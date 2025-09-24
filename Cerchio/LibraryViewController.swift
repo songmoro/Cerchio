@@ -68,6 +68,8 @@ final class LibraryViewController: UIViewController {
 extension LibraryViewController: MasonryLayoutProtocol {
     func collectionView(_ collectionView: UICollectionView, heightAtIndexPath indexPath:IndexPath) -> CGFloat {
         let book = books[indexPath.item]
+        
+        // TODO: 레이블 글자 크기 계산 개선
         return (UIScreen.main.bounds.height / 3) + CGFloat(max(1, book.title.count / 18) * 14) + CGFloat(max(1, book.author.count / 20) * 12)
     }
 }
