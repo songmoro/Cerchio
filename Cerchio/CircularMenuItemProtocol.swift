@@ -94,12 +94,12 @@ class CircularMenuButton: UIButton {
 }
 
 class CircularMenuViewController: UIViewController {
-    private var menuButtons: [CircularMenuButton] = []
-    private var menuItems: [CircularMenuItemProtocol] = []
+    var menuButtons: [CircularMenuButton] = []
+    var menuItems: [CircularMenuItemProtocol] = []
     private var originalImageView: UIView!
     private var highlightedButton: CircularMenuButton?
     private var labelView: UIView?
-    private var centerPoint: CGPoint = .zero
+    var centerPoint: CGPoint = .zero
     
     var buttonSize: CGFloat = 50
     var menuRadius: CGFloat = 100
@@ -302,7 +302,6 @@ class CircularMenuViewController: UIViewController {
     
     private func findButtonAtLocation(_ location: CGPoint) -> CircularMenuButton? {
         for button in menuButtons {
-            let buttonFrame = button.frame
             let distance = sqrt(pow(location.x - button.center.x, 2) + pow(location.y - button.center.y, 2))
             if distance <= buttonSize / 2 {
                 return button
@@ -311,7 +310,7 @@ class CircularMenuViewController: UIViewController {
         return nil
     }
     
-    private func createMenuButtons() {
+    func createMenuButtons() {
         menuButtons.forEach { $0.removeFromSuperview() }
         menuButtons.removeAll()
         
@@ -325,11 +324,11 @@ class CircularMenuViewController: UIViewController {
     private func createMenuButton(for item: CircularMenuItemProtocol) -> CircularMenuButton {
         let button = CircularMenuButton(frame: CGRect(x: 0, y: 0, width: buttonSize, height: buttonSize))
         button.configure(with: item)
-        // 기존 탭 제스처는 제거 (드래그로 대체)
+        // Long press 버전에서는 탭 제스처 추가하지 않음 (드래그로 대체)
         return button
     }
     
-    private func positionButtons(centerPoint: CGPoint) {
+    func positionButtons(centerPoint: CGPoint) {
         let buttonCount = menuButtons.count
         guard buttonCount > 0 else { return }
         
@@ -360,7 +359,7 @@ class CircularMenuViewController: UIViewController {
             positions.append(adjustPositionForScreenBounds(CGPoint(x: x, y: y)))
         }
         else {
-            let angleStep = 0.6 // 버튼 간격 (라디안)
+            let angleStep: CGFloat = 0.6 // 버튼 간격 (라디안)
             
             for i in 0..<buttonCount {
                 let angle: CGFloat
@@ -458,7 +457,7 @@ class CircularMenuViewController: UIViewController {
         }
     }
     
-    private func dismissMenu() {
+    func dismissMenu() {
         highlightedButton?.setHighlighted(false)
         highlightedButton = nil
         
@@ -477,6 +476,45 @@ class CircularMenuViewController: UIViewController {
     }
 }
 
+// MARK: - Tap Menu ViewController (탭 전용)
+class TapMenuViewController: CircularMenuViewController {
+    override func updateTouchLocation(_ location: CGPoint) {
+        // 탭 버전에서는 드래그 기능 비활성화
+    }
+    
+    override func touchEnded() {
+        // 탭 버전에서는 터치 엔드 시 자동으로 닫기만
+        dismissMenu()
+    }
+    
+    override func touchCancelled() {
+        dismissMenu()
+    }
+    
+    override func createMenuButtons() {
+        menuButtons.forEach { $0.removeFromSuperview() }
+        menuButtons.removeAll()
+        
+        for item in menuItems {
+            let button = createTapMenuButton(for: item)
+            menuButtons.append(button)
+            view.addSubview(button)
+        }
+    }
+    
+    private func createTapMenuButton(for item: CircularMenuItemProtocol) -> CircularMenuButton {
+        let button = CircularMenuButton(frame: CGRect(x: 0, y: 0, width: buttonSize, height: buttonSize))
+        button.configure(with: item)
+        button.addTarget(self, action: #selector(tapMenuButtonTapped), for: .touchUpInside)
+        return button
+    }
+    
+    @objc private func tapMenuButtonTapped(_ sender: CircularMenuButton) {
+        sender.menuItem?.action?()
+        dismissMenu()
+    }
+}
+
 // 드래그 선택을 위한 델리게이트 프로토콜
 protocol CircularMenuDragSelectionDelegate: AnyObject {
     func menuDidAppear()
@@ -488,6 +526,7 @@ class CircularMenuManager {
     private init() {}
     private var currentMenuViewController: CircularMenuViewController?
     
+    // MARK: - Manual API (기존 기능)
     func showMenu(
         at point: CGPoint,
         selectedView: UIView,
@@ -507,50 +546,287 @@ class CircularMenuManager {
         }
     }
     
-    // 터치 위치 업데이트
+    // MARK: - Long Press Gesture API
+    func addLongPressMenu(
+        to view: UIView,
+        targetView: UIView,
+        items: [CircularMenuItemProtocol],
+        presentingViewController: UIViewController,
+        minimumPressDuration: TimeInterval = 0.5,
+        customization: ((CircularMenuViewController) -> Void)? = nil
+    ) {
+        // Handler 객체 생성
+        let gestureHandler = LongPressGestureHandler(
+            targetView: targetView,
+            items: items,
+            presentingViewController: presentingViewController,
+            customization: customization
+        )
+        
+        // 제스처 생성 및 연결
+        let longPress = UILongPressGestureRecognizer(target: gestureHandler, action: #selector(LongPressGestureHandler.handleGesture(_:)))
+        longPress.minimumPressDuration = minimumPressDuration
+        
+        view.addGestureRecognizer(longPress)
+        
+        // 중요: 뷰에 핸들러를 연결하여 뷰가 살아있는 동안 핸들러도 유지
+        view.setAssociatedLongPressHandler(gestureHandler)
+    }
+    
+    // MARK: - Tap Gesture API
+    func addTapMenu(
+        to view: UIView,
+        targetView: UIView,
+        items: [CircularMenuItemProtocol],
+        presentingViewController: UIViewController,
+        customization: ((CircularMenuViewController) -> Void)? = nil
+    ) {
+        let gestureHandler = TapGestureHandler(
+            targetView: targetView,
+            items: items,
+            presentingViewController: presentingViewController,
+            customization: customization
+        )
+        
+        let tap = UITapGestureRecognizer(target: gestureHandler, action: #selector(TapGestureHandler.handleGesture(_:)))
+        view.addGestureRecognizer(tap)
+        
+        // 뷰에 핸들러 연결
+        view.setAssociatedTapHandler(gestureHandler)
+    }
+    
+    // MARK: - Touch handling (Long Press 전용)
     func updateTouchLocation(_ location: CGPoint) {
         currentMenuViewController?.updateTouchLocation(location)
     }
     
-    // 터치 종료
     func touchEnded() {
         currentMenuViewController?.touchEnded()
         currentMenuViewController = nil
     }
     
-    // 터치 취소
     func touchCancelled() {
         currentMenuViewController?.touchCancelled()
         currentMenuViewController = nil
     }
 }
 
+extension UIView {
+    struct AssociatedKeys {
+        /// 실제 값(0)은 중요하지 않음. &longPressHandler의 메모리 주소가 키가 됨
+        static var longPressHandler: UInt8 = 0
+        static var tapHandler: UInt8 = 0
+    }
+    
+    func setAssociatedLongPressHandler(_ handler: LongPressGestureHandler) {
+        /*
+         ⚠️ 순환 참조 주의사항:
+         - UIView → LongPressGestureHandler (강한 참조, Associated Object)
+         - LongPressGestureHandler → UIViewController (약한 참조, weak)
+         
+         만약 handler가 view를 강하게 참조한다면:
+         UIView ↔ LongPressGestureHandler 순환 참조 발생!
+         
+         현재 코드는 handler에서 targetView를 강한 참조하지만
+         targetView ≠ 이 view(제스처가 달린 view) 이므로 안전함
+         */
+        objc_setAssociatedObject(
+            self,  // 이 UIView 인스턴스의 연관 객체 저장소에
+            &AssociatedKeys.longPressHandler,  // 이 키로
+            handler,  // 이 객체를 저장
+            .OBJC_ASSOCIATION_RETAIN_NONATOMIC  // 강한 참조, non-atomic
+        )
+        
+        /*
+         Policy 선택 이유:
+         - RETAIN: handler 객체를 강하게 참조해야 GestureRecognizer가 작동
+         - NONATOMIC: UI는 메인 스레드에서만 접근하므로 atomic 불필요
+         
+         만약 멀티스레드 접근이 필요하다면:
+         .OBJC_ASSOCIATION_RETAIN 사용 (atomic, 더 느림)
+         */
+    }
+    
+    func getAssociatedLongPressHandler() -> LongPressGestureHandler? {
+        /*
+         타입 캐스팅 주의사항:
+         - objc_getAssociatedObject는 Any?를 반환
+         - 잘못된 타입으로 캐스팅하면 nil 반환 (크래시 X)
+         - 하지만 런타임에만 확인 가능하므로 실수 위험
+         */
+        return objc_getAssociatedObject(self, &AssociatedKeys.longPressHandler) as? LongPressGestureHandler
+    }
+    
+    func setAssociatedTapHandler(_ handler: TapGestureHandler) {
+        // 다른 키 사용으로 longPressHandler와 충돌 방지
+        objc_setAssociatedObject(
+            self,
+            &AssociatedKeys.tapHandler,  // 다른 메모리 주소
+            handler,
+            .OBJC_ASSOCIATION_RETAIN_NONATOMIC
+        )
+    }
+    
+    func getAssociatedTapHandler() -> TapGestureHandler? {
+        return objc_getAssociatedObject(self, &AssociatedKeys.tapHandler) as? TapGestureHandler
+    }
+    
+    /*
+     추가 주의사항들:
+     
+     1. 메모리 누수 디버깅:
+        - Xcode Memory Graph로 Associated Objects 추적 가능
+        - Instruments의 Leaks 도구로 순환 참조 확인
+     
+     2. 성능 고려사항:
+        - objc_getAssociatedObject는 O(1)이지만 해시 계산 오버헤드
+        - 자주 접근하는 값이라면 캐싱 고려
+     
+     3. KVO/KVC와의 상호작용:
+        - Associated Property는 KVO 알림 자동 발생 안 함
+        - 필요시 수동으로 willSet/didSet 호출해야 함
+     
+     4. Swizzling과의 충돌:
+        - Method Swizzling 사용 시 Associated Objects에 영향 줄 수 있음
+        - 특히 dealloc 스위즐링 시 주의 필요
+     */
+}
+
+// MARK: - Gesture Handlers
+class LongPressGestureHandler: NSObject {
+    private let targetView: UIView
+    private let items: [CircularMenuItemProtocol]
+    
+    /*
+     중요: weak 참조 사용
+     - 뷰 → 핸들러 (강한 참조, Associated Object)
+     - 핸들러 → 뷰컨트롤러 (약한 참조)
+     이렇게 하면 순환 참조 방지
+     */
+    private weak var presentingViewController: UIViewController?
+    private let customization: ((CircularMenuViewController) -> Void)?
+    
+    init(
+        targetView: UIView,
+        items: [CircularMenuItemProtocol],
+        presentingViewController: UIViewController,
+        customization: ((CircularMenuViewController) -> Void)? = nil
+    ) {
+        self.targetView = targetView
+        self.items = items
+        self.presentingViewController = presentingViewController // weak 참조로 순환 참조 방지
+        self.customization = customization
+        super.init()
+    }
+    
+    @objc func handleGesture(_ gesture: UILongPressGestureRecognizer) {
+        guard let presentingVC = presentingViewController else { return }
+        let point = gesture.location(in: presentingVC.view)
+        
+        switch gesture.state {
+        case .began:
+            CircularMenuManager.shared.showMenu(
+                at: point,
+                selectedView: targetView,
+                items: items,
+                from: presentingVC,
+                customization: customization
+            )
+            
+        case .changed:
+            CircularMenuManager.shared.updateTouchLocation(point)
+            
+        case .ended:
+            CircularMenuManager.shared.touchEnded()
+            
+        case .cancelled, .failed:
+            CircularMenuManager.shared.touchCancelled()
+            
+        default:
+            break
+        }
+    }
+}
+
+class TapGestureHandler: NSObject {
+    private let targetView: UIView
+    private let items: [CircularMenuItemProtocol]
+    private weak var presentingViewController: UIViewController? // 순환 참조 방지
+    private let customization: ((CircularMenuViewController) -> Void)?
+    
+    init(
+        targetView: UIView,
+        items: [CircularMenuItemProtocol],
+        presentingViewController: UIViewController,
+        customization: ((CircularMenuViewController) -> Void)? = nil
+    ) {
+        self.targetView = targetView
+        self.items = items
+        self.presentingViewController = presentingViewController
+        self.customization = customization
+        super.init()
+    }
+    
+    @objc func handleGesture(_ gesture: UITapGestureRecognizer) {
+        guard let presentingVC = presentingViewController else { return }
+        let point = gesture.location(in: presentingVC.view)
+        
+        let tapMenuVC = TapMenuViewController()
+        tapMenuVC.modalPresentationStyle = .overFullScreen
+        tapMenuVC.modalTransitionStyle = .crossDissolve
+        
+        customization?(tapMenuVC)
+        
+        presentingVC.present(tapMenuVC, animated: false) {
+            tapMenuVC.showMenu(at: point, selectedView: self.targetView, items: self.items)
+        }
+    }
+}
+
 class ViewController: UIViewController {
-    private let targetButton = UIButton(type: .system)
+    private let longPressButton = UIButton(type: .system)
+    private let tapButton = UIButton(type: .system)
     private let imageView = UIImageView()
     
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
-        setupGestures()
+        setupCircularMenus()
     }
     
     private func setupUI() {
         view.backgroundColor = .systemBackground
         
-        targetButton.setTitle("Long Press Me", for: .normal)
-        targetButton.backgroundColor = .systemBlue
-        targetButton.setTitleColor(.white, for: .normal)
-        targetButton.layer.cornerRadius = 8
-        targetButton.translatesAutoresizingMaskIntoConstraints = false
+        // Long Press 버튼
+        longPressButton.setTitle("Long Press Menu", for: .normal)
+        longPressButton.backgroundColor = .systemBlue
+        longPressButton.setTitleColor(.white, for: .normal)
+        longPressButton.layer.cornerRadius = 8
+        longPressButton.translatesAutoresizingMaskIntoConstraints = false
         
-        view.addSubview(targetButton)
+        // Tap 버튼
+        tapButton.setTitle("Tap Menu", for: .normal)
+        tapButton.backgroundColor = .systemGreen
+        tapButton.setTitleColor(.white, for: .normal)
+        tapButton.layer.cornerRadius = 8
+        tapButton.translatesAutoresizingMaskIntoConstraints = false
+        
+        view.addSubview(longPressButton)
+        view.addSubview(tapButton)
         view.addSubview(imageView)
         
-        targetButton.snp.makeConstraints {
-//            $0.center.equalToSuperview()
-//            $0.size.equalTo(40)
-            $0.edges.equalToSuperview()
+        longPressButton.snp.makeConstraints {
+            $0.centerX.equalToSuperview()
+            $0.centerY.equalToSuperview().offset(-50)
+            $0.width.equalTo(150)
+            $0.height.equalTo(44)
+        }
+        
+        tapButton.snp.makeConstraints {
+            $0.centerX.equalToSuperview()
+            $0.centerY.equalToSuperview().offset(50)
+            $0.width.equalTo(150)
+            $0.height.equalTo(44)
         }
         
         imageView.snp.makeConstraints {
@@ -558,71 +834,45 @@ class ViewController: UIViewController {
             $0.height.equalTo(200)
         }
         
-        if let url = URL(string: Book.sample[0].image) {
-            imageView.kf.setImage(with: url)
-        }
+        // Book.sample 참조 제거 - 테스트용 이미지로 대체
+        imageView.backgroundColor = .systemGray5
+        imageView.contentMode = .scaleAspectFit
     }
     
-    private func setupGestures() {
-        let longPress = UILongPressGestureRecognizer(target: self, action: #selector(handleLongPress))
-        longPress.minimumPressDuration = 0.5
-        targetButton.addGestureRecognizer(longPress)
-    }
-    
-    @objc private func handleLongPress(_ gesture: UILongPressGestureRecognizer) {
-        let point = gesture.location(in: view)
-        
-        switch gesture.state {
-        case .began:
-            // 롱프레스 시작 - 메뉴 표시
-            showCircularMenu(at: point, selectedView: imageView)
-            
-        case .changed:
-            // 롱프레스 중 손가락 이동 - 터치 위치 업데이트
-            CircularMenuManager.shared.updateTouchLocation(point)
-            
-        case .ended:
-            // 롱프레스 종료 - 선택된 버튼 실행
-            CircularMenuManager.shared.touchEnded()
-            
-        case .cancelled, .failed:
-            // 롱프레스 취소 - 메뉴 닫기
-            CircularMenuManager.shared.touchCancelled()
-            
-        default:
-            break
-        }
-    }
-    
-    private func showCircularMenu(at point: CGPoint, selectedView: UIView, completion: (() -> Void)? = nil) {
-        let items: [CircularMenuItem] = [
+    private func setupCircularMenus() {
+        let menuItems: [CircularMenuItem] = [
             CircularMenuItem(image: UIImage(systemName: "camera")) {
                 print("카메라 선택됨")
-                completion?()
             },
             CircularMenuItem(image: UIImage(systemName: "photo")) {
                 print("갤러리 선택됨")
-                completion?()
             },
             CircularMenuItem(image: UIImage(systemName: "video")) {
                 print("비디오 선택됨")
-                completion?()
             },
             CircularMenuItem(image: UIImage(systemName: "doc")) {
                 print("문서 선택됨")
-                completion?()
             },
             CircularMenuItem(image: UIImage(systemName: "star")) {
                 print("즐겨찾기 선택됨")
-                completion?()
             }
         ]
         
-        CircularMenuManager.shared.showMenu(
-            at: point,
-            selectedView: selectedView,
-            items: items,
-            from: self
+        // Long Press 버전 - 드래그로 선택 가능
+        CircularMenuManager.shared.addLongPressMenu(
+            to: longPressButton,
+            targetView: imageView,
+            items: menuItems,
+            presentingViewController: self,
+            minimumPressDuration: 0.5
+        )
+        
+        // Tap 버전 - 일반적인 버튼 탭으로 선택
+        CircularMenuManager.shared.addTapMenu(
+            to: tapButton,
+            targetView: imageView,
+            items: menuItems,
+            presentingViewController: self
         )
     }
 }
