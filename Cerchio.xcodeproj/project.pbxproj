@@ -11,6 +11,8 @@
 		F8137DA92E82AA330090F8FA /* RxCocoa in Frameworks */ = {isa = PBXBuildFile; productRef = F8137DA82E82AA330090F8FA /* RxCocoa */; };
 		F8137DAB2E82AA330090F8FA /* RxSwift in Frameworks */ = {isa = PBXBuildFile; productRef = F8137DAA2E82AA330090F8FA /* RxSwift */; };
 		F8137DAE2E82AA420090F8FA /* Kingfisher in Frameworks */ = {isa = PBXBuildFile; productRef = F8137DAD2E82AA420090F8FA /* Kingfisher */; };
+		F81383BD2E86ACD50090F8FA /* RealmSwift in Frameworks */ = {isa = PBXBuildFile; productRef = F81383BC2E86ACD50090F8FA /* RealmSwift */; };
+		F81383C02E86AD7F0090F8FA /* ReactorKit in Frameworks */ = {isa = PBXBuildFile; productRef = F81383BF2E86AD7F0090F8FA /* ReactorKit */; };
 		F84E0FE92E829A00006B98C0 /* .gitignore in Resources */ = {isa = PBXBuildFile; fileRef = F84E0FE82E829A00006B98C0 /* .gitignore */; };
 /* End PBXBuildFile section */
 
@@ -77,6 +79,8 @@
 				F8137DAE2E82AA420090F8FA /* Kingfisher in Frameworks */,
 				F8137DAB2E82AA330090F8FA /* RxSwift in Frameworks */,
 				F8137DA92E82AA330090F8FA /* RxCocoa in Frameworks */,
+				F81383BD2E86ACD50090F8FA /* RealmSwift in Frameworks */,
+				F81383C02E86AD7F0090F8FA /* ReactorKit in Frameworks */,
 				F8137DA62E82AA210090F8FA /* SnapKit in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -143,6 +147,8 @@
 				F8137DA82E82AA330090F8FA /* RxCocoa */,
 				F8137DAA2E82AA330090F8FA /* RxSwift */,
 				F8137DAD2E82AA420090F8FA /* Kingfisher */,
+				F81383BC2E86ACD50090F8FA /* RealmSwift */,
+				F81383BF2E86AD7F0090F8FA /* ReactorKit */,
 			);
 			productName = Cerchio;
 			productReference = F84E0EE22E829796006B98C0 /* Cerchio.app */;
@@ -231,6 +237,8 @@
 				F8137DA42E82AA210090F8FA /* XCRemoteSwiftPackageReference "SnapKit" */,
 				F8137DA72E82AA330090F8FA /* XCRemoteSwiftPackageReference "RxSwift" */,
 				F8137DAC2E82AA420090F8FA /* XCRemoteSwiftPackageReference "Kingfisher" */,
+				F81383BB2E86ACD50090F8FA /* XCRemoteSwiftPackageReference "realm-swift" */,
+				F81383BE2E86AD7F0090F8FA /* XCRemoteSwiftPackageReference "ReactorKit" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = F84E0EE32E829796006B98C0 /* Products */;
@@ -654,6 +662,22 @@
 				minimumVersion = 8.5.0;
 			};
 		};
+		F81383BB2E86ACD50090F8FA /* XCRemoteSwiftPackageReference "realm-swift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/realm/realm-swift.git";
+			requirement = {
+				branch = master;
+				kind = branch;
+			};
+		};
+		F81383BE2E86AD7F0090F8FA /* XCRemoteSwiftPackageReference "ReactorKit" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/ReactorKit/ReactorKit.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 3.2.0;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -676,6 +700,16 @@
 			isa = XCSwiftPackageProductDependency;
 			package = F8137DAC2E82AA420090F8FA /* XCRemoteSwiftPackageReference "Kingfisher" */;
 			productName = Kingfisher;
+		};
+		F81383BC2E86ACD50090F8FA /* RealmSwift */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = F81383BB2E86ACD50090F8FA /* XCRemoteSwiftPackageReference "realm-swift" */;
+			productName = RealmSwift;
+		};
+		F81383BF2E86AD7F0090F8FA /* ReactorKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = F81383BE2E86AD7F0090F8FA /* XCRemoteSwiftPackageReference "ReactorKit" */;
+			productName = ReactorKit;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
