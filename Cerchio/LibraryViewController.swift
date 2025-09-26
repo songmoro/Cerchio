@@ -36,9 +36,7 @@ final class LibraryViewController: UIViewController {
         collectionView.collectionViewLayout = layout
         layout.delegate = self
         
-        collectionView.backgroundColor = .systemGroupedBackground
         collectionView.register(LibraryCollectionViewCell.self)
-        collectionView.register(UICollectionViewCell.self, forCellWithReuseIdentifier: "UICollectionViewCell")
         
         view.addSubview(collectionView)
         

@@ -50,6 +50,9 @@ class CircleTabBarController: UITabBarController {
             make.height.equalTo(68)
         }
         
+//        let tabBarHeight: CGFloat = 83
+//        additionalSafeAreaInsets.bottom = tabBarHeight
+        
         circleTabBarViewModel.onTabSelected = { [weak self] index in
             self?.selectedIndex = index
         }
@@ -61,7 +64,7 @@ class CircleTabBarController: UITabBarController {
         let tabItems = viewControllers.map { viewController in
             CircleTabBarItemModel(
                 title: viewController.tabBarItem.title ?? "",
-                systemImageName: viewController.tabBarItem.image?.accessibilityIdentifier ?? "questionmark",
+                image: viewController.tabBarItem.image,
                 tag: viewController.tabBarItem.tag
             )
         }
@@ -98,75 +101,45 @@ class CircleTabBarViewModel: ObservableObject {
 struct CircleTabBarItemModel: Identifiable {
     let id = UUID()
     let title: String
-    let systemImageName: String
+    let image: UIImage
     let tag: Int
+    
+    init(title: String, image: UIImage?, tag: Int) {
+        self.title = title
+        self.image = image ?? UIImage(systemName: "questionmark") ?? UIImage()
+        self.tag = tag
+    }
 }
 
 struct CircleTabBarView: View {
     @ObservedObject var viewModel: CircleTabBarViewModel
     @State private var floatingButtonFrame: CGRect = .zero
-    @State private var showMask: Bool = false
+    @State private var showMask: Bool = false // 마스크 표시 상태
     
     var body: some View {
         ZStack {
-            Rectangle()
-                .fill(Color(UIColor.systemBackground))
-                .mask(
-                    Rectangle()
-                        .overlay(
-                            Group {
-                                if showMask {
-                                    Circle()
-                                        .frame(width: 60, height: 60)
-                                        .position(
-                                            x: floatingButtonFrame.midX,
-                                            y: floatingButtonFrame.midY
-                                        )
-                                        .blendMode(.destinationOut)
-                                }
-                            }
-                        )
-                )
-                .shadow(color: .black.opacity(0.1), radius: 8, x: 0, y: -2)
-                .ignoresSafeArea()
+            // 탭바 배경과 마스크
+            TabBarBackgroundView(
+                showMask: showMask,
+                floatingButtonFrame: floatingButtonFrame
+            )
             
-            if showMask {
-                Circle()
-                    .frame(width: 44, height: 44)
-                    .position(
-                        x: floatingButtonFrame.midX,
-                        y: floatingButtonFrame.midY
-                    )
-                    .foregroundColor(Color(UIColor.systemBackground))
-                    .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
-            }
+            // 플로팅 버튼 원형 배경
+            FloatingButtonBackgroundView(
+                showMask: showMask,
+                floatingButtonFrame: floatingButtonFrame
+            )
             
-            HStack(spacing: 0) {
-                ForEach(Array(viewModel.tabItems.enumerated()), id: \.element.id) { index, item in
-                    CircleTabBarButtonView(
-                        item: item,
-                        isSelected: index == viewModel.selectedIndex,
-                        onFrameChange: { frame in
-                            if index == viewModel.selectedIndex {
-                                floatingButtonFrame = frame
-                            }
-                        },
-                        onFloatingComplete: {
-                            if index == viewModel.selectedIndex {
-                                showMask = true
-                            }
-                        },
-                        action: {
-                            viewModel.selectTab(at: index)
-                        }
-                    )
-                    .frame(maxWidth: .infinity)
+            // 탭바 버튼들
+            TabBarButtonsContainerView(
+                viewModel: viewModel,
+                onFrameChange: { frame in
+                    floatingButtonFrame = frame
+                },
+                onFloatingComplete: {
+                    showMask = true
                 }
-            }
-            .padding(.horizontal, 16)
-            .padding(.top, 8)
-            .padding(.bottom, 34)
-            .coordinateSpace(name: "TabBarCoordinate")
+            )
         }
         .compositingGroup()
         .onChange(of: viewModel.selectedIndex) { _ in
@@ -197,6 +170,89 @@ struct CircleTabBarView: View {
     }
 }
 
+struct TabBarBackgroundView: View {
+    let showMask: Bool
+    let floatingButtonFrame: CGRect
+    
+    var body: some View {
+        Rectangle()
+            .fill(Color(UIColor.systemBackground))
+            .mask(backgroundMask)
+            .shadow(color: .black.opacity(0.1), radius: 8, x: 0, y: -2)
+            .ignoresSafeArea()
+    }
+    
+    private var backgroundMask: some View {
+        Rectangle()
+            .overlay(
+                Group {
+                    if showMask {
+                        Circle()
+                            .frame(width: 60, height: 60)
+                            .position(
+                                x: floatingButtonFrame.midX,
+                                y: floatingButtonFrame.midY
+                            )
+                            .blendMode(.destinationOut)
+                    }
+                }
+            )
+    }
+}
+
+struct FloatingButtonBackgroundView: View {
+    let showMask: Bool
+    let floatingButtonFrame: CGRect
+    
+    var body: some View {
+        if showMask {
+            Circle()
+                .frame(width: 44, height: 44)
+                .position(
+                    x: floatingButtonFrame.midX,
+                    y: floatingButtonFrame.midY
+                )
+                .foregroundColor(Color(UIColor.systemBackground))
+                .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
+        }
+    }
+}
+
+struct TabBarButtonsContainerView: View {
+    @ObservedObject var viewModel: CircleTabBarViewModel
+    let onFrameChange: (CGRect) -> Void
+    let onFloatingComplete: () -> Void
+    
+    var body: some View {
+        HStack(spacing: 0) {
+            ForEach(Array(viewModel.tabItems.enumerated()), id: \.element.id) { index, item in
+                CircleTabBarButtonView(
+                    item: item,
+                    isSelected: index == viewModel.selectedIndex,
+                    onFrameChange: { frame in
+                        if index == viewModel.selectedIndex {
+                            onFrameChange(frame)
+                        }
+                    },
+                    onFloatingComplete: {
+                        if index == viewModel.selectedIndex {
+                            onFloatingComplete()
+                        }
+                    },
+                    action: {
+                        viewModel.selectTab(at: index)
+                    }
+                )
+                .frame(maxWidth: .infinity)
+            }
+        }
+        .padding(.horizontal, 16)
+        .padding(.top, 8)
+        .padding(.bottom, 34)
+        .coordinateSpace(name: "TabBarCoordinate")
+    }
+}
+
 struct CircleTabBarButtonView: View {
     let item: CircleTabBarItemModel
     let isSelected: Bool
@@ -207,39 +263,51 @@ struct CircleTabBarButtonView: View {
     var body: some View {
         Button(action: action) {
             VStack(spacing: 4) {
-                Image(systemName: item.systemImageName)
-                    .font(.system(size: 24, weight: .medium))
-                    .foregroundColor(isSelected ? .blue : .gray)
-                    .offset(y: isSelected ? -18 : 0)
-                    .background(
-                        GeometryReader { geometry in
-                            Color.clear
-                                .onAppear {
-                                    updateFrame(geometry, isFloating: isSelected)
-                                }
-                                .onChange(of: isSelected) { selected in
-                                    if selected {
-                                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.01) {
-                                            updateFrame(geometry, isFloating: true)
-                                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.29) {
-                                                onFloatingComplete()
-                                            }
-                                        }
-                                    } else {
-                                        updateFrame(geometry, isFloating: false)
-                                    }
-                                }
-                        }
-                    )
-                
-                Text(item.title)
-                    .font(.system(size: 10, weight: .medium))
-                    .foregroundColor(isSelected ? .blue : .gray)
+                buttonIcon
+                buttonTitle
             }
-//            .border(.orange)
             .contentShape(Rectangle())
         }
         .buttonStyle(PlainButtonStyle())
+    }
+    
+    private var buttonIcon: some View {
+        Image(uiImage: item.image)
+            .font(.system(size: 24, weight: .medium))
+            .foregroundColor(isSelected ? .blue : .gray)
+            .offset(y: isSelected ? -18 : 0)
+            .background(frameTracker)
+    }
+    
+    private var buttonTitle: some View {
+        Text(item.title)
+            .font(.system(size: 10, weight: .medium))
+            .foregroundColor(isSelected ? .blue : .gray)
+    }
+    
+    private var frameTracker: some View {
+        GeometryReader { geometry in
+            Color.clear
+                .onAppear {
+                    updateFrame(geometry, isFloating: isSelected)
+                }
+                .onChange(of: isSelected) { selected in
+                    handleSelectionChange(selected, geometry: geometry)
+                }
+        }
+    }
+    
+    private func handleSelectionChange(_ selected: Bool, geometry: GeometryProxy) {
+        if selected {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.01) {
+                updateFrame(geometry, isFloating: true)
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.29) {
+                    onFloatingComplete()
+                }
+            }
+        } else {
+            updateFrame(geometry, isFloating: false)
+        }
     }
     
     private func updateFrame(_ geometry: GeometryProxy, isFloating: Bool) {
