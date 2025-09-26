@@ -27,6 +27,10 @@ final class MasonryLayout: UICollectionViewLayout {
     override func prepare() {
         guard cache.isEmpty, let collectionView = collectionView else { return }
 
+        // diffable data source 호환성을 위한 안전 체크
+        let numberOfSections = collectionView.numberOfSections
+        guard numberOfSections > 0 else { return }
+
         let columnWidth = contentWidth / CGFloat(numberOfColumns)
         var xOffset: [CGFloat] = []
         for column in 0..<numberOfColumns {
@@ -36,25 +40,30 @@ final class MasonryLayout: UICollectionViewLayout {
         var column = 0
         var yOffset: [CGFloat] = .init(repeating: 0, count: numberOfColumns)
 
-        for item in 0..<collectionView.numberOfItems(inSection: 0) {
-            let indexPath = IndexPath(item: item, section: 0)
+        // 모든 섹션을 처리 (현재는 주로 섹션 0만 사용하지만 확장 가능)
+        for section in 0..<numberOfSections {
+            let numberOfItems = collectionView.numberOfItems(inSection: section)
 
-            let cellHeight = delegate?.collectionView(collectionView, heightAtIndexPath: indexPath) ?? 180
-            let height = cellPadding * 2 + cellHeight
-            let frame = CGRect(x: xOffset[column],
-                               y: yOffset[column],
-                               width: columnWidth,
-                               height: height)
-            let insetFrame = frame.insetBy(dx: cellPadding, dy: cellPadding)
+            for item in 0..<numberOfItems {
+                let indexPath = IndexPath(item: item, section: section)
 
-            let attributes = UICollectionViewLayoutAttributes(forCellWith: indexPath)
-            attributes.frame = insetFrame
-            cache.append(attributes)
+                let cellHeight = delegate?.collectionView(collectionView, heightAtIndexPath: indexPath) ?? 180
+                let height = cellPadding * 2 + cellHeight
+                let frame = CGRect(x: xOffset[column],
+                                   y: yOffset[column],
+                                   width: columnWidth,
+                                   height: height)
+                let insetFrame = frame.insetBy(dx: cellPadding, dy: cellPadding)
 
-            contentHeight = max(contentHeight, frame.maxY)
-            yOffset[column] = yOffset[column] + height
+                let attributes = UICollectionViewLayoutAttributes(forCellWith: indexPath)
+                attributes.frame = insetFrame
+                cache.append(attributes)
 
-            column = column < (numberOfColumns - 1) ? (column + 1) : 0
+                contentHeight = max(contentHeight, frame.maxY)
+                yOffset[column] = yOffset[column] + height
+
+                column = column < (numberOfColumns - 1) ? (column + 1) : 0
+            }
         }
     }
 
@@ -70,6 +79,19 @@ final class MasonryLayout: UICollectionViewLayout {
     }
 
     override func layoutAttributesForItem(at indexPath: IndexPath) -> UICollectionViewLayoutAttributes? {
+        guard indexPath.item < cache.count else { return nil }
         return cache[indexPath.item]
+    }
+
+    // diffable data source 호환성을 위한 메서드들
+    override func invalidateLayout() {
+        super.invalidateLayout()
+        cache.removeAll()
+        contentHeight = 0
+    }
+
+    override func shouldInvalidateLayout(forBoundsChange newBounds: CGRect) -> Bool {
+        guard let collectionView = collectionView else { return false }
+        return !newBounds.size.equalTo(collectionView.bounds.size)
     }
 }

@@ -60,7 +60,6 @@ final class LibraryCollectionViewCell: UICollectionViewCell, IsIdentifiable {
         }
     }
     
-    
     func configure(with item: Book) {
         titleLabel.text = item.title
         authorLabel.text = item.author

@@ -9,52 +9,60 @@ import Foundation
 import RealmSwift
 import RxSwift
 
-protocol RepositoryProtocol {
-    associatedtype Entity: Object
-    func create(_ entity: Entity) -> Observable<Void>
-    func read() -> Observable<[Entity]>
-    func update(_ entity: Entity) -> Observable<Void>
-    func delete(_ entity: Entity) -> Observable<Void>
+// MARK: - Repository Type Protocol
+protocol RepositoryType {
+    associatedtype Model
+
+    func fetch() -> Observable<[Model]>
+    func save(_ model: Model) -> Observable<Model>
+    func delete(_ model: Model) -> Observable<Void>
+    func update(_ model: Model) -> Observable<Model>
 }
 
-class BaseRepository<T: Object>: RepositoryProtocol {
-    typealias Entity = T
+// MARK: - Base Repository Type Protocol
+protocol BaseRepositoryType: RepositoryType where Model: Object {
+    var realm: Realm { get }
+}
 
-    private let realm: Realm
+// MARK: - Base Repository
+class BaseRepository<T: Object>: BaseRepositoryType {
+    typealias Model = T
+
+    let realm: Realm
 
     init() throws {
         self.realm = try Realm()
     }
 
-    func create(_ entity: T) -> Observable<Void> {
+    func fetch() -> Observable<[T]> {
         return Observable.create { observer in
-            do {
-                try self.realm.write {
-                    self.realm.add(entity)
-                }
-                observer.onNext(())
-                observer.onCompleted()
-            } catch {
-                observer.onError(error)
-            }
-            return Disposables.create()
-        }
-    }
-
-    func read() -> Observable<[T]> {
-        return Observable.create { observer in
-            let objects = Array(self.realm.objects(T.self))
-            observer.onNext(objects)
+            let results = self.realm.objects(T.self)
+            observer.onNext(Array(results))
             observer.onCompleted()
             return Disposables.create()
         }
     }
 
-    func update(_ entity: T) -> Observable<Void> {
+    func save(_ model: T) -> Observable<T> {
         return Observable.create { observer in
             do {
                 try self.realm.write {
-                    self.realm.add(entity, update: .modified)
+                    self.realm.add(model)
+                }
+                observer.onNext(model)
+                observer.onCompleted()
+            } catch {
+                observer.onError(error)
+            }
+            return Disposables.create()
+        }
+    }
+
+    func delete(_ model: T) -> Observable<Void> {
+        return Observable.create { observer in
+            do {
+                try self.realm.write {
+                    self.realm.delete(model)
                 }
                 observer.onNext(())
                 observer.onCompleted()
@@ -65,13 +73,13 @@ class BaseRepository<T: Object>: RepositoryProtocol {
         }
     }
 
-    func delete(_ entity: T) -> Observable<Void> {
+    func update(_ model: T) -> Observable<T> {
         return Observable.create { observer in
             do {
                 try self.realm.write {
-                    self.realm.delete(entity)
+                    self.realm.add(model, update: .modified)
                 }
-                observer.onNext(())
+                observer.onNext(model)
                 observer.onCompleted()
             } catch {
                 observer.onError(error)
@@ -87,5 +95,13 @@ class BaseRepository<T: Object>: RepositoryProtocol {
             observer.onCompleted()
             return Disposables.create()
         }
+    }
+
+    func create(_ entity: T) -> Observable<Void> {
+        return save(entity).map { _ in () }
+    }
+
+    func read() -> Observable<[T]> {
+        return fetch()
     }
 }

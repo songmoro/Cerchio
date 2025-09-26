@@ -13,6 +13,7 @@
 		F8137DAE2E82AA420090F8FA /* Kingfisher in Frameworks */ = {isa = PBXBuildFile; productRef = F8137DAD2E82AA420090F8FA /* Kingfisher */; };
 		F81383BD2E86ACD50090F8FA /* RealmSwift in Frameworks */ = {isa = PBXBuildFile; productRef = F81383BC2E86ACD50090F8FA /* RealmSwift */; };
 		F81383C02E86AD7F0090F8FA /* ReactorKit in Frameworks */ = {isa = PBXBuildFile; productRef = F81383BF2E86AD7F0090F8FA /* ReactorKit */; };
+		F81384312E86E5E10090F8FA /* RealmSwift in Embed Frameworks */ = {isa = PBXBuildFile; productRef = F81383BC2E86ACD50090F8FA /* RealmSwift */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		F84E0FE92E829A00006B98C0 /* .gitignore in Resources */ = {isa = PBXBuildFile; fileRef = F84E0FE82E829A00006B98C0 /* .gitignore */; };
 /* End PBXBuildFile section */
 
@@ -32,6 +33,20 @@
 			remoteInfo = Cerchio;
 		};
 /* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		F81384322E86E5E10090F8FA /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				F81384312E86E5E10090F8FA /* RealmSwift in Embed Frameworks */,
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		F84E0EE22E829796006B98C0 /* Cerchio.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Cerchio.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -133,6 +148,7 @@
 				F84E0EDE2E829796006B98C0 /* Sources */,
 				F84E0EDF2E829796006B98C0 /* Frameworks */,
 				F84E0EE02E829796006B98C0 /* Resources */,
+				F81384322E86E5E10090F8FA /* Embed Frameworks */,
 			);
 			buildRules = (
 			);
@@ -441,7 +457,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.6;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
@@ -501,7 +517,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.6;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
