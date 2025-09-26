@@ -60,10 +60,6 @@ final class LibraryCollectionViewCell: UICollectionViewCell, IsIdentifiable {
         }
     }
     
-    private func getLabelHeight() -> CGFloat {
-        fatalError("미사용")
-//        return titleLabel.bounds.height + authorLabel.bounds.height
-    }
     
     func configure(with item: Book) {
         titleLabel.text = item.title
