@@ -121,7 +121,6 @@ final class LibraryViewController: BaseViewController<LibraryReactor> {
             guard let self = self, let cell = cell else { return }
 
             let menuItems = self.createMenuItems()
-
             CircularMenuManager.shared.addLongPressMenu(
                         to: cell,
                         targetView: cell,

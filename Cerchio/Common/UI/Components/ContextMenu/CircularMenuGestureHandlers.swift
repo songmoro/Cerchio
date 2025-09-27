@@ -48,7 +48,7 @@ class LongPressGestureHandler: NSObject {
     @objc func handleGesture(_ gesture: UILongPressGestureRecognizer) {
         guard let presentingVC = presentingViewController else { return }
         let point = gesture.location(in: presentingVC.view)
-
+        
         switch gesture.state {
         case .began:
             CircularMenuManager.shared.showMenu(

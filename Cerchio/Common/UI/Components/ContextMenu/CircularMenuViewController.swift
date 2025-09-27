@@ -50,6 +50,8 @@ class CircularMenuViewController: UIViewController {
         originalImageView.layer.shadowOpacity = 0.2
         originalImageView.layer.shadowOffset = CGSize(width: 0, height: 0)
         originalImageView.layer.shadowRadius = 1
+        
+        selectedView.alpha = 0
 
         createMenuButtons()
         positionButtons(centerPoint: point)
@@ -218,7 +220,6 @@ class CircularMenuViewController: UIViewController {
         for item in menuItems {
             let button = createMenuButton(for: item)
             menuButtons.append(button)
-            view.addSubview(button)
         }
     }
 
@@ -271,7 +272,7 @@ class CircularMenuViewController: UIViewController {
 
                 let x = centerPoint.x + menuRadius * cos(angle)
                 let y = centerPoint.y + menuRadius * sin(angle)
-                print("Button \(i): isLeft=\(isLeftSide), angle=\(angle), x=\(x), y=\(y)")
+//                print("Button \(i): isLeft=\(isLeftSide), angle=\(angle), x=\(x), y=\(y)")
 
                 positions.append(adjustPositionForScreenBounds(CGPoint(x: x, y: y)))
             }
@@ -328,12 +329,13 @@ class CircularMenuViewController: UIViewController {
     private func animateIn() {
         UIView.animate(withDuration: animationDuration, delay: 0.3, options: [.curveEaseOut]) {
             self.view.addSubview(self.originalImageView)
-            let uiView = UIView(frame: self.originalImageView.frame)
-            uiView.backgroundColor = .systemRed.withAlphaComponent(0.3)
-            self.view.addSubview(uiView)
+//            let uiView = UIView(frame: self.originalImageView.frame)
+//            uiView.backgroundColor = .systemRed.withAlphaComponent(0.3)
+//            self.view.addSubview(uiView)
 
             for button in self.menuButtons {
                 button.alpha = 1
+                self.view.addSubview(button)
                 button.transform = CGAffineTransform.identity
             }
         }
