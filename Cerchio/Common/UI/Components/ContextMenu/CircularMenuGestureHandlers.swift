@@ -47,12 +47,15 @@ class LongPressGestureHandler: NSObject {
 
     @objc func handleGesture(_ gesture: UILongPressGestureRecognizer) {
         guard let presentingVC = presentingViewController else { return }
-        let point = gesture.location(in: presentingVC.view)
-        
+
         switch gesture.state {
         case .began:
+            // 실제 터치한 위치를 사용 (타겟 뷰 내에서의 터치 위치)
+            let touchLocationInTarget = gesture.location(in: targetView)
+            let touchLocationInPresentingView = targetView.convert(touchLocationInTarget, to: presentingVC.view)
+
             CircularMenuManager.shared.showMenu(
-                at: point,
+                at: touchLocationInPresentingView,
                 selectedView: targetView,
                 items: items,
                 from: presentingVC,
@@ -60,6 +63,7 @@ class LongPressGestureHandler: NSObject {
             )
 
         case .changed:
+            let point = gesture.location(in: presentingVC.view)
             CircularMenuManager.shared.updateTouchLocation(point)
 
         case .ended:
@@ -90,7 +94,10 @@ class TapGestureHandler: NSObject {
 
     @objc func handleGesture(_ gesture: UITapGestureRecognizer) {
         guard let presentingVC = presentingViewController else { return }
-        let point = gesture.location(in: presentingVC.view)
+
+        // 실제 터치한 위치를 사용 (타겟 뷰 내에서의 터치 위치)
+        let touchLocationInTarget = gesture.location(in: targetView)
+        let touchLocationInPresentingView = targetView.convert(touchLocationInTarget, to: presentingVC.view)
 
         let tapMenuVC = TapMenuViewController()
         tapMenuVC.modalPresentationStyle = .overFullScreen
@@ -99,7 +106,7 @@ class TapGestureHandler: NSObject {
         customization?(tapMenuVC)
 
         presentingVC.present(tapMenuVC, animated: false) {
-            tapMenuVC.showMenu(at: point, selectedView: self.targetView, items: self.items)
+            tapMenuVC.showMenu(at: touchLocationInPresentingView, selectedView: self.targetView, items: self.items)
         }
     }
 }

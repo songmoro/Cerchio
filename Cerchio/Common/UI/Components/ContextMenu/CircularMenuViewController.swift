@@ -43,14 +43,19 @@ class CircularMenuViewController: UIViewController {
         centerPoint = point
         menuItems = items
         originalImageView = selectedView.snapshotView(afterScreenUpdates: true)
-        originalImageView.frame = selectedView.frame
+
+        // 정확한 좌표 계산: selectedView의 프레임을 현재 뷰 컨트롤러의 뷰 좌표계로 변환
+        guard let superview = selectedView.superview else { return }
+        let frameInCurrentView = superview.convert(selectedView.frame, to: self.view)
+
+        originalImageView.frame = frameInCurrentView
         originalImageView.layer.cornerRadius = 8
         originalImageView.layer.masksToBounds = true
         originalImageView.layer.shadowColor = UIColor.black.cgColor
         originalImageView.layer.shadowOpacity = 0.2
         originalImageView.layer.shadowOffset = CGSize(width: 0, height: 0)
         originalImageView.layer.shadowRadius = 1
-        
+
         selectedView.alpha = 0
 
         createMenuButtons()
