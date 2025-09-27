@@ -16,6 +16,9 @@ class CircularMenuViewController: UIViewController {
     private var labelView: UIView?
     var centerPoint: CGPoint = .zero
 
+    // 원본 뷰 참조 저장 (숨기기/보이기 관리용)
+    private weak var originalView: UIView?
+
     var buttonSize: CGFloat = 50
     var menuRadius: CGFloat = 100
     var animationDuration: TimeInterval = 0.3
@@ -29,7 +32,7 @@ class CircularMenuViewController: UIViewController {
     }
 
     private func setupView() {
-        view.backgroundColor = UIColor.white.withAlphaComponent(0.3)
+        view.backgroundColor = UIColor.white.withAlphaComponent(0.9)
 
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(backgroundTapped))
         view.addGestureRecognizer(tapGesture)
@@ -42,20 +45,37 @@ class CircularMenuViewController: UIViewController {
     func showMenu(at point: CGPoint, selectedView: UIView, items: [CircularMenuItemProtocol]) {
         centerPoint = point
         menuItems = items
+        originalView = selectedView // 원본 뷰 참조 저장
         originalImageView = selectedView.snapshotView(afterScreenUpdates: true)
 
         // 정확한 좌표 계산: selectedView의 프레임을 현재 뷰 컨트롤러의 뷰 좌표계로 변환
         guard let superview = selectedView.superview else { return }
         let frameInCurrentView = superview.convert(selectedView.frame, to: self.view)
 
-        originalImageView.frame = frameInCurrentView
-        originalImageView.layer.cornerRadius = 8
+        // 1.2배 크기로 확대하고 중앙 정렬
+        let scaledWidth = frameInCurrentView.width * 1.0
+        let scaledHeight = frameInCurrentView.height * 1.0
+        let scaledFrame = CGRect(
+            x: frameInCurrentView.midX - scaledWidth / 2,
+            y: frameInCurrentView.midY - scaledHeight / 2,
+            width: scaledWidth,
+            height: scaledHeight
+        )
+
+        originalImageView.frame = scaledFrame
+        originalImageView.layer.cornerRadius = 8 * 1.0 // 코너 반지름도 비례적으로 증가
         originalImageView.layer.masksToBounds = true
         originalImageView.layer.shadowColor = UIColor.black.cgColor
         originalImageView.layer.shadowOpacity = 0.2
         originalImageView.layer.shadowOffset = CGSize(width: 0, height: 0)
         originalImageView.layer.shadowRadius = 1
 
+        let screenCenter = view.bounds.midX
+        let tiltAngle: CGFloat = frameInCurrentView.midX < screenCenter ? -5 : 5
+        let radians = tiltAngle * .pi / 180 // 라디안으로 변환
+        originalImageView.transform = CGAffineTransform(rotationAngle: radians)
+
+        // 원본 뷰 숨기기
         selectedView.alpha = 0
 
         createMenuButtons()
@@ -138,7 +158,7 @@ class CircularMenuViewController: UIViewController {
         let label = UILabel()
         label.text = text
         label.textColor = .black
-        label.font = UIFont.systemFont(ofSize: 22, weight: .semibold)
+        label.font = UIFont.systemFont(ofSize: 24, weight: .bold)
         label.textAlignment = .center
 
         label.sizeToFit()
@@ -359,6 +379,8 @@ class CircularMenuViewController: UIViewController {
                 button.transform = CGAffineTransform(scaleX: 0.1, y: 0.1)
             }
         }) { _ in
+            // 메뉴가 사라지기 전에 원본 뷰 다시 보이기
+            self.originalView?.alpha = 1
             self.dismiss(animated: false)
         }
     }
