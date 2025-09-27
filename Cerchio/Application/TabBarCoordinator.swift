@@ -82,7 +82,7 @@ final class TabBarCoordinator: BaseCoordinator {
         let label = UILabel()
         label.text = "\(title) - 준비 중"
         label.textAlignment = .center
-        label.font = .systemFont(ofSize: 18, weight: .medium)
+        label.font = .custom(weight: .medium, size: 18)
         label.textColor = .secondaryLabel
 
         placeholderVC.view.addSubview(label)

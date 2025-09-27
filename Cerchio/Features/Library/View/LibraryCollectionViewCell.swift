@@ -31,12 +31,12 @@ final class LibraryCollectionViewCell: UICollectionViewCell, IsIdentifiable {
         coverImageView.backgroundColor = .systemGray5
         contentView.addSubview(coverImageView)
         
-        titleLabel.font = .systemFont(ofSize: 14, weight: .semibold)
+        titleLabel.font = .custom(weight: .semiBold, size: 14)
         titleLabel.numberOfLines = 0
         titleLabel.textColor = .label
         contentView.addSubview(titleLabel)
         
-        authorLabel.font = .systemFont(ofSize: 12, weight: .regular)
+        authorLabel.font = .custom(weight: .regular, size: 14)
         authorLabel.textColor = .secondaryLabel
         authorLabel.numberOfLines = 0
         contentView.addSubview(authorLabel)

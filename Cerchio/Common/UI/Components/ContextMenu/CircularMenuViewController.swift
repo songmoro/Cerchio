@@ -158,7 +158,7 @@ class CircularMenuViewController: UIViewController {
         let label = UILabel()
         label.text = text
         label.textColor = .black
-        label.font = UIFont.systemFont(ofSize: 24, weight: .bold)
+        label.font = .custom(weight: .bold, size: 24)
         label.textAlignment = .center
 
         label.sizeToFit()
