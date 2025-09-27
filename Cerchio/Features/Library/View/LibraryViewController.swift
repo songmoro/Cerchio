@@ -86,9 +86,11 @@ final class LibraryViewController: BaseViewController<LibraryReactor> {
     }
 
     private func configureDataSource() {
-        dataSource = DataSource(collectionView: collectionView) { collectionView, indexPath, item in
+        dataSource = DataSource(collectionView: collectionView) { [weak self] collectionView, indexPath, item in
             let cell = collectionView.dequeueReusableCell(LibraryCollectionViewCell.self, for: indexPath)
             cell.configure(with: item)
+            
+            self?.setupLongPressGesture(for: cell, with: item, at: indexPath)
             return cell
         }
 
@@ -108,6 +110,139 @@ final class LibraryViewController: BaseViewController<LibraryReactor> {
         super.viewDidLayoutSubviews()
         // 뷰의 레이아웃이 완료된 후 컬렉션 뷰 레이아웃 업데이트
         collectionView.collectionViewLayout.invalidateLayout()
+    }
+    
+    private func setupLongPressGesture(for cell: LibraryCollectionViewCell, with book: Book, at indexPath: IndexPath) {
+        // 기존 제스처 제거 (셀 재사용 시)
+        cell.gestureRecognizers?.removeAll()
+
+        // 셀이 화면에 완전히 표시된 후에 제스처 추가
+        DispatchQueue.main.async { [weak self, weak cell] in
+            guard let self = self, let cell = cell else { return }
+
+            let menuItems = self.createMenuItems()
+
+            CircularMenuManager.shared.addLongPressMenu(
+                        to: cell,
+                        targetView: cell,
+                        items: menuItems,
+                        presentingViewController: self,
+                        minimumPressDuration: 0.5
+                    )
+//            ContextMenu.addLongPress(
+//                to: cell,
+//                items: menuItems,
+//                presentingViewController: self,
+//                minimumPressDuration: 0.5
+//            )
+        }
+    }
+    
+    private func createMenuItems() -> [CircularMenuItem] {
+        let menuItems: [CircularMenuItem] = [
+            CircularMenuItem(image: UIImage(systemName: "camera")) {
+                print("카메라 선택됨")
+            },
+            CircularMenuItem(image: UIImage(systemName: "photo")) {
+                print("갤러리 선택됨")
+            },
+            CircularMenuItem(image: UIImage(systemName: "video")) {
+                print("비디오 선택됨")
+            },
+            CircularMenuItem(image: UIImage(systemName: "doc")) {
+                print("문서 선택됨")
+            },
+            CircularMenuItem(image: UIImage(systemName: "star")) {
+                print("즐겨찾기 선택됨")
+            }
+        ]
+        
+        return menuItems
+    }
+    
+//    private func createMenuItems(for book: Book, at indexPath: IndexPath) -> [ContextMenuItem] {
+//        return [
+//            // 읽기 시작/계속 읽기
+//            ContextMenuItem(
+//                image: UIImage(systemName: "book.fill"),
+//                backgroundColor: .systemBlue,
+//                action: { [weak self] in
+//                    self?.readBook(book)
+//                }
+//            ),
+//
+//            // 즐겨찾기 추가/제거
+//            ContextMenuItem(
+//                image: UIImage(systemName: "heart"),
+//                backgroundColor: .systemGray,
+//                action: { [weak self] in
+//                    self?.toggleFavorite(book)
+//                }
+//            ),
+//
+//            // 편집
+//            ContextMenuItem(
+//                image: UIImage(systemName: "pencil"),
+//                backgroundColor: .systemOrange,
+//                action: { [weak self] in
+//                    self?.editBook(book)
+//                }
+//            ),
+//
+//            // 삭제
+//            ContextMenuItem(
+//                image: UIImage(systemName: "trash"),
+//                backgroundColor: .systemRed,
+//                action: { [weak self] in
+//                    self?.deleteBook(book, at: indexPath)
+//                }
+//            )
+//        ]
+//    }
+
+    // MARK: - Menu Actions
+
+    private func readBook(_ book: Book) {
+        print("Reading book: \(book.title)")
+        // TODO: 책 읽기 화면으로 이동
+        if let libraryCoordinator = coordinator as? LibraryCoordinator {
+            libraryCoordinator.showBookDetail(book)
+        }
+    }
+
+    private func toggleFavorite(_ book: Book) {
+        print("Toggle favorite for book: \(book.title)")
+        // TODO: 즐겨찾기 상태 변경 로직
+        // reactor?.action.onNext(.toggleFavorite(book))
+    }
+
+    private func editBook(_ book: Book) {
+        print("Edit book: \(book.title)")
+        // TODO: 책 편집 화면으로 이동
+        // coordinator?.showEditBook(book)
+    }
+
+    private func deleteBook(_ book: Book, at indexPath: IndexPath) {
+        print("Delete book: \(book.title)")
+        // TODO: 삭제 확인 알럿 표시 후 삭제 로직
+        showDeleteConfirmation(for: book, at: indexPath)
+    }
+
+    private func showDeleteConfirmation(for book: Book, at indexPath: IndexPath) {
+        let alert = UIAlertController(
+            title: "책 삭제",
+            message: "'\(book.title)'을(를) 삭제하시겠습니까?",
+            preferredStyle: .alert
+        )
+
+        alert.addAction(UIAlertAction(title: "취소", style: .cancel))
+        alert.addAction(UIAlertAction(title: "삭제", style: .destructive) { [weak self] _ in
+            // TODO: 실제 삭제 로직
+            // self?.reactor?.action.onNext(.deleteBook(book))
+            print("Confirmed delete for book: \(book.title)")
+        })
+
+        present(alert, animated: true)
     }
 
     private func updateData(books: [Book]) {
