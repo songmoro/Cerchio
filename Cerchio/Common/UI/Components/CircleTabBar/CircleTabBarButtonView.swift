@@ -27,7 +27,7 @@ struct CircleTabBarButtonView: View {
     
     private var buttonIcon: some View {
         Image(uiImage: item.image)
-            .font(.system(size: 24, weight: .medium))
+            .font(.custom(weight: .medium, size: 24))
             .foregroundColor(isSelected ? .blue : .gray)
             .offset(y: isSelected ? -18 : 0)
             .background(frameTracker)
@@ -35,7 +35,7 @@ struct CircleTabBarButtonView: View {
     
     private var buttonTitle: some View {
         Text(item.title)
-            .font(.system(size: 10, weight: .medium))
+            .font(.custom(weight: .medium, size: 10))
             .foregroundColor(isSelected ? .blue : .gray)
     }
     
