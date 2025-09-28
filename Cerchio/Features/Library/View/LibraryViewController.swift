@@ -125,7 +125,7 @@ final class LibraryViewController: BaseViewController<LibraryReactor> {
                         targetView: cell,
                         items: menuItems,
                         presentingViewController: self,
-                        minimumPressDuration: 0.5
+                        minimumPressDuration: LibraryConstants.Gesture.minimumPressDuration
                     )
         }
     }
@@ -215,14 +215,14 @@ final class LibraryViewController: BaseViewController<LibraryReactor> {
 
 extension LibraryViewController: MasonryLayoutProtocol {
     func collectionView(_ collectionView: UICollectionView, heightAtIndexPath indexPath: IndexPath) -> CGFloat {
-        guard let reactor = reactor else { return 200 }
+        guard let reactor = reactor else { return LibraryConstants.HeightCalculation.defaultHeight }
 
         let books = reactor.currentState.books
-        guard indexPath.item < books.count else { return 200 }
+        guard indexPath.item < books.count else { return LibraryConstants.HeightCalculation.defaultHeight }
 
         let book = books[indexPath.item]
 
         // TODO: 레이블 글자 크기 계산 개선
-        return (UIScreen.main.bounds.height / 3) + CGFloat(max(1, book.title.count / 18) * 14) + CGFloat(max(1, book.author.count / 20) * 12)
+        return (UIScreen.main.bounds.height / LibraryConstants.HeightCalculation.screenHeightDivider) + CGFloat(max(1, book.title.count / LibraryConstants.HeightCalculation.titleCharacterDivider) * LibraryConstants.HeightCalculation.titleLineHeight) + CGFloat(max(1, book.author.count / LibraryConstants.HeightCalculation.authorCharacterDivider) * LibraryConstants.HeightCalculation.authorLineHeight)
     }
 }

@@ -27,16 +27,16 @@ final class LibraryCollectionViewCell: UICollectionViewCell, IsIdentifiable {
     private func setupViews() {
         coverImageView.contentMode = .scaleAspectFill
         coverImageView.clipsToBounds = true
-        coverImageView.layer.cornerRadius = 8
+        coverImageView.layer.cornerRadius = LibraryConstants.Layout.cornerRadius
         coverImageView.backgroundColor = .systemGray5
         contentView.addSubview(coverImageView)
         
-        titleLabel.font = .custom(weight: .semiBold, size: 14)
+        titleLabel.font = .custom(weight: .semiBold, size: LibraryConstants.Typography.titleFontSize)
         titleLabel.numberOfLines = 0
         titleLabel.textColor = .label
         contentView.addSubview(titleLabel)
         
-        authorLabel.font = .custom(weight: .regular, size: 14)
+        authorLabel.font = .custom(weight: .regular, size: LibraryConstants.Typography.authorFontSize)
         authorLabel.textColor = .secondaryLabel
         authorLabel.numberOfLines = 0
         contentView.addSubview(authorLabel)
@@ -44,19 +44,19 @@ final class LibraryCollectionViewCell: UICollectionViewCell, IsIdentifiable {
     
     private func setupConstraints() {
         coverImageView.snp.makeConstraints {
-            $0.top.leading.trailing.equalToSuperview().inset(8)
-            $0.height.equalTo(coverImageView.snp.width).multipliedBy(4.0/3.0)
+            $0.top.leading.trailing.equalToSuperview().inset(LibraryConstants.Layout.cellInset)
+            $0.height.equalTo(coverImageView.snp.width).multipliedBy(LibraryConstants.Layout.aspectRatio)
         }
         
         titleLabel.snp.makeConstraints {
-            $0.top.equalTo(coverImageView.snp.bottom).offset(4)
-            $0.leading.trailing.equalToSuperview().inset(8)
+            $0.top.equalTo(coverImageView.snp.bottom).offset(LibraryConstants.Layout.stackOffset)
+            $0.leading.trailing.equalToSuperview().inset(LibraryConstants.Layout.cellInset)
         }
         
         authorLabel.snp.makeConstraints {
-            $0.top.equalTo(titleLabel.snp.bottom).offset(4)
+            $0.top.equalTo(titleLabel.snp.bottom).offset(LibraryConstants.Layout.stackOffset)
             $0.leading.trailing.equalTo(titleLabel)
-            $0.bottom.lessThanOrEqualToSuperview().inset(4)
+            $0.bottom.lessThanOrEqualToSuperview().inset(LibraryConstants.Layout.stackOffset)
         }
     }
     

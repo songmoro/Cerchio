@@ -22,10 +22,10 @@ class CircularMenuViewController: UIViewController {
     // 롱 프레스 시작 위치 저장 (레이블 위치 결정용)
     private var initialTouchPosition: CGPoint = .zero
 
-    var buttonSize: CGFloat = 50
-    var menuRadius: CGFloat = 100
-    var animationDuration: TimeInterval = 0.3
-    var arcAngle: CGFloat = CGFloat.pi
+    var buttonSize: CGFloat = CircularMenuConstants.Layout.buttonSize
+    var menuRadius: CGFloat = CircularMenuConstants.Layout.menuRadius
+    var animationDuration: TimeInterval = CircularMenuConstants.Animation.duration
+    var arcAngle: CGFloat = CircularMenuConstants.Angles.arcAngle
 
     weak var dragSelectionDelegate: CircularMenuDragSelectionDelegate?
 
@@ -35,7 +35,7 @@ class CircularMenuViewController: UIViewController {
     }
 
     private func setupView() {
-        view.backgroundColor = UIColor.white.withAlphaComponent(0.9)
+        view.backgroundColor = UIColor.white.withAlphaComponent(CircularMenuConstants.Colors.backgroundAlpha)
 
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(backgroundTapped))
         view.addGestureRecognizer(tapGesture)
@@ -57,8 +57,8 @@ class CircularMenuViewController: UIViewController {
         let frameInCurrentView = superview.convert(selectedView.frame, to: self.view)
 
         // 1.2배 크기로 확대하고 중앙 정렬
-        let scaledWidth = frameInCurrentView.width * 1.0
-        let scaledHeight = frameInCurrentView.height * 1.0
+        let scaledWidth = frameInCurrentView.width * CircularMenuConstants.Layout.scaleMultiplier
+        let scaledHeight = frameInCurrentView.height * CircularMenuConstants.Layout.scaleMultiplier
         let scaledFrame = CGRect(
             x: frameInCurrentView.midX - scaledWidth / 2,
             y: frameInCurrentView.midY - scaledHeight / 2,
@@ -67,15 +67,15 @@ class CircularMenuViewController: UIViewController {
         )
 
         originalImageView.frame = scaledFrame
-        originalImageView.layer.cornerRadius = 8 * 1.0 // 코너 반지름도 비례적으로 증가
+        originalImageView.layer.cornerRadius = CircularMenuConstants.Layout.cornerRadius * CircularMenuConstants.Layout.scaleMultiplier // 코너 반지름도 비례적으로 증가
         originalImageView.layer.masksToBounds = true
         originalImageView.layer.shadowColor = UIColor.black.cgColor
-        originalImageView.layer.shadowOpacity = 0.2
-        originalImageView.layer.shadowOffset = CGSize(width: 0, height: 0)
-        originalImageView.layer.shadowRadius = 1
+        originalImageView.layer.shadowOpacity = CircularMenuConstants.Colors.shadowOpacity
+        originalImageView.layer.shadowOffset = CircularMenuConstants.Layout.shadowOffset
+        originalImageView.layer.shadowRadius = CircularMenuConstants.Layout.shadowRadius
 
         let screenCenter = view.bounds.midX
-        let tiltAngle: CGFloat = frameInCurrentView.midX < screenCenter ? -5 : 5
+        let tiltAngle: CGFloat = frameInCurrentView.midX < screenCenter ? CircularMenuConstants.Angles.tiltAngleLeft : CircularMenuConstants.Angles.tiltAngleRight
         let radians = tiltAngle * .pi / 180 // 라디안으로 변환
         originalImageView.transform = CGAffineTransform(rotationAngle: radians)
 
@@ -113,8 +113,8 @@ class CircularMenuViewController: UIViewController {
             view.addSubview(labelView)
 
             labelView.alpha = 0
-            labelView.transform = CGAffineTransform(scaleX: 0.8, y: 0.8)
-            UIView.animate(withDuration: 0.2) {
+            labelView.transform = CGAffineTransform(scaleX: CircularMenuConstants.Animation.labelScale, y: CircularMenuConstants.Animation.labelScale)
+            UIView.animate(withDuration: CircularMenuConstants.Animation.labelDuration) {
                 labelView.alpha = 1
                 labelView.transform = CGAffineTransform.identity
             }
@@ -163,13 +163,13 @@ class CircularMenuViewController: UIViewController {
         let label = UILabel()
         label.text = text
         label.textColor = .black
-        label.font = .custom(weight: .bold, size: 24)
+        label.font = .custom(weight: .bold, size: CircularMenuConstants.Typography.labelFontSize)
         label.textAlignment = .center
 
         label.sizeToFit()
         let labelSize = label.bounds.size
         let screenBounds = view.bounds
-        let margin: CGFloat = 40
+        let margin: CGFloat = CircularMenuConstants.Layout.labelMargin
 
         var labelFrame: CGRect
 
@@ -269,7 +269,7 @@ class CircularMenuViewController: UIViewController {
             if index < positions.count {
                 button.center = positions[index]
                 button.alpha = 0
-                button.transform = CGAffineTransform(scaleX: 0.1, y: 0.1)
+                button.transform = CGAffineTransform(scaleX: CircularMenuConstants.Animation.initialScale, y: CircularMenuConstants.Animation.initialScale)
             }
         }
     }
@@ -289,7 +289,7 @@ class CircularMenuViewController: UIViewController {
             let y = centerPoint.y + menuRadius * sin(angle)
             positions.append(adjustPositionForScreenBounds(CGPoint(x: x, y: y)))
         } else {
-            let angleStep: CGFloat = 0.6
+            let angleStep: CGFloat = CircularMenuConstants.Angles.angleStep
 
             for i in 0..<buttonCount {
                 let angle: CGFloat
@@ -315,10 +315,10 @@ class CircularMenuViewController: UIViewController {
         let centerX = bounds.width / 2
         let centerY = bounds.height / 2
 
-        let leftBoundary = centerX * 0.3
-        let rightBoundary = centerX * 1.7
-        let topBoundary = centerY * 0.3
-        let bottomBoundary = centerY * 1.7
+        let leftBoundary = centerX * CircularMenuConstants.PositionRatios.leftBoundaryRatio
+        let rightBoundary = centerX * CircularMenuConstants.PositionRatios.rightBoundaryRatio
+        let topBoundary = centerY * CircularMenuConstants.PositionRatios.topBoundaryRatio
+        let bottomBoundary = centerY * CircularMenuConstants.PositionRatios.bottomBoundaryRatio
 
         if point.x < leftBoundary {
             if point.y < topBoundary { return 0 }
@@ -357,7 +357,7 @@ class CircularMenuViewController: UIViewController {
     }
 
     private func animateIn() {
-        UIView.animate(withDuration: animationDuration, delay: 0.3, options: [.curveEaseOut]) {
+        UIView.animate(withDuration: animationDuration, delay: CircularMenuConstants.Animation.presentationDelay, options: [.curveEaseOut]) {
             self.view.addSubview(self.originalImageView)
 //            let uiView = UIView(frame: self.originalImageView.frame)
 //            uiView.backgroundColor = .systemRed.withAlphaComponent(0.3)
@@ -381,7 +381,7 @@ class CircularMenuViewController: UIViewController {
         UIView.animate(withDuration: animationDuration, animations: {
             for button in self.menuButtons {
                 button.alpha = 0
-                button.transform = CGAffineTransform(scaleX: 0.1, y: 0.1)
+                button.transform = CGAffineTransform(scaleX: CircularMenuConstants.Animation.initialScale, y: CircularMenuConstants.Animation.initialScale)
             }
         }) { _ in
             // 메뉴가 사라지기 전에 원본 뷰 다시 보이기

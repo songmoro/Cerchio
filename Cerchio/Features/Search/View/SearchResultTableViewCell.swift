@@ -16,14 +16,14 @@ final class SearchResultTableViewCell: UITableViewCell {
         let imageView = UIImageView()
         imageView.contentMode = .scaleAspectFill
         imageView.clipsToBounds = true
-        imageView.layer.cornerRadius = 8
+        imageView.layer.cornerRadius = SearchResultConstants.Layout.cornerRadius
         imageView.backgroundColor = .systemGray5
         return imageView
     }()
 
     private let titleLabel: UILabel = {
         let label = UILabel()
-        label.font = .custom(weight: .bold, size: 16)
+        label.font = .custom(weight: .bold, size: SearchResultConstants.Typography.titleFontSize)
         label.textColor = .label
         label.numberOfLines = 2
         return label
@@ -31,7 +31,7 @@ final class SearchResultTableViewCell: UITableViewCell {
 
     private let authorLabel: UILabel = {
         let label = UILabel()
-        label.font = .custom(weight: .regular, size: 14)
+        label.font = .custom(weight: .regular, size: SearchResultConstants.Typography.authorFontSize)
         label.textColor = .secondaryLabel
         label.numberOfLines = 1
         return label
@@ -40,17 +40,17 @@ final class SearchResultTableViewCell: UITableViewCell {
     private let addButton: UIButton = {
         let button = UIButton(type: .system)
         button.setTitle("담기", for: .normal)
-        button.titleLabel?.font = .custom(weight: .medium, size: 14)
+        button.titleLabel?.font = .custom(weight: .medium, size: SearchResultConstants.Typography.buttonFontSize)
         button.backgroundColor = .forestGreen
         button.setTitleColor(.white, for: .normal)
-        button.layer.cornerRadius = 8
+        button.layer.cornerRadius = SearchResultConstants.Layout.cornerRadius
         return button
     }()
 
     private let infoStackView: UIStackView = {
         let stackView = UIStackView()
         stackView.axis = .vertical
-        stackView.spacing = 4
+        stackView.spacing = SearchResultConstants.Layout.stackSpacing
         stackView.alignment = .leading
         return stackView
     }()
@@ -88,24 +88,24 @@ final class SearchResultTableViewCell: UITableViewCell {
     private func setupConstraints() {
         // 이미지 뷰 (가로 너비의 1/4 정도)
         bookImageView.snp.makeConstraints {
-            $0.leading.equalToSuperview().inset(16)
-            $0.top.bottom.equalToSuperview().inset(12)
-            $0.width.equalTo(60) // 고정 크기
-            $0.height.equalTo(80) // 4:3 비율보다 세로로 긴 책 모양
+            $0.leading.equalToSuperview().inset(SearchResultConstants.Layout.cellHorizontalInset)
+            $0.top.bottom.equalToSuperview().inset(SearchResultConstants.Layout.cellVerticalInset)
+            $0.width.equalTo(SearchResultConstants.Layout.imageWidth) // 고정 크기
+            $0.height.equalTo(SearchResultConstants.Layout.imageHeight) // 4:3 비율보다 세로로 긴 책 모양
         }
 
         // 담기 버튼 (세로 중심)
         addButton.snp.makeConstraints {
-            $0.trailing.equalToSuperview().inset(16)
+            $0.trailing.equalToSuperview().inset(SearchResultConstants.Layout.cellHorizontalInset)
             $0.centerY.equalToSuperview()
-            $0.width.equalTo(60)
-            $0.height.equalTo(32)
+            $0.width.equalTo(SearchResultConstants.Layout.buttonWidth)
+            $0.height.equalTo(SearchResultConstants.Layout.buttonHeight)
         }
 
         // 정보 스택뷰 (이미지와 버튼 사이)
         infoStackView.snp.makeConstraints {
-            $0.leading.equalTo(bookImageView.snp.trailing).offset(12)
-            $0.trailing.equalTo(addButton.snp.leading).offset(-12)
+            $0.leading.equalTo(bookImageView.snp.trailing).offset(SearchResultConstants.Layout.contentSpacing)
+            $0.trailing.equalTo(addButton.snp.leading).offset(-SearchResultConstants.Layout.contentSpacing)
             $0.centerY.equalToSuperview()
         }
     }
@@ -119,10 +119,10 @@ final class SearchResultTableViewCell: UITableViewCell {
         addBookHandler?(book)
 
         // 버튼 애니메이션
-        UIView.animate(withDuration: 0.1, animations: {
-            self.addButton.transform = CGAffineTransform(scaleX: 0.95, y: 0.95)
+        UIView.animate(withDuration: SearchResultConstants.Animation.buttonAnimationDuration, animations: {
+            self.addButton.transform = CGAffineTransform(scaleX: SearchResultConstants.Animation.buttonScaleDown, y: SearchResultConstants.Animation.buttonScaleDown)
         }) { _ in
-            UIView.animate(withDuration: 0.1) {
+            UIView.animate(withDuration: SearchResultConstants.Animation.buttonAnimationDuration) {
                 self.addButton.transform = .identity
             }
         }

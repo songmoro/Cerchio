@@ -169,18 +169,18 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
         // 도서 정보 섹션 - 전체 화면 너비 사용
         let itemSize = NSCollectionLayoutSize(
             widthDimension: .fractionalWidth(1.0),
-            heightDimension: .estimated(200) // 예상 높이, 자동 조정됨
+            heightDimension: .estimated(BookDetailConstants.Layout.estimatedHeight) // 예상 높이, 자동 조정됨
         )
         let item = NSCollectionLayoutItem(layoutSize: itemSize)
 
         let groupSize = NSCollectionLayoutSize(
             widthDimension: .fractionalWidth(1.0),
-            heightDimension: .estimated(200)
+            heightDimension: .estimated(BookDetailConstants.Layout.estimatedHeight)
         )
         let group = NSCollectionLayoutGroup.horizontal(layoutSize: groupSize, subitems: [item])
 
         let section = NSCollectionLayoutSection(group: group)
-        section.contentInsets = NSDirectionalEdgeInsets(top: 16, leading: 16, bottom: 16, trailing: 16)
+        section.contentInsets = BookDetailConstants.Layout.sectionContentInsets
 
         return section
     }
@@ -213,14 +213,14 @@ final class BookInfoCollectionViewCell: UICollectionViewCell, IsIdentifiable {
         let imageView = UIImageView()
         imageView.contentMode = .scaleAspectFill
         imageView.clipsToBounds = true
-        imageView.layer.cornerRadius = 8
+        imageView.layer.cornerRadius = BookDetailConstants.Layout.imageCornerRadius
         imageView.backgroundColor = .systemGray5
         return imageView
     }()
 
     private let titleLabel: UILabel = {
         let label = UILabel()
-        label.font = .custom(weight: .bold, size: 18)
+        label.font = .custom(weight: .bold, size: BookDetailConstants.Typography.titleFontSize)
         label.textColor = .label
         label.numberOfLines = 2
         return label
@@ -228,7 +228,7 @@ final class BookInfoCollectionViewCell: UICollectionViewCell, IsIdentifiable {
 
     private let authorLabel: UILabel = {
         let label = UILabel()
-        label.font = .custom(weight: .regular, size: 14)
+        label.font = .custom(weight: .regular, size: BookDetailConstants.Typography.authorFontSize)
         label.textColor = .secondaryLabel
         label.numberOfLines = 1
         return label
@@ -236,14 +236,14 @@ final class BookInfoCollectionViewCell: UICollectionViewCell, IsIdentifiable {
 
     private let pagesLabel: UILabel = {
         let label = UILabel()
-        label.font = .custom(weight: .regular, size: 14)
+        label.font = .custom(weight: .regular, size: BookDetailConstants.Typography.pagesFontSize)
         label.textColor = .secondaryLabel
         return label
     }()
 
     private let dateRangeLabel: UILabel = {
         let label = UILabel()
-        label.font = .custom(weight: .regular, size: 14)
+        label.font = .custom(weight: .regular, size: BookDetailConstants.Typography.dateRangeFontSize)
         label.textColor = .secondaryLabel
         return label
     }()
@@ -251,7 +251,7 @@ final class BookInfoCollectionViewCell: UICollectionViewCell, IsIdentifiable {
     private let tagsStackView: UIStackView = {
         let stackView = UIStackView()
         stackView.axis = .horizontal
-        stackView.spacing = 8
+        stackView.spacing = BookDetailConstants.Layout.stackSpacing
         stackView.alignment = .leading
         return stackView
     }()
@@ -259,7 +259,7 @@ final class BookInfoCollectionViewCell: UICollectionViewCell, IsIdentifiable {
     private let infoStackView: UIStackView = {
         let stackView = UIStackView()
         stackView.axis = .vertical
-        stackView.spacing = 8
+        stackView.spacing = BookDetailConstants.Layout.stackSpacing
         stackView.alignment = .leading
         return stackView
     }()
@@ -277,11 +277,11 @@ final class BookInfoCollectionViewCell: UICollectionViewCell, IsIdentifiable {
     // MARK: - Setup
     private func setupUI() {
         backgroundColor = .systemBackground
-        layer.cornerRadius = 12
+        layer.cornerRadius = BookDetailConstants.Layout.cellCornerRadius
         layer.shadowColor = UIColor.black.cgColor
-        layer.shadowOffset = CGSize(width: 0, height: 2)
-        layer.shadowRadius = 4
-        layer.shadowOpacity = 0.1
+        layer.shadowOffset = BookDetailConstants.Shadow.offset
+        layer.shadowRadius = BookDetailConstants.Shadow.radius
+        layer.shadowOpacity = BookDetailConstants.Shadow.opacity
 
         contentView.addSubview(coverImageView)
         contentView.addSubview(infoStackView)
@@ -299,17 +299,17 @@ final class BookInfoCollectionViewCell: UICollectionViewCell, IsIdentifiable {
     private func setupConstraints() {
         // 커버 이미지 (왼쪽 1/3)
         coverImageView.snp.makeConstraints {
-            $0.leading.top.bottom.equalToSuperview().inset(16)
-            $0.width.equalToSuperview().multipliedBy(0.3)
-            $0.height.equalTo(coverImageView.snp.width).multipliedBy(4.0/3.0)
+            $0.leading.top.bottom.equalToSuperview().inset(BookDetailConstants.Layout.cellInset)
+            $0.width.equalToSuperview().multipliedBy(BookDetailConstants.Layout.coverWidthMultiplier)
+            $0.height.equalTo(coverImageView.snp.width).multipliedBy(BookDetailConstants.Layout.aspectRatio)
         }
 
         // 정보 스택 뷰 (오른쪽 2/3)
         infoStackView.snp.makeConstraints {
-            $0.leading.equalTo(coverImageView.snp.trailing).offset(16)
-            $0.trailing.equalToSuperview().inset(16)
-            $0.top.equalToSuperview().inset(16)
-            $0.bottom.lessThanOrEqualToSuperview().inset(16)
+            $0.leading.equalTo(coverImageView.snp.trailing).offset(BookDetailConstants.Layout.cellInset)
+            $0.trailing.equalToSuperview().inset(BookDetailConstants.Layout.cellInset)
+            $0.top.equalToSuperview().inset(BookDetailConstants.Layout.cellInset)
+            $0.bottom.lessThanOrEqualToSuperview().inset(BookDetailConstants.Layout.cellInset)
         }
     }
 
@@ -357,16 +357,16 @@ final class BookInfoCollectionViewCell: UICollectionViewCell, IsIdentifiable {
     private func createTagLabel(text: String) -> UILabel {
         let label = UILabel()
         label.text = "#\(text)"
-        label.font = .custom(weight: .medium, size: 12)
+        label.font = .custom(weight: .medium, size: BookDetailConstants.Typography.tagFontSize)
         label.textColor = .forestGreen
-        label.backgroundColor = UIColor.forestGreen.withAlphaComponent(0.1)
-        label.layer.cornerRadius = 8
+        label.backgroundColor = UIColor.forestGreen.withAlphaComponent(BookDetailConstants.Colors.tagBackgroundAlpha)
+        label.layer.cornerRadius = BookDetailConstants.Layout.tagCornerRadius
         label.clipsToBounds = true
         label.textAlignment = .center
 
         // 패딩 추가
         label.snp.makeConstraints {
-            $0.height.equalTo(24)
+            $0.height.equalTo(BookDetailConstants.Layout.tagHeight)
         }
 
         return label

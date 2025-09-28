@@ -9,8 +9,8 @@ import UIKit
 
 final class MasonryLayout: UICollectionViewLayout {
     weak var delegate: MasonryLayoutProtocol?
-    private let numberOfColumns = 2
-    private let cellPadding: CGFloat = 0
+    private let numberOfColumns = MasonryConstants.Layout.numberOfColumns
+    private let cellPadding: CGFloat = MasonryConstants.Layout.cellPadding
     private var cache: [UICollectionViewLayoutAttributes] = []
     private var contentHeight: CGFloat = 0
 
@@ -47,7 +47,7 @@ final class MasonryLayout: UICollectionViewLayout {
             for item in 0..<numberOfItems {
                 let indexPath = IndexPath(item: item, section: section)
 
-                let cellHeight = delegate?.collectionView(collectionView, heightAtIndexPath: indexPath) ?? 180
+                let cellHeight = delegate?.collectionView(collectionView, heightAtIndexPath: indexPath) ?? MasonryConstants.Layout.defaultCellHeight
                 let height = cellPadding * 2 + cellHeight
                 let frame = CGRect(x: xOffset[column],
                                    y: yOffset[column],
