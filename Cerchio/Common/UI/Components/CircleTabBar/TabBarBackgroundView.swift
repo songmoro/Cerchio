@@ -13,7 +13,7 @@ struct TabBarBackgroundView: View {
     
     var body: some View {
         Rectangle()
-            .fill(Color(UIColor.systemBackground))
+            .fill(.forestGreen)
             .mask(backgroundMask)
             .shadow(color: .black.opacity(0.1), radius: 8, x: 0, y: -2)
             .ignoresSafeArea()

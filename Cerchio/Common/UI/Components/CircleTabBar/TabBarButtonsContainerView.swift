@@ -11,7 +11,7 @@ struct TabBarButtonsContainerView: View {
     @ObservedObject var viewModel: CircleTabBarViewModel
     let onFrameChange: (CGRect) -> Void
     let onFloatingComplete: () -> Void
-    
+
     var body: some View {
         HStack(spacing: 0) {
             ForEach(Array(viewModel.tabItems.enumerated()), id: \.element.id) { index, item in
@@ -37,7 +37,7 @@ struct TabBarButtonsContainerView: View {
         }
         .padding(.horizontal, 16)
         .padding(.top, 8)
-        .padding(.bottom, 34)
+        .padding(.bottom, 24)
         .coordinateSpace(name: "TabBarCoordinate")
     }
 }

@@ -24,16 +24,14 @@ final class LibraryViewController: BaseViewController<LibraryReactor> {
 
     override func setupUI() {
         super.setupUI()
-
-        view.backgroundColor = .systemBackground
         navigationItem.title = "서재"
-
+        
         let layout = MasonryLayout()
         collectionView.collectionViewLayout = layout
         layout.delegate = self
 
         collectionView.register(LibraryCollectionViewCell.self)
-
+        collectionView.backgroundColor = .clear
         view.addSubview(collectionView)
 
         collectionView.snp.makeConstraints {
@@ -128,12 +126,6 @@ final class LibraryViewController: BaseViewController<LibraryReactor> {
                         presentingViewController: self,
                         minimumPressDuration: 0.5
                     )
-//            ContextMenu.addLongPress(
-//                to: cell,
-//                items: menuItems,
-//                presentingViewController: self,
-//                minimumPressDuration: 0.5
-//            )
         }
     }
     
@@ -158,49 +150,8 @@ final class LibraryViewController: BaseViewController<LibraryReactor> {
         
         return menuItems
     }
-    
-//    private func createMenuItems(for book: Book, at indexPath: IndexPath) -> [ContextMenuItem] {
-//        return [
-//            // 읽기 시작/계속 읽기
-//            ContextMenuItem(
-//                image: UIImage(systemName: "book.fill"),
-//                backgroundColor: .systemBlue,
-//                action: { [weak self] in
-//                    self?.readBook(book)
-//                }
-//            ),
-//
-//            // 즐겨찾기 추가/제거
-//            ContextMenuItem(
-//                image: UIImage(systemName: "heart"),
-//                backgroundColor: .systemGray,
-//                action: { [weak self] in
-//                    self?.toggleFavorite(book)
-//                }
-//            ),
-//
-//            // 편집
-//            ContextMenuItem(
-//                image: UIImage(systemName: "pencil"),
-//                backgroundColor: .systemOrange,
-//                action: { [weak self] in
-//                    self?.editBook(book)
-//                }
-//            ),
-//
-//            // 삭제
-//            ContextMenuItem(
-//                image: UIImage(systemName: "trash"),
-//                backgroundColor: .systemRed,
-//                action: { [weak self] in
-//                    self?.deleteBook(book, at: indexPath)
-//                }
-//            )
-//        ]
-//    }
 
     // MARK: - Menu Actions
-
     private func readBook(_ book: Book) {
         print("Reading book: \(book.title)")
         // TODO: 책 읽기 화면으로 이동

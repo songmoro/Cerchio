@@ -19,6 +19,9 @@ class CircularMenuViewController: UIViewController {
     // 원본 뷰 참조 저장 (숨기기/보이기 관리용)
     private weak var originalView: UIView?
 
+    // 롱 프레스 시작 위치 저장 (레이블 위치 결정용)
+    private var initialTouchPosition: CGPoint = .zero
+
     var buttonSize: CGFloat = 50
     var menuRadius: CGFloat = 100
     var animationDuration: TimeInterval = 0.3
@@ -44,6 +47,7 @@ class CircularMenuViewController: UIViewController {
 
     func showMenu(at point: CGPoint, selectedView: UIView, items: [CircularMenuItemProtocol]) {
         centerPoint = point
+        initialTouchPosition = point // 롱 프레스 시작 위치 저장
         menuItems = items
         originalView = selectedView // 원본 뷰 참조 저장
         originalImageView = selectedView.snapshotView(afterScreenUpdates: true)
@@ -139,9 +143,10 @@ class CircularMenuViewController: UIViewController {
         let screenBounds = view.bounds
         let screenCenter = CGPoint(x: screenBounds.midX, y: screenBounds.midY)
 
-        let isButtonOnLeft = button.center.x < screenCenter.x
+        // 롱 프레스 시작 위치를 기준으로 레이블 위치 결정
+        let isInitialTouchOnLeft = initialTouchPosition.x < screenCenter.x
 
-        if isButtonOnLeft {
+        if isInitialTouchOnLeft {
             return .rightCenter
         } else {
             return .leftCenter

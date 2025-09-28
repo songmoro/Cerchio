@@ -13,32 +13,26 @@ struct CircleTabBarButtonView: View {
     let onFrameChange: (CGRect) -> Void
     let onFloatingComplete: () -> Void
     let action: () -> Void
-    
+
     var body: some View {
         Button(action: action) {
             VStack(spacing: 4) {
                 buttonIcon
-                buttonTitle
             }
             .contentShape(Rectangle())
         }
         .buttonStyle(PlainButtonStyle())
     }
-    
+
     private var buttonIcon: some View {
-        Image(uiImage: item.image)
+        Image(uiImage: item.image.withRenderingMode(.alwaysTemplate))
             .font(.custom(weight: .medium, size: 24))
-            .foregroundColor(isSelected ? .blue : .gray)
+            .foregroundColor(.bookBackground)
             .offset(y: isSelected ? -18 : 0)
+            .animation(.easeInOut(duration: 0.3), value: isSelected)
             .background(frameTracker)
     }
-    
-    private var buttonTitle: some View {
-        Text(item.title)
-            .font(.custom(weight: .medium, size: 10))
-            .foregroundColor(isSelected ? .blue : .gray)
-    }
-    
+
     private var frameTracker: some View {
         GeometryReader { geometry in
             Color.clear
@@ -50,27 +44,25 @@ struct CircleTabBarButtonView: View {
                 }
         }
     }
-    
+
     private func handleSelectionChange(_ selected: Bool, geometry: GeometryProxy) {
         if selected {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.01) {
                 updateFrame(geometry, isFloating: true)
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.29) {
-                    onFloatingComplete()
-                }
+                onFloatingComplete()
             }
         } else {
             updateFrame(geometry, isFloating: false)
         }
     }
-    
+
     private func updateFrame(_ geometry: GeometryProxy, isFloating: Bool) {
         var frame = geometry.frame(in: .named("TabBarCoordinate"))
-        
+
         if isFloating {
             frame.origin.y -= 18
         }
-        
+
         onFrameChange(frame)
     }
 }

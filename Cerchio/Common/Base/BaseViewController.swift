@@ -82,7 +82,27 @@ class BaseViewController<T: Reactor>: UIViewController, BaseViewControllerType, 
 
     // MARK: - Abstract Methods
     func setupUI() {
-        view.backgroundColor = .systemBackground
+        view.backgroundColor = .white
+        setupNavigationBarAppearance()
+    }
+
+    private func setupNavigationBarAppearance() {
+        guard let navigationController = navigationController else { return }
+
+        let appearance = UINavigationBarAppearance()
+        appearance.configureWithOpaqueBackground()
+        appearance.backgroundColor = .forestGreen
+        appearance.titleTextAttributes = [.foregroundColor: UIColor.bookBackground]
+        appearance.largeTitleTextAttributes = [.foregroundColor: UIColor.bookBackground]
+
+        let navigationBar = navigationController.navigationBar
+        navigationBar.standardAppearance = appearance
+        navigationBar.scrollEdgeAppearance = appearance
+        navigationBar.compactAppearance = appearance
+        if #available(iOS 15.0, *) {
+            navigationBar.compactScrollEdgeAppearance = appearance
+        }
+        navigationBar.tintColor = .bookBackground
     }
 
     func bind(reactor: T) {

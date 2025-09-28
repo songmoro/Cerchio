@@ -10,8 +10,8 @@ import SwiftUI
 struct CircleTabBarView: View {
     @ObservedObject var viewModel: CircleTabBarViewModel
     @State private var floatingButtonFrame: CGRect = .zero
-    @State private var showMask: Bool = false // 마스크 표시 상태
-    
+    @State private var showMask: Bool = false
+
     var body: some View {
         ZStack {
             // 탭바 배경과 마스크
@@ -19,13 +19,13 @@ struct CircleTabBarView: View {
                 showMask: showMask,
                 floatingButtonFrame: floatingButtonFrame
             )
-            
+
             // 플로팅 버튼 원형 배경
             FloatingButtonBackgroundView(
                 showMask: showMask,
                 floatingButtonFrame: floatingButtonFrame
             )
-            
+
             // 탭바 버튼들
             TabBarButtonsContainerView(
                 viewModel: viewModel,
@@ -44,22 +44,25 @@ struct CircleTabBarView: View {
         }
         .onAppear {
             updateFloatingFrame()
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                showMask = true
-            }
+            // 앱 시작 시 선택된 탭의 이미지가 이미 떠올라 있으므로
+            // 마스크와 배경도 떠올라 있는 위치로 조정
+            var adjustedFrame = floatingButtonFrame
+            adjustedFrame.origin.y -= 18
+            floatingButtonFrame = adjustedFrame
+            showMask = true
         }
     }
-    
+
     private func updateFloatingFrame() {
         guard !viewModel.tabItems.isEmpty else { return }
-        
+
         let screenWidth = UIScreen.main.bounds.width
         let tabWidth = (screenWidth - 32) / CGFloat(viewModel.tabItems.count)
         let buttonCenterX = 16 + tabWidth * (CGFloat(viewModel.selectedIndex) + 0.5)
-        
+
         floatingButtonFrame = CGRect(
             x: buttonCenterX - 12,
-            y: 25,
+            y: 20,
             width: 24,
             height: 24
         )

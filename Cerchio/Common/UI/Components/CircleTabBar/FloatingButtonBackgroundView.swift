@@ -19,7 +19,7 @@ struct FloatingButtonBackgroundView: View {
                     x: floatingButtonFrame.midX,
                     y: floatingButtonFrame.midY
                 )
-                .foregroundColor(Color(UIColor.systemBackground))
+                .foregroundColor(.forestGreen)
                 .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
         }
     }
