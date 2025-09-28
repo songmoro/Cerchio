@@ -56,8 +56,12 @@ final class LibraryCoordinator: BaseCoordinator {
     // MARK: - Navigation Methods
 
     func showBookDetail(_ book: Book) {
-        // TODO: BookDetailCoordinator 구현 시 추가
-        print("Show book detail: \(book.title)")
+        let bookDetailCoordinator = BookDetailCoordinator(
+            navigationController: navigationController,
+            book: book
+        )
+        addChildCoordinator(bookDetailCoordinator)
+        bookDetailCoordinator.start()
     }
 
     func showAddBook() {

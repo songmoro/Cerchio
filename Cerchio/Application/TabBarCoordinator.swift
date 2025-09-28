@@ -16,11 +16,10 @@ enum TabBarNavigationEvent: NavigationEventProtocol {
 }
 
 final class TabBarCoordinator: BaseCoordinator {
-    private var tabBarController: CircleTabBarController
+    private var tabBarController: CircleTabBarController!
 
-    init() {
-        self.tabBarController = CircleTabBarController()
-        super.init(navigationController: UINavigationController())
+    override init(navigationController: UINavigationController) {
+        super.init(navigationController: navigationController)
     }
 
     override func start() {
@@ -28,31 +27,60 @@ final class TabBarCoordinator: BaseCoordinator {
         bindNavigationEvents()
     }
 
-    func getTabBarController() -> CircleTabBarController {
-        return tabBarController
+    private func createTabBarController() -> CircleTabBarController {
+        return CircleTabBarController()
     }
 
     private func setupTabBarController() {
-        // 서재 탭 설정
-        let libraryNav = UINavigationController()
-        libraryNav.tabBarItem = UITabBarItem(
-            title: "서재",
-            image: UIImage(systemName: "books.vertical"),
-            tag: 0
-        )
+        tabBarController = createTabBarController()
 
-        let libraryCoordinator = LibraryCoordinator(navigationController: libraryNav)
-        addChildCoordinator(libraryCoordinator)
-        libraryCoordinator.start()
+        // 탭바 컨트롤러를 네비게이션 컨트롤러에 설정
+        navigationController.setViewControllers([tabBarController], animated: false)
+
+        // 서재 탭 설정 - 단순한 ViewController만 생성 (내부 네비게이션 없음)
+        let libraryViewController = createLibraryTab()
 
         // 향후 추가될 탭들을 위한 확장 가능한 구조
-        var viewControllers: [UIViewController] = [libraryNav]
+        var viewControllers: [UIViewController] = [libraryViewController]
 
         // 임시로 빈 뷰컨트롤러 추가 (향후 다른 탭들로 대체)
         let placeholderVC = createPlaceholderTab(title: "검색", systemImage: "magnifyingglass", tag: 1)
         viewControllers.append(placeholderVC)
 
         tabBarController.setViewControllers(viewControllers, animated: false)
+    }
+
+    private func createLibraryTab() -> UIViewController {
+        let libraryViewController = LibraryViewController()
+        let libraryReactor = LibraryReactor()
+
+        libraryViewController.reactor = libraryReactor
+        libraryViewController.tabBarItem = UITabBarItem(
+            title: "서재",
+            image: UIImage(systemName: "books.vertical"),
+            tag: 0
+        )
+        libraryViewController.navigationItem.title = "서재"
+
+        // 서재 코디네이터는 별도로 생성하지 않고, 직접 네비게이션 처리
+        setupLibraryNavigation(libraryViewController)
+
+        return libraryViewController
+    }
+
+    private func setupLibraryNavigation(_ libraryViewController: LibraryViewController) {
+        // LibraryViewController에서 도서 선택 시 BookDetail로 네비게이션
+        libraryViewController.bookSelectionHandler = { [weak self] book in
+            self?.navigateToBookDetail(book: book)
+        }
+    }
+
+    private func navigateToBookDetail(book: Book) {
+        let bookDetailViewController = BookDetailViewController()
+        let bookDetailReactor = BookDetailReactor(book: book)
+        bookDetailViewController.reactor = bookDetailReactor
+
+        navigationController.pushViewController(bookDetailViewController, animated: true)
     }
 
     private func bindNavigationEvents() {

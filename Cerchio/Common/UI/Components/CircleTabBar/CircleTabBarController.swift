@@ -9,7 +9,7 @@ import UIKit
 import SnapKit
 import SwiftUI
 
-class CircleTabBarController: UITabBarController {
+class CircleTabBarController: BaseTabBarController {
     override var viewControllers: [UIViewController]? {
         didSet {
             updateTabBarItems()
@@ -60,9 +60,8 @@ class CircleTabBarController: UITabBarController {
     override func viewDidLoad() {
         super.viewDidLoad()
         setupCustomTabBar()
-        
+
         tabBar.isHidden = true
-        delegate = self
     }
     
     private func setupCustomTabBar() {
@@ -113,15 +112,10 @@ class CircleTabBarController: UITabBarController {
             selectedIndex = 0
         }
     }
-}
 
-extension CircleTabBarController: UITabBarControllerDelegate {
-    func tabBarController(_ tabBarController: UITabBarController, didSelect viewController: UIViewController) {
-        print("Did select: \(viewController.title ?? "Unknown")")
-    }
-    
-    func tabBarController(_ tabBarController: UITabBarController, shouldSelect viewController: UIViewController) -> Bool {
-        print("Should select: \(viewController.title ?? "Unknown")")
-        return true
+    // MARK: - Custom Tab Bar Behavior
+    override func customizeNavigationItem(from viewController: UIViewController) {
+        // CircleTabBar 전용 네비게이션 아이템 커스터마이징
+        // 필요시 추가 구현
     }
 }

@@ -18,6 +18,9 @@ final class LibraryViewController: BaseViewController<LibraryReactor> {
     private let collectionView = UICollectionView(frame: .zero, collectionViewLayout: .init())
     private var dataSource: DataSource!
 
+    // Book selection handler
+    var bookSelectionHandler: ((Book) -> Void)?
+
     nonisolated enum Section: CaseIterable {
         case book
     }
@@ -57,9 +60,7 @@ final class LibraryViewController: BaseViewController<LibraryReactor> {
                 guard indexPath.item < books.count else { return }
 
                 let selectedBook = books[indexPath.item]
-                if let libraryCoordinator = self.coordinator as? LibraryCoordinator {
-                    libraryCoordinator.showBookDetail(selectedBook)
-                }
+                self.bookSelectionHandler?(selectedBook)
             })
             .disposed(by: disposeBag)
 
@@ -154,10 +155,7 @@ final class LibraryViewController: BaseViewController<LibraryReactor> {
     // MARK: - Menu Actions
     private func readBook(_ book: Book) {
         print("Reading book: \(book.title)")
-        // TODO: 책 읽기 화면으로 이동
-        if let libraryCoordinator = coordinator as? LibraryCoordinator {
-            libraryCoordinator.showBookDetail(book)
-        }
+        bookSelectionHandler?(book)
     }
 
     private func toggleFavorite(_ book: Book) {

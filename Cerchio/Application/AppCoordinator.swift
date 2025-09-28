@@ -21,14 +21,16 @@ class AppCoordinator: BaseCoordinator {
     }
 
     private func showMainInterface() {
-        let tabBarCoordinator = TabBarCoordinator()
+        // NavigationController를 루트로 설정
+        window.rootViewController = navigationController
+        window.makeKeyAndVisible()
+
+        // TabBarController를 NavigationController에 설정
+        let tabBarCoordinator = TabBarCoordinator(navigationController: navigationController)
         self.tabBarCoordinator = tabBarCoordinator
 
         addChildCoordinator(tabBarCoordinator)
         tabBarCoordinator.start()
-
-        window.rootViewController = tabBarCoordinator.getTabBarController()
-        window.makeKeyAndVisible()
     }
 
     override func finish() {
