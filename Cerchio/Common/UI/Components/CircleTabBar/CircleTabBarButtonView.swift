@@ -16,7 +16,7 @@ struct CircleTabBarButtonView: View {
 
     var body: some View {
         Button(action: action) {
-            VStack(spacing: 4) {
+            VStack(spacing: CircleTabBarConstants.Dimensions.iconSpacing) {
                 buttonIcon
             }
             .contentShape(Rectangle())
@@ -26,10 +26,10 @@ struct CircleTabBarButtonView: View {
 
     private var buttonIcon: some View {
         Image(uiImage: item.image.withRenderingMode(.alwaysTemplate))
-            .font(.custom(weight: .medium, size: 24))
+            .font(.custom(weight: .medium, size: CircleTabBarConstants.Dimensions.iconSize))
             .foregroundColor(.bookBackground)
-            .offset(y: isSelected ? -12 : 0)
-            .animation(.easeInOut(duration: 0.3), value: isSelected)
+            .offset(y: isSelected ? -CircleTabBarConstants.Animation.floatingOffset : 0)
+            .animation(.easeInOut(duration: CircleTabBarConstants.Animation.duration), value: isSelected)
             .background(frameTracker)
     }
 
@@ -47,7 +47,7 @@ struct CircleTabBarButtonView: View {
 
     private func handleSelectionChange(_ selected: Bool, geometry: GeometryProxy) {
         if selected {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.01) {
+            DispatchQueue.main.asyncAfter(deadline: .now() + CircleTabBarConstants.Animation.delay) {
                 updateFrame(geometry, isFloating: true)
                 onFloatingComplete()
             }
@@ -57,10 +57,10 @@ struct CircleTabBarButtonView: View {
     }
 
     private func updateFrame(_ geometry: GeometryProxy, isFloating: Bool) {
-        var frame = geometry.frame(in: .named("TabBarCoordinate"))
+        var frame = geometry.frame(in: .named(CircleTabBarConstants.CoordinateSpace.tabBar))
 
         if isFloating {
-            frame.origin.y -= 8
+            frame.origin.y -= CircleTabBarConstants.Animation.floatingOffset
         }
 
         onFrameChange(frame)

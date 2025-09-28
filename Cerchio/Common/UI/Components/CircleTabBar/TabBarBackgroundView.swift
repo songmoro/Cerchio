@@ -15,7 +15,12 @@ struct TabBarBackgroundView: View {
         Rectangle()
             .fill(.forestGreen)
             .mask(backgroundMask)
-            .shadow(color: .black.opacity(0.1), radius: 8, x: 0, y: -2)
+            .shadow(
+                color: .black.opacity(CircleTabBarConstants.Shadow.opacity),
+                radius: CircleTabBarConstants.Shadow.tabBarRadius,
+                x: CircleTabBarConstants.Shadow.tabBarOffsetX,
+                y: CircleTabBarConstants.Shadow.tabBarOffsetY
+            )
             .ignoresSafeArea()
     }
     
@@ -25,7 +30,10 @@ struct TabBarBackgroundView: View {
                 Group {
                     if showMask {
                         Circle()
-                            .frame(width: 48, height: 48)
+                            .frame(
+                                width: CircleTabBarConstants.Dimensions.maskSize,
+                                height: CircleTabBarConstants.Dimensions.maskSize
+                            )
                             .position(
                                 x: floatingButtonFrame.midX,
                                 y: floatingButtonFrame.midY

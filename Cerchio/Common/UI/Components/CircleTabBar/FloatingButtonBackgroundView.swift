@@ -14,13 +14,21 @@ struct FloatingButtonBackgroundView: View {
     var body: some View {
         if showMask {
             Circle()
-                .frame(width: 40, height: 40)
+                .frame(
+                    width: CircleTabBarConstants.Dimensions.floatingBackgroundSize,
+                    height: CircleTabBarConstants.Dimensions.floatingBackgroundSize
+                )
                 .position(
                     x: floatingButtonFrame.midX,
                     y: floatingButtonFrame.midY
                 )
                 .foregroundColor(.forestGreen)
-                .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
+                .shadow(
+                    color: .black.opacity(CircleTabBarConstants.Shadow.opacity),
+                    radius: CircleTabBarConstants.Shadow.radius,
+                    x: CircleTabBarConstants.Shadow.offsetX,
+                    y: CircleTabBarConstants.Shadow.offsetY
+                )
         }
     }
 }
