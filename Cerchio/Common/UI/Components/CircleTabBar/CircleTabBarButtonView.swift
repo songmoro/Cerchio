@@ -28,7 +28,7 @@ struct CircleTabBarButtonView: View {
         Image(uiImage: item.image.withRenderingMode(.alwaysTemplate))
             .font(.custom(weight: .medium, size: 24))
             .foregroundColor(.bookBackground)
-            .offset(y: isSelected ? -18 : 0)
+            .offset(y: isSelected ? -12 : 0)
             .animation(.easeInOut(duration: 0.3), value: isSelected)
             .background(frameTracker)
     }
@@ -60,7 +60,7 @@ struct CircleTabBarButtonView: View {
         var frame = geometry.frame(in: .named("TabBarCoordinate"))
 
         if isFloating {
-            frame.origin.y -= 18
+            frame.origin.y -= 8
         }
 
         onFrameChange(frame)

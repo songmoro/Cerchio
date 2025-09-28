@@ -43,9 +43,9 @@ final class TabBarCoordinator: BaseCoordinator {
         // 향후 추가될 탭들을 위한 확장 가능한 구조
         var viewControllers: [UIViewController] = [libraryViewController]
 
-        // 임시로 빈 뷰컨트롤러 추가 (향후 다른 탭들로 대체)
-        let placeholderVC = createPlaceholderTab(title: "검색", systemImage: "magnifyingglass", tag: 1)
-        viewControllers.append(placeholderVC)
+        // 검색 탭 설정
+        let searchViewController = createSearchTabViewController()
+        viewControllers.append(searchViewController)
 
         tabBarController.setViewControllers(viewControllers, animated: false)
     }
@@ -131,6 +131,29 @@ final class TabBarCoordinator: BaseCoordinator {
     }
 
     // MARK: - Future Tab Creation Methods
+
+    private func createSearchTabViewController() -> UIViewController {
+        let searchViewController = SearchViewController()
+        let searchReactor = SearchReactor()
+
+        searchViewController.reactor = searchReactor
+        searchViewController.tabBarItem = UITabBarItem(
+            title: "검색",
+            image: UIImage(systemName: "magnifyingglass"),
+            tag: 1
+        )
+        searchViewController.navigationItem.title = "검색"
+
+        // 검색 결과에서 도서를 라이브러리에 추가하는 로직
+        setupSearchNavigation(searchViewController)
+
+        return searchViewController
+    }
+
+    private func setupSearchNavigation(_ searchViewController: SearchViewController) {
+        // 향후 검색 결과에서 도서 상세로 이동하는 로직 추가 가능
+        // 현재는 "담기" 버튼 동작만 처리됨
+    }
 
     private func createSearchTab() -> UINavigationController {
         let searchNav = UINavigationController()

@@ -25,7 +25,7 @@ struct TabBarBackgroundView: View {
                 Group {
                     if showMask {
                         Circle()
-                            .frame(width: 60, height: 60)
+                            .frame(width: 48, height: 48)
                             .position(
                                 x: floatingButtonFrame.midX,
                                 y: floatingButtonFrame.midY

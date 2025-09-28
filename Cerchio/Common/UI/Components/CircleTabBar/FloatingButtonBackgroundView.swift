@@ -14,7 +14,7 @@ struct FloatingButtonBackgroundView: View {
     var body: some View {
         if showMask {
             Circle()
-                .frame(width: 44, height: 44)
+                .frame(width: 40, height: 40)
                 .position(
                     x: floatingButtonFrame.midX,
                     y: floatingButtonFrame.midY
