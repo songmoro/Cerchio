@@ -80,7 +80,7 @@ final class TabBarCoordinator: BaseCoordinator {
         let bookDetailReactor = BookDetailReactor(book: book)
         bookDetailViewController.reactor = bookDetailReactor
 
-        navigationController.pushViewController(bookDetailViewController, animated: true)
+        push(bookDetailViewController)
     }
 
     private func bindNavigationEvents() {
