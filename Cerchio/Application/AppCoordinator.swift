@@ -7,9 +7,8 @@
 
 import UIKit
 
-class AppCoordinator: BaseCoordinator {
+final class AppCoordinator: BaseCoordinator {
     private let window: UIWindow
-    private var tabBarCoordinator: TabBarCoordinator?
 
     init(windowScene: UIWindowScene) {
         self.window = UIWindow(windowScene: windowScene)
@@ -17,25 +16,17 @@ class AppCoordinator: BaseCoordinator {
     }
 
     override func start() {
-        showMainInterface()
+        showTabBar()
     }
 
-    private func showMainInterface() {
-        // NavigationController를 루트로 설정
+    private func showTabBar() {
+        let tabBarCoordinator = TabBarCoordinator(navigationController: navigationController)
+        addChildCoordinator(tabBarCoordinator)
+        
+        tabBarCoordinator.start()
+        
         window.rootViewController = navigationController
         window.makeKeyAndVisible()
-
-        // TabBarController를 NavigationController에 설정
-        let tabBarCoordinator = TabBarCoordinator(navigationController: navigationController)
-        self.tabBarCoordinator = tabBarCoordinator
-
-        addChildCoordinator(tabBarCoordinator)
-        tabBarCoordinator.start()
-    }
-
-    override func finish() {
-        super.finish()
-        tabBarCoordinator = nil
     }
 }
 
