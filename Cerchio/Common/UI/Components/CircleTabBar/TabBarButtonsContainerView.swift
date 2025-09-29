@@ -35,9 +35,9 @@ struct TabBarButtonsContainerView: View {
                 .frame(maxWidth: .infinity)
             }
         }
-        .padding(.horizontal, 16)
-        .padding(.top, 8)
-        .padding(.bottom, 24)
-        .coordinateSpace(name: "TabBarCoordinate")
+        .padding(.horizontal, CircleTabBarConstants.Dimensions.horizontalPadding)
+        .padding(.top, CircleTabBarConstants.Dimensions.topPadding)
+        .padding(.bottom, CircleTabBarConstants.Dimensions.bottomPadding)
+        .coordinateSpace(name: CircleTabBarConstants.CoordinateSpace.tabBar)
     }
 }

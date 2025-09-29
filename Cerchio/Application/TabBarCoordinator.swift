@@ -69,11 +69,11 @@ final class TabBarCoordinator: BaseCoordinator, Coordinatable {
 
         libraryViewController.reactor = libraryReactor
         libraryViewController.tabBarItem = UITabBarItem(
-            title: "서재",
-            image: UIImage(systemName: "books.vertical"),
-            tag: 0
+            title: AppConstants.TabBar.Titles.library,
+            image: UIImage(systemName: AppConstants.TabBar.SystemImages.library),
+            tag: AppConstants.TabBar.Tags.library
         )
-        libraryViewController.navigationItem.title = "서재"
+        libraryViewController.navigationItem.title = AppConstants.TabBar.Titles.library
 
         // 서재에서 네비게이션 처리를 위한 핸들러 설정
         setupLibraryNavigation(libraryViewController)
@@ -123,9 +123,9 @@ final class TabBarCoordinator: BaseCoordinator, Coordinatable {
 
         // TODO 라벨 추가
         let label = UILabel()
-        label.text = "\(title) - 준비 중"
+        label.text = "\(title) - \(AppConstants.TabBar.Titles.placeholder)"
         label.textAlignment = .center
-        label.font = .custom(weight: .medium, size: 18)
+        label.font = .custom(weight: .medium, size: AppConstants.TabBar.Typography.placeholderFontSize)
         label.textColor = .secondaryLabel
 
         placeholderVC.view.addSubview(label)
@@ -153,11 +153,11 @@ final class TabBarCoordinator: BaseCoordinator, Coordinatable {
 
         searchViewController.reactor = searchReactor
         searchViewController.tabBarItem = UITabBarItem(
-            title: "검색",
-            image: UIImage(systemName: "magnifyingglass"),
-            tag: 1
+            title: AppConstants.TabBar.Titles.search,
+            image: UIImage(systemName: AppConstants.TabBar.SystemImages.search),
+            tag: AppConstants.TabBar.Tags.search
         )
-        searchViewController.navigationItem.title = "검색"
+        searchViewController.navigationItem.title = AppConstants.TabBar.Titles.search
 
         // 검색 결과에서 도서를 라이브러리에 추가하는 로직
         setupSearchNavigation(searchViewController)
@@ -173,9 +173,9 @@ final class TabBarCoordinator: BaseCoordinator, Coordinatable {
     private func createSearchTab() -> UINavigationController {
         let searchNav = UINavigationController()
         searchNav.tabBarItem = UITabBarItem(
-            title: "검색",
-            image: UIImage(systemName: "magnifyingglass"),
-            tag: 1
+            title: AppConstants.TabBar.Titles.search,
+            image: UIImage(systemName: AppConstants.TabBar.SystemImages.search),
+            tag: AppConstants.TabBar.Tags.search
         )
 
         // TODO: SearchCoordinator 구현 시 활성화
@@ -189,9 +189,9 @@ final class TabBarCoordinator: BaseCoordinator, Coordinatable {
     private func createSettingsTab() -> UINavigationController {
         let settingsNav = UINavigationController()
         settingsNav.tabBarItem = UITabBarItem(
-            title: "설정",
-            image: UIImage(systemName: "gearshape"),
-            tag: 2
+            title: AppConstants.TabBar.Titles.settings,
+            image: UIImage(systemName: AppConstants.TabBar.SystemImages.settings),
+            tag: AppConstants.TabBar.Tags.settings
         )
 
         // TODO: SettingsCoordinator 구현 시 활성화

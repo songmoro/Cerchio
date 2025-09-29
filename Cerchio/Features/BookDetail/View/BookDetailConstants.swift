@@ -7,10 +7,10 @@
 
 import UIKit
 
-struct BookDetailConstants {
+enum BookDetailConstants {
 
     // MARK: - Layout
-    struct Layout {
+    enum Layout {
         static let estimatedHeight: CGFloat = 200
         static let sectionContentInsets = NSDirectionalEdgeInsets(
             top: 16,
@@ -29,7 +29,7 @@ struct BookDetailConstants {
     }
 
     // MARK: - Typography
-    struct Typography {
+    enum Typography {
         static let titleFontSize: CGFloat = 18
         static let authorFontSize: CGFloat = 14
         static let pagesFontSize: CGFloat = 14
@@ -38,14 +38,14 @@ struct BookDetailConstants {
     }
 
     // MARK: - Shadow
-    struct Shadow {
+    enum Shadow {
         static let offset = CGSize(width: 0, height: 2)
         static let radius: CGFloat = 4
         static let opacity: Float = 0.1
     }
 
     // MARK: - Colors
-    struct Colors {
+    enum Colors {
         static let tagBackgroundAlpha: CGFloat = 0.1
     }
 }

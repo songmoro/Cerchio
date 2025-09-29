@@ -115,7 +115,7 @@ enum NetworkError: Error, LocalizedError {
 }
 
 // MARK: - Network Constants
-struct NetworkConstants {
+enum NetworkConstants {
     static let baseURL = "https://api.example.com/v1"
     static let defaultTimeout: TimeInterval = 30.0
     static let defaultHeaders: [String: String] = [
@@ -123,6 +123,30 @@ struct NetworkConstants {
         "Accept": "application/json",
         "User-Agent": "Cerchio/1.0"
     ]
+
+    // MARK: - HTTP Status Codes
+    enum StatusCode {
+        static let successRange = 200...299
+        static let badRequest = 400
+        static let unauthorized = 401
+        static let forbidden = 403
+        static let notFound = 404
+        static let rateLimited = 429
+        static let serverErrorRange = 500...599
+    }
+
+    // MARK: - Error Codes
+    enum ErrorCode {
+        static let clientDeallocated = -1
+        static let invalidResponseType = -2
+        static let mockImplementation = 0
+    }
+
+    // MARK: - Retry Configuration
+    enum Retry {
+        static let defaultRetryCount: Int = 3
+        static let defaultRetryDelay: TimeInterval = 1.0
+    }
 }
 
 // MARK: - Response Wrapper

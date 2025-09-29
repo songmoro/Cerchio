@@ -77,7 +77,7 @@ class CircleTabBarController: BaseTabBarController {
         swiftUITabBarHostingController.view.snp.makeConstraints { make in
             make.horizontalEdges.equalToSuperview()
             make.bottom.equalToSuperview()
-            make.height.equalTo(58)
+            make.height.equalTo(CircleTabBarConstants.Dimensions.hostingControllerHeight)
         }
         
 //        let tabBarHeight: CGFloat = 83

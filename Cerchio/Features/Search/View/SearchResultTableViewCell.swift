@@ -25,7 +25,7 @@ final class SearchResultTableViewCell: UITableViewCell {
         let label = UILabel()
         label.font = .custom(weight: .bold, size: SearchResultConstants.Typography.titleFontSize)
         label.textColor = .label
-        label.numberOfLines = 2
+        label.numberOfLines = SearchResultConstants.Typography.titleNumberOfLines
         return label
     }()
 
@@ -33,7 +33,7 @@ final class SearchResultTableViewCell: UITableViewCell {
         let label = UILabel()
         label.font = .custom(weight: .regular, size: SearchResultConstants.Typography.authorFontSize)
         label.textColor = .secondaryLabel
-        label.numberOfLines = 1
+        label.numberOfLines = SearchResultConstants.Typography.authorNumberOfLines
         return label
     }()
 

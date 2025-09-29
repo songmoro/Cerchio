@@ -7,10 +7,10 @@
 
 import Foundation
 
-struct MasonryConstants {
+enum MasonryConstants {
 
     // MARK: - Layout
-    struct Layout {
+    enum Layout {
         static let numberOfColumns: Int = 2
         static let cellPadding: CGFloat = 0
         static let defaultCellHeight: CGFloat = 180

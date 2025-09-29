@@ -47,7 +47,7 @@ struct CircleTabBarView: View {
             // 앱 시작 시 선택된 탭의 이미지가 이미 떠올라 있으므로
             // 마스크와 배경도 떠올라 있는 위치로 조정
             var adjustedFrame = floatingButtonFrame
-            adjustedFrame.origin.y -= 18
+            adjustedFrame.origin.y -= CircleTabBarConstants.Dimensions.floatingAdjustmentY
             floatingButtonFrame = adjustedFrame
             showMask = true
         }
@@ -57,14 +57,14 @@ struct CircleTabBarView: View {
         guard !viewModel.tabItems.isEmpty else { return }
 
         let screenWidth = UIScreen.main.bounds.width
-        let tabWidth = (screenWidth - 32) / CGFloat(viewModel.tabItems.count)
-        let buttonCenterX = 16 + tabWidth * (CGFloat(viewModel.selectedIndex) + 0.5)
+        let tabWidth = (screenWidth - CircleTabBarConstants.Dimensions.screenInset) / CGFloat(viewModel.tabItems.count)
+        let buttonCenterX = CircleTabBarConstants.Dimensions.horizontalPadding + tabWidth * (CGFloat(viewModel.selectedIndex) + 0.5)
 
         floatingButtonFrame = CGRect(
-            x: buttonCenterX - 12,
-            y: 20,
-            width: 24,
-            height: 24
+            x: buttonCenterX - CircleTabBarConstants.Dimensions.buttonHalfWidth,
+            y: CircleTabBarConstants.Dimensions.buttonY,
+            width: CircleTabBarConstants.Dimensions.buttonSize,
+            height: CircleTabBarConstants.Dimensions.buttonSize
         )
     }
 }

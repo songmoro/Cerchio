@@ -121,14 +121,14 @@ final class SearchViewController: BaseViewController<SearchReactor> {
 
     private func setupTableView() {
         tableView.register(SearchResultTableViewCell.self, forCellReuseIdentifier: SearchResultTableViewCell.identifier)
-        tableView.rowHeight = 100 // 고정 크기
+        tableView.rowHeight = SearchResultConstants.Layout.rowHeight
     }
 
     private func setupEmptyState() {
         emptyStateView.addSubview(emptyStateLabel)
         emptyStateLabel.snp.makeConstraints {
             $0.center.equalToSuperview()
-            $0.leading.trailing.equalToSuperview().inset(40)
+            $0.leading.trailing.equalToSuperview().inset(SearchResultConstants.Layout.emptyStateInset)
         }
     }
 

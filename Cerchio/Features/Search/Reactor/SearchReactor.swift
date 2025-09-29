@@ -109,7 +109,7 @@ final class SearchReactor: Reactor {
     private func mockSearchAPI(query: String) -> Observable<[Book]> {
         return Observable.create { observer in
             // 1초 지연으로 네트워크 호출 시뮬레이션
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+            DispatchQueue.main.asyncAfter(deadline: .now() + SearchResultConstants.Animation.mockSearchDelay) {
                 let filteredBooks = Book.sample.filter { book in
                     book.title.lowercased().contains(query.lowercased()) ||
                     book.author.lowercased().contains(query.lowercased()) ||

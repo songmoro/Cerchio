@@ -69,7 +69,7 @@ extension ServiceProtocol {
         return Observable.error(error)
     }
 
-    func retryWithDelay<T>(_ source: Observable<T>, retryCount: Int = 3, delay: TimeInterval = 1.0) -> Observable<T> {
+    func retryWithDelay<T>(_ source: Observable<T>, retryCount: Int = NetworkConstants.Retry.defaultRetryCount, delay: TimeInterval = NetworkConstants.Retry.defaultRetryDelay) -> Observable<T> {
         return source
             .retryWhen { errors in
                 return errors

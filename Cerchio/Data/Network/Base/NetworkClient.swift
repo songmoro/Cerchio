@@ -46,7 +46,7 @@ final class URLSessionNetworkClient: NetworkClientProtocol {
     func execute<T: NetworkRequest>(_ request: T) -> Observable<T.Response> {
         return Observable.create { [weak self] observer in
             guard let self = self else {
-                observer.onError(NetworkError.networkError(NSError(domain: "NetworkClient", code: -1, userInfo: [NSLocalizedDescriptionKey: "Client deallocated"])))
+                observer.onError(NetworkError.networkError(NSError(domain: "NetworkClient", code: NetworkConstants.ErrorCode.clientDeallocated, userInfo: [NSLocalizedDescriptionKey: "Client deallocated"])))
                 return Disposables.create()
             }
 
@@ -63,7 +63,7 @@ final class URLSessionNetworkClient: NetworkClientProtocol {
                 }
 
                 guard let httpResponse = response as? HTTPURLResponse else {
-                    observer.onError(NetworkError.networkError(NSError(domain: "NetworkClient", code: -2, userInfo: [NSLocalizedDescriptionKey: "Invalid response type"])))
+                    observer.onError(NetworkError.networkError(NSError(domain: "NetworkClient", code: NetworkConstants.ErrorCode.invalidResponseType, userInfo: [NSLocalizedDescriptionKey: "Invalid response type"])))
                     return
                 }
 
@@ -98,7 +98,7 @@ final class URLSessionNetworkClient: NetworkClientProtocol {
     func execute<T: NetworkRequest>(_ request: T) -> Observable<APIResponse<T.Response>> {
         return Observable.create { [weak self] observer in
             guard let self = self else {
-                observer.onError(NetworkError.networkError(NSError(domain: "NetworkClient", code: -1, userInfo: [NSLocalizedDescriptionKey: "Client deallocated"])))
+                observer.onError(NetworkError.networkError(NSError(domain: "NetworkClient", code: NetworkConstants.ErrorCode.clientDeallocated, userInfo: [NSLocalizedDescriptionKey: "Client deallocated"])))
                 return Disposables.create()
             }
 
@@ -115,7 +115,7 @@ final class URLSessionNetworkClient: NetworkClientProtocol {
                 }
 
                 guard let httpResponse = response as? HTTPURLResponse else {
-                    observer.onError(NetworkError.networkError(NSError(domain: "NetworkClient", code: -2, userInfo: [NSLocalizedDescriptionKey: "Invalid response type"])))
+                    observer.onError(NetworkError.networkError(NSError(domain: "NetworkClient", code: NetworkConstants.ErrorCode.invalidResponseType, userInfo: [NSLocalizedDescriptionKey: "Invalid response type"])))
                     return
                 }
 
@@ -150,7 +150,7 @@ final class URLSessionNetworkClient: NetworkClientProtocol {
     func executePaginated<T: NetworkRequest>(_ request: T) -> Observable<PaginatedResponse<T.Response>> {
         return Observable.create { [weak self] observer in
             guard let self = self else {
-                observer.onError(NetworkError.networkError(NSError(domain: "NetworkClient", code: -1, userInfo: [NSLocalizedDescriptionKey: "Client deallocated"])))
+                observer.onError(NetworkError.networkError(NSError(domain: "NetworkClient", code: NetworkConstants.ErrorCode.clientDeallocated, userInfo: [NSLocalizedDescriptionKey: "Client deallocated"])))
                 return Disposables.create()
             }
 
@@ -167,7 +167,7 @@ final class URLSessionNetworkClient: NetworkClientProtocol {
                 }
 
                 guard let httpResponse = response as? HTTPURLResponse else {
-                    observer.onError(NetworkError.networkError(NSError(domain: "NetworkClient", code: -2, userInfo: [NSLocalizedDescriptionKey: "Invalid response type"])))
+                    observer.onError(NetworkError.networkError(NSError(domain: "NetworkClient", code: NetworkConstants.ErrorCode.invalidResponseType, userInfo: [NSLocalizedDescriptionKey: "Invalid response type"])))
                     return
                 }
 
@@ -240,19 +240,19 @@ private extension URLSessionNetworkClient {
 
     func validateResponse(_ response: HTTPURLResponse, data: Data?) -> NetworkError? {
         switch response.statusCode {
-        case 200...299:
+        case NetworkConstants.StatusCode.successRange:
             return nil
-        case 400:
+        case NetworkConstants.StatusCode.badRequest:
             return .serverError(response.statusCode, extractErrorMessage(from: data))
-        case 401:
+        case NetworkConstants.StatusCode.unauthorized:
             return .unauthorized
-        case 403:
+        case NetworkConstants.StatusCode.forbidden:
             return .forbidden
-        case 404:
+        case NetworkConstants.StatusCode.notFound:
             return .notFound
-        case 429:
+        case NetworkConstants.StatusCode.rateLimited:
             return .rateLimited
-        case 500...599:
+        case NetworkConstants.StatusCode.serverErrorRange:
             return .serviceUnavailable
         default:
             return .serverError(response.statusCode, extractErrorMessage(from: data))

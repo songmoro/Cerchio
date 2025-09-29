@@ -32,13 +32,13 @@ final class LibraryCollectionViewCell: UICollectionViewCell, IsIdentifiable {
         contentView.addSubview(coverImageView)
         
         titleLabel.font = .custom(weight: .semiBold, size: LibraryConstants.Typography.titleFontSize)
-        titleLabel.numberOfLines = 0
+        titleLabel.numberOfLines = LibraryConstants.Typography.multilineLabel
         titleLabel.textColor = .label
         contentView.addSubview(titleLabel)
         
         authorLabel.font = .custom(weight: .regular, size: LibraryConstants.Typography.authorFontSize)
         authorLabel.textColor = .secondaryLabel
-        authorLabel.numberOfLines = 0
+        authorLabel.numberOfLines = LibraryConstants.Typography.multilineLabel
         contentView.addSubview(authorLabel)
     }
     

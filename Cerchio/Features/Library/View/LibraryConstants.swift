@@ -7,10 +7,10 @@
 
 import Foundation
 
-struct LibraryConstants {
+enum LibraryConstants {
 
     // MARK: - Layout
-    struct Layout {
+    enum Layout {
         static let cornerRadius: CGFloat = 8
         static let cellInset: CGFloat = 8
         static let stackOffset: CGFloat = 4
@@ -18,13 +18,14 @@ struct LibraryConstants {
     }
 
     // MARK: - Typography
-    struct Typography {
+    enum Typography {
         static let titleFontSize: CGFloat = 14
         static let authorFontSize: CGFloat = 14
+        static let multilineLabel: Int = 0
     }
 
     // MARK: - Height Calculation
-    struct HeightCalculation {
+    enum HeightCalculation {
         static let defaultHeight: CGFloat = 200
         static let screenHeightDivider: CGFloat = 3
         static let titleCharacterDivider: Int = 18
@@ -34,7 +35,13 @@ struct LibraryConstants {
     }
 
     // MARK: - Gesture
-    struct Gesture {
+    enum Gesture {
         static let minimumPressDuration: TimeInterval = 0.5
+    }
+
+    // MARK: - Animation
+    enum Animation {
+        static let refreshDelayMilliseconds: Int = 500
+        static let initialLoadDelayMilliseconds: Int = 300
     }
 }

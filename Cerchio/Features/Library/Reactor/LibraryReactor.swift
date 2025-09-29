@@ -35,7 +35,7 @@ final class LibraryReactor: Reactor {
             return Observable.concat([
                 Observable.just(.setLoading(true)),
                 Observable.just(.setBooks(Book.sample))
-                    .delay(.milliseconds(300), scheduler: MainScheduler.instance),
+                    .delay(.milliseconds(LibraryConstants.Animation.initialLoadDelayMilliseconds), scheduler: MainScheduler.instance),
                 Observable.just(.setLoading(false))
             ])
 
@@ -43,7 +43,7 @@ final class LibraryReactor: Reactor {
             return Observable.concat([
                 Observable.just(.setLoading(true)),
                 Observable.just(.setBooks(Book.sample))
-                    .delay(.milliseconds(500), scheduler: MainScheduler.instance),
+                    .delay(.milliseconds(LibraryConstants.Animation.refreshDelayMilliseconds), scheduler: MainScheduler.instance),
                 Observable.just(.setLoading(false))
             ])
         }
