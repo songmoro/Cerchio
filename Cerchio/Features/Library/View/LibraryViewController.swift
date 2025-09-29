@@ -36,7 +36,7 @@ final class LibraryViewController: BaseViewController<LibraryReactor> {
         collectionView.register(LibraryCollectionViewCell.self)
         collectionView.backgroundColor = .clear
         collectionView.contentInset.bottom = 20
-        collectionView.scrollIndicatorInsets.bottom = 20
+        collectionView.verticalScrollIndicatorInsets = .init(top: 0, left: 0, bottom: 20, right: 0)
         view.addSubview(collectionView)
 
         collectionView.snp.makeConstraints {

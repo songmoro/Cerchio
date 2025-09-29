@@ -9,9 +9,7 @@ import UIKit
 import SnapKit
 import Kingfisher
 
-final class SearchResultTableViewCell: UITableViewCell {
-    static let identifier = "SearchResultTableViewCell"
-
+final class SearchResultTableViewCell: UITableViewCell, IsIdentifiable {
     // MARK: - UI Components
     private let bookImageView: UIImageView = {
         let imageView = UIImageView()

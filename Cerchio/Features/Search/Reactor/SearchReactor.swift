@@ -102,7 +102,7 @@ final class SearchReactor: Reactor {
             .catch { error in
                 let errorMessage: String
                 if let bookSearchError = error as? BookSearchError {
-                    errorMessage = bookSearchError.localizedDescription ?? "검색 중 오류가 발생했습니다."
+                    errorMessage = bookSearchError.localizedDescription
                 } else {
                     errorMessage = error.localizedDescription
                 }
