@@ -16,7 +16,7 @@ enum AppConstants {
 
         enum Titles {
             static let library = "서재"
-            static let search = "검색"
+            static let search = "도서 검색"
         }
 
         enum SystemImages {

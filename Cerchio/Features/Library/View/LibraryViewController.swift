@@ -27,7 +27,6 @@ final class LibraryViewController: BaseViewController<LibraryReactor> {
 
     override func setupUI() {
         super.setupUI()
-        navigationItem.title = "서재"
         
         let layout = MasonryLayout()
         collectionView.collectionViewLayout = layout
