@@ -17,19 +17,34 @@ enum BookDetailNavigationEvent: NavigationEventProtocol {
     case deleteBook(Book)
 }
 
-final class BookDetailCoordinator: BaseCoordinator {
+// MARK: - BookDetail Dependencies
+struct BookDetailDependencies {
+    let serviceFactory: ServiceFactory
+    let book: Book
+}
+
+final class BookDetailCoordinator: BaseCoordinator, Coordinatable {
+    typealias Dependencies = BookDetailDependencies
 
     // MARK: - Properties
-    private let book: Book
+    private var dependencies: BookDetailDependencies!
+
+    private var book: Book {
+        return dependencies.book
+    }
 
     // MARK: - Initialization
-    init(navigationController: UINavigationController, book: Book) {
-        self.book = book
+    override init(navigationController: UINavigationController) {
         super.init(navigationController: navigationController)
     }
 
     // MARK: - BaseCoordinator
     override func start() {
+        fatalError("Use start(with dependencies:) instead")
+    }
+
+    func start(with dependencies: BookDetailDependencies) {
+        self.dependencies = dependencies
         showBookDetailViewController()
         bindNavigationEvents()
     }

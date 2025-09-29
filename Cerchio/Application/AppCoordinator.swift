@@ -7,11 +7,24 @@
 
 import UIKit
 
+// MARK: - App Dependencies
+struct AppDependencies {
+    let dependencyAssembler: DependencyAssembler
+    let serviceFactory: ServiceFactory
+
+    init() {
+        self.dependencyAssembler = DependencyAssembler()
+        self.serviceFactory = dependencyAssembler.resolve(ServiceFactory.self)
+    }
+}
+
 final class AppCoordinator: BaseCoordinator {
     private let window: UIWindow
+    private let dependencies: AppDependencies
 
     init(windowScene: UIWindowScene) {
         self.window = UIWindow(windowScene: windowScene)
+        self.dependencies = AppDependencies()
         super.init(navigationController: UINavigationController())
     }
 
@@ -20,11 +33,14 @@ final class AppCoordinator: BaseCoordinator {
     }
 
     private func showTabBar() {
+        let tabBarDependencies = TabBarDependencies(
+            serviceFactory: dependencies.serviceFactory
+        )
         let tabBarCoordinator = TabBarCoordinator(navigationController: navigationController)
         addChildCoordinator(tabBarCoordinator)
-        
-        tabBarCoordinator.start()
-        
+
+        tabBarCoordinator.start(with: tabBarDependencies)
+
         window.rootViewController = navigationController
         window.makeKeyAndVisible()
     }

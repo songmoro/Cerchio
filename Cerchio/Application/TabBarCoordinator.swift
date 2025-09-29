@@ -15,14 +15,27 @@ enum TabBarNavigationEvent: NavigationEventProtocol {
     case settingsSelected
 }
 
-final class TabBarCoordinator: BaseCoordinator {
+// MARK: - TabBar Dependencies
+struct TabBarDependencies {
+    let serviceFactory: ServiceFactory
+}
+
+final class TabBarCoordinator: BaseCoordinator, Coordinatable {
+    typealias Dependencies = TabBarDependencies
+
     private var tabBarController: CircleTabBarController!
+    private var dependencies: TabBarDependencies!
 
     override init(navigationController: UINavigationController) {
         super.init(navigationController: navigationController)
     }
 
     override func start() {
+        fatalError("Use start(with dependencies:) instead")
+    }
+
+    func start(with dependencies: TabBarDependencies) {
+        self.dependencies = dependencies
         setupTabBarController()
         bindNavigationEvents()
     }
@@ -37,7 +50,7 @@ final class TabBarCoordinator: BaseCoordinator {
         // 탭바 컨트롤러를 네비게이션 컨트롤러에 설정
         navigationController.setViewControllers([tabBarController], animated: false)
 
-        // 서재 탭 설정 - 단순한 ViewController만 생성 (내부 네비게이션 없음)
+        // 서재 탭 설정 - 단순한 ViewController (내부에서 LibraryCoordinator 사용)
         let libraryViewController = createLibraryTab()
 
         // 향후 추가될 탭들을 위한 확장 가능한 구조
@@ -62,7 +75,7 @@ final class TabBarCoordinator: BaseCoordinator {
         )
         libraryViewController.navigationItem.title = "서재"
 
-        // 서재 코디네이터는 별도로 생성하지 않고, 직접 네비게이션 처리
+        // 서재에서 네비게이션 처리를 위한 핸들러 설정
         setupLibraryNavigation(libraryViewController)
 
         return libraryViewController
@@ -76,11 +89,13 @@ final class TabBarCoordinator: BaseCoordinator {
     }
 
     private func navigateToBookDetail(book: Book) {
-        let bookDetailViewController = BookDetailViewController()
-        let bookDetailReactor = BookDetailReactor(book: book)
-        bookDetailViewController.reactor = bookDetailReactor
-
-        push(bookDetailViewController)
+        let bookDetailDependencies = BookDetailDependencies(
+            serviceFactory: dependencies.serviceFactory,
+            book: book
+        )
+        let bookDetailCoordinator = BookDetailCoordinator(navigationController: navigationController)
+        addChildCoordinator(bookDetailCoordinator)
+        bookDetailCoordinator.start(with: bookDetailDependencies)
     }
 
     private func bindNavigationEvents() {

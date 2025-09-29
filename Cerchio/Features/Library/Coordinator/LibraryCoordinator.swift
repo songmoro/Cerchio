@@ -17,9 +17,22 @@ enum LibraryNavigationEvent: NavigationEventProtocol {
     case showSettings
 }
 
-final class LibraryCoordinator: BaseCoordinator {
+// MARK: - Library Dependencies
+struct LibraryDependencies {
+    let serviceFactory: ServiceFactory
+}
+
+final class LibraryCoordinator: BaseCoordinator, Coordinatable {
+    typealias Dependencies = LibraryDependencies
+
+    private var dependencies: LibraryDependencies!
 
     override func start() {
+        fatalError("Use start(with dependencies:) instead")
+    }
+
+    func start(with dependencies: LibraryDependencies) {
+        self.dependencies = dependencies
         showLibraryViewController()
         bindNavigationEvents()
     }
@@ -56,12 +69,13 @@ final class LibraryCoordinator: BaseCoordinator {
     // MARK: - Navigation Methods
 
     func showBookDetail(_ book: Book) {
-        let bookDetailCoordinator = BookDetailCoordinator(
-            navigationController: navigationController,
+        let bookDetailDependencies = BookDetailDependencies(
+            serviceFactory: dependencies.serviceFactory,
             book: book
         )
+        let bookDetailCoordinator = BookDetailCoordinator(navigationController: navigationController)
         addChildCoordinator(bookDetailCoordinator)
-        bookDetailCoordinator.start()
+        bookDetailCoordinator.start(with: bookDetailDependencies)
     }
 
     func showAddBook() {
