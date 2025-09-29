@@ -20,6 +20,8 @@ final class PhotoPageCell: UICollectionViewCell, IsIdentifiable {
 
     // MARK: - Properties
     var onAddPhotoTapped: (() -> Void)?
+    var onPhotoLongPressed: ((UIImageView, UIImage) -> Void)?
+    private var photos: [UIImage] = []
 
     // MARK: - Initialization
     override init(frame: CGRect) {
@@ -43,7 +45,7 @@ final class PhotoPageCell: UICollectionViewCell, IsIdentifiable {
         contentView.addSubview(containerView)
 
         // 타이틀 레이블
-        titleLabel.text = "찍은 사진"
+        titleLabel.text = NSLocalizedString("book_detail.photos", comment: "Photos section title")
         titleLabel.font = .systemFont(ofSize: 18, weight: .semibold)
         titleLabel.textColor = .label
         containerView.addSubview(titleLabel)
@@ -64,7 +66,7 @@ final class PhotoPageCell: UICollectionViewCell, IsIdentifiable {
         imageStackView.addArrangedSubview(image3)
 
         // 추가 버튼
-        addButton.setTitle("+ 사진 촬영", for: .normal)
+        addButton.setTitle(NSLocalizedString("camera.capture_button", comment: "Take photo button"), for: .normal)
         addButton.setTitleColor(.systemBlue, for: .normal)
         addButton.titleLabel?.font = .systemFont(ofSize: 14, weight: .medium)
         addButton.backgroundColor = .systemBlue.withAlphaComponent(0.1)
@@ -80,10 +82,15 @@ final class PhotoPageCell: UICollectionViewCell, IsIdentifiable {
         imageView.backgroundColor = .systemGray6
         imageView.layer.borderWidth = 1
         imageView.layer.borderColor = UIColor.systemGray4.cgColor
+        imageView.isUserInteractionEnabled = true
 
         // 플레이스홀더 이미지 설정
         let placeholderImage = UIImage(systemName: "photo")?.withTintColor(.systemGray3, renderingMode: .alwaysOriginal)
         imageView.image = placeholderImage
+
+        // 롱 프레스 제스처 추가
+        let longPress = UILongPressGestureRecognizer(target: self, action: #selector(handleLongPress(_:)))
+        imageView.addGestureRecognizer(longPress)
     }
 
     private func setupConstraints() {
@@ -115,8 +122,24 @@ final class PhotoPageCell: UICollectionViewCell, IsIdentifiable {
         onAddPhotoTapped?()
     }
 
+    @objc private func handleLongPress(_ gesture: UILongPressGestureRecognizer) {
+        guard gesture.state == .began,
+              let imageView = gesture.view as? UIImageView,
+              let image = imageView.image,
+              !isPlaceholderImage(image) else { return }
+
+        onPhotoLongPressed?(imageView, image)
+    }
+
+    private func isPlaceholderImage(_ image: UIImage) -> Bool {
+        // 플레이스홀더 이미지인지 확인
+        let placeholderImage = UIImage(systemName: "photo")?.withTintColor(.systemGray3, renderingMode: .alwaysOriginal)
+        return image.pngData() == placeholderImage?.pngData()
+    }
+
     // MARK: - Configuration
     func configure(with images: [UIImage?]) {
+        self.photos = images.compactMap { $0 }
         let imageViews = [image1, image2, image3]
 
         for (index, imageView) in imageViews.enumerated() {
@@ -138,5 +161,7 @@ final class PhotoPageCell: UICollectionViewCell, IsIdentifiable {
         image2.image = placeholderImage
         image3.image = placeholderImage
         onAddPhotoTapped = nil
+        onPhotoLongPressed = nil
+        photos.removeAll()
     }
 }

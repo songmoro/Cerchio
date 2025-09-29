@@ -41,13 +41,13 @@ final class SavedQuoteCell: UICollectionViewCell, IsIdentifiable {
         contentView.addSubview(containerView)
 
         // 타이틀 레이블
-        titleLabel.text = "저장한 문장"
+        titleLabel.text = NSLocalizedString("book_detail.saved_quotes", comment: "Saved quotes section title")
         titleLabel.font = .systemFont(ofSize: 18, weight: .semibold)
         titleLabel.textColor = .label
         containerView.addSubview(titleLabel)
 
         // 문장 레이블
-        quoteLabel.text = "저장된 문장이 없습니다"
+        quoteLabel.text = NSLocalizedString("book_detail.no_quotes", comment: "No quotes message")
         quoteLabel.font = .systemFont(ofSize: 14, weight: .regular)
         quoteLabel.textColor = .secondaryLabel
         quoteLabel.numberOfLines = 3
@@ -61,7 +61,7 @@ final class SavedQuoteCell: UICollectionViewCell, IsIdentifiable {
         containerView.addSubview(dateLabel)
 
         // 추가 버튼
-        addButton.setTitle("+ 문장 추가", for: .normal)
+        addButton.setTitle(NSLocalizedString("book_detail.add_quote", comment: "Add quote button"), for: .normal)
         addButton.setTitleColor(.systemBlue, for: .normal)
         addButton.titleLabel?.font = .systemFont(ofSize: 14, weight: .medium)
         addButton.backgroundColor = .systemBlue.withAlphaComponent(0.1)
@@ -116,7 +116,7 @@ final class SavedQuoteCell: UICollectionViewCell, IsIdentifiable {
                 dateLabel.text = "저장일: \(formatter.string(from: date))"
             }
         } else {
-            quoteLabel.text = "저장된 문장이 없습니다"
+            quoteLabel.text = NSLocalizedString("book_detail.no_quotes", comment: "No quotes message")
             quoteLabel.textColor = .secondaryLabel
             dateLabel.text = ""
         }

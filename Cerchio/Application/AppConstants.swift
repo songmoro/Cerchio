@@ -15,8 +15,8 @@ enum AppConstants {
         }
 
         enum Titles {
-            static let library = "서재"
-            static let search = "도서 검색"
+            static let library = NSLocalizedString("tab.library", comment: "Library tab title")
+            static let search = NSLocalizedString("tab.search", comment: "Search tab title")
         }
 
         enum SystemImages {

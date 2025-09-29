@@ -187,51 +187,77 @@ nonisolated struct Book: Hashable, Codable {
     ]
 }
 
+// MARK: - RealmPhoto Model
+
+class RealmPhoto: Object, Sendable {
+    @Persisted(primaryKey: true) var id: ObjectId
+    @Persisted var bookId: String
+    @Persisted var localImagePath: String
+    @Persisted var pageNumber: Int?
+    @Persisted var note: String?
+    @Persisted var createdAt: Date
+
+    convenience init(
+        bookId: String,
+        localImagePath: String,
+        pageNumber: Int? = nil,
+        note: String? = nil,
+        createdAt: Date = Date()
+    ) {
+        self.init()
+        self.bookId = bookId
+        self.localImagePath = localImagePath
+        self.pageNumber = pageNumber
+        self.note = note
+        self.createdAt = createdAt
+    }
+}
+
 // MARK: - RealmBook Extensions
 
-//extension RealmBook {
-//    /// Converts RealmBook to Book model
-//    func toBook() -> Book {
-//        return Book(
-//            id: id.stringValue,
-//            title: cleanTitle,
-//            image: image,
-//            author: author,
-//            isbn: isbn,
-//            genre: nil, // Realm doesn't store genre currently
-//            totalPages: nil, // Realm doesn't store totalPages currently
-//            isFavorite: false, // Default value, should be managed separately
-//            dateAdded: createAt,
-//            dateRead: nil, // Should be managed separately
-//            readingStatus: .toRead, // Default value, should be managed separately
-//            category: nil, // Should be managed separately
-//            rating: nil // Should be managed separately
-//        )
-//    }
-//}
+extension RealmBook {
+    /// Converts RealmBook to Book model
+    func toBook() -> Book {
+        return Book(
+            id: String(describing: id),
+            title: cleanTitle,
+            image: image,
+            author: author,
+            isbn: isbn,
+            genre: nil, // Realm doesn't store genre currently
+            totalPages: nil, // Realm doesn't store totalPages currently
+            isFavorite: false, // Default value, should be managed separately
+            dateAdded: createAt,
+            dateRead: nil, // Should be managed separately
+            readingStatus: .toRead, // Default value, should be managed separately
+            category: nil, // Should be managed separately
+            rating: nil // Should be managed separately
+        )
+    }
+}
 
 // MARK: - Book Extensions
 
-//extension Book {
-//    /// Converts Book to RealmBook model
-//    /// Note: This conversion may lose some network-derived data
-//    func toRealmBook() -> RealmBook {
-//        return RealmBook(
-//            title: title,
-//            link: "", // Not available in Book model
-//            image: image,
-//            author: author,
-//            discount: nil, // Not available in Book model
-//            publisher: "", // Not available in Book model
-//            isbn: isbn,
-//            description: "", // Not available in Book model
-//            pubdate: "", // Not available in Book model
-//            cleanTitle: title,
-//            cleanDescription: "", // Not available in Book model
-//            formattedPubDate: nil, // Not available in Book model
-//            formattedPrice: nil, // Not available in Book model
-//            priceAsInt: nil, // Not available in Book model
-//            createAt: dateAdded ?? Date()
-//        )
-//    }
-//}
+extension Book {
+    /// Converts Book to RealmBook model
+    /// Note: This conversion may lose some network-derived data
+    func toRealmBook() -> RealmBook {
+        return RealmBook(
+            title: title,
+            link: "", // Not available in Book model
+            image: image,
+            author: author,
+            discount: nil, // Not available in Book model
+            publisher: "", // Not available in Book model
+            isbn: isbn,
+            description: "", // Not available in Book model
+            pubdate: "", // Not available in Book model
+            cleanTitle: title,
+            cleanDescription: "", // Not available in Book model
+            formattedPubDate: nil, // Not available in Book model
+            formattedPrice: nil, // Not available in Book model
+            priceAsInt: nil, // Not available in Book model
+            createAt: dateAdded ?? Date()
+        )
+    }
+}

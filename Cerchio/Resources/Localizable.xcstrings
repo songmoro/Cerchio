@@ -1,7 +1,402 @@
 {
   "sourceLanguage" : "ko",
   "strings" : {
-
+    "action.add" : {
+      "comment" : "Add button",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "담기"
+          }
+        }
+      }
+    },
+    "action.cancel" : {
+      "comment" : "Cancel action",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cancel"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "취소"
+          }
+        }
+      }
+    },
+    "action.confirm" : {
+      "comment" : "Confirm action",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "확인"
+          }
+        }
+      }
+    },
+    "action.delete" : {
+      "comment" : "Delete action",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "삭제"
+          }
+        }
+      }
+    },
+    "book_detail.add_quote" : {
+      "comment" : "Add quote button",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "+ Add Quote"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "+ 문장 추가"
+          }
+        }
+      }
+    },
+    "book_detail.no_quotes" : {
+      "comment" : "No quotes message",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No saved quotes"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "저장된 문장이 없습니다"
+          }
+        }
+      }
+    },
+    "book_detail.photos" : {
+      "comment" : "Photos section title",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Photos Taken"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "찍은 사진"
+          }
+        }
+      }
+    },
+    "book_detail.saved_quotes" : {
+      "comment" : "Saved quotes section title",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Saved Quotes"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "저장한 문장"
+          }
+        }
+      }
+    },
+    "camera.capture_button" : {
+      "comment" : "Take photo button",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "+ Take Photo"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "+ 사진 촬영"
+          }
+        }
+      }
+    },
+    "camera.permission.go_to_settings" : {
+      "comment" : "Go to settings button",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Go to Settings"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "설정으로 이동"
+          }
+        }
+      }
+    },
+    "camera.permission.message" : {
+      "comment" : "Camera permission message",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Camera access is required to take photos. Please allow camera permission in Settings."
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "사진 촬영을 위해 카메라 접근 권한이 필요합니다. 설정에서 권한을 허용해주세요."
+          }
+        }
+      }
+    },
+    "camera.permission.title" : {
+      "comment" : "Camera permission title",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Camera Access Required"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "카메라 접근 권한 필요"
+          }
+        }
+      }
+    },
+    "photo.delete_confirmation.message" : {
+      "comment" : "Delete photo confirmation message",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Are you sure you want to delete this photo?"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이 사진을 삭제하시겠습니까?"
+          }
+        }
+      }
+    },
+    "photo.delete_confirmation.title" : {
+      "comment" : "Delete photo confirmation title",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete Photo"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "사진 삭제"
+          }
+        }
+      }
+    },
+    "photo.save_failure.message" : {
+      "comment" : "Save failure message",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Failed to save photo."
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "사진 저장에 실패했습니다."
+          }
+        }
+      }
+    },
+    "photo.save_failure.title" : {
+      "comment" : "Save failure title",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Save Failed"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "저장 실패"
+          }
+        }
+      }
+    },
+    "photo.save_success.message" : {
+      "comment" : "Save success message",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Photo has been saved to Photos app."
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "사진이 사진 앱에 저장되었습니다."
+          }
+        }
+      }
+    },
+    "photo.save_success.title" : {
+      "comment" : "Save success title",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Save Complete"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "저장 완료"
+          }
+        }
+      }
+    },
+    "photo.save_to_gallery" : {
+      "comment" : "Save to gallery action",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Save to Photos"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "사진 앱에 저장"
+          }
+        }
+      }
+    },
+    "photo.view" : {
+      "comment" : "View photo action",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "View Photo"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "사진 보기"
+          }
+        }
+      }
+    },
+    "tab.library" : {
+      "comment" : "Library tab title",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Library"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "서재"
+          }
+        }
+      }
+    },
+    "tab.search" : {
+      "comment" : "Search tab title",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Book Search"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "도서 검색"
+          }
+        }
+      }
+    }
   },
   "version" : "1.1"
 }
