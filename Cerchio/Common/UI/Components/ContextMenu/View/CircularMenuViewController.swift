@@ -320,17 +320,30 @@ class CircularMenuViewController: UIViewController {
         let topBoundary = centerY * CircularMenuConstants.PositionRatios.topBoundaryRatio
         let bottomBoundary = centerY * CircularMenuConstants.PositionRatios.bottomBoundaryRatio
 
-        if point.x < leftBoundary {
-            if point.y < topBoundary { return 0 }
-            else if point.y > bottomBoundary { return -CGFloat.pi }
-            else { return -CGFloat.pi / 4 }
-        } else if point.x > rightBoundary {
-            if point.y < topBoundary { return CGFloat.pi / 2 }
-            else if point.y > bottomBoundary { return CGFloat.pi }
-            else { return 3 * CGFloat.pi / 4 }
-        } else {
-            if point.y < centerY { return CGFloat.pi / 4 }
-            else { return -3 * CGFloat.pi / 4 }
+//        if point.x < leftBoundary {
+//            if point.y < topBoundary { return 0 }
+//            else if point.y > bottomBoundary { return -CGFloat.pi }
+//            else { return -CGFloat.pi / 4 }
+//        } else if point.x > rightBoundary {
+//            if point.y < topBoundary { return CGFloat.pi / 2 }
+//            else if point.y > bottomBoundary { return CGFloat.pi }
+//            else { return 3 * CGFloat.pi / 4 }
+//        } else {
+//            if point.y < centerY { return CGFloat.pi / 4 }
+//            else { return -3 * CGFloat.pi / 4 }
+//        }
+        
+        if point.y > topBoundary {
+            return -CGFloat.pi / 2
+            
+        }
+        else {
+            if point.x < leftBoundary {
+                return 0
+            }
+            else {
+                return CGFloat.pi
+            }
         }
     }
 
