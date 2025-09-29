@@ -5,7 +5,46 @@
 //  Created by 송재훈 on 9/24/25.
 //
 
-import Foundation
+import UIKit
+import RealmSwift
+
+class RealmBook: Object {
+    @Persisted(primaryKey: true) var id: ObjectId
+    @Persisted var title: String
+    @Persisted var link: String
+    @Persisted var image: String
+    @Persisted var author: String
+    @Persisted var discount: String?
+    @Persisted var publisher: String
+    @Persisted var isbn: String
+    @Persisted var bookDescription: String
+    @Persisted var pubdate: String
+    @Persisted var cleanTitle: String
+    @Persisted var cleanDescription: String
+    @Persisted var formattedPubDate: Date?
+    @Persisted var formattedPrice: String?
+    @Persisted var priceAsInt: Int?
+    @Persisted var createAt: Date
+    
+    convenience init(title: String, link: String, image: String, author: String, discount: String? = nil, publisher: String, isbn: String, description: String, pubdate: String, cleanTitle: String, cleanDescription: String, formattedPubDate: Date? = nil, formattedPrice: String? = nil, priceAsInt: Int? = nil, createAt: Date = Date()) {
+        self.init()
+        self.title = title
+        self.link = link
+        self.image = image
+        self.author = author
+        self.discount = discount
+        self.publisher = publisher
+        self.isbn = isbn
+        self.bookDescription = description
+        self.pubdate = pubdate
+        self.cleanTitle = cleanTitle
+        self.cleanDescription = cleanDescription
+        self.formattedPubDate = formattedPubDate
+        self.formattedPrice = formattedPrice
+        self.priceAsInt = priceAsInt
+        self.createAt = createAt
+    }
+}
 
 nonisolated struct Book: Hashable, Codable {
     let id: String

@@ -60,6 +60,7 @@ final class SearchReactor: Reactor {
 
         case .addBookToLibrary(let book):
             // TODO: BookService를 통한 도서 추가 로직
+            print(book)
             print("책 추가: \(book.title)")
             return Observable.empty()
         }
@@ -88,7 +89,7 @@ final class SearchReactor: Reactor {
     // MARK: - Private Methods
     private func performSearch(query: String) -> Observable<Mutation> {
         return bookSearchService
-            .searchBooks(query: query, display: 20, start: 1, sort: .accuracy)
+            .searchBooks(query: query, display: 100, start: 1, sort: .accuracy)
             .map { response -> [Book] in
                 return BookSearchMapper.mapResponseToBooks(response)
             }
