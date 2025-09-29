@@ -73,6 +73,9 @@
         }
       }
     },
+    "action.save" : {
+      "comment" : "Save button"
+    },
     "book_detail.add_quote" : {
       "comment" : "Add quote button",
       "extractionState" : "manual",
@@ -357,6 +360,168 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "사진 보기"
+          }
+        }
+      }
+    },
+    "quote_save.discard" : {
+      "comment" : "Discard action",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Discard"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "취소"
+          }
+        }
+      }
+    },
+    "quote_save.discard_message" : {
+      "comment" : "Discard confirmation message",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Are you sure you want to discard the text you entered?"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "입력한 내용을 취소하시겠습니까?"
+          }
+        }
+      }
+    },
+    "quote_save.discard_title" : {
+      "comment" : "Discard confirmation title",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Discard Changes"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "변경사항 취소"
+          }
+        }
+      }
+    },
+    "quote_save.error_message" : {
+      "comment" : "Save error message",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Failed to save quote. Please try again."
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "문장 저장에 실패했습니다. 다시 시도해주세요."
+          }
+        }
+      }
+    },
+    "quote_save.error_title" : {
+      "comment" : "Save error title",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Save Failed"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "저장 실패"
+          }
+        }
+      }
+    },
+    "quote_save.page_label" : {
+      "comment" : "Page label",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Page Number (Optional)"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "페이지 번호 (선택사항)"
+          }
+        }
+      }
+    },
+    "quote_save.page_placeholder" : {
+      "comment" : "Page number placeholder",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "e.g. 123"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "예: 123"
+          }
+        }
+      }
+    },
+    "quote_save.placeholder" : {
+      "comment" : "Quote placeholder text",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enter the quote you want to save..."
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "저장하고 싶은 문장을 입력하세요..."
+          }
+        }
+      }
+    },
+    "quote_save.title" : {
+      "comment" : "Quote save screen title",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Save Quote"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "문장 저장"
           }
         }
       }

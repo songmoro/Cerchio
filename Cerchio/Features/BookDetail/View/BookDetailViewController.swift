@@ -15,10 +15,13 @@ import RealmSwift
 final class BookDetailViewController: BaseViewController<BookDetailReactor> {
     private typealias DataSource = UICollectionViewDiffableDataSource<Section, Item>
     private typealias Snapshot = NSDiffableDataSourceSnapshot<Section, Item>
-    
+
     // MARK: - UI Components
     private let collectionView = UICollectionView(frame: .zero, collectionViewLayout: .init())
     private var dataSource: DataSource!
+
+    // MARK: - Child Coordinators
+    private var childCoordinators: [Coordinator] = []
     
     // MARK: - Section & Item Types
     nonisolated enum Section: CaseIterable {
@@ -96,6 +99,7 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
             .subscribe(onNext: { [weak self] bookDetail in
                 self?.updateSnapshot(with: bookDetail)
                 self?.loadPhotosAndUpdateUI() // 사진 데이터도 함께 로드
+                self?.loadQuotesAndUpdateUI() // 문장 데이터도 함께 로드
             })
             .disposed(by: disposeBag)
         
@@ -264,23 +268,45 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
     private func updateSnapshot(with bookDetail: BookDetail) {
         var snapshot = Snapshot()
         snapshot.appendSections([.bookInfo, .savedQuotes, .photoPages])
-        
+
         // 책 정보
         snapshot.appendItems([.bookInfo(bookDetail)], toSection: .bookInfo)
-        
-        // 저장한 문장 (임시 데이터)
+
+        // 저장한 문장 (기본 빈 데이터, 실제 데이터는 별도 로드)
         snapshot.appendItems([.savedQuote("", Date())], toSection: .savedQuotes)
-        
-        // 찍은 사진 (임시 데이터)
+
+        // 찍은 사진 (기본 빈 데이터, 실제 데이터는 별도 로드)
         snapshot.appendItems([.photoPage(nil)], toSection: .photoPages)
-        
+
         dataSource.apply(snapshot, animatingDifferences: true)
     }
     
     // MARK: - Navigation Methods
     private func showQuoteEntry() {
-        print("문장 저장 화면으로 이동")
-        // TODO: QuoteEntryCoordinator로 이동
+        guard let reactor = reactor else { return }
+        let bookId = String(describing: reactor.currentState.book.id)
+
+        let quoteSaveCoordinator = QuoteSaveCoordinator(
+            navigationController: navigationController ?? UINavigationController(),
+            dependencies: QuoteSaveCoordinator.Dependencies(bookId: bookId)
+        )
+
+        addChildCoordinator(quoteSaveCoordinator)
+
+        quoteSaveCoordinator.result
+            .subscribe(onNext: { [weak self] result in
+                switch result {
+                case .quoteSaved(let quote):
+                    print("✅ Quote saved: \(quote)")
+                    self?.loadQuotesAndUpdateUI()
+                case .cancelled:
+                    print("📝 Quote save cancelled")
+                }
+                self?.removeChildCoordinator(quoteSaveCoordinator)
+            })
+            .disposed(by: disposeBag)
+
+        quoteSaveCoordinator.start()
     }
     
     private func showPhotoCapture() {
@@ -356,24 +382,105 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
         }
     }
     
+    private func loadQuotesAndUpdateUI() {
+        guard let reactor = reactor else { return }
+        let bookId = String(describing: reactor.currentState.book.id)
+
+        do {
+            let realm = try Realm()
+            let quotes = realm.objects(RealmQuote.self)
+                .filter("bookId == %@", bookId)
+                .sorted(byKeyPath: "createdAt", ascending: false)
+            let quoteArray = Array(quotes)
+            
+            updateSnapshotWithAllData(
+                bookDetail: reactor.currentState.bookDetail,
+                quotes: quoteArray,
+                photos: nil // 포토는 별도로 로드
+            )
+        } catch {
+            print("❌ Failed to load quotes: \(error.localizedDescription)")
+        }
+    }
+
     private func updateSnapshotWithPhotos(bookDetail: BookDetail?, photos: [RealmPhoto]) {
         guard let bookDetail = bookDetail else { return }
-        
+        let bookId = String(describing: bookDetail.book.id)
+
+        // 문장 데이터도 함께 로드해서 전체 업데이트
+        do {
+            let realm = try Realm()
+            let quotes = realm.objects(RealmQuote.self)
+                .filter("bookId == %@", bookId)
+                .sorted(byKeyPath: "createdAt", ascending: false)
+            let quoteArray = Array(quotes)
+            
+            updateSnapshotWithAllData(
+                bookDetail: bookDetail,
+                quotes: quoteArray,
+                photos: photos
+            )
+        } catch {
+            print("❌ Failed to load quotes during photo update: \(error.localizedDescription)")
+            updateSnapshotWithAllData(
+                bookDetail: bookDetail,
+                quotes: [],
+                photos: photos
+            )
+        }
+    }
+
+    private func updateSnapshotWithAllData(bookDetail: BookDetail?, quotes: [RealmQuote], photos: [RealmPhoto]?) {
+        guard let bookDetail = bookDetail else { return }
+
         var snapshot = Snapshot()
         snapshot.appendSections([.bookInfo, .savedQuotes, .photoPages])
-        
+
         // 책 정보
         snapshot.appendItems([.bookInfo(bookDetail)], toSection: .bookInfo)
-        
-        // 저장한 문장 (임시 데이터)
-        snapshot.appendItems([.savedQuote("", Date())], toSection: .savedQuotes)
-        
+
+        // 저장한 문장 - 실제 데이터로 업데이트
+        if let latestQuote = quotes.first {
+            snapshot.appendItems([.savedQuote(latestQuote.quote, latestQuote.createdAt)], toSection: .savedQuotes)
+        } else {
+            snapshot.appendItems([.savedQuote("", Date())], toSection: .savedQuotes)
+        }
+
         // 찍은 사진 - 실제 데이터로 업데이트
-        let images = photos.compactMap { ImageStorageManager.shared.loadImage(fromPath: $0.localImagePath) }
-        let photoItem: Item = images.isEmpty ? .photoPage(nil) : .photoPage(images.first)
-        snapshot.appendItems([photoItem], toSection: .photoPages)
-        
+        if let photos = photos {
+            let images = photos.compactMap { ImageStorageManager.shared.loadImage(fromPath: $0.localImagePath) }
+            let photoItem: Item = images.isEmpty ? .photoPage(nil) : .photoPage(images.first)
+            snapshot.appendItems([photoItem], toSection: .photoPages)
+        } else {
+            // 사진 데이터가 제공되지 않은 경우 별도로 로드
+            loadPhotosForSnapshot(snapshot: snapshot)
+            return
+        }
+
         dataSource.apply(snapshot, animatingDifferences: true)
+    }
+
+    private func loadPhotosForSnapshot(snapshot: Snapshot) {
+        guard let reactor = reactor else { return }
+        let bookId = String(describing: reactor.currentState.book.id)
+
+        do {
+            let realm = try Realm()
+            let photos = realm.objects(RealmPhoto.self).filter("bookId == %@", bookId)
+            let photoArray = Array(photos)
+            
+            var updatedSnapshot = snapshot
+            let images = photoArray.compactMap { ImageStorageManager.shared.loadImage(fromPath: $0.localImagePath) }
+            let photoItem: Item = images.isEmpty ? .photoPage(nil) : .photoPage(images.first)
+            
+            // 기존 photoPages 섹션 업데이트
+            updatedSnapshot.deleteItems(updatedSnapshot.itemIdentifiers(inSection: .photoPages))
+            updatedSnapshot.appendItems([photoItem], toSection: .photoPages)
+            
+            dataSource.apply(updatedSnapshot, animatingDifferences: true)
+        } catch {
+            print("❌ Failed to load photos for snapshot: \(error.localizedDescription)")
+        }
     }
     
     private func showPhotoContextMenu(for imageView: UIImageView, with image: UIImage) {
@@ -503,5 +610,16 @@ extension BookDetailViewController: CameraViewControllerDelegate {
     
     func cameraViewControllerDidCancel(_ controller: CameraViewController) {
         controller.dismiss(animated: true)
+    }
+}
+
+// MARK: - Child Coordinator Management
+extension BookDetailViewController {
+    private func addChildCoordinator(_ coordinator: Coordinator) {
+        childCoordinators.append(coordinator)
+    }
+
+    private func removeChildCoordinator(_ coordinator: Coordinator) {
+        childCoordinators.removeAll { $0 === coordinator }
     }
 }

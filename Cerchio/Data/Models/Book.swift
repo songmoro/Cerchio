@@ -213,6 +213,32 @@ class RealmPhoto: Object, Sendable {
     }
 }
 
+// MARK: - RealmQuote Model
+
+class RealmQuote: Object, Sendable {
+    @Persisted(primaryKey: true) var id: ObjectId
+    @Persisted var bookId: String
+    @Persisted var quote: String
+    @Persisted var pageNumber: Int?
+    @Persisted var note: String?
+    @Persisted var createdAt: Date
+
+    convenience init(
+        bookId: String,
+        quote: String,
+        pageNumber: Int? = nil,
+        note: String? = nil,
+        createdAt: Date = Date()
+    ) {
+        self.init()
+        self.bookId = bookId
+        self.quote = quote
+        self.pageNumber = pageNumber
+        self.note = note
+        self.createdAt = createdAt
+    }
+}
+
 // MARK: - RealmBook Extensions
 
 extension RealmBook {
