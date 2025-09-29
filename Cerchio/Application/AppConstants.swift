@@ -8,41 +8,29 @@
 import Foundation
 
 enum AppConstants {
-
-    // MARK: - TabBar
     enum TabBar {
         enum Tags {
             static let library: Int = 0
             static let search: Int = 1
-            static let settings: Int = 2
-        }
-
-        enum Typography {
-            static let placeholderFontSize: CGFloat = 18
         }
 
         enum Titles {
             static let library = "서재"
             static let search = "검색"
-            static let settings = "설정"
-            static let placeholder = "준비 중"
         }
 
         enum SystemImages {
             static let library = "books.vertical"
             static let search = "magnifyingglass"
-            static let settings = "gearshape"
         }
     }
 
-    // MARK: - Navigation
     enum Navigation {
         enum Typography {
             static let titleFontSize: CGFloat = 17
         }
     }
 
-    // MARK: - General
     enum General {
         enum Layout {
             static let standardCornerRadius: CGFloat = 8

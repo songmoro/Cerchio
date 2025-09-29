@@ -113,40 +113,6 @@ final class TabBarCoordinator: BaseCoordinator, Coordinatable {
         }
     }
 
-    // MARK: - Helper Methods
-
-    private func createPlaceholderTab(title: String, systemImage: String, tag: Int) -> UIViewController {
-        let nav = UINavigationController()
-        let placeholderVC = UIViewController()
-        placeholderVC.view.backgroundColor = .systemBackground
-        placeholderVC.navigationItem.title = title
-
-        // TODO 라벨 추가
-        let label = UILabel()
-        label.text = "\(title) - \(AppConstants.TabBar.Titles.placeholder)"
-        label.textAlignment = .center
-        label.font = .custom(weight: .medium, size: AppConstants.TabBar.Typography.placeholderFontSize)
-        label.textColor = .secondaryLabel
-
-        placeholderVC.view.addSubview(label)
-        label.translatesAutoresizingMaskIntoConstraints = false
-        NSLayoutConstraint.activate([
-            label.centerXAnchor.constraint(equalTo: placeholderVC.view.centerXAnchor),
-            label.centerYAnchor.constraint(equalTo: placeholderVC.view.centerYAnchor)
-        ])
-
-        nav.setViewControllers([placeholderVC], animated: false)
-        nav.tabBarItem = UITabBarItem(
-            title: title,
-            image: UIImage(systemName: systemImage),
-            tag: tag
-        )
-
-        return nav
-    }
-
-    // MARK: - Future Tab Creation Methods
-
     private func createSearchTabViewController() -> UIViewController {
         let searchViewController = SearchViewController()
         let bookSearchService = dependencies.serviceFactory.createBookSearchService()
@@ -185,21 +151,5 @@ final class TabBarCoordinator: BaseCoordinator, Coordinatable {
         // searchCoordinator.start()
 
         return searchNav
-    }
-
-    private func createSettingsTab() -> UINavigationController {
-        let settingsNav = UINavigationController()
-        settingsNav.tabBarItem = UITabBarItem(
-            title: AppConstants.TabBar.Titles.settings,
-            image: UIImage(systemName: AppConstants.TabBar.SystemImages.settings),
-            tag: AppConstants.TabBar.Tags.settings
-        )
-
-        // TODO: SettingsCoordinator 구현 시 활성화
-        // let settingsCoordinator = SettingsCoordinator(navigationController: settingsNav)
-        // addChildCoordinator(settingsCoordinator)
-        // settingsCoordinator.start()
-
-        return settingsNav
     }
 }
