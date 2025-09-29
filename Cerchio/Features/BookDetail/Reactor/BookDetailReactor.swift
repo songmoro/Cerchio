@@ -28,7 +28,7 @@ final class BookDetailReactor: Reactor {
     }
 
     struct State {
-        var book: Book
+        var book: RealmBook
         var bookDetail: BookDetail?
         var isLoading: Bool = false
         var error: Error?
@@ -40,7 +40,7 @@ final class BookDetailReactor: Reactor {
     let initialState: State
 
     // MARK: - Initialization
-    init(book: Book) {
+    init(book: RealmBook) {
         self.initialState = State(book: book)
     }
 
@@ -56,14 +56,14 @@ final class BookDetailReactor: Reactor {
             ])
 
         case .updateReadingProgress(let currentPage):
-            let progress = ReadingProgress(
-                bookId: currentState.bookDetail?.book.id ?? "",
-                currentPage: currentPage,
-                totalPages: currentState.bookDetail?.totalPages ?? 0,
-                startDate: currentState.readingProgress?.startDate
-            )
-            return Observable.just(.setReadingProgress(progress))
-
+//            let progress = ReadingProgress(
+//                bookId: currentState.book.id.stringValue,
+//                currentPage: currentPage,
+//                totalPages: currentState.bookDetail?.totalPages ?? 0,
+//                startDate: currentState.readingProgress?.startDate
+//            )
+//            return Observable.just(.setReadingProgress(progress))
+            return .empty()
         case .toggleFavorite:
             let newFavoriteStatus = !currentState.isFavorite
             return Observable.just(.setFavorite(newFavoriteStatus))
@@ -110,13 +110,13 @@ final class BookDetailReactor: Reactor {
 
     // MARK: - Private Methods
     private func loadBookDetailData() -> Observable<Mutation> {
-        // 임시 데이터 생성 (나중에 실제 API 호출로 대체)
+        // RealmBook을 기반으로 BookDetail 생성
         let bookDetail = BookDetail(
             book: currentState.book,
-            totalPages: 320,
+            totalPages: 320, // 기본값 (RealmBook에 totalPages 정보 없음)
             startDate: Calendar.current.date(byAdding: .day, value: -10, to: Date()),
             endDate: nil,
-            tags: ["소설", "클래식", "필독서"]
+            tags: ["소설", "클래식", "필독서"] // 기본값 (RealmBook에 태그 정보 없음)
         )
 
         return Observable.just(.setBookDetail(bookDetail))
@@ -125,7 +125,7 @@ final class BookDetailReactor: Reactor {
 
 // MARK: - Supporting Models
 struct BookDetail: Hashable {
-    let book: Book
+    let book: RealmBook
     let totalPages: Int
     let startDate: Date?
     let endDate: Date?

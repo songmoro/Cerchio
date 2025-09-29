@@ -20,7 +20,7 @@ final class LibraryViewController: BaseViewController<LibraryReactor> {
     private var dataSource: DataSource!
 
     // Book selection handler
-    var bookSelectionHandler: ((Book) -> Void)?
+    var bookSelectionHandler: ((RealmBook) -> Void)?
 
     nonisolated enum Section: CaseIterable {
         case book
@@ -54,18 +54,18 @@ final class LibraryViewController: BaseViewController<LibraryReactor> {
             .disposed(by: disposeBag)
 
         // Collection View Selection
-//        collectionView.rx.itemSelected
-//            .subscribe(onNext: { [weak self] indexPath in
-//                guard let self = self,
-//                      let reactor = self.reactor else { return }
-//
-//                let books = reactor.currentState.books
-//                guard indexPath.item < books.count else { return }
-//
-//                let selectedBook = books[indexPath.item]
-//                self.bookSelectionHandler?(selectedBook)
-//            })
-//            .disposed(by: disposeBag)
+        collectionView.rx.itemSelected
+            .subscribe(onNext: { [weak self] indexPath in
+                guard let self = self,
+                      let reactor = self.reactor else { return }
+
+                let books = reactor.currentState.books
+                guard let books, indexPath.item < books.count else { return }
+
+                let selectedBook = books[indexPath.item]
+                self.bookSelectionHandler?(selectedBook)
+            })
+            .disposed(by: disposeBag)
 
         // State
         reactor.state
@@ -158,7 +158,7 @@ final class LibraryViewController: BaseViewController<LibraryReactor> {
     // MARK: - Menu Actions
     private func readBook(_ book: Book) {
         print("Reading book: \(book.title)")
-        bookSelectionHandler?(book)
+//        bookSelectionHandler?(book)
     }
 
     private func toggleFavorite(_ book: Book) {

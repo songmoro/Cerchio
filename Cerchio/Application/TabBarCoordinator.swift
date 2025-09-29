@@ -33,26 +33,11 @@ final class TabBarCoordinator: BaseCoordinator, Coordinatable {
     override func start() {
         fatalError("Use start(with dependencies:) instead")
     }
-    
-    private func bindNavigationEvents() {
-        navigationEvents
-            .subscribe(onNext: { [weak self] event in
-                self?.handleNavigationEvent(event)
-            })
-            .disposed(by: disposeBag)
-    }
-
-    private func handleNavigationEvent(_ event: NavigationEvent) {
-        switch event {
-        case .back, .close, .finished:
-            finish()
-        }
-    }
 
     func start(with dependencies: TabBarDependencies) {
         self.dependencies = dependencies
         setupTabBarController()
-        bindNavigationEvents()
+//        bindNavigationEvents()
     }
 
     private func createTabBarController() -> CircleTabBarController {
@@ -110,7 +95,7 @@ final class TabBarCoordinator: BaseCoordinator, Coordinatable {
         }
     }
 
-    private func navigateToBookDetail(book: Book) {
+    private func navigateToBookDetail(book: RealmBook) {
         let bookDetailDependencies = BookDetailDependencies(
             serviceFactory: dependencies.serviceFactory,
             book: book

@@ -125,6 +125,7 @@ final class BookInfoCollectionViewCell: UICollectionViewCell, IsIdentifiable {
         dateFormatter.dateFormat = "yyyy.MM.dd"
 
         if let startDate = bookDetail.startDate {
+            print(bookDetail)
             let startDateString = dateFormatter.string(from: startDate)
             if let endDate = bookDetail.endDate {
                 let endDateString = dateFormatter.string(from: endDate)

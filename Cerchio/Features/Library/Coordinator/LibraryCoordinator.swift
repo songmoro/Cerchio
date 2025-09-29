@@ -68,7 +68,7 @@ final class LibraryCoordinator: BaseCoordinator, Coordinatable {
 
     // MARK: - Navigation Methods
 
-    func showBookDetail(_ book: Book) {
+    func showBookDetail(_ book: RealmBook) {
         let bookDetailDependencies = BookDetailDependencies(
             serviceFactory: dependencies.serviceFactory,
             book: book
