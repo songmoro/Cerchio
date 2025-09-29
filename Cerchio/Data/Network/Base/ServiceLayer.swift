@@ -71,7 +71,7 @@ extension ServiceProtocol {
 
     func retryWithDelay<T>(_ source: Observable<T>, retryCount: Int = NetworkConstants.Retry.defaultRetryCount, delay: TimeInterval = NetworkConstants.Retry.defaultRetryDelay) -> Observable<T> {
         return source
-            .retryWhen { errors in
+            .retry { errors in
                 return errors
                     .enumerated()
                     .flatMap { (index, error) -> Observable<Int> in
