@@ -23,13 +23,11 @@ class CircleTabBarController: BaseTabBarController {
         }
     }
 
-    // setViewControllers 메서드들 오버라이드로 자동 업데이트 보장
     override func setViewControllers(_ viewControllers: [UIViewController]?, animated: Bool) {
         super.setViewControllers(viewControllers, animated: animated)
         updateTabBarItems()
     }
 
-    // selectedViewController 설정 시에도 업데이트
     override var selectedViewController: UIViewController? {
         didSet {
             if let selectedVC = selectedViewController,
@@ -40,7 +38,6 @@ class CircleTabBarController: BaseTabBarController {
         }
     }
 
-    // 뷰 컨트롤러 추가/삭제 메서드들도 오버라이드
     override func addChild(_ childController: UIViewController) {
         super.addChild(childController)
         DispatchQueue.main.async { [weak self] in
@@ -61,7 +58,6 @@ class CircleTabBarController: BaseTabBarController {
     override func viewDidLoad() {
         super.viewDidLoad()
         setupCustomTabBar()
-
         tabBar.isHidden = true
     }
     
@@ -81,14 +77,10 @@ class CircleTabBarController: BaseTabBarController {
             make.height.equalTo(CircleTabBarConstants.Dimensions.hostingControllerHeight)
         }
         
-//        let tabBarHeight: CGFloat = 83
-//        additionalSafeAreaInsets.bottom = tabBarHeight
-        
         circleTabBarViewModel.onTabSelected = { [weak self] index in
             self?.selectedIndex = index
         }
 
-        // 초기 타이틀 설정
         updateNavigationTitle()
     }
     
@@ -108,7 +100,6 @@ class CircleTabBarController: BaseTabBarController {
 
         circleTabBarViewModel.tabItems = tabItems
 
-        // selectedIndex 범위 체크 후 설정
         if selectedIndex < viewControllers.count {
             circleTabBarViewModel.selectedIndex = selectedIndex
         } else {
@@ -123,11 +114,5 @@ class CircleTabBarController: BaseTabBarController {
 
         let selectedViewController = viewControllers[selectedIndex]
         navigationItem.title = selectedViewController.navigationItem.title
-    }
-
-    // MARK: - Custom Tab Bar Behavior
-    override func customizeNavigationItem(from viewController: UIViewController) {
-        // CircleTabBar 전용 네비게이션 아이템 커스터마이징
-        // 필요시 추가 구현
     }
 }

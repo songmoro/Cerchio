@@ -16,10 +16,8 @@ struct CircleTabBarButtonView: View {
 
     var body: some View {
         Button(action: action) {
-            VStack(spacing: CircleTabBarConstants.Dimensions.iconSpacing) {
-                buttonIcon
-            }
-            .contentShape(Rectangle())
+            Color.clear
+                .overlay(buttonIcon)
         }
         .buttonStyle(PlainButtonStyle())
     }
@@ -62,7 +60,7 @@ struct CircleTabBarButtonView: View {
         if isFloating {
             frame.origin.y -= CircleTabBarConstants.Animation.floatingOffset
         }
-
+        
         onFrameChange(frame)
     }
 }

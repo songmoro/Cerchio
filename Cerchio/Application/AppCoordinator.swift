@@ -7,7 +7,6 @@
 
 import UIKit
 
-// MARK: - App Dependencies
 struct AppDependencies {
     let dependencyAssembler: DependencyAssembler
     let serviceFactory: ServiceFactory
@@ -45,4 +44,3 @@ final class AppCoordinator: BaseCoordinator {
         window.makeKeyAndVisible()
     }
 }
-
