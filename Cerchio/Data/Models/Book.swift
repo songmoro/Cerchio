@@ -85,14 +85,14 @@ nonisolated struct Book: Hashable, Codable {
         Book(
             title: "1984",
             image: "https://i.imgur.com/3x7J8K9.jpg",
-            author: "조지 오웰",
+            author: "조지 오웰 조지 오웰 조지 오웰 조지 오웰 조지 오웰 조지 오웰 조지 오웰 조지 오웰 조지 오웰 조지 오웰 조지 오웰",
             isbn: "9788937460777",
             genre: "SF",
             totalPages: 448,
             isFavorite: false
         ),
         Book(
-            title: "데미안",
+            title: "데미안 데미안 데미안 데미안 데미안 데미안 데미안 데미안 데미안 데미안 데미안 데미안",
             image: "https://i.imgur.com/9K8J3m2.jpg",
             author: "헤르만 헤세",
             isbn: "9788937462788",

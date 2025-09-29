@@ -124,6 +124,8 @@ final class SearchViewController: BaseViewController<SearchReactor> {
     private func setupTableView() {
         tableView.register(SearchResultTableViewCell.self, forCellReuseIdentifier: SearchResultTableViewCell.identifier)
         tableView.rowHeight = SearchResultConstants.Layout.rowHeight
+        tableView.contentInset.bottom = 20
+        tableView.scrollIndicatorInsets.bottom = 20
     }
 
     private func setupEmptyState() {
