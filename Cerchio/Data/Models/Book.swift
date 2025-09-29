@@ -17,7 +17,28 @@ nonisolated struct Book: Hashable, Codable {
     let totalPages: Int?
     let isFavorite: Bool
 
-    init(id: String = UUID().uuidString, title: String, image: String, author: String, isbn: String, genre: String? = nil, totalPages: Int? = nil, isFavorite: Bool = false) {
+    // Extended properties for feature models
+    let dateAdded: Date?
+    let dateRead: Date?
+    let readingStatus: ReadingStatus?
+    let category: BookCategory?
+    let rating: Int?
+
+    init(
+        id: String = UUID().uuidString,
+        title: String,
+        image: String,
+        author: String,
+        isbn: String,
+        genre: String? = nil,
+        totalPages: Int? = nil,
+        isFavorite: Bool = false,
+        dateAdded: Date? = nil,
+        dateRead: Date? = nil,
+        readingStatus: ReadingStatus? = nil,
+        category: BookCategory? = nil,
+        rating: Int? = nil
+    ) {
         self.id = id
         self.title = title
         self.image = image
@@ -26,6 +47,11 @@ nonisolated struct Book: Hashable, Codable {
         self.genre = genre
         self.totalPages = totalPages
         self.isFavorite = isFavorite
+        self.dateAdded = dateAdded
+        self.dateRead = dateRead
+        self.readingStatus = readingStatus
+        self.category = category
+        self.rating = rating
     }
     
     static let sample: [Book] = [

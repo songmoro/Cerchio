@@ -38,7 +38,8 @@ final class LibraryViewController: BaseViewController<LibraryReactor> {
         view.addSubview(collectionView)
 
         collectionView.snp.makeConstraints {
-            $0.edges.equalTo(view.safeAreaLayoutGuide)
+            $0.top.horizontalEdges.equalToSuperview(\.safeAreaLayoutGuide)
+            $0.bottom.equalToSuperview()
         }
 
         configureDataSource()

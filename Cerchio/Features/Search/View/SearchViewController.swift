@@ -166,7 +166,7 @@ final class SearchViewController: BaseViewController<SearchReactor> {
     }
 
     // MARK: - UI Updates
-    private func updateUI(for searchState: SearchReactor.SearchState) {
+    private func updateUI(for searchState: SearchState) {
         switch searchState {
         case .initial:
             showEmptyState(message: "검색어를 입력해주세요.")
@@ -210,18 +210,6 @@ final class SearchViewController: BaseViewController<SearchReactor> {
     }
 }
 
-// MARK: - SearchState Extension for Equatable
-extension SearchReactor.SearchState {
-    var description: String {
-        switch self {
-        case .initial: return "initial"
-        case .searching: return "searching"
-        case .results(let books): return "results(\(books.count))"
-        case .noResults: return "noResults"
-        case .error(let message): return "error(\(message))"
-        }
-    }
-}
 
 // MARK: - UISearchBarDelegate
 extension SearchViewController: UISearchBarDelegate {

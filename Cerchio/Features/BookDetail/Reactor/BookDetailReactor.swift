@@ -57,10 +57,10 @@ final class BookDetailReactor: Reactor {
 
         case .updateReadingProgress(let currentPage):
             let progress = ReadingProgress(
+                bookId: currentState.bookDetail?.book.id ?? "",
                 currentPage: currentPage,
                 totalPages: currentState.bookDetail?.totalPages ?? 0,
-                startDate: currentState.readingProgress?.startDate ?? Date(),
-                lastReadDate: Date()
+                startDate: currentState.readingProgress?.startDate
             )
             return Observable.just(.setReadingProgress(progress))
 
@@ -132,21 +132,6 @@ struct BookDetail: Hashable {
     let tags: [String]
 }
 
-struct ReadingProgress: Hashable {
-    let currentPage: Int
-    let totalPages: Int
-    let startDate: Date
-    let lastReadDate: Date
-
-    var progressPercentage: Double {
-        guard totalPages > 0 else { return 0 }
-        return Double(currentPage) / Double(totalPages) * 100
-    }
-
-    var isCompleted: Bool {
-        return currentPage >= totalPages
-    }
-}
 
 struct Quote: Hashable {
     let text: String

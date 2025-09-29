@@ -30,13 +30,6 @@ final class SearchReactor: Reactor {
         var error: String?
     }
 
-    enum SearchState {
-        case initial
-        case searching
-        case results([Book])
-        case noResults
-        case error(String)
-    }
 
     let initialState = State()
 
