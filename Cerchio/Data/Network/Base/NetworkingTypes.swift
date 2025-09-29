@@ -121,7 +121,6 @@ enum NetworkConstants {
     static let defaultHeaders: [String: String] = [
         "Content-Type": "application/json",
         "Accept": "application/json",
-        "User-Agent": "Cerchio/1.0"
     ]
 
     // MARK: - HTTP Status Codes

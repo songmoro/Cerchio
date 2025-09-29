@@ -57,7 +57,17 @@ final class ServiceFactory: BaseServiceFactory<ServiceDependencies> {
     }
 
     // MARK: - Service Creation Methods
-    // Add specific service creation methods as needed
+
+    /// Creates a BookSearchService instance
+    func createBookSearchService() -> BookSearchServiceProtocol {
+        let serviceDependencies = BookSearchService.Dependencies(networkClient: dependencies.networkClient)
+        return BookSearchService(dependencies: serviceDependencies)
+    }
+
+    /// Creates a Mock BookSearchService instance for testing
+    func createMockBookSearchService(scenario: MockBookSearchService.MockScenario = .success) -> BookSearchServiceProtocol {
+        return MockBookSearchService(scenario: scenario)
+    }
 
     // MARK: - Cache Management
     func clearServiceCache() {

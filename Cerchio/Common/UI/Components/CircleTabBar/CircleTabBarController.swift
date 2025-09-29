@@ -19,6 +19,7 @@ class CircleTabBarController: BaseTabBarController {
     override var selectedIndex: Int {
         didSet {
             circleTabBarViewModel.selectedIndex = selectedIndex
+            updateNavigationTitle()
         }
     }
 
@@ -86,6 +87,9 @@ class CircleTabBarController: BaseTabBarController {
         circleTabBarViewModel.onTabSelected = { [weak self] index in
             self?.selectedIndex = index
         }
+
+        // 초기 타이틀 설정
+        updateNavigationTitle()
     }
     
     private func updateTabBarItems() {
@@ -111,6 +115,14 @@ class CircleTabBarController: BaseTabBarController {
             circleTabBarViewModel.selectedIndex = 0
             selectedIndex = 0
         }
+    }
+
+    private func updateNavigationTitle() {
+        guard let viewControllers = viewControllers,
+              selectedIndex < viewControllers.count else { return }
+
+        let selectedViewController = viewControllers[selectedIndex]
+        navigationItem.title = selectedViewController.navigationItem.title
     }
 
     // MARK: - Custom Tab Bar Behavior

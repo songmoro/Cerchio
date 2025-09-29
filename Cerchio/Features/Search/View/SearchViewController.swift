@@ -62,6 +62,8 @@ final class SearchViewController: BaseViewController<SearchReactor> {
     // MARK: - Lifecycle
     override func setupUI() {
         super.setupUI()
+        navigationItem.title = "도서 검색"
+        
         setupSearchBar()
         setupTableView()
         setupEmptyState()

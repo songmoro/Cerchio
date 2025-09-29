@@ -149,7 +149,8 @@ final class TabBarCoordinator: BaseCoordinator, Coordinatable {
 
     private func createSearchTabViewController() -> UIViewController {
         let searchViewController = SearchViewController()
-        let searchReactor = SearchReactor()
+        let bookSearchService = dependencies.serviceFactory.createBookSearchService()
+        let searchReactor = SearchReactor(bookSearchService: bookSearchService)
 
         searchViewController.reactor = searchReactor
         searchViewController.tabBarItem = UITabBarItem(

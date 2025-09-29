@@ -33,8 +33,11 @@ final class SearchReactor: Reactor {
 
     let initialState = State()
 
-    // TODO: BookService 추가 시 의존성 주입
-    // private let bookService: BookServiceType
+    private let bookSearchService: BookSearchServiceProtocol
+
+    init(bookSearchService: BookSearchServiceProtocol) {
+        self.bookSearchService = bookSearchService
+    }
 
     func mutate(action: Action) -> Observable<Mutation> {
         switch action {
@@ -84,8 +87,11 @@ final class SearchReactor: Reactor {
 
     // MARK: - Private Methods
     private func performSearch(query: String) -> Observable<Mutation> {
-        // TODO: 실제 BookService로 교체
-        return mockSearchAPI(query: query)
+        return bookSearchService
+            .searchBooks(query: query, display: 20, start: 1, sort: .accuracy)
+            .map { response -> [Book] in
+                return BookSearchMapper.mapResponseToBooks(response)
+            }
             .map { books in
                 if books.isEmpty {
                     return .setSearchState(.noResults)
@@ -94,24 +100,13 @@ final class SearchReactor: Reactor {
                 }
             }
             .catch { error in
-                Observable.just(.setSearchState(.error(error.localizedDescription)))
-            }
-    }
-
-    // 임시 Mock API
-    private func mockSearchAPI(query: String) -> Observable<[Book]> {
-        return Observable.create { observer in
-            // 1초 지연으로 네트워크 호출 시뮬레이션
-            DispatchQueue.main.asyncAfter(deadline: .now() + SearchResultConstants.Animation.mockSearchDelay) {
-                let filteredBooks = Book.sample.filter { book in
-                    book.title.lowercased().contains(query.lowercased()) ||
-                    book.author.lowercased().contains(query.lowercased()) ||
-                    book.isbn.contains(query)
+                let errorMessage: String
+                if let bookSearchError = error as? BookSearchError {
+                    errorMessage = bookSearchError.localizedDescription ?? "검색 중 오류가 발생했습니다."
+                } else {
+                    errorMessage = error.localizedDescription
                 }
-                observer.onNext(filteredBooks)
-                observer.onCompleted()
+                return Observable.just(.setSearchState(.error(errorMessage)))
             }
-            return Disposables.create()
-        }
     }
 }

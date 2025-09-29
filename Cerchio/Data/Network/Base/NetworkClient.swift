@@ -39,7 +39,8 @@ final class URLSessionNetworkClient: NetworkClientProtocol {
         formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z'"
         formatter.timeZone = TimeZone(abbreviation: "UTC")
         decoder.dateDecodingStrategy = .formatted(formatter)
-        decoder.keyDecodingStrategy = .convertFromSnakeCase
+        // 네이버 API는 camelCase 사용하므로 snake_case 변환 제거
+        // decoder.keyDecodingStrategy = .convertFromSnakeCase
     }
 
     // MARK: - Execute Request (Direct Response)
@@ -82,6 +83,12 @@ final class URLSessionNetworkClient: NetworkClientProtocol {
                     observer.onNext(decodedResponse)
                     observer.onCompleted()
                 } catch {
+                    // 디버깅을 위한 로그 추가
+                    print("=== DECODING ERROR ===")
+                    print("Error: \(error)")
+                    if let jsonString = String(data: data, encoding: .utf8) {
+                        print("Raw JSON: \(jsonString)")
+                    }
                     observer.onError(NetworkError.decodingError(error))
                 }
             }
@@ -202,7 +209,8 @@ final class URLSessionNetworkClient: NetworkClientProtocol {
 // MARK: - Private Helper Methods
 private extension URLSessionNetworkClient {
     func buildURLRequest<T: NetworkRequest>(from request: T) -> URLRequest? {
-        var urlComponents = URLComponents(url: request.baseURL.appendingPathComponent(request.path), resolvingAgainstBaseURL: false)
+        let finalURL = request.path.isEmpty ? request.baseURL : request.baseURL.appendingPathComponent(request.path)
+        var urlComponents = URLComponents(url: finalURL, resolvingAgainstBaseURL: false)
 
         // Add query parameters
         if let queryParameters = request.queryParameters {
@@ -234,7 +242,7 @@ private extension URLSessionNetworkClient {
                 return nil
             }
         }
-
+        dump(urlRequest)
         return urlRequest
     }
 

@@ -7,6 +7,7 @@
 
 import UIKit
 import SnapKit
+import Kingfisher
 
 final class SearchResultTableViewCell: UITableViewCell {
     static let identifier = "SearchResultTableViewCell"
@@ -136,14 +137,26 @@ final class SearchResultTableViewCell: UITableViewCell {
         titleLabel.text = book.title
         authorLabel.text = book.author
 
-        // TODO: Kingfisher로 이미지 로드
-        // bookImageView.kf.setImage(with: URL(string: book.image))
-        bookImageView.backgroundColor = .systemGray4
+        // Kingfisher로 이미지 로드
+        if let imageURL = URL(string: book.image) {
+            bookImageView.kf.setImage(
+                with: imageURL,
+                placeholder: UIImage(systemName: "book.fill"),
+                options: [
+                    .transition(.fade(0.3)),
+                    .cacheOriginalImage
+                ]
+            )
+        } else {
+            bookImageView.image = UIImage(systemName: "book.fill")
+            bookImageView.tintColor = .systemGray3
+        }
     }
 
     // MARK: - Prepare for Reuse
     override func prepareForReuse() {
         super.prepareForReuse()
+        bookImageView.kf.cancelDownloadTask()
         bookImageView.image = nil
         titleLabel.text = nil
         authorLabel.text = nil
