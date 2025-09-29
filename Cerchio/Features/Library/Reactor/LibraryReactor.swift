@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import RealmSwift
 import ReactorKit
 import RxSwift
 
@@ -16,13 +17,13 @@ final class LibraryReactor: Reactor {
     }
 
     enum Mutation {
-        case setBooks([Book])
+        case setBooks(Results<RealmBook>)
         case setLoading(Bool)
         case setError(Error?)
     }
 
     struct State {
-        var books: [Book] = Book.sample
+        var books: Results<RealmBook>! = nil
         var isLoading: Bool = false
         var error: Error?
     }
@@ -34,16 +35,15 @@ final class LibraryReactor: Reactor {
         case .loadBooks:
             return Observable.concat([
                 Observable.just(.setLoading(true)),
-                Observable.just(.setBooks(Book.sample))
-                    .delay(.milliseconds(LibraryConstants.Animation.initialLoadDelayMilliseconds), scheduler: MainScheduler.instance),
+                loadBooks(),
                 Observable.just(.setLoading(false))
             ])
 
         case .refreshBooks:
             return Observable.concat([
                 Observable.just(.setLoading(true)),
-                Observable.just(.setBooks(Book.sample))
-                    .delay(.milliseconds(LibraryConstants.Animation.refreshDelayMilliseconds), scheduler: MainScheduler.instance),
+//                Observable.just(.setBooks(Book.sample))
+//                    .delay(.milliseconds(LibraryConstants.Animation.refreshDelayMilliseconds), scheduler: MainScheduler.instance),
                 Observable.just(.setLoading(false))
             ])
         }
@@ -64,5 +64,12 @@ final class LibraryReactor: Reactor {
         }
 
         return newState
+    }
+    
+    private func loadBooks() -> Observable<Mutation> {
+        let realm = try! Realm()
+        let books = realm.objects(RealmBook.self)
+        
+        return .just(.setBooks(books))
     }
 }

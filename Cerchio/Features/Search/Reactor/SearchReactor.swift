@@ -8,6 +8,7 @@
 import Foundation
 import ReactorKit
 import RxSwift
+import RealmSwift
 
 final class SearchReactor: Reactor {
     enum Action {
@@ -60,10 +61,34 @@ final class SearchReactor: Reactor {
             ])
 
         case .addBookToLibrary(let book):
-            // TODO: BookService를 통한 도서 추가 로직
-            print(book)
-            print("책 추가: \(book.title)")
-            return Observable.empty()
+            // 현재 상태에서 매칭되는 원본 BookSearchItem 찾기
+            let originalItems = currentState.originalSearchItems
+
+            if let matchingItem = originalItems.first(where: { $0.isbn == book.isbn }) {
+                // 원본 데이터를 RealmBook으로 변환
+                let realmBook = matchingItem.toRealmBook()
+
+                // Realm에 저장
+                return saveBookToRealm(realmBook)
+                    .do(onNext: { success in
+                        if success {
+                            print("✅ 책 저장 성공: \(realmBook.cleanTitle)")
+                            print("📚 저장된 데이터:")
+                            print("  - 제목: \(realmBook.cleanTitle)")
+                            print("  - 저자: \(realmBook.author)")
+                            print("  - 출판사: \(realmBook.publisher)")
+                            print("  - 출간일: \(realmBook.pubdate)")
+                            print("  - 가격: \(realmBook.formattedPrice ?? "정보 없음")")
+                            print("  - ISBN: \(realmBook.isbn)")
+                        } else {
+                            print("❌ 책 저장 실패: \(realmBook.cleanTitle)")
+                        }
+                    })
+                    .map { _ in .setError(nil) }
+            } else {
+                print("⚠️ 매칭되는 원본 데이터를 찾을 수 없음: \(book.title)")
+                return Observable.just(.setError("원본 데이터를 찾을 수 없습니다."))
+            }
         }
     }
 
@@ -122,5 +147,27 @@ final class SearchReactor: Reactor {
                     Observable.just(.setSearchState(.error(errorMessage)))
                 ])
             }
+    }
+
+    // MARK: - Realm Save Helper
+    private func saveBookToRealm(_ realmBook: RealmBook) -> Observable<Bool> {
+        return Observable.create { observer in
+            do {
+                let realm = try Realm()
+                print(realm.configuration.fileURL)
+                try realm.write {
+                    realm.add(realmBook)
+                }
+                observer.onNext(true)
+                observer.onCompleted()
+            } catch {
+                print("❌ Realm 저장 에러: \(error.localizedDescription)")
+                observer.onNext(false)
+                observer.onCompleted()
+            }
+            return Disposables.create()
+        }
+//        .subscribe(on: ConcurrentDispatchQueueScheduler(qos: .background))
+        .observe(on: MainScheduler.instance)
     }
 }

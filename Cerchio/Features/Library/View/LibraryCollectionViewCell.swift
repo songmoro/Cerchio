@@ -60,10 +60,10 @@ final class LibraryCollectionViewCell: UICollectionViewCell, IsIdentifiable {
         }
     }
     
-    func configure(with item: Book) {
-        titleLabel.text = item.title
+    func configure(with item: RealmBook) {
+        titleLabel.text = item.cleanTitle
         authorLabel.text = item.author
-        
+
         guard let url = URL(string: item.image) else { return }
         coverImageView.kf.setImage(with: url)
     }

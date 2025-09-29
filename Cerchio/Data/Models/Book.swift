@@ -8,7 +8,7 @@
 import UIKit
 import RealmSwift
 
-class RealmBook: Object {
+class RealmBook: Object, Sendable {
     @Persisted(primaryKey: true) var id: ObjectId
     @Persisted var title: String
     @Persisted var link: String
@@ -212,26 +212,26 @@ nonisolated struct Book: Hashable, Codable {
 
 // MARK: - Book Extensions
 
-extension Book {
-    /// Converts Book to RealmBook model
-    /// Note: This conversion may lose some network-derived data
-    func toRealmBook() -> RealmBook {
-        return RealmBook(
-            title: title,
-            link: "", // Not available in Book model
-            image: image,
-            author: author,
-            discount: nil, // Not available in Book model
-            publisher: "", // Not available in Book model
-            isbn: isbn,
-            description: "", // Not available in Book model
-            pubdate: "", // Not available in Book model
-            cleanTitle: title,
-            cleanDescription: "", // Not available in Book model
-            formattedPubDate: nil, // Not available in Book model
-            formattedPrice: nil, // Not available in Book model
-            priceAsInt: nil, // Not available in Book model
-            createAt: dateAdded ?? Date()
-        )
-    }
-}
+//extension Book {
+//    /// Converts Book to RealmBook model
+//    /// Note: This conversion may lose some network-derived data
+//    func toRealmBook() -> RealmBook {
+//        return RealmBook(
+//            title: title,
+//            link: "", // Not available in Book model
+//            image: image,
+//            author: author,
+//            discount: nil, // Not available in Book model
+//            publisher: "", // Not available in Book model
+//            isbn: isbn,
+//            description: "", // Not available in Book model
+//            pubdate: "", // Not available in Book model
+//            cleanTitle: title,
+//            cleanDescription: "", // Not available in Book model
+//            formattedPubDate: nil, // Not available in Book model
+//            formattedPrice: nil, // Not available in Book model
+//            priceAsInt: nil, // Not available in Book model
+//            createAt: dateAdded ?? Date()
+//        )
+//    }
+//}

@@ -10,10 +10,11 @@ import ReactorKit
 import RxSwift
 import RxCocoa
 import SnapKit
+import RealmSwift
 
 final class LibraryViewController: BaseViewController<LibraryReactor> {
-    private typealias DataSource = UICollectionViewDiffableDataSource<Section, Book>
-    private typealias Snapshot = NSDiffableDataSourceSnapshot<Section, Book>
+    private typealias DataSource = UICollectionViewDiffableDataSource<Section, RealmBook>
+    private typealias Snapshot = NSDiffableDataSourceSnapshot<Section, RealmBook>
 
     private let collectionView = UICollectionView(frame: .zero, collectionViewLayout: .init())
     private var dataSource: DataSource!
@@ -53,18 +54,18 @@ final class LibraryViewController: BaseViewController<LibraryReactor> {
             .disposed(by: disposeBag)
 
         // Collection View Selection
-        collectionView.rx.itemSelected
-            .subscribe(onNext: { [weak self] indexPath in
-                guard let self = self,
-                      let reactor = self.reactor else { return }
-
-                let books = reactor.currentState.books
-                guard indexPath.item < books.count else { return }
-
-                let selectedBook = books[indexPath.item]
-                self.bookSelectionHandler?(selectedBook)
-            })
-            .disposed(by: disposeBag)
+//        collectionView.rx.itemSelected
+//            .subscribe(onNext: { [weak self] indexPath in
+//                guard let self = self,
+//                      let reactor = self.reactor else { return }
+//
+//                let books = reactor.currentState.books
+//                guard indexPath.item < books.count else { return }
+//
+//                let selectedBook = books[indexPath.item]
+//                self.bookSelectionHandler?(selectedBook)
+//            })
+//            .disposed(by: disposeBag)
 
         // State
         reactor.state
@@ -113,7 +114,7 @@ final class LibraryViewController: BaseViewController<LibraryReactor> {
         collectionView.collectionViewLayout.invalidateLayout()
     }
     
-    private func setupLongPressGesture(for cell: LibraryCollectionViewCell, with book: Book, at indexPath: IndexPath) {
+    private func setupLongPressGesture(for cell: LibraryCollectionViewCell, with book: RealmBook, at indexPath: IndexPath) {
         // 기존 제스처 제거 (셀 재사용 시)
         cell.gestureRecognizers?.removeAll()
 
@@ -195,12 +196,12 @@ final class LibraryViewController: BaseViewController<LibraryReactor> {
         present(alert, animated: true)
     }
 
-    private func updateData(books: [Book]) {
-        guard let dataSource = dataSource else { return }
+    private func updateData(books: Results<RealmBook>?) {
+        guard let dataSource = dataSource, let books = books else { return }
 
         var snapshot = Snapshot()
         snapshot.appendSections([.book])
-        snapshot.appendItems(books, toSection: .book)
+        snapshot.appendItems(Array(books), toSection: .book)
         dataSource.apply(snapshot, animatingDifferences: true)
     }
 
@@ -220,11 +221,11 @@ extension LibraryViewController: MasonryLayoutProtocol {
         guard let reactor = reactor else { return LibraryConstants.HeightCalculation.defaultHeight }
 
         let books = reactor.currentState.books
-        guard indexPath.item < books.count else { return LibraryConstants.HeightCalculation.defaultHeight }
+        guard let books = books, indexPath.item < books.count else { return LibraryConstants.HeightCalculation.defaultHeight }
 
         let book = books[indexPath.item]
 
         // TODO: 레이블 글자 크기 계산 개선
-        return (UIScreen.main.bounds.height / LibraryConstants.HeightCalculation.screenHeightDivider) + CGFloat(max(1, book.title.count / LibraryConstants.HeightCalculation.titleCharacterDivider) * LibraryConstants.HeightCalculation.titleLineHeight) + CGFloat(max(1, book.author.count / LibraryConstants.HeightCalculation.authorCharacterDivider) * LibraryConstants.HeightCalculation.authorLineHeight)
+        return (UIScreen.main.bounds.height / LibraryConstants.HeightCalculation.screenHeightDivider) + CGFloat(max(1, book.cleanTitle.count / LibraryConstants.HeightCalculation.titleCharacterDivider) * LibraryConstants.HeightCalculation.titleLineHeight) + CGFloat(max(1, book.author.count / LibraryConstants.HeightCalculation.authorCharacterDivider) * LibraryConstants.HeightCalculation.authorLineHeight)
     }
 }
