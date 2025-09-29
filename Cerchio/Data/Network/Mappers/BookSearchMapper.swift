@@ -29,14 +29,45 @@ struct BookSearchMapper {
         )
     }
 
+    /// Maps a BookSearchItem to a RealmBook model (preserves all network response data)
+    static func mapToRealmBook(_ item: BookSearchItem) -> RealmBook {
+        return RealmBook(
+            title: item.title,
+            link: item.link,
+            image: item.image,
+            author: item.author,
+            discount: item.discount,
+            publisher: item.publisher,
+            isbn: item.isbn,
+            description: item.description,
+            pubdate: item.pubdate,
+            cleanTitle: item.cleanTitle,
+            cleanDescription: item.cleanDescription,
+            formattedPubDate: item.formattedPubDate,
+            formattedPrice: item.formattedPrice,
+            priceAsInt: item.priceAsInt,
+            createAt: Date()
+        )
+    }
+
     /// Maps an array of BookSearchItems to an array of Book models
     static func mapToBooks(_ items: [BookSearchItem]) -> [Book] {
         return items.map { mapToBook($0) }
     }
 
+    /// Maps an array of BookSearchItems to an array of RealmBook models
+    static func mapToRealmBooks(_ items: [BookSearchItem]) -> [RealmBook] {
+        return items.map { mapToRealmBook($0) }
+    }
+
     /// Maps BookSearchResponse to an array of Book models
     static func mapResponseToBooks(_ response: BookSearchResponse) -> [Book] {
         return mapToBooks(response.items)
+    }
+
+    /// Maps BookSearchResponse to an array of RealmBook models
+    static func mapResponseToRealmBooks(_ response: BookSearchResponse) -> [RealmBook] {
+        return mapToRealmBooks(response.items)
     }
 
 }
@@ -66,12 +97,22 @@ extension BookSearchItem {
     func toBook() -> Book {
         return BookSearchMapper.mapToBook(self)
     }
+
+    /// Converts BookSearchItem to RealmBook model (preserves all network response data)
+    func toRealmBook() -> RealmBook {
+        return BookSearchMapper.mapToRealmBook(self)
+    }
 }
 
 extension BookSearchResponse {
     /// Converts BookSearchResponse to an array of Book models
     func toBooks() -> [Book] {
         return BookSearchMapper.mapResponseToBooks(self)
+    }
+
+    /// Converts BookSearchResponse to an array of RealmBook models
+    func toRealmBooks() -> [RealmBook] {
+        return BookSearchMapper.mapResponseToRealmBooks(self)
     }
 
     /// Converts BookSearchResponse to BookSearchResult with pagination info

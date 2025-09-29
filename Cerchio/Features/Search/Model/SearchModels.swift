@@ -11,7 +11,7 @@ import Foundation
 enum SearchState {
     case initial
     case searching
-    case results([Book])
+    case results([Book], [BookSearchItem])  // UI용 Book + 원본 BookSearchItem
     case noResults
     case error(String)
 }
@@ -22,9 +22,29 @@ extension SearchState {
         switch self {
         case .initial: return "initial"
         case .searching: return "searching"
-        case .results(let books): return "results(\(books.count))"
+        case .results(let books, _): return "results(\(books.count))"
         case .noResults: return "noResults"
         case .error(let message): return "error(\(message))"
+        }
+    }
+
+    /// UI 표시용 Book 배열 반환
+    var books: [Book] {
+        switch self {
+        case .results(let books, _):
+            return books
+        default:
+            return []
+        }
+    }
+
+    /// 원본 BookSearchItem 배열 반환
+    var originalItems: [BookSearchItem] {
+        switch self {
+        case .results(_, let items):
+            return items
+        default:
+            return []
         }
     }
 }

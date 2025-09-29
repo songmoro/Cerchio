@@ -21,6 +21,7 @@ final class SearchReactor: Reactor {
         case setSearchState(SearchState)
         case setLoading(Bool)
         case setError(String?)
+        case setOriginalSearchItems([BookSearchItem])
     }
 
     struct State {
@@ -28,9 +29,9 @@ final class SearchReactor: Reactor {
         var searchState: SearchState = .initial
         var isLoading: Bool = false
         var error: String?
+        var originalSearchItems: [BookSearchItem] = []  // 원본 데이터 보존
     }
-
-
+    
     let initialState = State()
 
     private let bookSearchService: BookSearchServiceProtocol
@@ -68,7 +69,7 @@ final class SearchReactor: Reactor {
 
     func reduce(state: State, mutation: Mutation) -> State {
         var newState = state
-
+        
         switch mutation {
         case .setSearchText(let text):
             newState.searchText = text
@@ -81,6 +82,9 @@ final class SearchReactor: Reactor {
 
         case .setError(let error):
             newState.error = error
+
+        case .setOriginalSearchItems(let items):
+            newState.originalSearchItems = items
         }
 
         return newState
@@ -90,14 +94,20 @@ final class SearchReactor: Reactor {
     private func performSearch(query: String) -> Observable<Mutation> {
         return bookSearchService
             .searchBooks(query: query, display: 100, start: 1, sort: .accuracy)
-            .map { response -> [Book] in
-                return BookSearchMapper.mapResponseToBooks(response)
-            }
-            .map { books in
+            .flatMap { response -> Observable<Mutation> in
+                let books = BookSearchMapper.mapResponseToBooks(response)
+                let originalItems = response.items
+
                 if books.isEmpty {
-                    return .setSearchState(.noResults)
+                    return Observable.concat([
+                        Observable.just(.setOriginalSearchItems([])),
+                        Observable.just(.setSearchState(.noResults))
+                    ])
                 } else {
-                    return .setSearchState(.results(books))
+                    return Observable.concat([
+                        Observable.just(.setOriginalSearchItems(originalItems)),
+                        Observable.just(.setSearchState(.results(books, originalItems)))
+                    ])
                 }
             }
             .catch { error in
@@ -107,7 +117,10 @@ final class SearchReactor: Reactor {
                 } else {
                     errorMessage = error.localizedDescription
                 }
-                return Observable.just(.setSearchState(.error(errorMessage)))
+                return Observable.concat([
+                    Observable.just(.setOriginalSearchItems([])),
+                    Observable.just(.setSearchState(.error(errorMessage)))
+                ])
             }
     }
 }

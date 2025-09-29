@@ -178,7 +178,7 @@ final class SearchViewController: BaseViewController<SearchReactor> {
         case .searching:
             hideEmptyState()
 
-        case .results(let books):
+        case .results(let books, _):
             hideEmptyState()
             updateSnapshot(with: books)
 
