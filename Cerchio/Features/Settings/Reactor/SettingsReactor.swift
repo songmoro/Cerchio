@@ -12,18 +12,21 @@ import RxSwift
 final class SettingsReactor: Reactor {
     enum Action {
         case resetAllData
+        case changeLanguage(AppLanguage)
     }
 
     enum Mutation {
         case setResetting(Bool)
         case setError(Error?)
         case resetCompleted
+        case languageChanged(AppLanguage)
     }
 
     struct State {
         var isResetting: Bool = false
         var error: Error?
         var resetCompleted: Bool = false
+        var currentLanguage: AppLanguage = LanguageManager.shared.currentLanguage
     }
 
     let initialState = State()
@@ -46,6 +49,10 @@ final class SettingsReactor: Reactor {
                     },
                 Observable.just(.setResetting(false))
             ])
+
+        case .changeLanguage(let language):
+            LanguageManager.shared.setLanguage(language)
+            return Observable.just(.languageChanged(language))
         }
     }
 
@@ -63,6 +70,9 @@ final class SettingsReactor: Reactor {
         case .resetCompleted:
             newState.resetCompleted = true
             newState.error = nil
+
+        case .languageChanged(let language):
+            newState.currentLanguage = language
         }
 
         return newState
