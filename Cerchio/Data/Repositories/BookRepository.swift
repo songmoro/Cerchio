@@ -24,6 +24,9 @@ protocol BookRepositoryProtocol {
     func saveBookStruct(_ book: Book) -> Observable<Book>
     func deleteBookByISBN(_ isbn: String) -> Observable<Void>
     func deleteBooksByISBNs(_ isbns: [String]) -> Observable<Void>
+
+    // Data management
+    func deleteAllData() -> Observable<Void>
 }
 
 final class BookRepository: BaseRepository<RealmBook>, BookRepositoryProtocol {
@@ -170,6 +173,26 @@ final class BookRepository: BaseRepository<RealmBook>, BookRepositoryProtocol {
                 // 책 삭제
                 self.realm.delete(book)
             }
+            return ()
+        }
+    }
+
+    // MARK: - Data Management
+
+    func deleteAllData() -> Observable<Void> {
+        return performWriteTransaction {
+            // 모든 인용구 삭제
+            let allQuotes = self.realm.objects(RealmQuote.self)
+            self.realm.delete(allQuotes)
+
+            // 모든 사진 삭제
+            let allPhotos = self.realm.objects(RealmPhoto.self)
+            self.realm.delete(allPhotos)
+
+            // 모든 책 삭제
+            let allBooks = self.realm.objects(RealmBook.self)
+            self.realm.delete(allBooks)
+
             return ()
         }
     }

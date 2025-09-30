@@ -8,6 +8,7 @@
 import UIKit
 import RxSwift
 import RxCocoa
+import ReactorKit
 
 enum TabBarNavigationEvent: NavigationEventProtocol {
     case librarySelected
@@ -47,10 +48,11 @@ final class TabBarCoordinator: BaseCoordinator, Coordinatable {
     private func setupTabBarController() {
         tabBarController = createTabBarController()
         navigationController.setViewControllers([tabBarController], animated: false)
-        
+
         let libraryViewController = createLibraryTab()
         let searchViewController = createSearchTab()
-        let viewControllers: [UIViewController] = [libraryViewController, searchViewController]
+        let settingsViewController = createSettingsTab()
+        let viewControllers: [UIViewController] = [libraryViewController, searchViewController, settingsViewController]
 
         tabBarController.setViewControllers(viewControllers, animated: false)
     }
@@ -92,6 +94,33 @@ final class TabBarCoordinator: BaseCoordinator, Coordinatable {
         setupSearchNavigation(searchViewController)
 
         return searchViewController
+    }
+
+    private func createSettingsTab() -> UIViewController {
+        let settingsViewController = SettingsViewController()
+        let bookRepository = dependencies.serviceFactory.createBookRepository()
+        let settingsReactor = SettingsReactor(bookRepository: bookRepository)
+
+        settingsViewController.reactor = settingsReactor
+        settingsViewController.tabBarItem = UITabBarItem(
+            title: "설정",
+            image: UIImage(systemName: "gearshape"),
+            tag: 2
+        )
+        settingsViewController.navigationItem.title = "설정"
+
+        // Reset 완료 시 서재 탭으로 이동
+        settingsReactor.state
+            .map { $0.resetCompleted }
+            .distinctUntilChanged()
+            .filter { $0 == true }
+            .observe(on: MainScheduler.instance)
+            .subscribe(onNext: { [weak self] _ in
+                self?.tabBarController.selectedIndex = 0 // Library tab
+            })
+            .disposed(by: disposeBag)
+
+        return settingsViewController
     }
 
     private func setupLibraryNavigation(_ libraryViewController: LibraryViewController) {
