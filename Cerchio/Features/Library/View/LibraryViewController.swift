@@ -27,6 +27,7 @@ final class LibraryViewController: BaseViewController<LibraryReactor> {
     private var selectedBookIds: Set<ObjectId> = []
     private var editButton: UIBarButtonItem!
     private var filterButton: UIBarButtonItem!
+    private var cancelButton: UIBarButtonItem!
 
     // Repository
     private var bookRepository: BookRepositoryProtocol?
@@ -57,9 +58,28 @@ final class LibraryViewController: BaseViewController<LibraryReactor> {
         configureDataSource()
     }
 
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+
+        // 화면이 다시 나타날 때마다 데이터 새로고침
+        reactor?.action.onNext(.loadBooks)
+    }
+
     // MARK: - Public Methods
     func setEditButton(_ button: UIBarButtonItem) {
         editButton = button
+    }
+
+    func setFilterButton(_ button: UIBarButtonItem) {
+        filterButton = button
+
+        // 취소 버튼 생성 (편집 모드에서 사용)
+        cancelButton = UIBarButtonItem(
+            title: NSLocalizedString("action.cancel", comment: "Cancel button"),
+            style: .plain,
+            target: self,
+            action: #selector(cancelButtonTapped)
+        )
     }
 
     func setBookRepository(_ repository: BookRepositoryProtocol) {
@@ -276,14 +296,26 @@ final class LibraryViewController: BaseViewController<LibraryReactor> {
     private func enterEditMode() {
         isEditMode = true
         selectedBookIds.removeAll()
+
+        // 햅틱 피드백
+        let generator = UIImpactFeedbackGenerator(style: .medium)
+        generator.impactOccurred()
+
         updateEditButtonState()
+        updateNavigationBarForEditMode()
         updateCollectionViewForEditMode()
     }
 
     private func exitEditMode() {
         isEditMode = false
         selectedBookIds.removeAll()
+
+        // 햅틱 피드백
+        let generator = UIImpactFeedbackGenerator(style: .light)
+        generator.impactOccurred()
+
         updateEditButtonState()
+        updateNavigationBarForEditMode()
         updateCollectionViewForEditMode()
 
         // 모든 셀의 선택 상태 해제
@@ -291,6 +323,23 @@ final class LibraryViewController: BaseViewController<LibraryReactor> {
             collectionView.deselectItem(at: indexPath, animated: true)
             updateCellSelection(at: indexPath, isSelected: false)
         }
+    }
+
+    private func updateNavigationBarForEditMode() {
+        guard let tabBarController = tabBarController else { return }
+
+        if isEditMode {
+            // 편집 모드: 필터 버튼을 취소 버튼으로 교체
+            tabBarController.navigationItem.rightBarButtonItems = [editButton, cancelButton]
+        } else {
+            // 일반 모드: 취소 버튼을 필터 버튼으로 교체
+            tabBarController.navigationItem.rightBarButtonItems = [editButton, filterButton]
+        }
+    }
+
+    @objc private func cancelButtonTapped() {
+        // 편집 모드 종료
+        exitEditMode()
     }
 
     private func updateEditButtonState() {

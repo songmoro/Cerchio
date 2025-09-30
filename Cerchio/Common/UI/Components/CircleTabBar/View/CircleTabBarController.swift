@@ -164,8 +164,9 @@ class CircleTabBarController: BaseTabBarController {
 
         navigationItem.rightBarButtonItems = [editButton, filterButton]
 
-        // LibraryViewController의 editButton 참조 업데이트
+        // LibraryViewController의 버튼 참조 업데이트
         libraryVC.setEditButton(editButton)
+        libraryVC.setFilterButton(filterButton)
     }
 
     private func setupSearchNavigationBar() {
