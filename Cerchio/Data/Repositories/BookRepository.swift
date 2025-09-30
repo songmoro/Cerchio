@@ -15,6 +15,7 @@ protocol BookRepositoryProtocol {
     func saveBook(_ book: RealmBook) -> Observable<RealmBook>
     func deleteBook(_ book: RealmBook) -> Observable<Void>
     func deleteBooksWithRelatedData(_ books: [RealmBook]) -> Observable<Void>
+    func deleteBooksByIds(_ bookIds: [ObjectId]) -> Observable<Void>
     // func updateFavoriteStatus(_ book: RealmBook, isFavorite: Bool) -> Observable<RealmBook>
 }
 
@@ -53,6 +54,32 @@ final class BookRepository: BaseRepository<RealmBook>, BookRepositoryProtocol {
 
                 // 관련된 사진들 삭제
                 let photosToDelete = self.realm.objects(RealmPhoto.self).filter("bookId == %@", bookId)
+                self.realm.delete(photosToDelete)
+
+                // 책 삭제
+                self.realm.delete(book)
+            }
+            return ()
+        }
+    }
+
+    func deleteBooksByIds(_ bookIds: [ObjectId]) -> Observable<Void> {
+        return performWriteTransaction {
+            for bookId in bookIds {
+                // Find book by ID
+                guard let book = self.realm.object(ofType: RealmBook.self, forPrimaryKey: bookId),
+                      !book.isInvalidated else {
+                    continue
+                }
+
+                let bookIdString = String(describing: bookId)
+
+                // 관련된 인용구들 삭제
+                let quotesToDelete = self.realm.objects(RealmQuote.self).filter("bookId == %@", bookIdString)
+                self.realm.delete(quotesToDelete)
+
+                // 관련된 사진들 삭제
+                let photosToDelete = self.realm.objects(RealmPhoto.self).filter("bookId == %@", bookIdString)
                 self.realm.delete(photosToDelete)
 
                 // 책 삭제

@@ -123,7 +123,14 @@ final class LibraryViewController: BaseViewController<LibraryReactor> {
         // State
         reactor.state
             .map { $0.books }
-            .distinctUntilChanged()
+            .distinctUntilChanged { oldBooks, newBooks in
+                // Compare by book IDs and count to detect changes
+                guard let oldBooks = oldBooks, let newBooks = newBooks else {
+                    return oldBooks == nil && newBooks == nil
+                }
+                guard oldBooks.count == newBooks.count else { return false }
+                return oldBooks.map { $0.id } == newBooks.map { $0.id }
+            }
             .observe(on: MainScheduler.instance)
             .subscribe(onNext: { [weak self] books in
                 self?.updateData(books: books)
@@ -403,18 +410,16 @@ final class LibraryViewController: BaseViewController<LibraryReactor> {
         guard let reactor = reactor,
               let bookRepository = bookRepository else { return }
 
-        // Get current books from reactor state
-        guard let currentBooks = reactor.currentState.books else { return }
+        // Copy selected IDs before clearing
+        let bookIdsToDelete = Array(selectedBookIds)
 
-        // Find books to delete by IDs
-        let booksToDelete = currentBooks.filter { selectedBookIds.contains($0.id) }
-
-        guard !booksToDelete.isEmpty else { return }
+        guard !bookIdsToDelete.isEmpty else { return }
 
         // 먼저 편집 모드를 종료하고 UI 업데이트 (무효화된 객체 참조 방지)
         exitEditMode()
 
-        bookRepository.deleteBooksWithRelatedData(booksToDelete)
+        // Use ID-based deletion to avoid working with invalidated objects
+        bookRepository.deleteBooksByIds(bookIdsToDelete)
             .observe(on: MainScheduler.instance)
             .subscribe(
                 onNext: { _ in

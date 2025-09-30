@@ -33,14 +33,14 @@ class ViewHighlightManager {
         self.containerView = containerView
         self.originalView = view
 
+        // Create snapshot
+        guard let snapshot = view.snapshotView(afterScreenUpdates: true) else { return }
+        highlightedSnapshotView = snapshot
+        
         // Hide original view if configured
         if configuration.hideOriginalView {
             view.alpha = 0
         }
-
-        // Create snapshot
-        guard let snapshot = view.snapshotView(afterScreenUpdates: true) else { return }
-        highlightedSnapshotView = snapshot
 
         // Calculate frame in container view coordinates
         guard let superview = view.superview else { return }
@@ -51,8 +51,19 @@ class ViewHighlightManager {
         snapshot.frame = scaledFrame
 
         // Apply corner radius
-        if let originalCornerRadius = view.layer.cornerRadius as CGFloat?, originalCornerRadius > 0 {
-            snapshot.layer.cornerRadius = originalCornerRadius * configuration.cornerRadiusMultiplier
+        let cornerRadius: CGFloat
+        if let configuredRadius = configuration.cornerRadius {
+            // Use configured corner radius
+            cornerRadius = configuredRadius * configuration.cornerRadiusMultiplier
+        } else if view.layer.cornerRadius > 0 {
+            // Use original view's corner radius
+            cornerRadius = view.layer.cornerRadius * configuration.cornerRadiusMultiplier
+        } else {
+            cornerRadius = 0
+        }
+
+        if cornerRadius > 0 {
+            snapshot.layer.cornerRadius = cornerRadius
             snapshot.layer.masksToBounds = true
         }
 

@@ -13,7 +13,7 @@ enum CircularMenuConstants {
     enum Layout {
         static let buttonSize: CGFloat = 50
         static let menuRadius: CGFloat = 100
-        static let scaleMultiplier: CGFloat = 1.0
+        static let scaleMultiplier: CGFloat = 1.2
         static let cornerRadius: CGFloat = 8
         static let labelMargin: CGFloat = 40
         static let shadowOffset = CGSize(width: 0, height: 0)

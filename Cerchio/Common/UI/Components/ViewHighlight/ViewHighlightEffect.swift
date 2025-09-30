@@ -55,6 +55,9 @@ struct ViewHighlightConfiguration {
     /// Duration of the highlight animation
     let animationDuration: TimeInterval
 
+    /// Corner radius to apply (if nil, uses original view's corner radius)
+    let cornerRadius: CGFloat?
+
     /// Corner radius multiplier (applied proportionally to scale)
     let cornerRadiusMultiplier: CGFloat
 
@@ -75,6 +78,7 @@ struct ViewHighlightConfiguration {
                 .rotation(degrees: 0) // Will be computed contextually
             ]),
             animationDuration: CircularMenuConstants.Animation.duration,
+            cornerRadius: CircularMenuConstants.Layout.cornerRadius,
             cornerRadiusMultiplier: CircularMenuConstants.Layout.scaleMultiplier,
             shadowColor: .black,
             shadowOpacity: CircularMenuConstants.Colors.shadowOpacity,
@@ -85,14 +89,15 @@ struct ViewHighlightConfiguration {
     }
 
     /// Configuration with contextual rotation based on screen position
+    /// Rotation direction is automatically determined: left side tilts left, right side tilts right
     static func withContextualRotation(tiltAngle: CGFloat = 5.0) -> ViewHighlightConfiguration {
         var config = ViewHighlightConfiguration.default
         return ViewHighlightConfiguration(
             effect: .combined([
-                .scale(CircularMenuConstants.Layout.scaleMultiplier),
-                .rotation(degrees: tiltAngle) // Will be determined by screen position
+                .rotation(degrees: 0) // 0 triggers contextual rotation calculation
             ]),
             animationDuration: config.animationDuration,
+            cornerRadius: config.cornerRadius,
             cornerRadiusMultiplier: config.cornerRadiusMultiplier,
             shadowColor: config.shadowColor,
             shadowOpacity: config.shadowOpacity,
