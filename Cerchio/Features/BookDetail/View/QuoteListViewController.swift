@@ -21,6 +21,7 @@ final class QuoteListViewController: BaseViewController<QuoteListReactor> {
 
     // MARK: - Properties
     var onAddQuoteTapped: (() -> Void)?
+    private var isEditMode: Bool = false
 
     // MARK: - Section Type
     nonisolated enum Section: CaseIterable {
@@ -46,7 +47,7 @@ final class QuoteListViewController: BaseViewController<QuoteListReactor> {
             action: #selector(addButtonTapped)
         )
 
-        // 편집 버튼 (보류)
+        // 편집 버튼
         let editButton = UIBarButtonItem(
             title: NSLocalizedString("action.edit", comment: "Edit action"),
             style: .plain,
@@ -55,6 +56,21 @@ final class QuoteListViewController: BaseViewController<QuoteListReactor> {
         )
 
         navigationItem.rightBarButtonItems = [addButton, editButton]
+    }
+
+    private func updateNavigationBar() {
+        guard let rightBarButtonItems = navigationItem.rightBarButtonItems,
+              rightBarButtonItems.count >= 2 else { return }
+
+        let editButton = rightBarButtonItems[1]
+
+        if isEditMode {
+            editButton.title = NSLocalizedString("action.done", comment: "Done action")
+            editButton.style = .done
+        } else {
+            editButton.title = NSLocalizedString("action.edit", comment: "Edit action")
+            editButton.style = .plain
+        }
     }
 
     private func setupTableView() {
@@ -141,8 +157,9 @@ final class QuoteListViewController: BaseViewController<QuoteListReactor> {
     }
 
     @objc private func editButtonTapped() {
-        // TODO: 편집 모드 구현 보류
-        print("📝 Edit button tapped - feature pending")
+        isEditMode.toggle()
+        tableView.setEditing(isEditMode, animated: true)
+        updateNavigationBar()
     }
 }
 
@@ -162,6 +179,21 @@ extension QuoteListViewController: UITableViewDelegate {
         }
 
         return UISwipeActionsConfiguration(actions: [deleteAction])
+    }
+
+    func tableView(_ tableView: UITableView, editingStyleForRowAt indexPath: IndexPath) -> UITableViewCell.EditingStyle {
+        return .delete
+    }
+
+    func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCell.EditingStyle, forRowAt indexPath: IndexPath) {
+        if editingStyle == .delete {
+            guard let quote = dataSource.itemIdentifier(for: indexPath) else { return }
+            deleteQuote(quote)
+        }
+    }
+
+    func tableView(_ tableView: UITableView, canMoveRowAt indexPath: IndexPath) -> Bool {
+        return false // 순서 변경은 비활성화
     }
 
     private func deleteQuote(_ quote: RealmQuote) {

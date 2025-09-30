@@ -73,6 +73,9 @@
         }
       }
     },
+    "action.done" : {
+      "comment" : "Done action"
+    },
     "action.edit" : {
       "comment" : "Edit button",
       "extractionState" : "manual",

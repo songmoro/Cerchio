@@ -142,9 +142,33 @@ final class BookDetailCoordinator: BaseCoordinator, Coordinatable {
     }
 
     private func deleteBook() {
-        // TODO: 실제 삭제 로직 구현
-        print("Book deleted: \(book.cleanTitle)")
-        navigationController.popViewController(animated: true)
+        let bookRepository = dependencies.serviceFactory.createBookRepository()
+
+        bookRepository.deleteBooksByISBNs([book.isbn])
+            .observe(on: MainScheduler.instance)
+            .subscribe(
+                onNext: { [weak self] _ in
+                    guard let self = self else { return }
+                    print("✅ Book deleted: \(self.book.cleanTitle)")
+                    self.navigationController.popViewController(animated: true)
+                },
+                onError: { [weak self] error in
+                    print("❌ Failed to delete book: \(error.localizedDescription)")
+                    self?.showDeleteErrorAlert()
+                }
+            )
+            .disposed(by: disposeBag)
+    }
+
+    private func showDeleteErrorAlert() {
+        let alert = UIAlertController(
+            title: "삭제 실패",
+            message: "도서를 삭제하는 중 오류가 발생했습니다.",
+            preferredStyle: .alert
+        )
+
+        alert.addAction(UIAlertAction(title: "확인", style: .default))
+        navigationController.present(alert, animated: true)
     }
 
     // MARK: - Navigation Methods
