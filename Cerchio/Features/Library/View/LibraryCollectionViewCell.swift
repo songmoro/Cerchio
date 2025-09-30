@@ -60,7 +60,7 @@ final class LibraryCollectionViewCell: UICollectionViewCell, IsIdentifiable {
         }
     }
     
-    func configure(with item: RealmBook) {
+    func configure(with item: Book) {
         titleLabel.text = item.cleanTitle
         authorLabel.text = item.author
 

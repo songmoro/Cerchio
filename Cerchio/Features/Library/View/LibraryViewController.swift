@@ -13,18 +13,18 @@ import SnapKit
 import RealmSwift
 
 final class LibraryViewController: BaseViewController<LibraryReactor> {
-    private typealias DataSource = UICollectionViewDiffableDataSource<Section, RealmBook>
-    private typealias Snapshot = NSDiffableDataSourceSnapshot<Section, RealmBook>
+    private typealias DataSource = UICollectionViewDiffableDataSource<Section, Book>
+    private typealias Snapshot = NSDiffableDataSourceSnapshot<Section, Book>
 
     private let collectionView = UICollectionView(frame: .zero, collectionViewLayout: .init())
     private var dataSource: DataSource!
 
     // Book selection handler
-    var bookSelectionHandler: ((RealmBook) -> Void)?
+    var bookSelectionHandler: ((Book) -> Void)?
 
     // Edit mode properties
     private var isEditMode = false
-    private var selectedBookIds: Set<ObjectId> = []
+    private var selectedISBNs: Set<String> = []
     private var editButton: UIBarButtonItem!
     private var filterButton: UIBarButtonItem!
     private var cancelButton: UIBarButtonItem!
@@ -105,13 +105,13 @@ final class LibraryViewController: BaseViewController<LibraryReactor> {
 
                 if self.isEditMode {
                     // 편집 모드에서는 선택/해제 토글
-                    if self.selectedBookIds.contains(selectedBook.id) {
-                        self.selectedBookIds.remove(selectedBook.id)
+                    if self.selectedISBNs.contains(selectedBook.isbn) {
+                        self.selectedISBNs.remove(selectedBook.isbn)
                         self.collectionView.deselectItem(at: indexPath, animated: true)
                     } else {
-                        self.selectedBookIds.insert(selectedBook.id)
+                        self.selectedISBNs.insert(selectedBook.isbn)
                     }
-                    self.updateCellSelection(at: indexPath, isSelected: self.selectedBookIds.contains(selectedBook.id))
+                    self.updateCellSelection(at: indexPath, isSelected: self.selectedISBNs.contains(selectedBook.isbn))
                     self.updateEditButtonState()
                 } else {
                     // 일반 모드에서는 책 상세로 이동
@@ -124,12 +124,12 @@ final class LibraryViewController: BaseViewController<LibraryReactor> {
         reactor.state
             .map { $0.books }
             .distinctUntilChanged { oldBooks, newBooks in
-                // Compare by book IDs and count to detect changes
+                // Compare by book ISBNs and count to detect changes
                 guard let oldBooks = oldBooks, let newBooks = newBooks else {
                     return oldBooks == nil && newBooks == nil
                 }
                 guard oldBooks.count == newBooks.count else { return false }
-                return oldBooks.map { $0.id } == newBooks.map { $0.id }
+                return oldBooks.map { $0.isbn } == newBooks.map { $0.isbn }
             }
             .observe(on: MainScheduler.instance)
             .subscribe(onNext: { [weak self] books in
@@ -175,7 +175,7 @@ final class LibraryViewController: BaseViewController<LibraryReactor> {
         collectionView.collectionViewLayout.invalidateLayout()
     }
     
-    private func setupLongPressGesture(for cell: LibraryCollectionViewCell, with book: RealmBook, at indexPath: IndexPath) {
+    private func setupLongPressGesture(for cell: LibraryCollectionViewCell, with book: Book, at indexPath: IndexPath) {
         // 기존 제스처 제거 (셀 재사용 시)
         cell.gestureRecognizers?.removeAll()
 
@@ -269,7 +269,7 @@ final class LibraryViewController: BaseViewController<LibraryReactor> {
         present(alert, animated: true)
     }
 
-    private func updateData(books: [RealmBook]?) {
+    private func updateData(books: [Book]?) {
         guard let dataSource = dataSource, let books = books else { return }
 
         var snapshot = Snapshot()
@@ -296,7 +296,7 @@ final class LibraryViewController: BaseViewController<LibraryReactor> {
 
     @objc public func editButtonTapped() {
         if isEditMode {
-            if selectedBookIds.isEmpty {
+            if selectedISBNs.isEmpty {
                 // 편집 모드 종료
                 exitEditMode()
             } else {
@@ -311,7 +311,7 @@ final class LibraryViewController: BaseViewController<LibraryReactor> {
 
     private func enterEditMode() {
         isEditMode = true
-        selectedBookIds.removeAll()
+        selectedISBNs.removeAll()
 
         // 햅틱 피드백
         let generator = UIImpactFeedbackGenerator(style: .medium)
@@ -324,7 +324,7 @@ final class LibraryViewController: BaseViewController<LibraryReactor> {
 
     private func exitEditMode() {
         isEditMode = false
-        selectedBookIds.removeAll()
+        selectedISBNs.removeAll()
 
         // 햅틱 피드백
         let generator = UIImpactFeedbackGenerator(style: .light)
@@ -360,7 +360,7 @@ final class LibraryViewController: BaseViewController<LibraryReactor> {
 
     private func updateEditButtonState() {
         if isEditMode {
-            if selectedBookIds.isEmpty {
+            if selectedISBNs.isEmpty {
                 editButton.title = NSLocalizedString("action.edit", comment: "Edit button")
                 editButton.style = .plain
             } else {
@@ -394,7 +394,7 @@ final class LibraryViewController: BaseViewController<LibraryReactor> {
     private func deleteSelectedBooks() {
         let alert = UIAlertController(
             title: NSLocalizedString("action.delete", comment: "Delete action"),
-            message: "선택한 \(selectedBookIds.count)개의 책을 삭제하시겠습니까?",
+            message: "선택한 \(selectedISBNs.count)개의 책을 삭제하시겠습니까?",
             preferredStyle: .alert
         )
 
@@ -410,16 +410,16 @@ final class LibraryViewController: BaseViewController<LibraryReactor> {
         guard let reactor = reactor,
               let bookRepository = bookRepository else { return }
 
-        // Copy selected IDs before clearing
-        let bookIdsToDelete = Array(selectedBookIds)
+        // Copy selected ISBNs before clearing
+        let isbnsToDelete = Array(selectedISBNs)
 
-        guard !bookIdsToDelete.isEmpty else { return }
+        guard !isbnsToDelete.isEmpty else { return }
 
         // 먼저 편집 모드를 종료하고 UI 업데이트 (무효화된 객체 참조 방지)
         exitEditMode()
 
-        // Use ID-based deletion to avoid working with invalidated objects
-        bookRepository.deleteBooksByIds(bookIdsToDelete)
+        // Use ISBN-based deletion to avoid working with invalidated objects
+        bookRepository.deleteBooksByISBNs(isbnsToDelete)
             .observe(on: MainScheduler.instance)
             .subscribe(
                 onNext: { _ in

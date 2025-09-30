@@ -17,13 +17,13 @@ final class LibraryReactor: Reactor {
     }
 
     enum Mutation {
-        case setBooks([RealmBook])
+        case setBooks([Book])
         case setLoading(Bool)
         case setError(Error?)
     }
 
     struct State {
-        var books: [RealmBook]? = nil
+        var books: [Book]? = nil
         var isLoading: Bool = false
         var error: Error?
     }
@@ -71,7 +71,7 @@ final class LibraryReactor: Reactor {
     }
 
     private func loadBooks() -> Observable<Mutation> {
-        return bookRepository.getAllBooks()
+        return bookRepository.getAllBooksAsStruct()
             .map { .setBooks($0) }
             .catch { error in
                 print("❌ Failed to load books: \(error.localizedDescription)")

@@ -100,7 +100,7 @@ final class TabBarCoordinator: BaseCoordinator, Coordinatable {
         }
     }
 
-    private func navigateToBookDetail(book: RealmBook) {
+    private func navigateToBookDetail(book: Book) {
         let bookDetailDependencies = BookDetailDependencies(
             serviceFactory: dependencies.serviceFactory,
             book: book

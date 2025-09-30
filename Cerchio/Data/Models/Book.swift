@@ -49,14 +49,25 @@ class RealmBook: Object, Sendable {
 nonisolated struct Book: Hashable, Codable {
     let id: String
     let title: String
+    let cleanTitle: String
+    let link: String
     let image: String
     let author: String
     let isbn: String
+    let publisher: String
+    let bookDescription: String
+    let cleanDescription: String
+    let pubdate: String
+    let discount: String?
+    let formattedPubDate: Date?
+    let formattedPrice: String?
+    let priceAsInt: Int?
+    let createAt: Date
+
+    // Extended properties for feature models
     let genre: String?
     let totalPages: Int?
     let isFavorite: Bool
-
-    // Extended properties for feature models
     let dateAdded: Date?
     let dateRead: Date?
     let readingStatus: ReadingStatus?
@@ -66,9 +77,20 @@ nonisolated struct Book: Hashable, Codable {
     init(
         id: String = UUID().uuidString,
         title: String,
+        cleanTitle: String? = nil,
+        link: String = "",
         image: String,
         author: String,
         isbn: String,
+        publisher: String = "",
+        bookDescription: String = "",
+        cleanDescription: String = "",
+        pubdate: String = "",
+        discount: String? = nil,
+        formattedPubDate: Date? = nil,
+        formattedPrice: String? = nil,
+        priceAsInt: Int? = nil,
+        createAt: Date = Date(),
         genre: String? = nil,
         totalPages: Int? = nil,
         isFavorite: Bool = false,
@@ -80,9 +102,20 @@ nonisolated struct Book: Hashable, Codable {
     ) {
         self.id = id
         self.title = title
+        self.cleanTitle = cleanTitle ?? title
+        self.link = link
         self.image = image
         self.author = author
         self.isbn = isbn
+        self.publisher = publisher
+        self.bookDescription = bookDescription
+        self.cleanDescription = cleanDescription
+        self.pubdate = pubdate
+        self.discount = discount
+        self.formattedPubDate = formattedPubDate
+        self.formattedPrice = formattedPrice
+        self.priceAsInt = priceAsInt
+        self.createAt = createAt
         self.genre = genre
         self.totalPages = totalPages
         self.isFavorite = isFavorite
@@ -246,18 +279,29 @@ extension RealmBook {
     func toBook() -> Book {
         return Book(
             id: String(describing: id),
-            title: cleanTitle,
+            title: title,
+            cleanTitle: cleanTitle,
+            link: link,
             image: image,
             author: author,
             isbn: isbn,
-            genre: nil, // Realm doesn't store genre currently
-            totalPages: nil, // Realm doesn't store totalPages currently
-            isFavorite: false, // Default value, should be managed separately
+            publisher: publisher,
+            bookDescription: bookDescription,
+            cleanDescription: cleanDescription,
+            pubdate: pubdate,
+            discount: discount,
+            formattedPubDate: formattedPubDate,
+            formattedPrice: formattedPrice,
+            priceAsInt: priceAsInt,
+            createAt: createAt,
+            genre: nil,
+            totalPages: nil,
+            isFavorite: false,
             dateAdded: createAt,
-            dateRead: nil, // Should be managed separately
-            readingStatus: .toRead, // Default value, should be managed separately
-            category: nil, // Should be managed separately
-            rating: nil // Should be managed separately
+            dateRead: nil,
+            readingStatus: .toRead,
+            category: nil,
+            rating: nil
         )
     }
 }
@@ -266,24 +310,23 @@ extension RealmBook {
 
 extension Book {
     /// Converts Book to RealmBook model
-    /// Note: This conversion may lose some network-derived data
     func toRealmBook() -> RealmBook {
         return RealmBook(
             title: title,
-            link: "", // Not available in Book model
+            link: link,
             image: image,
             author: author,
-            discount: nil, // Not available in Book model
-            publisher: "", // Not available in Book model
+            discount: discount,
+            publisher: publisher,
             isbn: isbn,
-            description: "", // Not available in Book model
-            pubdate: "", // Not available in Book model
-            cleanTitle: title,
-            cleanDescription: "", // Not available in Book model
-            formattedPubDate: nil, // Not available in Book model
-            formattedPrice: nil, // Not available in Book model
-            priceAsInt: nil, // Not available in Book model
-            createAt: dateAdded ?? Date()
+            description: bookDescription,
+            pubdate: pubdate,
+            cleanTitle: cleanTitle,
+            cleanDescription: cleanDescription,
+            formattedPubDate: formattedPubDate,
+            formattedPrice: formattedPrice,
+            priceAsInt: priceAsInt,
+            createAt: createAt
         )
     }
 }

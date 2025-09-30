@@ -10,13 +10,20 @@ import RealmSwift
 import RxSwift
 
 protocol BookRepositoryProtocol {
+    // RealmBook-based methods (legacy)
     func getAllBooks() -> Observable<[RealmBook]>
     func getBook(by id: String) -> Observable<RealmBook?>
     func saveBook(_ book: RealmBook) -> Observable<RealmBook>
     func deleteBook(_ book: RealmBook) -> Observable<Void>
     func deleteBooksWithRelatedData(_ books: [RealmBook]) -> Observable<Void>
     func deleteBooksByIds(_ bookIds: [ObjectId]) -> Observable<Void>
-    // func updateFavoriteStatus(_ book: RealmBook, isFavorite: Bool) -> Observable<RealmBook>
+
+    // Book struct-based methods (preferred)
+    func getAllBooksAsStruct() -> Observable<[Book]>
+    func getBookByISBN(_ isbn: String) -> Observable<Book?>
+    func saveBookStruct(_ book: Book) -> Observable<Book>
+    func deleteBookByISBN(_ isbn: String) -> Observable<Void>
+    func deleteBooksByISBNs(_ isbns: [String]) -> Observable<Void>
 }
 
 final class BookRepository: BaseRepository<RealmBook>, BookRepositoryProtocol {
@@ -73,6 +80,84 @@ final class BookRepository: BaseRepository<RealmBook>, BookRepositoryProtocol {
                 }
 
                 let bookIdString = String(describing: bookId)
+
+                // 관련된 인용구들 삭제
+                let quotesToDelete = self.realm.objects(RealmQuote.self).filter("bookId == %@", bookIdString)
+                self.realm.delete(quotesToDelete)
+
+                // 관련된 사진들 삭제
+                let photosToDelete = self.realm.objects(RealmPhoto.self).filter("bookId == %@", bookIdString)
+                self.realm.delete(photosToDelete)
+
+                // 책 삭제
+                self.realm.delete(book)
+            }
+            return ()
+        }
+    }
+
+    // MARK: - Book Struct-based Methods
+
+    func getAllBooksAsStruct() -> Observable<[Book]> {
+        return getAllBooks()
+            .map { realmBooks in
+                realmBooks.map { $0.toBook() }
+            }
+    }
+
+    func getBookByISBN(_ isbn: String) -> Observable<Book?> {
+        return Observable.create { observer in
+            let books = self.realm.objects(RealmBook.self).filter("isbn == %@", isbn)
+            if let realmBook = books.first, !realmBook.isInvalidated {
+                observer.onNext(realmBook.toBook())
+            } else {
+                observer.onNext(nil)
+            }
+            observer.onCompleted()
+            return Disposables.create()
+        }
+    }
+
+    func saveBookStruct(_ book: Book) -> Observable<Book> {
+        return performWriteTransaction {
+            let realmBook = book.toRealmBook()
+            self.realm.add(realmBook, update: .modified)
+            return realmBook.toBook()
+        }
+    }
+
+    func deleteBookByISBN(_ isbn: String) -> Observable<Void> {
+        return performWriteTransaction {
+            let books = self.realm.objects(RealmBook.self).filter("isbn == %@", isbn)
+            guard let book = books.first, !book.isInvalidated else {
+                return ()
+            }
+
+            let bookIdString = String(describing: book.id)
+
+            // 관련된 인용구들 삭제
+            let quotesToDelete = self.realm.objects(RealmQuote.self).filter("bookId == %@", bookIdString)
+            self.realm.delete(quotesToDelete)
+
+            // 관련된 사진들 삭제
+            let photosToDelete = self.realm.objects(RealmPhoto.self).filter("bookId == %@", bookIdString)
+            self.realm.delete(photosToDelete)
+
+            // 책 삭제
+            self.realm.delete(book)
+            return ()
+        }
+    }
+
+    func deleteBooksByISBNs(_ isbns: [String]) -> Observable<Void> {
+        return performWriteTransaction {
+            for isbn in isbns {
+                let books = self.realm.objects(RealmBook.self).filter("isbn == %@", isbn)
+                guard let book = books.first, !book.isInvalidated else {
+                    continue
+                }
+
+                let bookIdString = String(describing: book.id)
 
                 // 관련된 인용구들 삭제
                 let quotesToDelete = self.realm.objects(RealmQuote.self).filter("bookId == %@", bookIdString)

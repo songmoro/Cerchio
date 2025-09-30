@@ -46,6 +46,12 @@ final class LibraryCoordinator: BaseCoordinator, Coordinatable {
 
         libraryViewController.coordinator = self
         libraryViewController.reactor = libraryReactor
+        libraryViewController.setBookRepository(bookRepository)
+
+        // Book selection handler
+        libraryViewController.bookSelectionHandler = { [weak self] book in
+            self?.showBookDetail(book)
+        }
 
         navigationController.setViewControllers([libraryViewController], animated: false)
     }
@@ -71,7 +77,7 @@ final class LibraryCoordinator: BaseCoordinator, Coordinatable {
 
     // MARK: - Navigation Methods
 
-    func showBookDetail(_ book: RealmBook) {
+    func showBookDetail(_ book: Book) {
         let bookDetailDependencies = BookDetailDependencies(
             serviceFactory: dependencies.serviceFactory,
             book: book

@@ -11,16 +11,16 @@ import RxCocoa
 import ReactorKit
 
 enum BookDetailNavigationEvent: NavigationEventProtocol {
-    case showEditBook(RealmBook)
-    case showQuoteEntry(RealmBook)
-    case showReadingProgress(RealmBook)
-    case deleteBook(RealmBook)
+    case showEditBook(Book)
+    case showQuoteEntry(Book)
+    case showReadingProgress(Book)
+    case deleteBook(Book)
 }
 
 // MARK: - BookDetail Dependencies
 struct BookDetailDependencies {
     let serviceFactory: ServiceFactory
-    let book: RealmBook
+    let book: Book
 }
 
 final class BookDetailCoordinator: BaseCoordinator, Coordinatable {
@@ -29,7 +29,7 @@ final class BookDetailCoordinator: BaseCoordinator, Coordinatable {
     // MARK: - Properties
     private var dependencies: BookDetailDependencies!
 
-    private var book: RealmBook {
+    private var book: Book {
         return dependencies.book
     }
 

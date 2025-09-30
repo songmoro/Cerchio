@@ -28,7 +28,7 @@ final class BookDetailReactor: Reactor {
     }
 
     struct State {
-        var book: RealmBook
+        var book: Book
         var bookDetail: BookDetail?
         var isLoading: Bool = false
         var error: Error?
@@ -40,7 +40,7 @@ final class BookDetailReactor: Reactor {
     let initialState: State
 
     // MARK: - Initialization
-    init(book: RealmBook) {
+    init(book: Book) {
         self.initialState = State(book: book)
     }
 
@@ -125,7 +125,7 @@ final class BookDetailReactor: Reactor {
 
 // MARK: - Supporting Models
 struct BookDetail: Hashable {
-    let book: RealmBook
+    let book: Book
     let totalPages: Int
     let startDate: Date?
     let endDate: Date?
