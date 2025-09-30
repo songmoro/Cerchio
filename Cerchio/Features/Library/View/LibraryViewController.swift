@@ -383,7 +383,7 @@ final class LibraryViewController: BaseViewController<LibraryReactor> {
 
         if isSelected {
             cell.layer.borderWidth = 2.0
-            cell.layer.borderColor = UIColor.systemBlue.cgColor
+            cell.layer.borderColor = UIColor.forestGreen.cgColor
             cell.layer.cornerRadius = 8.0
         } else {
             cell.layer.borderWidth = 0.0
@@ -394,7 +394,7 @@ final class LibraryViewController: BaseViewController<LibraryReactor> {
     private func deleteSelectedBooks() {
         let alert = UIAlertController(
             title: NSLocalizedString("action.delete", comment: "Delete action"),
-            message: "선택한 \\(selectedBookIds.count)개의 책을 삭제하시겠습니까?",
+            message: "선택한 \(selectedBookIds.count)개의 책을 삭제하시겠습니까?",
             preferredStyle: .alert
         )
 
