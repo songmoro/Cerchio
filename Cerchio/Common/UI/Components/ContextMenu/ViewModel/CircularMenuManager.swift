@@ -17,11 +17,13 @@ class CircularMenuManager {
         selectedView: UIView,
         items: [CircularMenuItemProtocol],
         from presentingViewController: UIViewController,
+        highlightConfiguration: ViewHighlightConfiguration = .withContextualRotation(),
         customization: ((CircularMenuViewController) -> Void)? = nil
     ) {
         let menuVC = CircularMenuViewController()
         menuVC.modalPresentationStyle = .overFullScreen
         menuVC.modalTransitionStyle = .crossDissolve
+        menuVC.highlightConfiguration = highlightConfiguration
 
         customization?(menuVC)
         currentMenuViewController = menuVC
@@ -37,12 +39,14 @@ class CircularMenuManager {
         items: [CircularMenuItemProtocol],
         presentingViewController: UIViewController,
         minimumPressDuration: TimeInterval = 0.5,
+        highlightConfiguration: ViewHighlightConfiguration = .withContextualRotation(),
         customization: ((CircularMenuViewController) -> Void)? = nil
     ) {
         let gestureHandler = LongPressGestureHandler(
             targetView: targetView,
             items: items,
             presentingViewController: presentingViewController,
+            highlightConfiguration: highlightConfiguration,
             customization: customization
         )
 

@@ -35,12 +35,20 @@ class LongPressGestureHandler: NSObject {
     private let targetView: UIView
     private let items: [CircularMenuItemProtocol]
     private weak var presentingViewController: UIViewController?
+    private let highlightConfiguration: ViewHighlightConfiguration
     private let customization: ((CircularMenuViewController) -> Void)?
 
-    init(targetView: UIView, items: [CircularMenuItemProtocol], presentingViewController: UIViewController, customization: ((CircularMenuViewController) -> Void)? = nil) {
+    init(
+        targetView: UIView,
+        items: [CircularMenuItemProtocol],
+        presentingViewController: UIViewController,
+        highlightConfiguration: ViewHighlightConfiguration = .withContextualRotation(),
+        customization: ((CircularMenuViewController) -> Void)? = nil
+    ) {
         self.targetView = targetView
         self.items = items
         self.presentingViewController = presentingViewController
+        self.highlightConfiguration = highlightConfiguration
         self.customization = customization
         super.init()
     }
@@ -59,6 +67,7 @@ class LongPressGestureHandler: NSObject {
                 selectedView: targetView,
                 items: items,
                 from: presentingVC,
+                highlightConfiguration: highlightConfiguration,
                 customization: customization
             )
 

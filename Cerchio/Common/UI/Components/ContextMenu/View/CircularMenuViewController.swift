@@ -11,13 +11,13 @@ import SnapKit
 class CircularMenuViewController: UIViewController {
     var menuButtons: [CircularMenuButton] = []
     var menuItems: [CircularMenuItemProtocol] = []
-    private var originalImageView: UIView!
     private var highlightedButton: CircularMenuButton?
     private var labelView: UIView?
     var centerPoint: CGPoint = .zero
 
-    // 원본 뷰 참조 저장 (숨기기/보이기 관리용)
-    private weak var originalView: UIView?
+    // View highlighting
+    private var highlightManager: ViewHighlightManager?
+    var highlightConfiguration: ViewHighlightConfiguration = .withContextualRotation()
 
     // 롱 프레스 시작 위치 저장 (레이블 위치 결정용)
     private var initialTouchPosition: CGPoint = .zero
@@ -49,38 +49,10 @@ class CircularMenuViewController: UIViewController {
         centerPoint = point
         initialTouchPosition = point // 롱 프레스 시작 위치 저장
         menuItems = items
-        originalView = selectedView // 원본 뷰 참조 저장
-        originalImageView = selectedView.snapshotView(afterScreenUpdates: true)
 
-        // 정확한 좌표 계산: selectedView의 프레임을 현재 뷰 컨트롤러의 뷰 좌표계로 변환
-        guard let superview = selectedView.superview else { return }
-        let frameInCurrentView = superview.convert(selectedView.frame, to: self.view)
-
-        // 1.2배 크기로 확대하고 중앙 정렬
-        let scaledWidth = frameInCurrentView.width * CircularMenuConstants.Layout.scaleMultiplier
-        let scaledHeight = frameInCurrentView.height * CircularMenuConstants.Layout.scaleMultiplier
-        let scaledFrame = CGRect(
-            x: frameInCurrentView.midX - scaledWidth / 2,
-            y: frameInCurrentView.midY - scaledHeight / 2,
-            width: scaledWidth,
-            height: scaledHeight
-        )
-
-        originalImageView.frame = scaledFrame
-        originalImageView.layer.cornerRadius = CircularMenuConstants.Layout.cornerRadius * CircularMenuConstants.Layout.scaleMultiplier // 코너 반지름도 비례적으로 증가
-        originalImageView.layer.masksToBounds = true
-        originalImageView.layer.shadowColor = UIColor.black.cgColor
-        originalImageView.layer.shadowOpacity = CircularMenuConstants.Colors.shadowOpacity
-        originalImageView.layer.shadowOffset = CircularMenuConstants.Layout.shadowOffset
-        originalImageView.layer.shadowRadius = CircularMenuConstants.Layout.shadowRadius
-
-        let screenCenter = view.bounds.midX
-        let tiltAngle: CGFloat = frameInCurrentView.midX < screenCenter ? CircularMenuConstants.Angles.tiltAngleLeft : CircularMenuConstants.Angles.tiltAngleRight
-        let radians = tiltAngle * .pi / 180 // 라디안으로 변환
-        originalImageView.transform = CGAffineTransform(rotationAngle: radians)
-
-        // 원본 뷰 숨기기
-        selectedView.alpha = 0
+        // Use ViewHighlightManager for view highlighting
+        highlightManager = ViewHighlightManager(configuration: highlightConfiguration)
+        highlightManager?.highlight(view: selectedView, in: self.view, touchPoint: point)
 
         createMenuButtons()
         positionButtons(centerPoint: point)
@@ -371,11 +343,6 @@ class CircularMenuViewController: UIViewController {
 
     private func animateIn() {
         UIView.animate(withDuration: animationDuration, delay: CircularMenuConstants.Animation.presentationDelay, options: [.curveEaseOut]) {
-            self.view.addSubview(self.originalImageView)
-//            let uiView = UIView(frame: self.originalImageView.frame)
-//            uiView.backgroundColor = .systemRed.withAlphaComponent(0.3)
-//            self.view.addSubview(uiView)
-
             for button in self.menuButtons {
                 button.alpha = 1
                 self.view.addSubview(button)
@@ -396,10 +363,11 @@ class CircularMenuViewController: UIViewController {
                 button.alpha = 0
                 button.transform = CGAffineTransform(scaleX: CircularMenuConstants.Animation.initialScale, y: CircularMenuConstants.Animation.initialScale)
             }
-        }) { _ in
-            // 메뉴가 사라지기 전에 원본 뷰 다시 보이기
-            self.originalView?.alpha = 1
-            self.dismiss(animated: false)
+        }) { [weak self] _ in
+            // Dismiss highlight using ViewHighlightManager
+            self?.highlightManager?.dismiss(animated: false) {
+                self?.dismiss(animated: false)
+            }
         }
     }
 }

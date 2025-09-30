@@ -180,13 +180,22 @@ final class LibraryViewController: BaseViewController<LibraryReactor> {
             guard let self = self, let cell = cell else { return }
 
             let menuItems = self.createMenuItems()
+
+            // 하이라이트 효과 설정 (필요시 커스터마이즈 가능)
+            // 예시:
+            // - .withContextualRotation() - 기본값: 1.2배 확대 + 화면 위치에 따른 회전
+            // - ViewHighlightConfiguration(effect: .scale(1.5), ...) - 1.5배 확대만
+            // - ViewHighlightConfiguration(effect: .combined([.scale(1.3), .rotation(degrees: 10)]), ...) - 1.3배 확대 + 10도 회전
+            let highlightConfig = ViewHighlightConfiguration.withContextualRotation()
+
             CircularMenuManager.shared.addLongPressMenu(
-                        to: cell,
-                        targetView: cell,
-                        items: menuItems,
-                        presentingViewController: self,
-                        minimumPressDuration: LibraryConstants.Gesture.minimumPressDuration
-                    )
+                to: cell,
+                targetView: cell,
+                items: menuItems,
+                presentingViewController: self,
+                minimumPressDuration: LibraryConstants.Gesture.minimumPressDuration,
+                highlightConfiguration: highlightConfig
+            )
         }
     }
     
@@ -402,20 +411,21 @@ final class LibraryViewController: BaseViewController<LibraryReactor> {
 
         guard !booksToDelete.isEmpty else { return }
 
+        // 먼저 편집 모드를 종료하고 UI 업데이트 (무효화된 객체 참조 방지)
+        exitEditMode()
+
         bookRepository.deleteBooksWithRelatedData(booksToDelete)
             .observe(on: MainScheduler.instance)
             .subscribe(
-                onNext: { [weak self] _ in
-                    // 편집 모드 종료
-                    self?.exitEditMode()
-
+                onNext: { _ in
                     // 데이터 새로고침
                     reactor.action.onNext(.loadBooks)
                 },
                 onError: { [weak self] error in
                     print("❌ Failed to delete books: \\(error.localizedDescription)")
-                    // TODO: 에러 알럿 표시
                     self?.showDeleteErrorAlert()
+                    // 삭제 실패 시 데이터 새로고침하여 일관성 유지
+                    reactor.action.onNext(.loadBooks)
                 }
             )
             .disposed(by: disposeBag)
