@@ -12,6 +12,7 @@ import RxRelay
 final class QuoteSaveCoordinator: BaseCoordinator {
     struct Dependencies {
         let bookId: String
+        let serviceFactory: ServiceFactory
     }
 
     enum Result {
@@ -42,6 +43,10 @@ final class QuoteSaveCoordinator: BaseCoordinator {
     private func showQuoteSave() {
         let quoteSaveVC = QuoteSaveViewController(bookId: dependencies.bookId)
         quoteSaveVC.delegate = self
+
+        // Repository 주입
+        let quoteRepository = dependencies.serviceFactory.createQuoteRepository()
+        quoteSaveVC.setQuoteRepository(quoteRepository)
 
         let quoteSaveNavController = UINavigationController(rootViewController: quoteSaveVC)
         quoteSaveNavController.modalPresentationStyle = .pageSheet

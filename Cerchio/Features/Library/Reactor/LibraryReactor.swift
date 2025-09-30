@@ -17,18 +17,23 @@ final class LibraryReactor: Reactor {
     }
 
     enum Mutation {
-        case setBooks(Results<RealmBook>)
+        case setBooks([RealmBook])
         case setLoading(Bool)
         case setError(Error?)
     }
 
     struct State {
-        var books: Results<RealmBook>! = nil
+        var books: [RealmBook]? = nil
         var isLoading: Bool = false
         var error: Error?
     }
 
     let initialState = State()
+    private let bookRepository: BookRepositoryProtocol
+
+    init(bookRepository: BookRepositoryProtocol) {
+        self.bookRepository = bookRepository
+    }
 
     func mutate(action: Action) -> Observable<Mutation> {
         switch action {
@@ -42,8 +47,7 @@ final class LibraryReactor: Reactor {
         case .refreshBooks:
             return Observable.concat([
                 Observable.just(.setLoading(true)),
-//                Observable.just(.setBooks(Book.sample))
-//                    .delay(.milliseconds(LibraryConstants.Animation.refreshDelayMilliseconds), scheduler: MainScheduler.instance),
+                loadBooks(),
                 Observable.just(.setLoading(false))
             ])
         }
@@ -65,11 +69,13 @@ final class LibraryReactor: Reactor {
 
         return newState
     }
-    
+
     private func loadBooks() -> Observable<Mutation> {
-        let realm = try! Realm()
-        let books = realm.objects(RealmBook.self)
-        
-        return .just(.setBooks(books))
+        return bookRepository.getAllBooks()
+            .map { .setBooks($0) }
+            .catch { error in
+                print("❌ Failed to load books: \(error.localizedDescription)")
+                return Observable.just(.setError(error))
+            }
     }
 }

@@ -69,6 +69,35 @@ final class ServiceFactory: BaseServiceFactory<ServiceDependencies> {
         return MockBookSearchService(scenario: scenario)
     }
 
+    // MARK: - Repository Creation Methods
+
+    /// Creates a BookRepository instance
+    func createBookRepository() -> BookRepositoryProtocol {
+        do {
+            return try BookRepository()
+        } catch {
+            fatalError("Failed to create BookRepository: \(error)")
+        }
+    }
+
+    /// Creates a QuoteRepository instance
+    func createQuoteRepository() -> QuoteRepositoryProtocol {
+        do {
+            return try QuoteRepository()
+        } catch {
+            fatalError("Failed to create QuoteRepository: \(error)")
+        }
+    }
+
+    /// Creates a PhotoRepository instance
+    func createPhotoRepository() -> PhotoRepositoryProtocol {
+        do {
+            return try PhotoRepository()
+        } catch {
+            fatalError("Failed to create PhotoRepository: \(error)")
+        }
+    }
+
     // MARK: - Cache Management
     func clearServiceCache() {
         cacheQueue.async(flags: .barrier) {

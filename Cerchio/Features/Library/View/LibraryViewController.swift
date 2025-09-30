@@ -24,9 +24,12 @@ final class LibraryViewController: BaseViewController<LibraryReactor> {
 
     // Edit mode properties
     private var isEditMode = false
-    private var selectedBooks: Set<RealmBook> = []
+    private var selectedBookIds: Set<ObjectId> = []
     private var editButton: UIBarButtonItem!
     private var filterButton: UIBarButtonItem!
+
+    // Repository
+    private var bookRepository: BookRepositoryProtocol?
 
     nonisolated enum Section: CaseIterable {
         case book
@@ -59,6 +62,10 @@ final class LibraryViewController: BaseViewController<LibraryReactor> {
         editButton = button
     }
 
+    func setBookRepository(_ repository: BookRepositoryProtocol) {
+        bookRepository = repository
+    }
+
     override func bind(reactor: LibraryReactor) {
         // Action
         Observable.just(LibraryReactor.Action.loadBooks)
@@ -78,13 +85,13 @@ final class LibraryViewController: BaseViewController<LibraryReactor> {
 
                 if self.isEditMode {
                     // 편집 모드에서는 선택/해제 토글
-                    if self.selectedBooks.contains(selectedBook) {
-                        self.selectedBooks.remove(selectedBook)
+                    if self.selectedBookIds.contains(selectedBook.id) {
+                        self.selectedBookIds.remove(selectedBook.id)
                         self.collectionView.deselectItem(at: indexPath, animated: true)
                     } else {
-                        self.selectedBooks.insert(selectedBook)
+                        self.selectedBookIds.insert(selectedBook.id)
                     }
-                    self.updateCellSelection(at: indexPath, isSelected: self.selectedBooks.contains(selectedBook))
+                    self.updateCellSelection(at: indexPath, isSelected: self.selectedBookIds.contains(selectedBook.id))
                     self.updateEditButtonState()
                 } else {
                     // 일반 모드에서는 책 상세로 이동
@@ -226,12 +233,12 @@ final class LibraryViewController: BaseViewController<LibraryReactor> {
         present(alert, animated: true)
     }
 
-    private func updateData(books: Results<RealmBook>?) {
+    private func updateData(books: [RealmBook]?) {
         guard let dataSource = dataSource, let books = books else { return }
 
         var snapshot = Snapshot()
         snapshot.appendSections([.book])
-        snapshot.appendItems(Array(books), toSection: .book)
+        snapshot.appendItems(books, toSection: .book)
         dataSource.apply(snapshot, animatingDifferences: true)
     }
 
@@ -253,7 +260,7 @@ final class LibraryViewController: BaseViewController<LibraryReactor> {
 
     @objc public func editButtonTapped() {
         if isEditMode {
-            if selectedBooks.isEmpty {
+            if selectedBookIds.isEmpty {
                 // 편집 모드 종료
                 exitEditMode()
             } else {
@@ -268,14 +275,14 @@ final class LibraryViewController: BaseViewController<LibraryReactor> {
 
     private func enterEditMode() {
         isEditMode = true
-        selectedBooks.removeAll()
+        selectedBookIds.removeAll()
         updateEditButtonState()
         updateCollectionViewForEditMode()
     }
 
     private func exitEditMode() {
         isEditMode = false
-        selectedBooks.removeAll()
+        selectedBookIds.removeAll()
         updateEditButtonState()
         updateCollectionViewForEditMode()
 
@@ -288,7 +295,7 @@ final class LibraryViewController: BaseViewController<LibraryReactor> {
 
     private func updateEditButtonState() {
         if isEditMode {
-            if selectedBooks.isEmpty {
+            if selectedBookIds.isEmpty {
                 editButton.title = NSLocalizedString("action.edit", comment: "Edit button")
                 editButton.style = .plain
             } else {
@@ -322,7 +329,7 @@ final class LibraryViewController: BaseViewController<LibraryReactor> {
     private func deleteSelectedBooks() {
         let alert = UIAlertController(
             title: NSLocalizedString("action.delete", comment: "Delete action"),
-            message: "선택한 \\(selectedBooks.count)개의 책을 삭제하시겠습니까?",
+            message: "선택한 \\(selectedBookIds.count)개의 책을 삭제하시겠습니까?",
             preferredStyle: .alert
         )
 
@@ -335,38 +342,44 @@ final class LibraryViewController: BaseViewController<LibraryReactor> {
     }
 
     private func performDeletion() {
-        guard let reactor = reactor else { return }
+        guard let reactor = reactor,
+              let bookRepository = bookRepository else { return }
 
-        // Realm에서 삭제 - 메인 스레드에서 실행
-        DispatchQueue.main.async { [weak self] in
-            guard let self = self else { return }
+        // Get current books from reactor state
+        guard let currentBooks = reactor.currentState.books else { return }
 
-            let booksToDelete = Array(self.selectedBooks)
+        // Find books to delete by IDs
+        let booksToDelete = currentBooks.filter { selectedBookIds.contains($0.id) }
 
-            do {
-                let realm = try Realm()
-                try realm.write {
-                    for book in booksToDelete {
-                        // 관련된 인용구들도 함께 삭제
-                        let quotesToDelete = realm.objects(RealmQuote.self).filter("bookId == %@", String(describing: book.id))
-                        realm.delete(quotesToDelete)
+        guard !booksToDelete.isEmpty else { return }
 
-                        // 책 삭제
-                        realm.delete(book)
-                    }
+        bookRepository.deleteBooksWithRelatedData(booksToDelete)
+            .observe(on: MainScheduler.instance)
+            .subscribe(
+                onNext: { [weak self] _ in
+                    // 편집 모드 종료
+                    self?.exitEditMode()
+
+                    // 데이터 새로고침
+                    reactor.action.onNext(.loadBooks)
+                },
+                onError: { [weak self] error in
+                    print("❌ Failed to delete books: \\(error.localizedDescription)")
+                    // TODO: 에러 알럿 표시
+                    self?.showDeleteErrorAlert()
                 }
+            )
+            .disposed(by: disposeBag)
+    }
 
-                // 편집 모드 종료
-                self.exitEditMode()
-
-                // 데이터 새로고침
-                reactor.action.onNext(.loadBooks)
-
-            } catch {
-                print("❌ Failed to delete books: \\(error.localizedDescription)")
-                // TODO: 에러 알럿 표시
-            }
-        }
+    private func showDeleteErrorAlert() {
+        let alert = UIAlertController(
+            title: "삭제 실패",
+            message: "책 삭제에 실패했습니다. 다시 시도해주세요.",
+            preferredStyle: .alert
+        )
+        alert.addAction(UIAlertAction(title: "확인", style: .default))
+        present(alert, animated: true)
     }
 }
 

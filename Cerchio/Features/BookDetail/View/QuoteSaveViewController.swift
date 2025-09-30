@@ -8,6 +8,7 @@
 import UIKit
 import SnapKit
 import RealmSwift
+import RxSwift
 
 protocol QuoteSaveViewControllerDelegate: AnyObject {
     func quoteSaveViewController(_ controller: QuoteSaveViewController, didSaveQuote quote: String)
@@ -19,6 +20,8 @@ final class QuoteSaveViewController: UIViewController {
 
     // MARK: - Properties
     private let bookId: String
+    private var quoteRepository: QuoteRepositoryProtocol?
+    private let disposeBag = DisposeBag()
 
     // MARK: - UI Components
     private let textView: UITextView = {
@@ -65,6 +68,10 @@ final class QuoteSaveViewController: UIViewController {
     init(bookId: String) {
         self.bookId = bookId
         super.init(nibName: nil, bundle: nil)
+    }
+
+    func setQuoteRepository(_ repository: QuoteRepositoryProtocol) {
+        quoteRepository = repository
     }
 
     required init?(coder: NSCoder) {
@@ -182,22 +189,29 @@ final class QuoteSaveViewController: UIViewController {
 
     @objc private func saveTapped() {
         let quote = textView.text.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !quote.isEmpty else { return }
+        guard !quote.isEmpty, let quoteRepository = quoteRepository else { return }
 
         let pageNumber = Int(pageNumberTextField.text ?? "")
 
-        // Realm에 저장
+        // Repository를 통해 저장
         let realmQuote = RealmQuote(
             bookId: bookId,
             quote: quote,
             pageNumber: pageNumber
         )
 
-        if saveQuoteToRealm(realmQuote) {
-            delegate?.quoteSaveViewController(self, didSaveQuote: quote)
-        } else {
-            showSaveErrorAlert()
-        }
+        quoteRepository.saveQuote(realmQuote)
+            .observe(on: MainScheduler.instance)
+            .subscribe(
+                onNext: { [weak self] _ in
+                    self?.delegate?.quoteSaveViewController(self!, didSaveQuote: quote)
+                },
+                onError: { [weak self] error in
+                    print("❌ Failed to save quote: \\(error.localizedDescription)")
+                    self?.showSaveErrorAlert()
+                }
+            )
+            .disposed(by: disposeBag)
     }
 
     @objc private func dismissKeyboard() {
@@ -239,18 +253,6 @@ final class QuoteSaveViewController: UIViewController {
         navigationItem.rightBarButtonItem?.isEnabled = hasText
     }
 
-    private func saveQuoteToRealm(_ realmQuote: RealmQuote) -> Bool {
-        do {
-            let realm = try Realm()
-            try realm.write {
-                realm.add(realmQuote)
-            }
-            return true
-        } catch {
-            print("❌ Failed to save quote to Realm: \(error.localizedDescription)")
-            return false
-        }
-    }
 
     private func showDiscardConfirmation() {
         let alert = UIAlertController(

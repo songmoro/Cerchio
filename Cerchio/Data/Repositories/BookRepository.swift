@@ -1,0 +1,90 @@
+//
+//  BookRepository.swift
+//  Cerchio
+//
+//  Created by 송재훈 on 9/30/25.
+//
+
+import Foundation
+import RealmSwift
+import RxSwift
+
+protocol BookRepositoryProtocol {
+    func getAllBooks() -> Observable<[RealmBook]>
+    func getBook(by id: String) -> Observable<RealmBook?>
+    func saveBook(_ book: RealmBook) -> Observable<RealmBook>
+    func deleteBook(_ book: RealmBook) -> Observable<Void>
+    func deleteBooksWithRelatedData(_ books: [RealmBook]) -> Observable<Void>
+    // func updateFavoriteStatus(_ book: RealmBook, isFavorite: Bool) -> Observable<RealmBook>
+}
+
+final class BookRepository: BaseRepository<RealmBook>, BookRepositoryProtocol {
+
+    // MARK: - BookRepositoryProtocol
+    func getAllBooks() -> Observable<[RealmBook]> {
+        return fetch()
+    }
+
+    func getBook(by id: String) -> Observable<RealmBook?> {
+        return findById(id)
+    }
+
+    func saveBook(_ book: RealmBook) -> Observable<RealmBook> {
+        return save(book)
+    }
+
+    func deleteBook(_ book: RealmBook) -> Observable<Void> {
+        return delete(book)
+    }
+
+    func deleteBooksWithRelatedData(_ books: [RealmBook]) -> Observable<Void> {
+        return performWriteTransaction {
+            for book in books {
+                // Check if book is still valid before deletion
+                guard !book.isInvalidated else {
+                    continue // Skip already deleted books
+                }
+
+                let bookId = String(describing: book.id)
+
+                // 관련된 인용구들 삭제
+                let quotesToDelete = self.realm.objects(RealmQuote.self).filter("bookId == %@", bookId)
+                self.realm.delete(quotesToDelete)
+
+                // 관련된 사진들 삭제
+                let photosToDelete = self.realm.objects(RealmPhoto.self).filter("bookId == %@", bookId)
+                self.realm.delete(photosToDelete)
+
+                // 책 삭제
+                self.realm.delete(book)
+            }
+            return ()
+        }
+    }
+
+    // TODO: isFavorite 프로퍼티가 RealmBook에 추가되면 구현
+    // func updateFavoriteStatus(_ book: RealmBook, isFavorite: Bool) -> Observable<RealmBook> {
+    //     return performWriteTransaction {
+    //         book.isFavorite = isFavorite
+    //         return book
+    //     }
+    // }
+
+    // MARK: - Helper Methods
+    private func performWriteTransaction<U>(_ operation: @escaping () throws -> U) -> Observable<U> {
+        return Observable.create { observer in
+            DispatchQueue.main.async {
+                do {
+                    let result = try self.realm.write {
+                        try operation()
+                    }
+                    observer.onNext(result)
+                    observer.onCompleted()
+                } catch {
+                    observer.onError(RepositoryError.transactionFailed(error))
+                }
+            }
+            return Disposables.create()
+        }
+    }
+}

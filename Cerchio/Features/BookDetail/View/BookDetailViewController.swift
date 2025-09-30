@@ -25,6 +25,9 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
 
     // MARK: - Navigation Bar Buttons
     private var favoriteButton: UIBarButtonItem?
+
+    // MARK: - Dependencies
+    private var serviceFactory: ServiceFactory?
     
     // MARK: - Section & Item Types
     nonisolated enum Section: CaseIterable {
@@ -59,6 +62,10 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
     // MARK: - Public Methods
     func setFavoriteButton(_ button: UIBarButtonItem) {
         favoriteButton = button
+    }
+
+    func setServiceFactory(_ factory: ServiceFactory) {
+        serviceFactory = factory
     }
 
     private func updateFavoriteButton(isFavorite: Bool) {
@@ -267,12 +274,15 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
     
     // MARK: - Navigation Methods
     private func showQuoteEntry() {
-        guard let reactor = reactor else { return }
+        guard let reactor = reactor, let serviceFactory = serviceFactory else { return }
         let bookId = String(describing: reactor.currentState.book.id)
 
         let quoteSaveCoordinator = QuoteSaveCoordinator(
             navigationController: navigationController ?? UINavigationController(),
-            dependencies: QuoteSaveCoordinator.Dependencies(bookId: bookId)
+            dependencies: QuoteSaveCoordinator.Dependencies(
+                bookId: bookId,
+                serviceFactory: serviceFactory
+            )
         )
 
         addChildCoordinator(quoteSaveCoordinator)
@@ -549,38 +559,46 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
     }
     
     private func deletePhoto(_ image: UIImage) {
-        guard let reactor = reactor else { return }
+        guard let reactor = reactor,
+              let serviceFactory = serviceFactory else { return }
+
         let bookId = String(describing: reactor.currentState.book.id)
-        
-        do {
-            let realm = try Realm()
-            let photos = realm.objects(RealmPhoto.self).filter("bookId == %@", bookId)
-            
-            // 삭제할 사진 찾기 (이미지 데이터 비교)
-            var photoToDelete: RealmPhoto?
-            for photo in photos {
-                if let loadedImage = ImageStorageManager.shared.loadImage(fromPath: photo.localImagePath),
-                   loadedImage.pngData() == image.pngData() {
-                    photoToDelete = photo
-                    break
+        let photoRepository = serviceFactory.createPhotoRepository()
+
+        // Get all photos for this book
+        photoRepository.getPhotos(for: bookId)
+            .flatMap { photos -> Observable<RealmPhoto?> in
+                // Find photo to delete by comparing image data
+                for photo in photos {
+                    if let loadedImage = ImageStorageManager.shared.loadImage(fromPath: photo.localImagePath),
+                       loadedImage.pngData() == image.pngData() {
+                        return Observable.just(photo)
+                    }
                 }
+                return Observable.just(nil)
             }
-            
-            guard let targetPhoto = photoToDelete else { return }
-            
-            // Realm에서 삭제
-            try realm.write {
-                realm.delete(targetPhoto)
+            .flatMap { [weak self] photoToDelete -> Observable<Void> in
+                guard let photoToDelete = photoToDelete else {
+                    return Observable.error(NSError(domain: "PhotoNotFound", code: 404, userInfo: [NSLocalizedDescriptionKey: "Photo not found"]))
+                }
+
+                // Delete local file first
+                ImageStorageManager.shared.deleteImage(atPath: photoToDelete.localImagePath)
+
+                // Delete from repository
+                return photoRepository.deletePhoto(photoToDelete)
             }
-            
-            // 로컬 파일 삭제
-            ImageStorageManager.shared.deleteImage(atPath: targetPhoto.localImagePath)
-            
-            print("✅ Photo deleted successfully")
-            loadPhotosAndUpdateUI()
-        } catch {
-            print("❌ Failed to delete photo: \(error.localizedDescription)")
-        }
+            .observe(on: MainScheduler.instance)
+            .subscribe(
+                onNext: { [weak self] _ in
+                    print("✅ Photo deleted successfully")
+                    self?.loadPhotosAndUpdateUI()
+                },
+                onError: { error in
+                    print("❌ Failed to delete photo: \(error.localizedDescription)")
+                }
+            )
+            .disposed(by: disposeBag)
     }
 }
 

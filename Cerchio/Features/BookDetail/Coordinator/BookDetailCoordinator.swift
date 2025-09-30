@@ -57,6 +57,9 @@ final class BookDetailCoordinator: BaseCoordinator, Coordinatable {
         bookDetailViewController.coordinator = self
         bookDetailViewController.reactor = bookDetailReactor
 
+        // ServiceFactory 주입
+        bookDetailViewController.setServiceFactory(dependencies.serviceFactory)
+
         // 탭바 숨김 설정
         bookDetailViewController.hidesBottomBarWhenPushed = true
 

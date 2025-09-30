@@ -39,7 +39,10 @@ final class LibraryCoordinator: BaseCoordinator, Coordinatable {
 
     private func showLibraryViewController() {
         let libraryViewController = LibraryViewController()
-        let libraryReactor = LibraryReactor()
+
+        // Repository 주입
+        let bookRepository = dependencies.serviceFactory.createBookRepository()
+        let libraryReactor = LibraryReactor(bookRepository: bookRepository)
 
         libraryViewController.coordinator = self
         libraryViewController.reactor = libraryReactor

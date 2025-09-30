@@ -36,9 +36,11 @@ final class SearchReactor: Reactor {
     let initialState = State()
 
     private let bookSearchService: BookSearchServiceProtocol
+    private let bookRepository: BookRepositoryProtocol
 
-    init(bookSearchService: BookSearchServiceProtocol) {
+    init(bookSearchService: BookSearchServiceProtocol, bookRepository: BookRepositoryProtocol) {
         self.bookSearchService = bookSearchService
+        self.bookRepository = bookRepository
     }
 
     func mutate(action: Action) -> Observable<Mutation> {
@@ -69,7 +71,7 @@ final class SearchReactor: Reactor {
                 let realmBook = matchingItem.toRealmBook()
 
                 // Realm에 저장
-                return saveBookToRealm(realmBook)
+                return saveBookWithRepository(realmBook)
                     .do(onNext: { success in
                         if success {
                             print("✅ 책 저장 성공: \(realmBook.cleanTitle)")
@@ -149,25 +151,13 @@ final class SearchReactor: Reactor {
             }
     }
 
-    // MARK: - Realm Save Helper
-    private func saveBookToRealm(_ realmBook: RealmBook) -> Observable<Bool> {
-        return Observable.create { observer in
-            do {
-                let realm = try Realm()
-                print(realm.configuration.fileURL)
-                try realm.write {
-                    realm.add(realmBook)
-                }
-                observer.onNext(true)
-                observer.onCompleted()
-            } catch {
-                print("❌ Realm 저장 에러: \(error.localizedDescription)")
-                observer.onNext(false)
-                observer.onCompleted()
+    // MARK: - Repository Save Helper
+    private func saveBookWithRepository(_ realmBook: RealmBook) -> Observable<Bool> {
+        return bookRepository.saveBook(realmBook)
+            .map { _ in true }
+            .catch { error in
+                print("❌ Failed to save book: \(error.localizedDescription)")
+                return Observable.just(false)
             }
-            return Disposables.create()
-        }
-//        .subscribe(on: ConcurrentDispatchQueueScheduler(qos: .background))
-        .observe(on: MainScheduler.instance)
     }
 }

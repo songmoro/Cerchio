@@ -57,7 +57,11 @@ final class TabBarCoordinator: BaseCoordinator, Coordinatable {
 
     private func createLibraryTab() -> UIViewController {
         let libraryViewController = LibraryViewController()
-        let libraryReactor = LibraryReactor()
+
+        // Repository 주입
+        let bookRepository = dependencies.serviceFactory.createBookRepository()
+        let libraryReactor = LibraryReactor(bookRepository: bookRepository)
+        libraryViewController.setBookRepository(bookRepository)
 
         libraryViewController.reactor = libraryReactor
         libraryViewController.tabBarItem = UITabBarItem(
@@ -75,7 +79,8 @@ final class TabBarCoordinator: BaseCoordinator, Coordinatable {
     private func createSearchTab() -> UIViewController {
         let searchViewController = SearchViewController()
         let bookSearchService = dependencies.serviceFactory.createBookSearchService()
-        let searchReactor = SearchReactor(bookSearchService: bookSearchService)
+        let bookRepository = dependencies.serviceFactory.createBookRepository()
+        let searchReactor = SearchReactor(bookSearchService: bookSearchService, bookRepository: bookRepository)
 
         searchViewController.reactor = searchReactor
         searchViewController.tabBarItem = UITabBarItem(
