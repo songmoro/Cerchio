@@ -7,6 +7,7 @@
 
 import UIKit
 import SnapKit
+import Kingfisher
 
 final class BookInfoCollectionViewCell: UICollectionViewCell, IsIdentifiable {
     // MARK: - UI Components
@@ -116,7 +117,7 @@ final class BookInfoCollectionViewCell: UICollectionViewCell, IsIdentifiable {
 
     // MARK: - Configuration
     func configure(with bookDetail: BookDetail) {
-        titleLabel.text = bookDetail.book.title
+        titleLabel.text = bookDetail.book.cleanTitle
         authorLabel.text = bookDetail.book.author
         pagesLabel.text = "\(bookDetail.totalPages)페이지"
 
@@ -125,7 +126,6 @@ final class BookInfoCollectionViewCell: UICollectionViewCell, IsIdentifiable {
         dateFormatter.dateFormat = "yyyy.MM.dd"
 
         if let startDate = bookDetail.startDate {
-            print(bookDetail)
             let startDateString = dateFormatter.string(from: startDate)
             if let endDate = bookDetail.endDate {
                 let endDateString = dateFormatter.string(from: endDate)
@@ -140,9 +140,20 @@ final class BookInfoCollectionViewCell: UICollectionViewCell, IsIdentifiable {
         // 태그 설정
         setupTags(bookDetail.tags)
 
-        // 이미지 로드 (Kingfisher 사용 예정)
-        // TODO: Kingfisher로 이미지 로드
-        coverImageView.backgroundColor = .systemGray4
+        // 이미지 로드
+        if let url = URL(string: bookDetail.book.image) {
+            coverImageView.kf.setImage(
+                with: url,
+                placeholder: nil,
+                options: [
+                    .transition(.fade(0.2)),
+                    .cacheOriginalImage
+                ]
+            )
+        } else {
+            coverImageView.image = nil
+            coverImageView.backgroundColor = .systemGray4
+        }
     }
 
     private func setupTags(_ tags: [String]) {
