@@ -22,13 +22,19 @@ final class LibraryViewController: BaseViewController<LibraryReactor> {
     // Book selection handler
     var bookSelectionHandler: ((RealmBook) -> Void)?
 
+    // Edit mode properties
+    private var isEditMode = false
+    private var selectedBooks: Set<RealmBook> = []
+    private var editButton: UIBarButtonItem!
+    private var filterButton: UIBarButtonItem!
+
     nonisolated enum Section: CaseIterable {
         case book
     }
 
     override func setupUI() {
         super.setupUI()
-        
+
         let layout = MasonryLayout()
         collectionView.collectionViewLayout = layout
         layout.delegate = self
@@ -37,6 +43,7 @@ final class LibraryViewController: BaseViewController<LibraryReactor> {
         collectionView.backgroundColor = .clear
         collectionView.contentInset.bottom = 20
         collectionView.verticalScrollIndicatorInsets = .init(top: 0, left: 0, bottom: 20, right: 0)
+        collectionView.allowsMultipleSelection = true
         view.addSubview(collectionView)
 
         collectionView.snp.makeConstraints {
@@ -45,6 +52,11 @@ final class LibraryViewController: BaseViewController<LibraryReactor> {
         }
 
         configureDataSource()
+    }
+
+    // MARK: - Public Methods
+    func setEditButton(_ button: UIBarButtonItem) {
+        editButton = button
     }
 
     override func bind(reactor: LibraryReactor) {
@@ -63,7 +75,21 @@ final class LibraryViewController: BaseViewController<LibraryReactor> {
                 guard let books, indexPath.item < books.count else { return }
 
                 let selectedBook = books[indexPath.item]
-                self.bookSelectionHandler?(selectedBook)
+
+                if self.isEditMode {
+                    // 편집 모드에서는 선택/해제 토글
+                    if self.selectedBooks.contains(selectedBook) {
+                        self.selectedBooks.remove(selectedBook)
+                        self.collectionView.deselectItem(at: indexPath, animated: true)
+                    } else {
+                        self.selectedBooks.insert(selectedBook)
+                    }
+                    self.updateCellSelection(at: indexPath, isSelected: self.selectedBooks.contains(selectedBook))
+                    self.updateEditButtonState()
+                } else {
+                    // 일반 모드에서는 책 상세로 이동
+                    self.bookSelectionHandler?(selectedBook)
+                }
             })
             .disposed(by: disposeBag)
 
@@ -108,6 +134,7 @@ final class LibraryViewController: BaseViewController<LibraryReactor> {
         dataSource.apply(snapshot, animatingDifferences: false)
     }
 
+
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
         // 뷰의 레이아웃이 완료된 후 컬렉션 뷰 레이아웃 업데이트
@@ -117,6 +144,9 @@ final class LibraryViewController: BaseViewController<LibraryReactor> {
     private func setupLongPressGesture(for cell: LibraryCollectionViewCell, with book: RealmBook, at indexPath: IndexPath) {
         // 기존 제스처 제거 (셀 재사용 시)
         cell.gestureRecognizers?.removeAll()
+
+        // 편집 모드에서는 롱 프레스 제스처 비활성화
+        guard !isEditMode else { return }
 
         // 셀이 화면에 완전히 표시된 후에 제스처 추가
         DispatchQueue.main.async { [weak self, weak cell] in
@@ -212,6 +242,130 @@ final class LibraryViewController: BaseViewController<LibraryReactor> {
         } else {
             // TODO: 로딩 인디케이터 숨기기
             print("Loading completed")
+        }
+    }
+
+    // MARK: - Edit Mode Actions
+    @objc public func filterButtonTapped() {
+        // TODO: 필터 기능 구현
+        print("Filter button tapped")
+    }
+
+    @objc public func editButtonTapped() {
+        if isEditMode {
+            if selectedBooks.isEmpty {
+                // 편집 모드 종료
+                exitEditMode()
+            } else {
+                // 선택된 책들 삭제
+                deleteSelectedBooks()
+            }
+        } else {
+            // 편집 모드 진입
+            enterEditMode()
+        }
+    }
+
+    private func enterEditMode() {
+        isEditMode = true
+        selectedBooks.removeAll()
+        updateEditButtonState()
+        updateCollectionViewForEditMode()
+    }
+
+    private func exitEditMode() {
+        isEditMode = false
+        selectedBooks.removeAll()
+        updateEditButtonState()
+        updateCollectionViewForEditMode()
+
+        // 모든 셀의 선택 상태 해제
+        for indexPath in collectionView.indexPathsForSelectedItems ?? [] {
+            collectionView.deselectItem(at: indexPath, animated: true)
+            updateCellSelection(at: indexPath, isSelected: false)
+        }
+    }
+
+    private func updateEditButtonState() {
+        if isEditMode {
+            if selectedBooks.isEmpty {
+                editButton.title = NSLocalizedString("action.edit", comment: "Edit button")
+                editButton.style = .plain
+            } else {
+                editButton.title = NSLocalizedString("action.delete", comment: "Delete button")
+                editButton.style = .plain
+            }
+        } else {
+            editButton.title = NSLocalizedString("action.edit", comment: "Edit button")
+            editButton.style = .plain
+        }
+    }
+
+    private func updateCollectionViewForEditMode() {
+        // 편집 모드에 따라 컬렉션 뷰 상태 업데이트
+        collectionView.reloadData()
+    }
+
+    private func updateCellSelection(at indexPath: IndexPath, isSelected: Bool) {
+        guard let cell = collectionView.cellForItem(at: indexPath) as? LibraryCollectionViewCell else { return }
+
+        if isSelected {
+            cell.layer.borderWidth = 2.0
+            cell.layer.borderColor = UIColor.systemBlue.cgColor
+            cell.layer.cornerRadius = 8.0
+        } else {
+            cell.layer.borderWidth = 0.0
+            cell.layer.borderColor = UIColor.clear.cgColor
+        }
+    }
+
+    private func deleteSelectedBooks() {
+        let alert = UIAlertController(
+            title: NSLocalizedString("action.delete", comment: "Delete action"),
+            message: "선택한 \\(selectedBooks.count)개의 책을 삭제하시겠습니까?",
+            preferredStyle: .alert
+        )
+
+        alert.addAction(UIAlertAction(title: NSLocalizedString("action.cancel", comment: "Cancel action"), style: .cancel))
+        alert.addAction(UIAlertAction(title: NSLocalizedString("action.delete", comment: "Delete action"), style: .destructive) { [weak self] _ in
+            self?.performDeletion()
+        })
+
+        present(alert, animated: true)
+    }
+
+    private func performDeletion() {
+        guard let reactor = reactor else { return }
+
+        // Realm에서 삭제 - 메인 스레드에서 실행
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
+
+            let booksToDelete = Array(self.selectedBooks)
+
+            do {
+                let realm = try Realm()
+                try realm.write {
+                    for book in booksToDelete {
+                        // 관련된 인용구들도 함께 삭제
+                        let quotesToDelete = realm.objects(RealmQuote.self).filter("bookId == %@", String(describing: book.id))
+                        realm.delete(quotesToDelete)
+
+                        // 책 삭제
+                        realm.delete(book)
+                    }
+                }
+
+                // 편집 모드 종료
+                self.exitEditMode()
+
+                // 데이터 새로고침
+                reactor.action.onNext(.loadBooks)
+
+            } catch {
+                print("❌ Failed to delete books: \\(error.localizedDescription)")
+                // TODO: 에러 알럿 표시
+            }
         }
     }
 }

@@ -22,6 +22,9 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
 
     // MARK: - Child Coordinators
     private var childCoordinators: [Coordinator] = []
+
+    // MARK: - Navigation Bar Buttons
+    private var favoriteButton: UIBarButtonItem?
     
     // MARK: - Section & Item Types
     nonisolated enum Section: CaseIterable {
@@ -39,47 +42,28 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
     // MARK: - Lifecycle
     override func setupUI() {
         super.setupUI()
-        setupNavigationBar()
         setupCollectionView()
         setupLayout()
         configureDataSource()
     }
+
     
-    private func setupNavigationBar() {
-        // 즐겨찾기 버튼
-        let favoriteButton = UIBarButtonItem(
-            image: UIImage(systemName: "heart"),
-            style: .plain,
-            target: self,
-            action: #selector(favoriteButtonTapped)
-        )
-        
-        // 삭제 버튼
-        let deleteButton = UIBarButtonItem(
-            image: UIImage(systemName: "trash"),
-            style: .plain,
-            target: self,
-            action: #selector(deleteButtonTapped)
-        )
-        
-        navigationItem.rightBarButtonItems = [deleteButton, favoriteButton]
-    }
-    
-    @objc private func favoriteButtonTapped() {
+    @objc public func favoriteButtonTapped() {
         reactor?.action.onNext(.toggleFavorite)
     }
-    
-    @objc private func deleteButtonTapped() {
+
+    @objc public func deleteButtonTapped() {
         reactor?.action.onNext(.deleteBook)
     }
-    
+
+    // MARK: - Public Methods
+    func setFavoriteButton(_ button: UIBarButtonItem) {
+        favoriteButton = button
+    }
+
     private func updateFavoriteButton(isFavorite: Bool) {
-        guard let rightBarButtonItems = navigationItem.rightBarButtonItems,
-              rightBarButtonItems.count >= 2 else { return }
-        
-        let favoriteButton = rightBarButtonItems[1] // 두 번째 버튼이 즐겨찾기 버튼
         let imageName = isFavorite ? "heart.fill" : "heart"
-        favoriteButton.image = UIImage(systemName: imageName)
+        favoriteButton?.image = UIImage(systemName: imageName)
     }
     
     override func bind(reactor: BookDetailReactor) {

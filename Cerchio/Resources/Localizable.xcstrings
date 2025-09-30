@@ -73,6 +73,24 @@
         }
       }
     },
+    "action.edit" : {
+      "comment" : "Edit button",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Edit"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "편집"
+          }
+        }
+      }
+    },
     "action.save" : {
       "comment" : "Save button"
     },

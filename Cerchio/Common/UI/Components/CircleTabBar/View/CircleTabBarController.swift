@@ -60,6 +60,12 @@ class CircleTabBarController: BaseTabBarController {
         setupCustomTabBar()
         tabBar.isHidden = true
     }
+
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        // 앱 초기 시작 시 네비게이션 바 설정
+        updateNavigationTitle()
+    }
     
     private func setupCustomTabBar() {
         let swiftUITabBar = CircleTabBarView(viewModel: circleTabBarViewModel)
@@ -106,6 +112,9 @@ class CircleTabBarController: BaseTabBarController {
             circleTabBarViewModel.selectedIndex = 0
             selectedIndex = 0
         }
+
+        // 탭 아이템 업데이트 후 네비게이션 바도 업데이트
+        updateNavigationTitle()
     }
 
     private func updateNavigationTitle() {
@@ -113,6 +122,76 @@ class CircleTabBarController: BaseTabBarController {
               selectedIndex < viewControllers.count else { return }
 
         let selectedViewController = viewControllers[selectedIndex]
+
+        // 네비게이션 타이틀 업데이트
         navigationItem.title = selectedViewController.navigationItem.title
+
+        // 네비게이션 바 버튼들 업데이트
+        updateNavigationBarButtons(for: selectedViewController)
+    }
+
+    private func updateNavigationBarButtons(for viewController: UIViewController) {
+        // 기본적으로 모든 버튼 제거
+        navigationItem.leftBarButtonItem = nil
+        navigationItem.rightBarButtonItems = nil
+
+        // 뷰 컨트롤러 타입에 따라 적절한 네비게이션 바 설정
+        if let libraryVC = viewController as? LibraryViewController {
+            setupLibraryNavigationBar(libraryVC)
+        } else if viewController is SearchViewController {
+            setupSearchNavigationBar()
+        } else if let bookDetailVC = viewController as? BookDetailViewController {
+            setupBookDetailNavigationBar(bookDetailVC)
+        }
+    }
+
+    private func setupLibraryNavigationBar(_ libraryVC: LibraryViewController) {
+        // 필터 버튼
+        let filterButton = UIBarButtonItem(
+            image: UIImage(systemName: "line.3.horizontal.decrease.circle"),
+            style: .plain,
+            target: libraryVC,
+            action: #selector(LibraryViewController.filterButtonTapped)
+        )
+
+        // 편집 버튼
+        let editButton = UIBarButtonItem(
+            title: NSLocalizedString("action.edit", comment: "Edit button"),
+            style: .plain,
+            target: libraryVC,
+            action: #selector(LibraryViewController.editButtonTapped)
+        )
+
+        navigationItem.rightBarButtonItems = [editButton, filterButton]
+
+        // LibraryViewController의 editButton 참조 업데이트
+        libraryVC.setEditButton(editButton)
+    }
+
+    private func setupSearchNavigationBar() {
+        // 검색 화면에서는 네비게이션 바 버튼 없음
+    }
+
+    private func setupBookDetailNavigationBar(_ bookDetailVC: BookDetailViewController) {
+        // 즐겨찾기 버튼
+        let favoriteButton = UIBarButtonItem(
+            image: UIImage(systemName: "heart"),
+            style: .plain,
+            target: bookDetailVC,
+            action: #selector(BookDetailViewController.favoriteButtonTapped)
+        )
+
+        // 삭제 버튼
+        let deleteButton = UIBarButtonItem(
+            image: UIImage(systemName: "trash"),
+            style: .plain,
+            target: bookDetailVC,
+            action: #selector(BookDetailViewController.deleteButtonTapped)
+        )
+
+        navigationItem.rightBarButtonItems = [deleteButton, favoriteButton]
+
+        // BookDetailViewController에게 즐겨찾기 버튼 참조 전달
+        bookDetailVC.setFavoriteButton(favoriteButton)
     }
 }

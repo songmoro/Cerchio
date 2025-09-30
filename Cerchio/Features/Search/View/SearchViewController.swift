@@ -62,13 +62,14 @@ final class SearchViewController: BaseViewController<SearchReactor> {
     // MARK: - Lifecycle
     override func setupUI() {
         super.setupUI()
-        
+
         setupSearchBar()
         setupTableView()
         setupEmptyState()
         setupLayout()
         configureDataSource()
     }
+
 
     override func bind(reactor: SearchReactor) {
         // Action
