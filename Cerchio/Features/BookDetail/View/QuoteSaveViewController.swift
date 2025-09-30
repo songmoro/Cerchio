@@ -84,9 +84,16 @@ final class QuoteSaveViewController: UIViewController {
         setupUI()
         setupNavigationBar()
         setupKeyboardHandling()
+        setupModalBehavior()
 
         // 자동으로 텍스트뷰에 포커스
         textView.becomeFirstResponder()
+    }
+
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        // 확실하게 modal presentation 설정
+        isModalInPresentation = true
     }
 
     // MARK: - Setup
@@ -142,6 +149,7 @@ final class QuoteSaveViewController: UIViewController {
             target: self,
             action: #selector(cancelTapped)
         )
+        cancelButton.tintColor = .systemBlue
         navigationItem.leftBarButtonItem = cancelButton
 
         // 저장 버튼
@@ -151,9 +159,29 @@ final class QuoteSaveViewController: UIViewController {
             target: self,
             action: #selector(saveTapped)
         )
+        saveButton.tintColor = .systemBlue
         navigationItem.rightBarButtonItem = saveButton
 
+        // 네비게이션 바 스타일 설정
+        setupNavigationBarAppearance()
         updateSaveButtonState()
+    }
+
+    private func setupNavigationBarAppearance() {
+        // 바텀 시트에 적합한 네비게이션 바 스타일
+        guard let navigationBar = navigationController?.navigationBar else { return }
+
+        let appearance = UINavigationBarAppearance()
+        appearance.configureWithDefaultBackground()
+        appearance.backgroundColor = .systemBackground
+        appearance.titleTextAttributes = [
+            .font: UIFont.systemFont(ofSize: 17, weight: .semibold),
+            .foregroundColor: UIColor.label
+        ]
+
+        navigationBar.standardAppearance = appearance
+        navigationBar.scrollEdgeAppearance = appearance
+        navigationBar.compactAppearance = appearance
     }
 
     private func setupKeyboardHandling() {
@@ -176,6 +204,14 @@ final class QuoteSaveViewController: UIViewController {
             name: UIResponder.keyboardWillHideNotification,
             object: nil
         )
+    }
+
+    private func setupModalBehavior() {
+        // 모달이 취소/저장 버튼으로만 dismiss되도록 설정
+        isModalInPresentation = true
+
+        // Navigation controller의 modal presentation도 설정
+        navigationController?.isModalInPresentation = true
     }
 
     // MARK: - Actions
@@ -251,6 +287,15 @@ final class QuoteSaveViewController: UIViewController {
     private func updateSaveButtonState() {
         let hasText = !textView.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
         navigationItem.rightBarButtonItem?.isEnabled = hasText
+
+        // 텍스트가 있으면 더욱 확실하게 modal dismiss 방지
+        updateModalPresentationState()
+    }
+
+    private func updateModalPresentationState() {
+        // 항상 modal presentation 유지
+        isModalInPresentation = true
+        navigationController?.isModalInPresentation = true
     }
 
 

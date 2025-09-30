@@ -51,6 +51,9 @@ final class QuoteSaveCoordinator: BaseCoordinator {
         let quoteSaveNavController = UINavigationController(rootViewController: quoteSaveVC)
         quoteSaveNavController.modalPresentationStyle = .pageSheet
 
+        // Navigation Controller의 modal presentation 설정
+        quoteSaveNavController.isModalInPresentation = true
+
         // 페이지 시트 크기 설정
         if let sheet = quoteSaveNavController.sheetPresentationController {
             sheet.detents = [.large()]
