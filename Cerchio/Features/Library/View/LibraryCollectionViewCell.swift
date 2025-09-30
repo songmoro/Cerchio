@@ -71,5 +71,9 @@ final class LibraryCollectionViewCell: UICollectionViewCell, IsIdentifiable {
     override func prepareForReuse() {
         super.prepareForReuse()
         coverImageView.image = nil
+
+        // Border 초기화
+        layer.borderWidth = 0
+        layer.borderColor = UIColor.clear.cgColor
     }
 }

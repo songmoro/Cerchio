@@ -12,7 +12,7 @@ import RxCocoa
 import SnapKit
 import RealmSwift
 
-final class LibraryViewController: BaseViewController<LibraryReactor> {
+final class LibraryViewController: BaseViewController<LibraryReactor>, UICollectionViewDelegate {
     private typealias DataSource = UICollectionViewDiffableDataSource<Section, Book>
     private typealias Snapshot = NSDiffableDataSourceSnapshot<Section, Book>
 
@@ -48,6 +48,7 @@ final class LibraryViewController: BaseViewController<LibraryReactor> {
         collectionView.contentInset.bottom = 20
         collectionView.verticalScrollIndicatorInsets = .init(top: 0, left: 0, bottom: 20, right: 0)
         collectionView.allowsMultipleSelection = true
+        collectionView.delegate = self
         view.addSubview(collectionView)
 
         collectionView.snp.makeConstraints {
@@ -168,6 +169,23 @@ final class LibraryViewController: BaseViewController<LibraryReactor> {
         dataSource.apply(snapshot, animatingDifferences: false)
     }
 
+    // MARK: - UICollectionViewDelegate
+    func collectionView(_ collectionView: UICollectionView, willDisplay cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
+        // 편집 모드에서 선택된 셀인 경우 border 다시 적용
+        guard isEditMode,
+              let reactor = reactor,
+              let books = reactor.currentState.books,
+              indexPath.item < books.count else { return }
+
+        let book = books[indexPath.item]
+        let isSelected = selectedISBNs.contains(book.isbn)
+
+        if isSelected {
+            cell.layer.borderWidth = 2.0
+            cell.layer.borderColor = UIColor.forestGreen.cgColor
+            cell.layer.cornerRadius = 8.0
+        }
+    }
 
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
@@ -334,10 +352,16 @@ final class LibraryViewController: BaseViewController<LibraryReactor> {
         updateNavigationBarForEditMode()
         updateCollectionViewForEditMode()
 
-        // 모든 셀의 선택 상태 해제
+        // 모든 셀의 선택 상태 및 border 해제
         for indexPath in collectionView.indexPathsForSelectedItems ?? [] {
             collectionView.deselectItem(at: indexPath, animated: true)
             updateCellSelection(at: indexPath, isSelected: false)
+        }
+
+        // 모든 가시 셀의 border 제거 (선택되지 않았지만 border가 있을 수 있는 셀 포함)
+        for cell in collectionView.visibleCells {
+            cell.layer.borderWidth = 0
+            cell.layer.borderColor = UIColor.clear.cgColor
         }
     }
 
