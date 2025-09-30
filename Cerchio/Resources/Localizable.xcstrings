@@ -94,6 +94,9 @@
     "action.save" : {
       "comment" : "Save button"
     },
+    "action.view_all" : {
+      "comment" : "View all action"
+    },
     "book_detail.add_quote" : {
       "comment" : "Add quote button",
       "extractionState" : "manual",

@@ -38,7 +38,8 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
     
     nonisolated enum Item: Hashable {
         case bookInfo(BookDetail)
-        case savedQuote(String, Date) // 문장 텍스트, 저장 날짜 (임시 모델)
+        case savedQuote(String, Int?, Date) // 문장 텍스트, 페이지, 저장 날짜
+        case addQuoteButton // 문장 추가 버튼
         case photoPage(UIImage?) // 임시 이미지 데이터
     }
     
@@ -134,7 +135,15 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
         // 셀 등록
         collectionView.register(BookInfoCollectionViewCell.self)
         collectionView.register(SavedQuoteCell.self)
+        collectionView.register(AddQuoteButtonCell.self)
         collectionView.register(PhotoPageCell.self)
+
+        // 헤더 등록
+        collectionView.register(
+            SavedQuotesSectionHeader.self,
+            forSupplementaryViewOfKind: UICollectionView.elementKindSectionHeader,
+            withReuseIdentifier: SavedQuotesSectionHeader.identifier
+        )
         
         view.addSubview(collectionView)
     }
@@ -185,22 +194,35 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
     }
     
     private func createSavedQuotesSection() -> NSCollectionLayoutSection {
-        // 저장한 문장 섹션 - 화면 높이의 1/3
+        // 저장한 문장 섹션 - 1열 레이아웃
         let itemSize = NSCollectionLayoutSize(
-            widthDimension: .fractionalWidth(1.0),
-            heightDimension: .fractionalHeight(1.0)
+            widthDimension: .fractionalWidth(1.0), // 1열
+            heightDimension: .estimated(120) // 예상 높이
         )
         let item = NSCollectionLayoutItem(layoutSize: itemSize)
-        
+        item.contentInsets = NSDirectionalEdgeInsets(top: 4, leading: 0, bottom: 4, trailing: 0)
+
         let groupSize = NSCollectionLayoutSize(
             widthDimension: .fractionalWidth(1.0),
-            heightDimension: .fractionalHeight(1.0/3.0) // 화면 높이의 1/3
+            heightDimension: .estimated(120)
         )
-        let group = NSCollectionLayoutGroup.horizontal(layoutSize: groupSize, subitems: [item])
-        
+        let group = NSCollectionLayoutGroup.vertical(layoutSize: groupSize, subitems: [item])
+
         let section = NSCollectionLayoutSection(group: group)
         section.contentInsets = NSDirectionalEdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16)
-        
+
+        // 섹션 헤더 추가
+        let headerSize = NSCollectionLayoutSize(
+            widthDimension: .fractionalWidth(1.0),
+            heightDimension: .estimated(44)
+        )
+        let header = NSCollectionLayoutBoundarySupplementaryItem(
+            layoutSize: headerSize,
+            elementKind: UICollectionView.elementKindSectionHeader,
+            alignment: .top
+        )
+        section.boundarySupplementaryItems = [header]
+
         return section
     }
     
@@ -232,15 +254,19 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
                 let cell: BookInfoCollectionViewCell = collectionView.dequeueReusableCell(BookInfoCollectionViewCell.self, for: indexPath)
                 cell.configure(with: bookDetail)
                 return cell
-                
-            case .savedQuote(let quote, let date):
+
+            case .savedQuote(let quote, let pageNumber, let date):
                 let cell: SavedQuoteCell = collectionView.dequeueReusableCell(SavedQuoteCell.self, for: indexPath)
-                cell.configure(with: quote, date: date)
+                cell.configure(with: quote, pageNumber: pageNumber, date: date)
+                return cell
+
+            case .addQuoteButton:
+                let cell: AddQuoteButtonCell = collectionView.dequeueReusableCell(AddQuoteButtonCell.self, for: indexPath)
                 cell.onAddQuoteTapped = { [weak self] in
                     self?.showQuoteEntry()
                 }
                 return cell
-                
+
             case .photoPage(let images):
                 let cell: PhotoPageCell = collectionView.dequeueReusableCell(PhotoPageCell.self, for: indexPath)
                 let imageArray: [UIImage?] = images != nil ? [images] : []
@@ -254,6 +280,27 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
                 return cell
             }
         }
+
+        // 헤더 supplementary view 설정
+        dataSource.supplementaryViewProvider = { [weak self] collectionView, kind, indexPath in
+            guard kind == UICollectionView.elementKindSectionHeader else { return nil }
+
+            let section = Section.allCases[indexPath.section]
+            if section == .savedQuotes {
+                let header = collectionView.dequeueReusableSupplementaryView(
+                    ofKind: kind,
+                    withReuseIdentifier: SavedQuotesSectionHeader.identifier,
+                    for: indexPath
+                ) as! SavedQuotesSectionHeader
+
+                header.onViewAllTapped = { [weak self] in
+                    self?.showAllQuotes()
+                }
+                return header
+            }
+
+            return nil
+        }
     }
     
     private func updateSnapshot(with bookDetail: BookDetail) {
@@ -264,7 +311,7 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
         snapshot.appendItems([.bookInfo(bookDetail)], toSection: .bookInfo)
 
         // 저장한 문장 (기본 빈 데이터, 실제 데이터는 별도 로드)
-        snapshot.appendItems([.savedQuote("", Date())], toSection: .savedQuotes)
+        snapshot.appendItems([.savedQuote("", nil, Date())], toSection: .savedQuotes)
 
         // 찍은 사진 (기본 빈 데이터, 실제 데이터는 별도 로드)
         snapshot.appendItems([.photoPage(nil)], toSection: .photoPages)
@@ -433,12 +480,16 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
         // 책 정보
         snapshot.appendItems([.bookInfo(bookDetail)], toSection: .bookInfo)
 
-        // 저장한 문장 - 실제 데이터로 업데이트
-        if let latestQuote = quotes.first {
-            snapshot.appendItems([.savedQuote(latestQuote.quote, latestQuote.createdAt)], toSection: .savedQuotes)
-        } else {
-            snapshot.appendItems([.savedQuote("", Date())], toSection: .savedQuotes)
+        // 저장한 문장 - 최대 2개 + 추가 버튼
+        var quoteItems: [Item] = []
+        let maxQuotes = min(quotes.count, 2)
+        for i in 0..<maxQuotes {
+            let quote = quotes[i]
+            quoteItems.append(.savedQuote(quote.quote, quote.pageNumber, quote.createdAt))
         }
+        // 3번째에 추가 버튼
+        quoteItems.append(.addQuoteButton)
+        snapshot.appendItems(quoteItems, toSection: .savedQuotes)
 
         // 찍은 사진 - 실제 데이터로 업데이트
         if let photos = photos {
@@ -599,6 +650,37 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
                 }
             )
             .disposed(by: disposeBag)
+    }
+
+    // MARK: - Show All Quotes
+    private func showAllQuotes() {
+        guard let reactor = reactor, let serviceFactory = serviceFactory else { return }
+        let bookId = String(describing: reactor.currentState.book.id)
+
+        let quoteListCoordinator = QuoteListCoordinator(
+            navigationController: navigationController ?? UINavigationController(),
+            dependencies: QuoteListCoordinator.Dependencies(
+                bookId: bookId,
+                serviceFactory: serviceFactory
+            )
+        )
+
+        addChildCoordinator(quoteListCoordinator)
+
+        quoteListCoordinator.result
+            .subscribe(onNext: { [weak self] result in
+                switch result {
+                case .quotesUpdated:
+                    print("✅ Quotes updated, refreshing...")
+                    self?.loadQuotesAndUpdateUI()
+                case .dismissed:
+                    print("📝 Quote list dismissed")
+                }
+                self?.removeChildCoordinator(quoteListCoordinator)
+            })
+            .disposed(by: disposeBag)
+
+        quoteListCoordinator.start()
     }
 }
 

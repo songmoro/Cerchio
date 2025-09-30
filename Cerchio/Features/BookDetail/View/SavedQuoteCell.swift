@@ -11,13 +11,9 @@ import SnapKit
 final class SavedQuoteCell: UICollectionViewCell, IsIdentifiable {
     // MARK: - UI Components
     private let containerView = UIView()
-    private let titleLabel = UILabel()
     private let quoteLabel = UILabel()
+    private let pageLabel = UILabel()
     private let dateLabel = UILabel()
-    private let addButton = UIButton()
-
-    // MARK: - Properties
-    var onAddQuoteTapped: (() -> Void)?
 
     // MARK: - Initialization
     override init(frame: CGRect) {
@@ -32,42 +28,28 @@ final class SavedQuoteCell: UICollectionViewCell, IsIdentifiable {
 
     // MARK: - Setup
     private func setupViews() {
-        contentView.backgroundColor = .systemBackground
+        contentView.backgroundColor = .systemGray6
         contentView.layer.cornerRadius = 12
-        contentView.layer.borderWidth = 1
-        contentView.layer.borderColor = UIColor.systemGray5.cgColor
 
         containerView.backgroundColor = .clear
         contentView.addSubview(containerView)
 
-        // 타이틀 레이블
-        titleLabel.text = NSLocalizedString("book_detail.saved_quotes", comment: "Saved quotes section title")
-        titleLabel.font = .systemFont(ofSize: 18, weight: .semibold)
-        titleLabel.textColor = .label
-        containerView.addSubview(titleLabel)
-
         // 문장 레이블
-        quoteLabel.text = NSLocalizedString("book_detail.no_quotes", comment: "No quotes message")
-        quoteLabel.font = .systemFont(ofSize: 14, weight: .regular)
-        quoteLabel.textColor = .secondaryLabel
-        quoteLabel.numberOfLines = 3
+        quoteLabel.font = .systemFont(ofSize: 15, weight: .regular)
+        quoteLabel.textColor = .label
+        quoteLabel.numberOfLines = 0
         quoteLabel.textAlignment = .left
         containerView.addSubview(quoteLabel)
 
-        // 날짜 레이블
-        dateLabel.text = ""
-        dateLabel.font = .systemFont(ofSize: 12, weight: .regular)
-        dateLabel.textColor = .tertiaryLabel
-        containerView.addSubview(dateLabel)
+        // 페이지 레이블
+        pageLabel.font = .systemFont(ofSize: 12, weight: .medium)
+        pageLabel.textColor = .systemBlue
+        containerView.addSubview(pageLabel)
 
-        // 추가 버튼
-        addButton.setTitle(NSLocalizedString("book_detail.add_quote", comment: "Add quote button"), for: .normal)
-        addButton.setTitleColor(.systemBlue, for: .normal)
-        addButton.titleLabel?.font = .systemFont(ofSize: 14, weight: .medium)
-        addButton.backgroundColor = .systemBlue.withAlphaComponent(0.1)
-        addButton.layer.cornerRadius = 8
-        addButton.addTarget(self, action: #selector(addButtonTapped), for: .touchUpInside)
-        containerView.addSubview(addButton)
+        // 날짜 레이블
+        dateLabel.font = .systemFont(ofSize: 12, weight: .regular)
+        dateLabel.textColor = .secondaryLabel
+        containerView.addSubview(dateLabel)
     }
 
     private func setupConstraints() {
@@ -75,57 +57,44 @@ final class SavedQuoteCell: UICollectionViewCell, IsIdentifiable {
             $0.edges.equalToSuperview().inset(16)
         }
 
-        titleLabel.snp.makeConstraints {
+        quoteLabel.snp.makeConstraints {
             $0.top.leading.trailing.equalToSuperview()
         }
 
-        quoteLabel.snp.makeConstraints {
-            $0.top.equalTo(titleLabel.snp.bottom).offset(12)
-            $0.leading.trailing.equalToSuperview()
+        pageLabel.snp.makeConstraints {
+            $0.top.equalTo(quoteLabel.snp.bottom).offset(8)
+            $0.leading.equalToSuperview()
         }
 
         dateLabel.snp.makeConstraints {
-            $0.top.equalTo(quoteLabel.snp.bottom).offset(8)
+            $0.top.equalTo(pageLabel.snp.bottom).offset(4)
             $0.leading.trailing.equalToSuperview()
+            $0.bottom.equalToSuperview()
         }
-
-        addButton.snp.makeConstraints {
-            $0.top.equalTo(dateLabel.snp.bottom).offset(16)
-            $0.centerX.equalToSuperview()
-            $0.width.equalTo(120)
-            $0.height.equalTo(32)
-            $0.bottom.lessThanOrEqualToSuperview().inset(8)
-        }
-    }
-
-    // MARK: - Actions
-    @objc private func addButtonTapped() {
-        onAddQuoteTapped?()
     }
 
     // MARK: - Configuration
-    func configure(with quote: String?, date: Date?) {
-        if let quote = quote, !quote.isEmpty {
-            quoteLabel.text = "\"\(quote)\""
-            quoteLabel.textColor = .label
+    func configure(with quote: String, pageNumber: Int?, date: Date) {
+        quoteLabel.text = "\"\(quote)\""
 
-            if let date = date {
-                let formatter = DateFormatter()
-                formatter.dateStyle = .medium
-                formatter.timeStyle = .none
-                dateLabel.text = "저장일: \(formatter.string(from: date))"
-            }
+        if let pageNumber = pageNumber {
+            pageLabel.text = "p.\(pageNumber)"
+            pageLabel.isHidden = false
         } else {
-            quoteLabel.text = NSLocalizedString("book_detail.no_quotes", comment: "No quotes message")
-            quoteLabel.textColor = .secondaryLabel
-            dateLabel.text = ""
+            pageLabel.isHidden = true
         }
+
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
+        formatter.timeStyle = .none
+        dateLabel.text = formatter.string(from: date)
     }
 
     override func prepareForReuse() {
         super.prepareForReuse()
         quoteLabel.text = nil
+        pageLabel.text = nil
+        pageLabel.isHidden = false
         dateLabel.text = nil
-        onAddQuoteTapped = nil
     }
 }
