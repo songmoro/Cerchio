@@ -12,8 +12,8 @@ import RxCocoa
 import SnapKit
 
 final class QuoteListViewController: BaseViewController<QuoteListReactor> {
-    private typealias DataSource = UITableViewDiffableDataSource<Section, RealmQuote>
-    private typealias Snapshot = NSDiffableDataSourceSnapshot<Section, RealmQuote>
+    private typealias DataSource = UITableViewDiffableDataSource<Section, Quote>
+    private typealias Snapshot = NSDiffableDataSourceSnapshot<Section, Quote>
 
     // MARK: - UI Components
     private let tableView = UITableView(frame: .zero, style: .insetGrouped)
@@ -144,7 +144,7 @@ final class QuoteListViewController: BaseViewController<QuoteListReactor> {
             .disposed(by: disposeBag)
     }
 
-    private func updateSnapshot(with quotes: [RealmQuote]) {
+    private func updateSnapshot(with quotes: [Quote]) {
         var snapshot = Snapshot()
         snapshot.appendSections([.quotes])
         snapshot.appendItems(quotes, toSection: .quotes)
@@ -196,7 +196,7 @@ extension QuoteListViewController: UITableViewDelegate {
         return false // 순서 변경은 비활성화
     }
 
-    private func deleteQuote(_ quote: RealmQuote) {
-        reactor?.action.onNext(.deleteQuote(quote))
+    private func deleteQuote(_ quote: Quote) {
+        reactor?.action.onNext(.deleteQuote(quote.id))
     }
 }

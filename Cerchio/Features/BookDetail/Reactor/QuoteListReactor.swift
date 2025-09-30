@@ -13,18 +13,18 @@ import RealmSwift
 final class QuoteListReactor: Reactor {
     enum Action {
         case loadQuotes
-        case deleteQuote(RealmQuote)
+        case deleteQuote(String) // ID로 삭제
     }
 
     enum Mutation {
-        case setQuotes([RealmQuote])
+        case setQuotes([Quote])
         case setLoading(Bool)
         case setError(Error?)
     }
 
     struct State {
         var bookId: String
-        var quotes: [RealmQuote] = []
+        var quotes: [Quote] = []
         var isLoading: Bool = false
         var error: Error?
     }
@@ -44,10 +44,10 @@ final class QuoteListReactor: Reactor {
                 Observable.just(.setLoading(false))
             ])
 
-        case .deleteQuote(let quote):
+        case .deleteQuote(let quoteId):
             return Observable.concat([
                 Observable.just(.setLoading(true)),
-                deleteQuoteFromRealm(quote),
+                deleteQuoteFromRealm(quoteId),
                 loadQuotesFromRealm(),
                 Observable.just(.setLoading(false))
             ])
@@ -80,12 +80,12 @@ final class QuoteListReactor: Reactor {
 
             do {
                 let realm = try Realm()
-                let quotes = realm.objects(RealmQuote.self)
+                let realmQuotes = realm.objects(RealmQuote.self)
                     .filter("bookId == %@", self.currentState.bookId)
                     .sorted(byKeyPath: "createdAt", ascending: false)
-                let quoteArray = Array(quotes)
+                let quotes = realmQuotes.map { $0.toQuote() }
 
-                observer.onNext(.setQuotes(quoteArray))
+                observer.onNext(.setQuotes(Array(quotes)))
                 observer.onCompleted()
             } catch {
                 observer.onNext(.setError(error))
@@ -96,10 +96,17 @@ final class QuoteListReactor: Reactor {
         }
     }
 
-    private func deleteQuoteFromRealm(_ quote: RealmQuote) -> Observable<Mutation> {
+    private func deleteQuoteFromRealm(_ quoteId: String) -> Observable<Mutation> {
         return Observable.create { observer in
             do {
                 let realm = try Realm()
+                guard let objectId = try? ObjectId(string: quoteId),
+                      let quote = realm.object(ofType: RealmQuote.self, forPrimaryKey: objectId) else {
+                    observer.onNext(.setError(NSError(domain: "QuoteNotFound", code: 404)))
+                    observer.onCompleted()
+                    return Disposables.create()
+                }
+
                 try realm.write {
                     realm.delete(quote)
                 }

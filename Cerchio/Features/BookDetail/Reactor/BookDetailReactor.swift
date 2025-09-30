@@ -24,7 +24,6 @@ final class BookDetailReactor: Reactor {
         case setError(Error?)
         case setFavorite(Bool)
         case setReadingProgress(ReadingProgress)
-        case addQuoteToList(Quote)
     }
 
     struct State {
@@ -34,7 +33,6 @@ final class BookDetailReactor: Reactor {
         var error: Error?
         var isFavorite: Bool = false
         var readingProgress: ReadingProgress?
-        var quotes: [Quote] = []
     }
 
     let initialState: State
@@ -68,13 +66,9 @@ final class BookDetailReactor: Reactor {
             let newFavoriteStatus = !currentState.isFavorite
             return Observable.just(.setFavorite(newFavoriteStatus))
 
-        case .addQuote(let text):
-            let newQuote = Quote(
-                text: text,
-                pageNumber: currentState.readingProgress?.currentPage ?? 0,
-                createdDate: Date()
-            )
-            return Observable.just(.addQuoteToList(newQuote))
+        case .addQuote:
+            // TODO: 문장 추가 로직 구현 (현재 사용하지 않음)
+            return Observable.empty()
 
         case .deleteBook:
             // TODO: 실제 삭제 로직 구현
@@ -100,9 +94,6 @@ final class BookDetailReactor: Reactor {
 
         case .setReadingProgress(let progress):
             newState.readingProgress = progress
-
-        case .addQuoteToList(let quote):
-            newState.quotes.append(quote)
         }
 
         return newState
@@ -130,11 +121,4 @@ struct BookDetail: Hashable {
     let startDate: Date?
     let endDate: Date?
     let tags: [String]
-}
-
-
-struct Quote: Hashable {
-    let text: String
-    let pageNumber: Int
-    let createdDate: Date
 }

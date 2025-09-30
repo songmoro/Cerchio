@@ -246,6 +246,26 @@ class RealmPhoto: Object, Sendable {
     }
 }
 
+// MARK: - Quote Struct (for UI)
+
+nonisolated struct Quote: Hashable, Sendable {
+    let id: String
+    let bookId: String
+    let quote: String
+    let pageNumber: Int?
+    let note: String?
+    let createdAt: Date
+
+    init(id: String, bookId: String, quote: String, pageNumber: Int? = nil, note: String? = nil, createdAt: Date) {
+        self.id = id
+        self.bookId = bookId
+        self.quote = quote
+        self.pageNumber = pageNumber
+        self.note = note
+        self.createdAt = createdAt
+    }
+}
+
 // MARK: - RealmQuote Model
 
 class RealmQuote: Object, Sendable {
@@ -269,6 +289,17 @@ class RealmQuote: Object, Sendable {
         self.pageNumber = pageNumber
         self.note = note
         self.createdAt = createdAt
+    }
+
+    func toQuote() -> Quote {
+        return Quote(
+            id: String(describing: id),
+            bookId: bookId,
+            quote: quote,
+            pageNumber: pageNumber,
+            note: note,
+            createdAt: createdAt
+        )
     }
 }
 
