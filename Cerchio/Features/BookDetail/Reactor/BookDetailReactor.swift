@@ -13,7 +13,7 @@ final class BookDetailReactor: Reactor {
     enum Action {
         case loadBookDetail
         case updateReadingProgress(currentPage: Int)
-        case updateReadingInfo(totalPages: Int, startDate: Date?)
+        case updateReadingInfo(totalPages: Int, startDate: Date?, endDate: Date?)
         case toggleFavorite
         case addQuote(String)
         case deleteBook
@@ -67,7 +67,7 @@ final class BookDetailReactor: Reactor {
 //            return Observable.just(.setReadingProgress(progress))
             return .empty()
 
-        case .updateReadingInfo(let totalPages, let startDate):
+        case .updateReadingInfo(let totalPages, let startDate, let endDate):
             // BookDetail 업데이트
             guard var bookDetail = currentState.bookDetail else {
                 return Observable.empty()
@@ -77,7 +77,7 @@ final class BookDetailReactor: Reactor {
                 book: bookDetail.book,
                 totalPages: totalPages,
                 startDate: startDate,
-                endDate: bookDetail.endDate,
+                endDate: endDate,
                 tags: bookDetail.tags
             )
 
@@ -109,6 +109,7 @@ final class BookDetailReactor: Reactor {
                         genre: existingBook.genre,
                         totalPages: totalPages,
                         startDate: startDate,
+                        endDate: endDate,
                         isFavorite: existingBook.isFavorite,
                         dateAdded: existingBook.dateAdded,
                         dateRead: existingBook.dateRead,

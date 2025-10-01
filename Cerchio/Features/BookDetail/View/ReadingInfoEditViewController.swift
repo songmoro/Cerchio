@@ -15,7 +15,8 @@ final class ReadingInfoEditViewController: UIViewController {
     private let disposeBag = DisposeBag()
     private var currentTotalPages: Int = 0
     private var currentStartDate: Date?
-    var onSaved: ((Int, Date?) -> Void)?
+    private var currentEndDate: Date?
+    var onSaved: ((Int, Date?, Date?) -> Void)?
 
     // MARK: - UI Components
     private let pagesTextField: UITextField = {
@@ -35,7 +36,7 @@ final class ReadingInfoEditViewController: UIViewController {
         return label
     }()
 
-    private let dateLabel: UILabel = {
+    private let startDateLabel: UILabel = {
         let label = UILabel()
         label.text = "읽기 시작한 날짜"
         label.font = .systemFont(ofSize: 16, weight: .semibold)
@@ -43,7 +44,7 @@ final class ReadingInfoEditViewController: UIViewController {
         return label
     }()
 
-    private let datePicker: UIDatePicker = {
+    private let startDatePicker: UIDatePicker = {
         let picker = UIDatePicker()
         picker.datePickerMode = .date
         picker.preferredDatePickerStyle = .inline
@@ -51,9 +52,33 @@ final class ReadingInfoEditViewController: UIViewController {
         return picker
     }()
 
-    private let clearDateButton: UIButton = {
+    private let clearStartDateButton: UIButton = {
         let button = UIButton(type: .system)
-        button.setTitle("날짜 초기화", for: .normal)
+        button.setTitle("시작 날짜 초기화", for: .normal)
+        button.titleLabel?.font = .systemFont(ofSize: 14)
+        button.setTitleColor(.systemRed, for: .normal)
+        return button
+    }()
+
+    private let endDateLabel: UILabel = {
+        let label = UILabel()
+        label.text = "읽기 완료한 날짜"
+        label.font = .systemFont(ofSize: 16, weight: .semibold)
+        label.textColor = .label
+        return label
+    }()
+
+    private let endDatePicker: UIDatePicker = {
+        let picker = UIDatePicker()
+        picker.datePickerMode = .date
+        picker.preferredDatePickerStyle = .inline
+        picker.maximumDate = Date()
+        return picker
+    }()
+
+    private let clearEndDateButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.setTitle("완료 날짜 초기화", for: .normal)
         button.titleLabel?.font = .systemFont(ofSize: 14)
         button.setTitleColor(.systemRed, for: .normal)
         return button
@@ -92,9 +117,12 @@ final class ReadingInfoEditViewController: UIViewController {
 
         contentView.addSubview(pagesLabel)
         contentView.addSubview(pagesTextField)
-        contentView.addSubview(dateLabel)
-        contentView.addSubview(datePicker)
-        contentView.addSubview(clearDateButton)
+        contentView.addSubview(startDateLabel)
+        contentView.addSubview(startDatePicker)
+        contentView.addSubview(clearStartDateButton)
+        contentView.addSubview(endDateLabel)
+        contentView.addSubview(endDatePicker)
+        contentView.addSubview(clearEndDateButton)
 
         scrollView.snp.makeConstraints {
             $0.edges.equalTo(view.safeAreaLayoutGuide)
@@ -116,18 +144,33 @@ final class ReadingInfoEditViewController: UIViewController {
             $0.height.equalTo(44)
         }
 
-        dateLabel.snp.makeConstraints {
+        startDateLabel.snp.makeConstraints {
             $0.top.equalTo(pagesTextField.snp.bottom).offset(32)
             $0.leading.trailing.equalToSuperview().inset(20)
         }
 
-        datePicker.snp.makeConstraints {
-            $0.top.equalTo(dateLabel.snp.bottom).offset(12)
+        startDatePicker.snp.makeConstraints {
+            $0.top.equalTo(startDateLabel.snp.bottom).offset(12)
             $0.leading.trailing.equalToSuperview().inset(20)
         }
 
-        clearDateButton.snp.makeConstraints {
-            $0.top.equalTo(datePicker.snp.bottom).offset(16)
+        clearStartDateButton.snp.makeConstraints {
+            $0.top.equalTo(startDatePicker.snp.bottom).offset(16)
+            $0.centerX.equalToSuperview()
+        }
+
+        endDateLabel.snp.makeConstraints {
+            $0.top.equalTo(clearStartDateButton.snp.bottom).offset(32)
+            $0.leading.trailing.equalToSuperview().inset(20)
+        }
+
+        endDatePicker.snp.makeConstraints {
+            $0.top.equalTo(endDateLabel.snp.bottom).offset(12)
+            $0.leading.trailing.equalToSuperview().inset(20)
+        }
+
+        clearEndDateButton.snp.makeConstraints {
+            $0.top.equalTo(endDatePicker.snp.bottom).offset(16)
             $0.centerX.equalToSuperview()
             $0.bottom.equalToSuperview().inset(20)
         }
@@ -155,20 +198,28 @@ final class ReadingInfoEditViewController: UIViewController {
     }
 
     private func setupActions() {
-        clearDateButton.addTarget(self, action: #selector(clearDateTapped), for: .touchUpInside)
+        clearStartDateButton.addTarget(self, action: #selector(clearStartDateTapped), for: .touchUpInside)
+        clearEndDateButton.addTarget(self, action: #selector(clearEndDateTapped), for: .touchUpInside)
     }
 
     // MARK: - Public Methods
-    func configure(totalPages: Int, startDate: Date?) {
+    func configure(totalPages: Int, startDate: Date?, endDate: Date?) {
         self.currentTotalPages = totalPages
         self.currentStartDate = startDate
+        self.currentEndDate = endDate
 
         pagesTextField.text = "\(totalPages)"
 
         if let startDate = startDate {
-            datePicker.date = startDate
+            startDatePicker.date = startDate
         } else {
-            datePicker.date = Date()
+            startDatePicker.date = Date()
+        }
+
+        if let endDate = endDate {
+            endDatePicker.date = endDate
+        } else {
+            endDatePicker.date = Date()
         }
     }
 
@@ -182,19 +233,33 @@ final class ReadingInfoEditViewController: UIViewController {
         let totalPages = Int(pagesText) ?? currentTotalPages
 
         // 날짜가 초기화되었는지 확인
-        let startDate = currentStartDate != nil ? datePicker.date : nil
+        let startDate = currentStartDate != nil ? startDatePicker.date : nil
+        let endDate = currentEndDate != nil ? endDatePicker.date : nil
 
-        onSaved?(totalPages, startDate)
+        onSaved?(totalPages, startDate, endDate)
         dismiss(animated: true)
     }
 
-    @objc private func clearDateTapped() {
+    @objc private func clearStartDateTapped() {
         currentStartDate = nil
-        datePicker.date = Date()
+        startDatePicker.date = Date()
 
         let alert = UIAlertController(
-            title: "날짜 초기화",
+            title: "시작 날짜 초기화",
             message: "읽기 시작 날짜가 초기화됩니다.",
+            preferredStyle: .alert
+        )
+        alert.addAction(UIAlertAction(title: "확인", style: .default))
+        present(alert, animated: true)
+    }
+
+    @objc private func clearEndDateTapped() {
+        currentEndDate = nil
+        endDatePicker.date = Date()
+
+        let alert = UIAlertController(
+            title: "완료 날짜 초기화",
+            message: "읽기 완료 날짜가 초기화됩니다.",
             preferredStyle: .alert
         )
         alert.addAction(UIAlertAction(title: "확인", style: .default))

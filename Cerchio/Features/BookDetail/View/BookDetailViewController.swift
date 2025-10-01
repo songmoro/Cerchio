@@ -51,6 +51,23 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
         configureDataSource()
     }
 
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+
+        // 화면을 벗어날 때 도서 정보 다시 로드
+        guard let reactor = reactor,
+              let serviceFactory = serviceFactory else { return }
+
+        let bookRepository = serviceFactory.createBookRepository()
+        bookRepository.getBookByISBN(reactor.currentState.book.isbn)
+            .observe(on: MainScheduler.instance)
+            .subscribe(onNext: { [weak self] updatedBook in
+                guard let updatedBook = updatedBook else { return }
+                self?.reactor?.action.onNext(.loadBookDetail)
+            })
+            .disposed(by: disposeBag)
+    }
+
     
     @objc public func favoriteButtonTapped() {
         reactor?.action.onNext(.toggleFavorite)
@@ -851,10 +868,11 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
         let readingInfoEditVC = ReadingInfoEditViewController()
         readingInfoEditVC.configure(
             totalPages: bookDetail.totalPages,
-            startDate: bookDetail.startDate
+            startDate: bookDetail.startDate,
+            endDate: bookDetail.endDate
         )
-        readingInfoEditVC.onSaved = { [weak self] totalPages, startDate in
-            self?.reactor?.action.onNext(.updateReadingInfo(totalPages: totalPages, startDate: startDate))
+        readingInfoEditVC.onSaved = { [weak self] totalPages, startDate, endDate in
+            self?.reactor?.action.onNext(.updateReadingInfo(totalPages: totalPages, startDate: startDate, endDate: endDate))
         }
 
         let navController = UINavigationController(rootViewController: readingInfoEditVC)

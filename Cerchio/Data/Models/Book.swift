@@ -28,8 +28,9 @@ class RealmBook: Object, Sendable {
     @Persisted var isFavorite: Bool = false
     @Persisted var totalPages: Int = 0
     @Persisted var startDate: Date?
+    @Persisted var endDate: Date?
 
-    convenience init(title: String, link: String, image: String, author: String, discount: String? = nil, publisher: String, isbn: String, description: String, pubdate: String, cleanTitle: String, cleanDescription: String, formattedPubDate: Date? = nil, formattedPrice: String? = nil, priceAsInt: Int? = nil, createAt: Date = Date(), isFavorite: Bool = false, totalPages: Int = 0, startDate: Date? = nil) {
+    convenience init(title: String, link: String, image: String, author: String, discount: String? = nil, publisher: String, isbn: String, description: String, pubdate: String, cleanTitle: String, cleanDescription: String, formattedPubDate: Date? = nil, formattedPrice: String? = nil, priceAsInt: Int? = nil, createAt: Date = Date(), isFavorite: Bool = false, totalPages: Int = 0, startDate: Date? = nil, endDate: Date? = nil) {
         self.init()
         self.title = title
         self.link = link
@@ -49,6 +50,7 @@ class RealmBook: Object, Sendable {
         self.isFavorite = isFavorite
         self.totalPages = totalPages
         self.startDate = startDate
+        self.endDate = endDate
     }
 }
 
@@ -74,6 +76,7 @@ nonisolated struct Book: Hashable, Codable {
     let genre: String?
     let totalPages: Int?
     let startDate: Date?
+    let endDate: Date?
     let isFavorite: Bool
     let dateAdded: Date?
     let dateRead: Date?
@@ -101,6 +104,7 @@ nonisolated struct Book: Hashable, Codable {
         genre: String? = nil,
         totalPages: Int? = nil,
         startDate: Date? = nil,
+        endDate: Date? = nil,
         isFavorite: Bool = false,
         dateAdded: Date? = nil,
         dateRead: Date? = nil,
@@ -127,6 +131,7 @@ nonisolated struct Book: Hashable, Codable {
         self.genre = genre
         self.totalPages = totalPages
         self.startDate = startDate
+        self.endDate = endDate
         self.isFavorite = isFavorite
         self.dateAdded = dateAdded
         self.dateRead = dateRead
@@ -368,6 +373,7 @@ extension RealmBook {
             genre: nil,
             totalPages: totalPages > 0 ? totalPages : nil,
             startDate: startDate,
+            endDate: endDate,
             isFavorite: isFavorite,
             dateAdded: createAt,
             dateRead: nil,
@@ -401,7 +407,8 @@ extension Book {
             createAt: createAt,
             isFavorite: isFavorite,
             totalPages: totalPages ?? 0,
-            startDate: startDate
+            startDate: startDate,
+            endDate: endDate
         )
     }
 }

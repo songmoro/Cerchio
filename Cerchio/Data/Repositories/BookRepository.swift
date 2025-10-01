@@ -166,6 +166,7 @@ final class BookRepository: BaseRepository<RealmBook>, BookRepositoryProtocol {
                 existingBook.isFavorite = book.isFavorite
                 existingBook.totalPages = book.totalPages ?? 0
                 existingBook.startDate = book.startDate
+                existingBook.endDate = book.endDate
                 return existingBook.toBook()
             } else {
                 // 새 책 생성
