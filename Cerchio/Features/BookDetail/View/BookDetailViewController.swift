@@ -645,11 +645,11 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
         let sortedPhotos = photos.sorted { $0.createdAt > $1.createdAt }
         let imagePaths = sortedPhotos.map { $0.localImagePath }
 
-        // 백그라운드에서 이미지만 로드
-        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-            let images = imagePaths.compactMap { ImageStorageManager.shared.loadImage(fromPath: $0) }
+        // Swift Concurrency로 이미지 로드
+        Task { [weak self] in
+            let images = await self?.loadImages(from: imagePaths) ?? []
 
-            DispatchQueue.main.async {
+            await MainActor.run { [weak self] in
                 guard let self = self else { return }
 
                 var snapshot = self.dataSource.snapshot()
@@ -683,6 +683,24 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
         }
     }
 
+    private func loadImages(from paths: [String]) async -> [UIImage] {
+        await withTaskGroup(of: UIImage?.self) { group in
+            for path in paths {
+                group.addTask {
+                    ImageStorageManager.shared.loadImage(fromPath: path)
+                }
+            }
+
+            var images: [UIImage] = []
+            for await image in group {
+                if let image = image {
+                    images.append(image)
+                }
+            }
+            return images
+        }
+    }
+
     private func loadPhotosFromRealm() {
         guard let reactor = reactor else { return }
         let bookId = String(describing: reactor.currentState.book.id)
@@ -696,11 +714,11 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
             // 메인 스레드에서 이미지 경로 추출
             let imagePaths = photoArray.map { $0.localImagePath }
 
-            // 이미지 로드만 백그라운드에서 처리
-            DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-                let images = imagePaths.compactMap { ImageStorageManager.shared.loadImage(fromPath: $0) }
+            // Swift Concurrency로 이미지 로드
+            Task { [weak self] in
+                let images = await self?.loadImages(from: imagePaths) ?? []
 
-                DispatchQueue.main.async {
+                await MainActor.run { [weak self] in
                     guard let self = self else { return }
 
                     var snapshot = self.dataSource.snapshot()
