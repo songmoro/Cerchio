@@ -8,16 +8,6 @@
 import Foundation
 
 extension String {
-    // MARK: - 일반 다국어 텍스트
-    enum Localized: String {
-        
-    }
-    
-    // MARK: - 매개변수 다국어 텍스트
-    enum ArgumentLocalized: String {
-        
-    }
-    
     init(localized: Localized) {
         self = localized.rawValue.localized
     }
