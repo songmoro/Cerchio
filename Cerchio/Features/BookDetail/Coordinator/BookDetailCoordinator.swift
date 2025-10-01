@@ -28,6 +28,7 @@ final class BookDetailCoordinator: BaseCoordinator, Coordinatable {
 
     // MARK: - Properties
     private var dependencies: BookDetailDependencies!
+    private weak var currentReactor: BookDetailReactor?
 
     private var book: Book {
         return dependencies.book
@@ -55,6 +56,9 @@ final class BookDetailCoordinator: BaseCoordinator, Coordinatable {
         let bookRepository = dependencies.serviceFactory.createBookRepository()
         let bookDetailReactor = BookDetailReactor(book: book, bookRepository: bookRepository)
 
+        // Reactor 참조 저장
+        self.currentReactor = bookDetailReactor
+
         bookDetailViewController.coordinator = self
         bookDetailViewController.reactor = bookDetailReactor
 
@@ -65,23 +69,24 @@ final class BookDetailCoordinator: BaseCoordinator, Coordinatable {
         bookDetailViewController.hidesBottomBarWhenPushed = true
 
         // 네비게이션 아이템 설정
-        setupNavigationItems(for: bookDetailViewController)
+        setupNavigationItems(for: bookDetailViewController, reactor: bookDetailReactor)
 
         navigationController.pushViewController(bookDetailViewController, animated: true)
     }
 
-    private func setupNavigationItems(for viewController: UIViewController) {
+    private func setupNavigationItems(for viewController: UIViewController, reactor: BookDetailReactor) {
         // 뒤로가기 버튼 (기본 제공)
         viewController.navigationItem.title = book.cleanTitle
 
-        // 오른쪽 버튼들: 즐겨찾기, 삭제
+        // 즐겨찾기 버튼
         let favoriteButton = UIBarButtonItem(
-            image: UIImage(systemName: "heart"),
+            image: UIImage(systemName: book.isFavorite ? "heart.fill" : "heart"),
             style: .plain,
             target: self,
             action: #selector(favoriteButtonTapped)
         )
 
+        // 삭제 버튼
         let deleteButton = UIBarButtonItem(
             image: UIImage(systemName: "trash"),
             style: .plain,
@@ -90,6 +95,17 @@ final class BookDetailCoordinator: BaseCoordinator, Coordinatable {
         )
 
         viewController.navigationItem.rightBarButtonItems = [deleteButton, favoriteButton]
+
+        // 즐겨찾기 상태 변경 감지
+        reactor.state
+            .map { $0.isFavorite }
+            .distinctUntilChanged()
+            .observe(on: MainScheduler.instance)
+            .subscribe(onNext: { [weak favoriteButton] isFavorite in
+                let imageName = isFavorite ? "heart.fill" : "heart"
+                favoriteButton?.image = UIImage(systemName: imageName)
+            })
+            .disposed(by: disposeBag)
     }
 
     private func bindNavigationEvents() {
@@ -113,8 +129,7 @@ final class BookDetailCoordinator: BaseCoordinator, Coordinatable {
 
     // MARK: - Action Methods
     @objc private func favoriteButtonTapped() {
-        // TODO: 즐겨찾기 토글 기능 구현
-        print("Favorite button tapped for book: \(book.cleanTitle)")
+        currentReactor?.action.onNext(.toggleFavorite)
     }
 
     @objc private func deleteButtonTapped() {
