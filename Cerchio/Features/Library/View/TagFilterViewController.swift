@@ -147,7 +147,7 @@ extension TagFilterViewController: UITableViewDataSource {
                 let cell = UITableViewCell()
                 cell.textLabel?.text = "사용 가능한 태그가 없습니다"
                 cell.textLabel?.textColor = .secondaryLabel
-                cell.textLabel?.font = .systemFont(ofSize: 14)
+                cell.textLabel?.font = .custom(weight: .regular, size: 14)
                 cell.textLabel?.textAlignment = .center
                 cell.selectionStyle = .none
                 return cell
@@ -198,7 +198,7 @@ final class TagFilterCell: UITableViewCell {
 
     private let tagLabel: UILabel = {
         let label = UILabel()
-        label.font = .systemFont(ofSize: 16, weight: .medium)
+        label.font = .custom(weight: .medium, size: 16)
         label.textColor = .label
         return label
     }()
