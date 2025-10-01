@@ -120,11 +120,52 @@ final class PhotoListViewController: BaseViewController<PhotoListReactor> {
 
     private func setupCollectionView() {
         collectionView.backgroundColor = .systemBackground
-        collectionView.delegate = self
         collectionView.allowsMultipleSelection = true
         collectionView.register(PhotoGridCell.self, forCellWithReuseIdentifier: PhotoGridCell.identifier)
 
         view.addSubview(collectionView)
+
+        // Collection View Selection - 일반 모드
+        collectionView.rx.itemSelected(dataSource)
+            .filter { [weak self] _ in self?.isEditMode == false }
+            .subscribe(onNext: { [weak self] photo in
+                guard let self = self else { return }
+                if let indexPath = self.dataSource.indexPath(for: photo) {
+                    self.collectionView.deselectItem(at: indexPath, animated: true)
+                }
+                guard let image = ImageStorageManager.shared.loadImage(fromPath: photo.localImagePath) else { return }
+                self.showImagePreview(image)
+            })
+            .disposed(by: disposeBag)
+
+        // Collection View Selection - 편집 모드
+        collectionView.rx.itemSelected(dataSource)
+            .filter { [weak self] _ in self?.isEditMode == true }
+            .subscribe(onNext: { [weak self] photo in
+                guard let self = self else { return }
+
+                // 이미 선택된 경우 deselect 처리 (다음 이벤트에서 처리됨)
+                if self.selectedPhotoIds.contains(photo.id) {
+                    if let indexPath = self.dataSource.indexPath(for: photo) {
+                        self.collectionView.deselectItem(at: indexPath, animated: true)
+                    }
+                } else {
+                    // 새로 선택된 경우
+                    self.selectedPhotoIds.insert(photo.id)
+                    self.updateNavigationBar()
+                }
+            })
+            .disposed(by: disposeBag)
+
+        // Collection View Deselection - 편집 모드
+        collectionView.rx.itemDeselected(dataSource)
+            .filter { [weak self] _ in self?.isEditMode == true }
+            .subscribe(onNext: { [weak self] photo in
+                guard let self = self else { return }
+                self.selectedPhotoIds.remove(photo.id)
+                self.updateNavigationBar()
+            })
+            .disposed(by: disposeBag)
     }
 
     private func setupLayout() {
@@ -273,28 +314,8 @@ final class PhotoListViewController: BaseViewController<PhotoListReactor> {
     }
 }
 
-// MARK: - UICollectionViewDelegate
-extension PhotoListViewController: UICollectionViewDelegate {
-    func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        guard let photo = dataSource.itemIdentifier(for: indexPath) else { return }
-
-        if isEditMode {
-            // 편집 모드에서는 선택/해제 토글
-            if selectedPhotoIds.contains(photo.id) {
-                selectedPhotoIds.remove(photo.id)
-                collectionView.deselectItem(at: indexPath, animated: true)
-            } else {
-                selectedPhotoIds.insert(photo.id)
-            }
-            updateNavigationBar()
-        } else {
-            // 일반 모드에서는 사진 보기
-            collectionView.deselectItem(at: indexPath, animated: true)
-            guard let image = ImageStorageManager.shared.loadImage(fromPath: photo.localImagePath) else { return }
-            showImagePreview(image)
-        }
-    }
-
+// MARK: - Image Preview
+extension PhotoListViewController {
     private func showImagePreview(_ image: UIImage) {
         let previewVC = UIViewController()
         let imageView = UIImageView(image: image)

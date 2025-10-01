@@ -12,7 +12,7 @@ import RxCocoa
 import SnapKit
 import RealmSwift
 
-final class LibraryViewController: BaseViewController<LibraryReactor>, UICollectionViewDelegate {
+final class LibraryViewController: BaseViewController<LibraryReactor> {
     private typealias DataSource = UICollectionViewDiffableDataSource<Section, Book>
     private typealias Snapshot = NSDiffableDataSourceSnapshot<Section, Book>
 
@@ -56,7 +56,6 @@ final class LibraryViewController: BaseViewController<LibraryReactor>, UICollect
         collectionView.contentInset.bottom = 20
         collectionView.verticalScrollIndicatorInsets = .init(top: 0, left: 0, bottom: 20, right: 0)
         collectionView.allowsMultipleSelection = true
-        collectionView.delegate = self
         view.addSubview(collectionView)
 
         collectionView.snp.makeConstraints {
@@ -133,31 +132,47 @@ final class LibraryViewController: BaseViewController<LibraryReactor>, UICollect
             .bind(to: reactor.action)
             .disposed(by: disposeBag)
 
-        // Collection View Selection
-        collectionView.rx.itemSelected
-            .subscribe(onNext: { [weak self] indexPath in
-                guard let self = self,
-                      let reactor = self.reactor else { return }
+        // Collection View Selection - 일반 모드
+        collectionView.rx.itemSelected(dataSource)
+            .filter { [weak self] _ in self?.isEditMode == false }
+            .subscribe(onNext: { [weak self] selectedBook in
+                self?.bookSelectionHandler?(selectedBook)
+            })
+            .disposed(by: disposeBag)
 
-                let books = reactor.currentState.displayBooks
-                guard let books, indexPath.item < books.count else { return }
+        // Collection View Selection - 편집 모드
+        collectionView.rx.itemSelected(dataSource)
+            .filter { [weak self] _ in self?.isEditMode == true }
+            .subscribe(onNext: { [weak self] selectedBook in
+                guard let self = self else { return }
 
-                let selectedBook = books[indexPath.item]
-
-                if self.isEditMode {
-                    // 편집 모드에서는 선택/해제 토글
-                    if self.selectedISBNs.contains(selectedBook.isbn) {
-                        self.selectedISBNs.remove(selectedBook.isbn)
+                // 이미 선택된 경우 deselect 처리 (다음 이벤트에서 처리됨)
+                if self.selectedISBNs.contains(selectedBook.isbn) {
+                    if let indexPath = self.dataSource.indexPath(for: selectedBook) {
                         self.collectionView.deselectItem(at: indexPath, animated: true)
-                    } else {
-                        self.selectedISBNs.insert(selectedBook.isbn)
                     }
-                    self.updateCellSelection(at: indexPath, isSelected: self.selectedISBNs.contains(selectedBook.isbn))
-                    self.updateNavigationBarForEditMode()
                 } else {
-                    // 일반 모드에서는 책 상세로 이동
-                    self.bookSelectionHandler?(selectedBook)
+                    // 새로 선택된 경우
+                    self.selectedISBNs.insert(selectedBook.isbn)
+                    if let indexPath = self.dataSource.indexPath(for: selectedBook) {
+                        self.updateCellSelection(at: indexPath, isSelected: true)
+                    }
+                    self.updateNavigationBarForEditMode()
                 }
+            })
+            .disposed(by: disposeBag)
+
+        // Collection View Deselection - 편집 모드
+        collectionView.rx.itemDeselected(dataSource)
+            .filter { [weak self] _ in self?.isEditMode == true }
+            .subscribe(onNext: { [weak self] deselectedBook in
+                guard let self = self else { return }
+
+                self.selectedISBNs.remove(deselectedBook.isbn)
+                if let indexPath = self.dataSource.indexPath(for: deselectedBook) {
+                    self.updateCellSelection(at: indexPath, isSelected: false)
+                }
+                self.updateNavigationBarForEditMode()
             })
             .disposed(by: disposeBag)
 
@@ -200,6 +215,21 @@ final class LibraryViewController: BaseViewController<LibraryReactor>, UICollect
                 self?.handleLoadingState(isLoading)
             })
             .disposed(by: disposeBag)
+
+        // Cell will display - 편집 모드에서 선택된 셀 border 복원
+        collectionView.rx.willDisplayCell(dataSource)
+            .filter { [weak self] _ in self?.isEditMode == true }
+            .subscribe(onNext: { [weak self] (cell, book, indexPath) in
+                guard let self = self else { return }
+
+                let isSelected = self.selectedISBNs.contains(book.isbn)
+                if isSelected {
+                    cell.layer.borderWidth = 2.0
+                    cell.layer.borderColor = UIColor.forestGreen.cgColor
+                    cell.layer.cornerRadius = 8.0
+                }
+            })
+            .disposed(by: disposeBag)
     }
 
     private func configureDataSource() {
@@ -221,24 +251,6 @@ final class LibraryViewController: BaseViewController<LibraryReactor>, UICollect
         var snapshot = Snapshot()
         snapshot.appendSections([.book])
         dataSource.apply(snapshot, animatingDifferences: false)
-    }
-
-    // MARK: - UICollectionViewDelegate
-    func collectionView(_ collectionView: UICollectionView, willDisplay cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
-        // 편집 모드에서 선택된 셀인 경우 border 다시 적용
-        guard isEditMode,
-              let reactor = reactor,
-              let books = reactor.currentState.displayBooks,
-              indexPath.item < books.count else { return }
-
-        let book = books[indexPath.item]
-        let isSelected = selectedISBNs.contains(book.isbn)
-
-        if isSelected {
-            cell.layer.borderWidth = 2.0
-            cell.layer.borderColor = UIColor.forestGreen.cgColor
-            cell.layer.cornerRadius = 8.0
-        }
     }
 
     override func viewDidLayoutSubviews() {
