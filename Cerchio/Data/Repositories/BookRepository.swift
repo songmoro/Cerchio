@@ -145,9 +145,34 @@ final class BookRepository: BaseRepository<RealmBook>, BookRepositoryProtocol {
 
     func saveBookStruct(_ book: Book) -> Observable<Book> {
         return performWriteTransaction {
-            let realmBook = book.toRealmBook()
-            self.realm.add(realmBook, update: .modified)
-            return realmBook.toBook()
+            // Book의 id로 기존 RealmBook 찾기
+            if let objectId = try? ObjectId(string: book.id),
+               let existingBook = self.realm.object(ofType: RealmBook.self, forPrimaryKey: objectId) {
+                // 기존 책 업데이트
+                existingBook.title = book.title
+                existingBook.link = book.link
+                existingBook.image = book.image
+                existingBook.author = book.author
+                existingBook.discount = book.discount
+                existingBook.publisher = book.publisher
+                existingBook.isbn = book.isbn
+                existingBook.bookDescription = book.bookDescription
+                existingBook.pubdate = book.pubdate
+                existingBook.cleanTitle = book.cleanTitle
+                existingBook.cleanDescription = book.cleanDescription
+                existingBook.formattedPubDate = book.formattedPubDate
+                existingBook.formattedPrice = book.formattedPrice
+                existingBook.priceAsInt = book.priceAsInt
+                existingBook.isFavorite = book.isFavorite
+                existingBook.totalPages = book.totalPages ?? 0
+                existingBook.startDate = book.startDate
+                return existingBook.toBook()
+            } else {
+                // 새 책 생성
+                let realmBook = book.toRealmBook()
+                self.realm.add(realmBook)
+                return realmBook.toBook()
+            }
         }
     }
 

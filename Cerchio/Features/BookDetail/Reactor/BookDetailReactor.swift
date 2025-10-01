@@ -25,6 +25,7 @@ final class BookDetailReactor: Reactor {
         case setError(Error?)
         case setFavorite(Bool)
         case setReadingProgress(ReadingProgress)
+        case updateBook(Book)
     }
 
     struct State {
@@ -117,7 +118,12 @@ final class BookDetailReactor: Reactor {
                     )
 
                     return self.bookRepository.saveBookStruct(updatedBook)
-                        .map { _ in .setBookDetail(updatedBookDetail) }
+                        .flatMap { savedBook -> Observable<Mutation> in
+                            return Observable.concat([
+                                Observable.just(.updateBook(savedBook)),
+                                Observable.just(.setBookDetail(updatedBookDetail))
+                            ])
+                        }
                         .catch { error in
                             print("Failed to update reading info: \(error.localizedDescription)")
                             return Observable.empty()
@@ -126,7 +132,22 @@ final class BookDetailReactor: Reactor {
 
         case .toggleFavorite:
             return bookRepository.toggleFavorite(bookId: currentState.book.id)
-                .map { .setFavorite($0) }
+                .flatMap { [weak self] isFavorite -> Observable<Mutation> in
+                    guard let self = self else { return Observable.empty() }
+
+                    // 업데이트된 Book을 다시 가져오기
+                    return self.bookRepository.getBookByISBN(self.currentState.book.isbn)
+                        .flatMap { updatedBook -> Observable<Mutation> in
+                            if let updatedBook = updatedBook {
+                                return Observable.concat([
+                                    Observable.just(.updateBook(updatedBook)),
+                                    Observable.just(.setFavorite(isFavorite))
+                                ])
+                            } else {
+                                return Observable.just(.setFavorite(isFavorite))
+                            }
+                        }
+                }
                 .catch { error in
                     print("Failed to toggle favorite: \(error.localizedDescription)")
                     return Observable.just(.setFavorite(self.currentState.isFavorite))
@@ -160,6 +181,9 @@ final class BookDetailReactor: Reactor {
 
         case .setReadingProgress(let progress):
             newState.readingProgress = progress
+
+        case .updateBook(let book):
+            newState.book = book
         }
 
         return newState
@@ -170,8 +194,8 @@ final class BookDetailReactor: Reactor {
         // RealmBook을 기반으로 BookDetail 생성
         let bookDetail = BookDetail(
             book: currentState.book,
-            totalPages: 320, // 기본값 (RealmBook에 totalPages 정보 없음)
-            startDate: Calendar.current.date(byAdding: .day, value: -10, to: Date()),
+            totalPages: currentState.book.totalPages ?? 0,
+            startDate: currentState.book.startDate,
             endDate: nil,
             tags: [] // 실제 태그는 Realm에서 로드
         )
