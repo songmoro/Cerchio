@@ -24,9 +24,9 @@ final class SettingsViewController: BaseViewController<SettingsReactor> {
         var title: String? {
             switch self {
             case .general:
-                return "일반"
+                return SettingsConstants.Strings.generalSectionTitle
             case .data:
-                return "데이터"
+                return SettingsConstants.Strings.dataSectionTitle
             }
         }
     }
@@ -37,7 +37,7 @@ final class SettingsViewController: BaseViewController<SettingsReactor> {
         var title: String {
             switch self {
             case .language:
-                return "언어"
+                return SettingsConstants.Strings.languageRowTitle
             }
         }
     }
@@ -48,7 +48,7 @@ final class SettingsViewController: BaseViewController<SettingsReactor> {
         var title: String {
             switch self {
             case .resetData:
-                return "모든 데이터 초기화"
+                return SettingsConstants.Strings.resetDataRowTitle
             }
         }
 
@@ -69,9 +69,8 @@ final class SettingsViewController: BaseViewController<SettingsReactor> {
 
         tableView.delegate = self
         tableView.dataSource = self
-        tableView.register(UITableViewCell.self, forCellReuseIdentifier: "Cell")
-        // Value1 스타일로 detail text 표시
-        tableView.register(UITableViewCell.self, forCellReuseIdentifier: "ValueCell")
+        tableView.register(UITableViewCell.self, forCellReuseIdentifier: SettingsConstants.CellIdentifiers.defaultCell)
+        tableView.register(UITableViewCell.self, forCellReuseIdentifier: SettingsConstants.CellIdentifiers.valueCell)
         tableView.backgroundColor = .clear
 
         view.addSubview(tableView)
@@ -125,14 +124,14 @@ final class SettingsViewController: BaseViewController<SettingsReactor> {
 
     private func showResetConfirmationAlert() {
         let alert = UIAlertController(
-            title: "모든 데이터 초기화",
-            message: "모든 책, 인용구, 사진이 삭제됩니다.\n이 작업은 되돌릴 수 없습니다.",
+            title: SettingsConstants.Strings.resetConfirmationTitle,
+            message: SettingsConstants.Strings.resetConfirmationMessage,
             preferredStyle: .alert
         )
 
-        let cancelAction = UIAlertAction(title: "취소", style: .cancel)
+        let cancelAction = UIAlertAction(title: SettingsConstants.Strings.cancelAction, style: .cancel)
 
-        let resetAction = UIAlertAction(title: "초기화", style: .destructive) { [weak self] _ in
+        let resetAction = UIAlertAction(title: SettingsConstants.Strings.resetAction, style: .destructive) { [weak self] _ in
             self?.performReset()
         }
 
@@ -148,8 +147,8 @@ final class SettingsViewController: BaseViewController<SettingsReactor> {
 
     private func showLanguageSelection() {
         let alert = UIAlertController(
-            title: "언어 선택",
-            message: "앱의 언어를 선택하세요.\n변경 사항을 적용하려면 앱을 재시작해야 합니다.",
+            title: SettingsConstants.Strings.languageSelectionTitle,
+            message: SettingsConstants.Strings.languageSelectionMessage,
             preferredStyle: .actionSheet
         )
 
@@ -166,7 +165,7 @@ final class SettingsViewController: BaseViewController<SettingsReactor> {
             alert.addAction(action)
         }
 
-        alert.addAction(UIAlertAction(title: "취소", style: .cancel))
+        alert.addAction(UIAlertAction(title: SettingsConstants.Strings.cancelAction, style: .cancel))
 
         // iPad 지원
         if let popover = alert.popoverPresentationController {
@@ -185,12 +184,12 @@ final class SettingsViewController: BaseViewController<SettingsReactor> {
 
     private func showLanguageChangedAlert() {
         let alert = UIAlertController(
-            title: "언어 변경됨",
-            message: "앱을 재시작하면 변경 사항이 적용됩니다.",
+            title: SettingsConstants.Strings.languageChangedTitle,
+            message: SettingsConstants.Strings.languageChangedMessage,
             preferredStyle: .alert
         )
 
-        alert.addAction(UIAlertAction(title: "확인", style: .default))
+        alert.addAction(UIAlertAction(title: SettingsConstants.Strings.confirmAction, style: .default))
 
         present(alert, animated: true)
     }
@@ -216,12 +215,12 @@ extension SettingsViewController: UITableViewDataSource {
 
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         guard let sectionType = Section(rawValue: indexPath.section) else {
-            return tableView.dequeueReusableCell(withIdentifier: "Cell", for: indexPath)
+            return tableView.dequeueReusableCell(withIdentifier: SettingsConstants.CellIdentifiers.defaultCell, for: indexPath)
         }
 
         switch sectionType {
         case .general:
-            let cell = UITableViewCell(style: .value1, reuseIdentifier: "ValueCell")
+            let cell = UITableViewCell(style: .value1, reuseIdentifier: SettingsConstants.CellIdentifiers.valueCell)
             if let rowType = GeneralRow(rawValue: indexPath.row) {
                 cell.textLabel?.text = rowType.title
                 cell.textLabel?.textColor = .label
@@ -238,7 +237,7 @@ extension SettingsViewController: UITableViewDataSource {
             return cell
 
         case .data:
-            let cell = tableView.dequeueReusableCell(withIdentifier: "Cell", for: indexPath)
+            let cell = tableView.dequeueReusableCell(withIdentifier: SettingsConstants.CellIdentifiers.defaultCell, for: indexPath)
             if let rowType = DataRow(rawValue: indexPath.row) {
                 cell.textLabel?.text = rowType.title
                 cell.textLabel?.textColor = rowType.textColor
