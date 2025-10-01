@@ -301,7 +301,9 @@ final class QuoteSaveViewController: UIViewController {
         let keyboardHeight = keyboardFrame.height
 
         // 텍스트뷰 높이 조정
-        textView.snp.updateConstraints {
+        textView.snp.remakeConstraints {
+            $0.top.equalTo(view.safeAreaLayoutGuide).offset(16)
+            $0.leading.trailing.equalToSuperview().inset(16)
             $0.height.equalToSuperview().multipliedBy(0.4) // 키보드가 올라올 때 조금 작게
         }
 
@@ -312,7 +314,9 @@ final class QuoteSaveViewController: UIViewController {
 
     @objc private func keyboardWillHide(_ notification: Notification) {
         // 텍스트뷰 높이 복원
-        textView.snp.updateConstraints {
+        textView.snp.remakeConstraints {
+            $0.top.equalTo(view.safeAreaLayoutGuide).offset(16)
+            $0.leading.trailing.equalToSuperview().inset(16)
             $0.height.equalToSuperview().multipliedBy(0.5)
         }
 

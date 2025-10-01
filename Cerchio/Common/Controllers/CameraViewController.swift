@@ -89,7 +89,6 @@ final class CameraViewController: UIViewController {
         previewView.translatesAutoresizingMaskIntoConstraints = false
         captureButton.translatesAutoresizingMaskIntoConstraints = false
         cancelButton.translatesAutoresizingMaskIntoConstraints = false
-        flashButton.translatesAutoresizingMaskIntoConstraints = false
 
         NSLayoutConstraint.activate([
             // Preview View
@@ -106,13 +105,7 @@ final class CameraViewController: UIViewController {
 
             // Cancel Button
             cancelButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
-            cancelButton.centerYAnchor.constraint(equalTo: captureButton.centerYAnchor),
-
-            // Flash Button
-            flashButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
-            flashButton.centerYAnchor.constraint(equalTo: captureButton.centerYAnchor),
-            flashButton.widthAnchor.constraint(equalToConstant: 44),
-            flashButton.heightAnchor.constraint(equalToConstant: 44)
+            cancelButton.centerYAnchor.constraint(equalTo: captureButton.centerYAnchor)
         ])
     }
 
