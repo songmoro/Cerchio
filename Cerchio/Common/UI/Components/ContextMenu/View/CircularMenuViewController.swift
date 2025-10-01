@@ -181,10 +181,14 @@ class CircularMenuViewController: UIViewController {
     }
 
     func touchEnded() {
-        if let button = highlightedButton {
-            button.menuItem?.action?()
+        if let button = highlightedButton, let action = button.menuItem?.action {
+            // Dismiss menu first, then execute action
+            dismissMenu {
+                action()
+            }
+        } else {
+            dismissMenu()
         }
-        dismissMenu()
     }
 
     func touchCancelled() {
@@ -336,7 +340,7 @@ class CircularMenuViewController: UIViewController {
         }
     }
 
-    func dismissMenu() {
+    func dismissMenu(completion: (() -> Void)? = nil) {
         highlightedButton?.setHighlighted(false)
         highlightedButton = nil
 
@@ -354,6 +358,8 @@ class CircularMenuViewController: UIViewController {
                 self?.dismiss(animated: false) {
                     // dismiss 완료 후 CircularMenuManager에 알림
                     CircularMenuManager.shared.resetMenuState()
+                    // Execute completion handler
+                    completion?()
                 }
             }
         }

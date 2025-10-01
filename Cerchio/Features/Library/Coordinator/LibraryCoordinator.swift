@@ -43,12 +43,16 @@ final class LibraryCoordinator: BaseCoordinator, Coordinatable {
         // Repository 주입
         let bookRepository = dependencies.serviceFactory.createBookRepository()
         let tagRepository = dependencies.serviceFactory.createTagRepository()
+        let quoteRepository = dependencies.serviceFactory.createQuoteRepository()
+        let photoRepository = dependencies.serviceFactory.createPhotoRepository()
         let libraryReactor = LibraryReactor(bookRepository: bookRepository, tagRepository: tagRepository)
 
         libraryViewController.coordinator = self
         libraryViewController.reactor = libraryReactor
         libraryViewController.setBookRepository(bookRepository)
         libraryViewController.setTagRepository(tagRepository)
+        libraryViewController.setQuoteRepository(quoteRepository)
+        libraryViewController.setPhotoRepository(photoRepository)
 
         // Book selection handler
         libraryViewController.bookSelectionHandler = { [weak self] book in

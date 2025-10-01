@@ -32,6 +32,8 @@ final class LibraryViewController: BaseViewController<LibraryReactor>, UICollect
     // Repository
     private var bookRepository: BookRepositoryProtocol?
     private var tagRepository: TagRepositoryProtocol?
+    private var quoteRepository: QuoteRepositoryProtocol?
+    private var photoRepository: PhotoRepositoryProtocol?
 
     // Temp storage for photo capture
     private var tempBookForPhoto: Book?
@@ -93,6 +95,14 @@ final class LibraryViewController: BaseViewController<LibraryReactor>, UICollect
 
     func setTagRepository(_ repository: TagRepositoryProtocol) {
         tagRepository = repository
+    }
+
+    func setQuoteRepository(_ repository: QuoteRepositoryProtocol) {
+        quoteRepository = repository
+    }
+
+    func setPhotoRepository(_ repository: PhotoRepositoryProtocol) {
+        photoRepository = repository
     }
 
     override func bind(reactor: LibraryReactor) {
@@ -295,25 +305,17 @@ final class LibraryViewController: BaseViewController<LibraryReactor>, UICollect
         // Book 정보를 저장해두기 위해 임시로 저장
         self.tempBookForPhoto = book
 
-        // CircularMenuViewController가 dismiss된 후에 카메라 present
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
-            guard let self = self else { return }
+        let imagePicker = UIImagePickerController()
+        imagePicker.delegate = self
+        imagePicker.sourceType = .camera
+        imagePicker.allowsEditing = false
 
-            let imagePicker = UIImagePickerController()
-            imagePicker.delegate = self
-            imagePicker.sourceType = .camera
-            imagePicker.allowsEditing = false
-
-            self.present(imagePicker, animated: true)
-        }
+        self.present(imagePicker, animated: true)
     }
 
     // 2. 문장 저장
     private func saveQuote(for book: Book) {
-        // CircularMenuViewController가 dismiss된 후에 alert present
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
-            self?.showQuoteInputAlert(for: book)
-        }
+        showQuoteInputAlert(for: book)
     }
 
     // 3. 즐겨찾기 토글
@@ -334,18 +336,12 @@ final class LibraryViewController: BaseViewController<LibraryReactor>, UICollect
 
     // 5. 도서 정보 수정
     private func editBookInfo(for book: Book) {
-        // CircularMenuViewController가 dismiss된 후에 modal present
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
-            self?.showReadingInfoEdit(for: book)
-        }
+        showReadingInfoEdit(for: book)
     }
 
     // 4. 삭제
     private func deleteBook(_ book: Book, at indexPath: IndexPath) {
-        // CircularMenuViewController가 dismiss된 후에 alert present
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
-            self?.showDeleteConfirmation(for: book, at: indexPath)
-        }
+        showDeleteConfirmation(for: book, at: indexPath)
     }
 
     private func showDeleteConfirmation(for book: Book, at indexPath: IndexPath) {
@@ -661,8 +657,31 @@ extension LibraryViewController {
     }
 
     private func saveQuoteToRealm(quote: String, pageNumber: Int?, for book: Book) {
-        // TODO: QuoteRepository 주입 필요
-        print("✅ Quote saved: \(quote), page: \(pageNumber ?? 0) for book: \(book.cleanTitle)")
+        guard let quoteRepository = quoteRepository else {
+            print("❌ QuoteRepository not available")
+            return
+        }
+
+        let bookId = String(describing: book.id)
+
+        let realmQuote = RealmQuote(
+            bookId: bookId,
+            quote: quote,
+            pageNumber: pageNumber
+        )
+
+        quoteRepository.saveQuote(realmQuote)
+            .observe(on: MainScheduler.instance)
+            .subscribe(
+                onNext: { [weak self] savedQuote in
+                    print("✅ Quote saved: \(quote), page: \(pageNumber ?? 0) for book: \(book.cleanTitle)")
+                    // 필요시 UI 업데이트
+                },
+                onError: { error in
+                    print("❌ Failed to save quote: \(error.localizedDescription)")
+                }
+            )
+            .disposed(by: disposeBag)
     }
 }
 
@@ -684,8 +703,40 @@ extension LibraryViewController: UIImagePickerControllerDelegate, UINavigationCo
     }
 
     private func savePhotoToRealm(image: UIImage, for book: Book) {
-        // TODO: PhotoRepository 주입 및 저장 로직
-        print("✅ Photo saved for book: \(book.cleanTitle)")
+        guard let photoRepository = photoRepository else {
+            print("❌ PhotoRepository not available")
+            return
+        }
+
+        let bookId = String(describing: book.id)
+
+        // 이미지를 로컬에 저장
+        let imageName = ImageStorageManager.shared.generateUniqueImageName(for: bookId)
+        guard let localPath = ImageStorageManager.shared.saveImage(image, withName: imageName) else {
+            print("❌ Failed to save image locally")
+            return
+        }
+
+        // Realm에 사진 메타데이터 저장
+        let realmPhoto = RealmPhoto(
+            bookId: bookId,
+            localImagePath: localPath
+        )
+
+        photoRepository.savePhoto(realmPhoto)
+            .observe(on: MainScheduler.instance)
+            .subscribe(
+                onNext: { [weak self] savedPhoto in
+                    print("✅ Photo saved for book: \(book.cleanTitle)")
+                    // 필요시 UI 업데이트
+                },
+                onError: { [weak self] error in
+                    print("❌ Failed to save photo: \(error.localizedDescription)")
+                    // 저장 실패 시 로컬 이미지 삭제
+                    ImageStorageManager.shared.deleteImage(atPath: localPath)
+                }
+            )
+            .disposed(by: disposeBag)
     }
 }
 

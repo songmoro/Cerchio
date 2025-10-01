@@ -19,9 +19,9 @@ final class PhotoListViewController: BaseViewController<PhotoListReactor> {
     private let collectionView: UICollectionView = {
         let layout = UICollectionViewFlowLayout()
         layout.scrollDirection = .vertical
-        layout.minimumInteritemSpacing = 8
-        layout.minimumLineSpacing = 8
-        layout.sectionInset = UIEdgeInsets(top: 16, left: 16, bottom: 16, right: 16)
+        layout.minimumInteritemSpacing = 4
+        layout.minimumLineSpacing = 4
+        layout.sectionInset = UIEdgeInsets(top: 8, left: 8, bottom: 8, right: 8)
         return UICollectionView(frame: .zero, collectionViewLayout: layout)
     }()
 
@@ -212,8 +212,13 @@ extension PhotoListViewController: UICollectionViewDelegateFlowLayout {
         let layout = collectionViewLayout as! UICollectionViewFlowLayout
         let spacing = layout.minimumInteritemSpacing
         let insets = layout.sectionInset
-        let width = (collectionView.bounds.width - insets.left - insets.right - spacing * 2) / 3
-        return CGSize(width: width, height: width)
+
+        // 3열 그리드: 전체 너비에서 좌우 인셋과 아이템 간 간격(2개)를 빼고 3으로 나눔
+        let totalWidth = collectionView.bounds.width
+        let availableWidth = totalWidth - insets.left - insets.right - (spacing * 2)
+        let itemWidth = floor(availableWidth / 3)
+
+        return CGSize(width: itemWidth, height: itemWidth)
     }
 }
 
