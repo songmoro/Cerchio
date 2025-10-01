@@ -190,10 +190,16 @@ final class BookInfoCollectionViewCell: UICollectionViewCell, IsIdentifiable {
         // 기존 태그 제거
         tagsStackView.arrangedSubviews.forEach { $0.removeFromSuperview() }
 
-        // 새 태그 추가
-        tags.forEach { tag in
-            let tagLabel = createTagLabel(text: tag)
-            tagsStackView.addArrangedSubview(tagLabel)
+        if tags.isEmpty {
+            // 태그가 없을 때 플레이스홀더 표시
+            let placeholderLabel = createPlaceholderLabel()
+            tagsStackView.addArrangedSubview(placeholderLabel)
+        } else {
+            // 새 태그 추가
+            tags.forEach { tag in
+                let tagLabel = createTagLabel(text: tag)
+                tagsStackView.addArrangedSubview(tagLabel)
+            }
         }
     }
 
@@ -203,6 +209,24 @@ final class BookInfoCollectionViewCell: UICollectionViewCell, IsIdentifiable {
         label.font = .custom(weight: .medium, size: BookDetailConstants.Typography.tagFontSize)
         label.textColor = .forestGreen
         label.backgroundColor = UIColor.forestGreen.withAlphaComponent(BookDetailConstants.Colors.tagBackgroundAlpha)
+        label.layer.cornerRadius = BookDetailConstants.Layout.tagCornerRadius
+        label.clipsToBounds = true
+        label.textAlignment = .center
+
+        // 패딩 추가
+        label.snp.makeConstraints {
+            $0.height.equalTo(BookDetailConstants.Layout.tagHeight)
+        }
+
+        return label
+    }
+
+    private func createPlaceholderLabel() -> UILabel {
+        let label = UILabel()
+        label.text = "#태그 추가"
+        label.font = .custom(weight: .medium, size: BookDetailConstants.Typography.tagFontSize)
+        label.textColor = .systemGray
+        label.backgroundColor = UIColor.systemGray.withAlphaComponent(0.15)
         label.layer.cornerRadius = BookDetailConstants.Layout.tagCornerRadius
         label.clipsToBounds = true
         label.textAlignment = .center
