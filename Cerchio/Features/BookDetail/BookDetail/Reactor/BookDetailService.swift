@@ -18,6 +18,26 @@ final class BookDetailService {
 
     // MARK: - Photo Operations
 
+    /// 사진 메타데이터와 이미지를 비동기로 로드
+    /// - 메인 스레드: Realm 접근, 경로 추출
+    /// - 백그라운드: 이미지 파일 로딩 (병렬)
+    func loadPhotosWithImages(bookId: String) async throws -> [UIImage] {
+        // 1. 메인 스레드에서 Realm 접근하여 경로만 추출
+        let imagePaths = try await MainActor.run {
+            let realm = try Realm()
+            let photos = realm.objects(RealmPhoto.self)
+                .filter("bookId == %@", bookId)
+                .sorted(byKeyPath: "createdAt", ascending: false)
+
+            // 메인 스레드에서 경로만 추출 (가벼운 작업)
+            return Array(photos.map { $0.localImagePath })
+        }
+
+        // 2. 백그라운드에서 이미지 로딩 (병렬 처리)
+        return await loadImagesInBackground(from: imagePaths)
+    }
+
+    /// Realm 메타데이터만 로드 (Observable)
     func loadPhotos(bookId: String) -> Observable<[RealmPhoto]> {
         return Observable.create { observer in
             do {
@@ -36,26 +56,35 @@ final class BookDetailService {
         }
     }
 
+    /// 이미지 경로 목록에서 이미지 로드 (백그라운드 병렬 처리)
     func loadPhotoImages(photos: [RealmPhoto]) async -> [UIImage] {
         let imagePaths = photos.map { $0.localImagePath }
-        return await loadImages(from: imagePaths)
+        return await loadImagesInBackground(from: imagePaths)
     }
 
-    private func loadImages(from paths: [String]) async -> [UIImage] {
-        await withTaskGroup(of: UIImage?.self) { group in
-            for path in paths {
+    /// 백그라운드에서 이미지 병렬 로딩
+    func loadImagesInBackground(from paths: [String]) async -> [UIImage] {
+        await withTaskGroup(of: (index: Int, image: UIImage?).self) { group in
+            for (index, path) in paths.enumerated() {
                 group.addTask {
-                    ImageStorageManager.shared.loadImage(fromPath: path)
+                    // 백그라운드에서 이미지 로드
+                    let image = ImageStorageManager.shared.loadImage(fromPath: path)
+                    return (index, image)
                 }
             }
 
-            var images: [UIImage] = []
-            for await image in group {
-                if let image = image {
-                    images.append(image)
+            // 원본 순서 유지를 위해 index와 함께 저장
+            var indexedImages: [(index: Int, image: UIImage)] = []
+            for await result in group {
+                if let image = result.image {
+                    indexedImages.append((result.index, image))
                 }
             }
-            return images
+
+            // 원본 순서대로 정렬하여 반환
+            return indexedImages
+                .sorted { $0.index < $1.index }
+                .map { $0.image }
         }
     }
 

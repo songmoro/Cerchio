@@ -227,11 +227,24 @@ final class PhotoListViewController: BaseViewController<PhotoListReactor> {
     }
 
     private func configureDataSource() {
-        dataSource = DataSource(collectionView: collectionView) { collectionView, indexPath, photo in
+        dataSource = DataSource(collectionView: collectionView) { [weak self] collectionView, indexPath, photo in
             let cell = collectionView.dequeueReusableCell(withReuseIdentifier: PhotoGridCell.identifier, for: indexPath) as! PhotoGridCell
 
-            if let image = ImageStorageManager.shared.loadImage(fromPath: photo.localImagePath) {
-                cell.configure(with: image)
+            // 백그라운드에서 이미지 로드
+            Task {
+                let imagePath = photo.localImagePath
+                let image = await Task.detached {
+                    ImageStorageManager.shared.loadImage(fromPath: imagePath)
+                }.value
+
+                // UI 업데이트는 메인 스레드에서
+                await MainActor.run {
+                    // 셀이 재사용되지 않았는지 확인
+                    if let currentCell = collectionView.cellForItem(at: indexPath) as? PhotoGridCell,
+                       let image = image {
+                        currentCell.configure(with: image)
+                    }
+                }
             }
 
             return cell
