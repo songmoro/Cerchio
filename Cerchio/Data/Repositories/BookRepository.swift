@@ -66,6 +66,10 @@ final class BookRepository: BaseRepository<RealmBook>, BookRepositoryProtocol {
                 let photosToDelete = self.realm.objects(RealmPhoto.self).filter("bookId == %@", bookId)
                 self.realm.delete(photosToDelete)
 
+                // 관련된 태그들 삭제
+                let tagsToDelete = self.realm.objects(RealmTag.self).filter("bookId == %@", bookId)
+                self.realm.delete(tagsToDelete)
+
                 // 책 삭제
                 self.realm.delete(book)
             }
@@ -91,6 +95,10 @@ final class BookRepository: BaseRepository<RealmBook>, BookRepositoryProtocol {
                 // 관련된 사진들 삭제
                 let photosToDelete = self.realm.objects(RealmPhoto.self).filter("bookId == %@", bookIdString)
                 self.realm.delete(photosToDelete)
+
+                // 관련된 태그들 삭제
+                let tagsToDelete = self.realm.objects(RealmTag.self).filter("bookId == %@", bookIdString)
+                self.realm.delete(tagsToDelete)
 
                 // 책 삭제
                 self.realm.delete(book)
@@ -146,6 +154,10 @@ final class BookRepository: BaseRepository<RealmBook>, BookRepositoryProtocol {
             let photosToDelete = self.realm.objects(RealmPhoto.self).filter("bookId == %@", bookIdString)
             self.realm.delete(photosToDelete)
 
+            // 관련된 태그들 삭제
+            let tagsToDelete = self.realm.objects(RealmTag.self).filter("bookId == %@", bookIdString)
+            self.realm.delete(tagsToDelete)
+
             // 책 삭제
             self.realm.delete(book)
             return ()
@@ -169,6 +181,10 @@ final class BookRepository: BaseRepository<RealmBook>, BookRepositoryProtocol {
                 // 관련된 사진들 삭제
                 let photosToDelete = self.realm.objects(RealmPhoto.self).filter("bookId == %@", bookIdString)
                 self.realm.delete(photosToDelete)
+
+                // 관련된 태그들 삭제
+                let tagsToDelete = self.realm.objects(RealmTag.self).filter("bookId == %@", bookIdString)
+                self.realm.delete(tagsToDelete)
 
                 // 책 삭제
                 self.realm.delete(book)

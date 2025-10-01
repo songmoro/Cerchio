@@ -510,8 +510,9 @@ final class LibraryViewController: BaseViewController<LibraryReactor>, UICollect
         guard let reactor = reactor,
               let bookRepository = bookRepository else { return }
 
-        // Copy selected ISBNs before clearing
+        // Copy selected ISBNs and current filters before clearing
         let isbnsToDelete = Array(selectedISBNs)
+        let currentFilters = reactor.currentState.activeFilters
 
         guard !isbnsToDelete.isEmpty else { return }
 
@@ -522,12 +523,21 @@ final class LibraryViewController: BaseViewController<LibraryReactor>, UICollect
         bookRepository.deleteBooksByISBNs(isbnsToDelete)
             .observe(on: MainScheduler.instance)
             .subscribe(
-                onNext: { _ in
+                onNext: { [weak self] _ in
+                    guard let self = self, let reactor = self.reactor else { return }
+
                     // 데이터 새로고침
                     reactor.action.onNext(.loadBooks)
+
+                    // 필터가 활성화되어 있었다면 다시 적용
+                    if !currentFilters.isEmpty {
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                            reactor.action.onNext(.applyTagFilters(currentFilters))
+                        }
+                    }
                 },
                 onError: { [weak self] error in
-                    print("❌ Failed to delete books: \\(error.localizedDescription)")
+                    print("Failed to delete books: \(error.localizedDescription)")
                     self?.showDeleteErrorAlert()
                     // 삭제 실패 시 데이터 새로고침하여 일관성 유지
                     reactor.action.onNext(.loadBooks)
