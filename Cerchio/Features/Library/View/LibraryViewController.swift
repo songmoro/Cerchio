@@ -273,20 +273,28 @@ final class LibraryViewController: BaseViewController<LibraryReactor>, UICollect
 
     // 1. 사진 찍기
     private func capturePhoto(for book: Book) {
-        let imagePicker = UIImagePickerController()
-        imagePicker.delegate = self
-        imagePicker.sourceType = .camera
-        imagePicker.allowsEditing = false
-
         // Book 정보를 저장해두기 위해 임시로 저장
         self.tempBookForPhoto = book
 
-        present(imagePicker, animated: true)
+        // CircularMenuViewController가 dismiss된 후에 카메라 present
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
+            guard let self = self else { return }
+
+            let imagePicker = UIImagePickerController()
+            imagePicker.delegate = self
+            imagePicker.sourceType = .camera
+            imagePicker.allowsEditing = false
+
+            self.present(imagePicker, animated: true)
+        }
     }
 
     // 2. 문장 저장
     private func saveQuote(for book: Book) {
-        showQuoteInputAlert(for: book)
+        // CircularMenuViewController가 dismiss된 후에 alert present
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
+            self?.showQuoteInputAlert(for: book)
+        }
     }
 
     // 3. 즐겨찾기 토글
@@ -307,12 +315,18 @@ final class LibraryViewController: BaseViewController<LibraryReactor>, UICollect
 
     // 5. 도서 정보 수정
     private func editBookInfo(for book: Book) {
-        showReadingInfoEdit(for: book)
+        // CircularMenuViewController가 dismiss된 후에 modal present
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
+            self?.showReadingInfoEdit(for: book)
+        }
     }
 
     // 4. 삭제
     private func deleteBook(_ book: Book, at indexPath: IndexPath) {
-        showDeleteConfirmation(for: book, at: indexPath)
+        // CircularMenuViewController가 dismiss된 후에 alert present
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
+            self?.showDeleteConfirmation(for: book, at: indexPath)
+        }
     }
 
     private func showDeleteConfirmation(for book: Book, at indexPath: IndexPath) {
