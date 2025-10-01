@@ -28,6 +28,8 @@ final class LibraryViewController: BaseViewController<LibraryReactor>, UICollect
     private var editButton: UIBarButtonItem!
     private var filterButton: UIBarButtonItem!
     private var cancelButton: UIBarButtonItem!
+    private var selectAllButton: UIBarButtonItem!
+    private var deleteButton: UIBarButtonItem!
 
     // Repository
     private var bookRepository: BookRepositoryProtocol?
@@ -68,6 +70,11 @@ final class LibraryViewController: BaseViewController<LibraryReactor>, UICollect
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
 
+        // 편집 모드였다면 기본 모드로 복귀
+        if isEditMode {
+            exitEditMode()
+        }
+
         // 화면이 다시 나타날 때마다 데이터 새로고침
         reactor?.action.onNext(.loadBooks)
     }
@@ -80,13 +87,28 @@ final class LibraryViewController: BaseViewController<LibraryReactor>, UICollect
     func setFilterButton(_ button: UIBarButtonItem) {
         filterButton = button
 
-        // 취소 버튼 생성 (편집 모드에서 사용)
+        // 편집 모드 버튼들 생성
         cancelButton = UIBarButtonItem(
             title: String(localized: .actionCancel),
             style: .plain,
             target: self,
             action: #selector(cancelButtonTapped)
         )
+
+        selectAllButton = UIBarButtonItem(
+            title: "전체 선택",
+            style: .plain,
+            target: self,
+            action: #selector(selectAllButtonTapped)
+        )
+
+        deleteButton = UIBarButtonItem(
+            title: String(localized: .actionDelete),
+            style: .plain,
+            target: self,
+            action: #selector(deleteButtonTapped)
+        )
+        deleteButton.tintColor = .systemRed
     }
 
     func setBookRepository(_ repository: BookRepositoryProtocol) {
@@ -131,7 +153,7 @@ final class LibraryViewController: BaseViewController<LibraryReactor>, UICollect
                         self.selectedISBNs.insert(selectedBook.isbn)
                     }
                     self.updateCellSelection(at: indexPath, isSelected: self.selectedISBNs.contains(selectedBook.isbn))
-                    self.updateEditButtonState()
+                    self.updateNavigationBarForEditMode()
                 } else {
                     // 일반 모드에서는 책 상세로 이동
                     self.bookSelectionHandler?(selectedBook)
@@ -457,21 +479,17 @@ final class LibraryViewController: BaseViewController<LibraryReactor>, UICollect
     }
 
     @objc public func editButtonTapped() {
-        if isEditMode {
-            if selectedISBNs.isEmpty {
-                // 편집 모드 종료
-                exitEditMode()
-            } else {
-                // 선택된 책들 삭제
-                deleteSelectedBooks()
-            }
-        } else {
-            // 편집 모드 진입
-            enterEditMode()
-        }
+        // 편집 모드 진입
+        enterEditMode()
     }
 
     private func enterEditMode() {
+        // 필터가 활성화되어 있으면 먼저 해제
+        if let reactor = reactor,
+           (!reactor.currentState.activeFilters.isEmpty || reactor.currentState.isFavoriteFilterEnabled) {
+            reactor.action.onNext(.clearFilters)
+        }
+
         isEditMode = true
         selectedISBNs.removeAll()
 
@@ -479,7 +497,6 @@ final class LibraryViewController: BaseViewController<LibraryReactor>, UICollect
         let generator = UIImpactFeedbackGenerator(style: .medium)
         generator.impactOccurred()
 
-        updateEditButtonState()
         updateNavigationBarForEditMode()
         updateCollectionViewForEditMode()
     }
@@ -492,7 +509,6 @@ final class LibraryViewController: BaseViewController<LibraryReactor>, UICollect
         let generator = UIImpactFeedbackGenerator(style: .light)
         generator.impactOccurred()
 
-        updateEditButtonState()
         updateNavigationBarForEditMode()
         updateCollectionViewForEditMode()
 
@@ -513,10 +529,19 @@ final class LibraryViewController: BaseViewController<LibraryReactor>, UICollect
         guard let tabBarController = tabBarController else { return }
 
         if isEditMode {
-            // 편집 모드: 필터 버튼을 취소 버튼으로 교체
-            tabBarController.navigationItem.rightBarButtonItems = [editButton, cancelButton]
+            // 편집 모드
+            if selectedISBNs.isEmpty {
+                // 선택된 책이 없으면: [취소] [전체 선택]
+                tabBarController.navigationItem.leftBarButtonItem = cancelButton
+                tabBarController.navigationItem.rightBarButtonItems = [selectAllButton]
+            } else {
+                // 선택된 책이 있으면: [취소] [삭제]
+                tabBarController.navigationItem.leftBarButtonItem = cancelButton
+                tabBarController.navigationItem.rightBarButtonItems = [deleteButton]
+            }
         } else {
-            // 일반 모드: 취소 버튼을 필터 버튼으로 교체
+            // 일반 모드: [편집] [필터]
+            tabBarController.navigationItem.leftBarButtonItem = nil
             tabBarController.navigationItem.rightBarButtonItems = [editButton, filterButton]
         }
     }
@@ -526,19 +551,27 @@ final class LibraryViewController: BaseViewController<LibraryReactor>, UICollect
         exitEditMode()
     }
 
-    private func updateEditButtonState() {
-        if isEditMode {
-            if selectedISBNs.isEmpty {
-                editButton.title = String(localized: .actionEdit)
-                editButton.style = .plain
-            } else {
-                editButton.title = String(localized: .actionDelete)
-                editButton.style = .plain
-            }
-        } else {
-            editButton.title = String(localized: .actionEdit)
-            editButton.style = .plain
+    @objc private func selectAllButtonTapped() {
+        guard let reactor = reactor,
+              let books = reactor.currentState.displayBooks else { return }
+
+        // 모든 책 선택
+        for (index, book) in books.enumerated() {
+            selectedISBNs.insert(book.isbn)
+            let indexPath = IndexPath(item: index, section: 0)
+            collectionView.selectItem(at: indexPath, animated: false, scrollPosition: [])
+            updateCellSelection(at: indexPath, isSelected: true)
         }
+
+        // 햅틱 피드백
+        let generator = UIImpactFeedbackGenerator(style: .light)
+        generator.impactOccurred()
+
+        updateNavigationBarForEditMode()
+    }
+
+    @objc private func deleteButtonTapped() {
+        deleteSelectedBooks()
     }
 
     private func updateCollectionViewForEditMode() {
