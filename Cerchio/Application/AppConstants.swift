@@ -12,16 +12,19 @@ enum AppConstants {
         enum Tags {
             static let library: Int = 0
             static let search: Int = 1
+            static let settings: Int = 2
         }
 
         enum Titles {
-            static let library = NSLocalizedString("tab.library", comment: "Library tab title")
-            static let search = NSLocalizedString("tab.search", comment: "Search tab title")
+            static let library = String(localized: .tabLibrary)
+            static let search = String(localized: .tabSearch)
+            static let settings = String(localized: .tabSettings)
         }
 
         enum SystemImages {
-            static let library = "books.vertical"
-            static let search = "magnifyingglass"
+            static let library = SystemImage.library
+            static let search = SystemImage.search
+            static let settings = SystemImage.settings
         }
     }
 

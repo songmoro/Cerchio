@@ -38,7 +38,6 @@ final class TabBarCoordinator: BaseCoordinator, Coordinatable {
     func start(with dependencies: TabBarDependencies) {
         self.dependencies = dependencies
         setupTabBarController()
-//        bindNavigationEvents()
     }
 
     private func createTabBarController() -> CircleTabBarController {
@@ -60,7 +59,6 @@ final class TabBarCoordinator: BaseCoordinator, Coordinatable {
     private func createLibraryTab() -> UIViewController {
         let libraryViewController = LibraryViewController()
 
-        // Repository 주입
         let bookRepository = dependencies.serviceFactory.createBookRepository()
         let tagRepository = dependencies.serviceFactory.createTagRepository()
         let libraryReactor = LibraryReactor(bookRepository: bookRepository, tagRepository: tagRepository)
@@ -110,20 +108,19 @@ final class TabBarCoordinator: BaseCoordinator, Coordinatable {
 
         settingsViewController.reactor = settingsReactor
         settingsViewController.tabBarItem = UITabBarItem(
-            title: "설정",
-            image: UIImage(systemName: "gearshape"),
-            tag: 2
+            title: AppConstants.TabBar.Titles.settings,
+            image: UIImage(systemName: AppConstants.TabBar.SystemImages.settings),
+            tag: AppConstants.TabBar.Tags.settings
         )
-        settingsViewController.navigationItem.title = "설정"
+        settingsViewController.navigationItem.title = AppConstants.TabBar.Titles.settings
 
-        // Reset 완료 시 서재 탭으로 이동
         settingsReactor.state
             .map { $0.resetCompleted }
             .distinctUntilChanged()
             .filter { $0 == true }
             .observe(on: MainScheduler.instance)
             .subscribe(onNext: { [weak self] _ in
-                self?.tabBarController.selectedIndex = 0 // Library tab
+                self?.tabBarController.selectedIndex = 0
             })
             .disposed(by: disposeBag)
 

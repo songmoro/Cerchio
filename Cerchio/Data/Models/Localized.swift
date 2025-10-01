@@ -42,4 +42,5 @@ enum Localized: String {
     case `quote_save.title`
     case `tab.library`
     case `tab.search`
+    case `tab.settings`
 }

@@ -585,6 +585,18 @@
           }
         }
       }
+    },
+    "tab.settings" : {
+      "comment" : "Settings tab title",
+      "extractionState" : "manual",
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "설정"
+          }
+        }
+      }
     }
   },
   "version" : "1.1"
