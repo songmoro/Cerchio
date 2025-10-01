@@ -24,7 +24,6 @@ final class PhotoItemCell: UICollectionViewCell, IsIdentifiable {
 
     // MARK: - Properties
     var onPhotoTapped: ((UIImage) -> Void)?
-    var onPhotoLongPressed: ((UIImageView, UIImage) -> Void)?
 
     // MARK: - Initialization
     override init(frame: CGRect) {
@@ -48,23 +47,12 @@ final class PhotoItemCell: UICollectionViewCell, IsIdentifiable {
         // 탭 제스처
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(photoTapped))
         imageView.addGestureRecognizer(tapGesture)
-
-        // 롱 프레스 제스처
-        let longPress = UILongPressGestureRecognizer(target: self, action: #selector(handleLongPress))
-        imageView.addGestureRecognizer(longPress)
     }
 
     // MARK: - Actions
     @objc private func photoTapped() {
         guard let image = imageView.image else { return }
         onPhotoTapped?(image)
-    }
-
-    @objc private func handleLongPress(_ gesture: UILongPressGestureRecognizer) {
-        guard gesture.state == .began,
-              let image = imageView.image else { return }
-
-        onPhotoLongPressed?(imageView, image)
     }
 
     // MARK: - Configuration
@@ -76,6 +64,5 @@ final class PhotoItemCell: UICollectionViewCell, IsIdentifiable {
         super.prepareForReuse()
         imageView.image = nil
         onPhotoTapped = nil
-        onPhotoLongPressed = nil
     }
 }

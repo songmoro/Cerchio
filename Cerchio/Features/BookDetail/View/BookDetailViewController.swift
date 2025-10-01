@@ -363,9 +363,10 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
                 cell.onPhotoTapped = { [weak self] image in
                     self?.showImagePreview(image)
                 }
-                cell.onPhotoLongPressed = { [weak self] imageView, image in
-                    self?.showPhotoContextMenu(for: imageView, with: image)
-                }
+
+                // 컨텍스트 메뉴 설정
+                self?.setupPhotoContextMenu(for: cell, with: image)
+
                 return cell
 
             case .addPhotoButton:
@@ -660,34 +661,35 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
         }
     }
     
-    private func showPhotoContextMenu(for imageView: UIImageView, with image: UIImage) {
-        let alert = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
+    private func setupPhotoContextMenu(for cell: PhotoItemCell, with image: UIImage) {
+        let menuItems = createPhotoMenuItems(for: image)
+        let highlightConfig = ViewHighlightConfiguration.withContextualRotation()
 
-        // 사진 보기
-        alert.addAction(UIAlertAction(title: String(localized: .photoView), style: .default) { _ in
-            self.showImagePreview(image)
-        })
+        CircularMenuManager.shared.addLongPressMenu(
+            to: cell,
+            targetView: cell,
+            items: menuItems,
+            presentingViewController: self,
+            minimumPressDuration: 0.5,
+            highlightConfiguration: highlightConfig
+        )
+    }
 
-        // 사진 저장 (사진 앱으로)
-        alert.addAction(UIAlertAction(title: String(localized: .photoSaveToGallery), style: .default) { _ in
-            self.saveImageToPhotoLibrary(image)
-        })
-
-        // 사진 삭제
-        alert.addAction(UIAlertAction(title: String(localized: .actionDelete), style: .destructive) { _ in
-            self.showDeletePhotoConfirmation(for: image)
-        })
-
-        // 취소
-        alert.addAction(UIAlertAction(title: String(localized: .actionCancel), style: .cancel))
-
-        // iPad 지원
-        if let popover = alert.popoverPresentationController {
-            popover.sourceView = imageView
-            popover.sourceRect = imageView.bounds
-        }
-
-        present(alert, animated: true)
+    private func createPhotoMenuItems(for image: UIImage) -> [CircularMenuItem] {
+        return [
+            // 1. 사진 보기
+            CircularMenuItem(name: "보기", image: UIImage(systemName: "eye")) { [weak self] in
+                self?.showImagePreview(image)
+            },
+            // 2. 사진 저장
+            CircularMenuItem(name: "저장", image: UIImage(systemName: "square.and.arrow.down")) { [weak self] in
+                self?.saveImageToPhotoLibrary(image)
+            },
+            // 3. 사진 삭제
+            CircularMenuItem(name: "삭제", image: UIImage(systemName: "trash")) { [weak self] in
+                self?.showDeletePhotoConfirmation(for: image)
+            }
+        ]
     }
     
     private func showImagePreview(_ image: UIImage) {
