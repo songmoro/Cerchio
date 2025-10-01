@@ -762,72 +762,51 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
               let serviceFactory = serviceFactory else { return }
 
         let bookId = String(describing: reactor.currentState.book.id)
-
-        // 기존 태그 로드
         let tagRepository = serviceFactory.createTagRepository()
-        tagRepository.getTags(for: bookId)
-            .observe(on: MainScheduler.instance)
-            .subscribe(onNext: { [weak self] existingTags in
-                self?.presentTagInputAlert(existingTags: existingTags)
-            }, onError: { error in
-                print("❌ Failed to load existing tags: \(error.localizedDescription)")
-            })
-            .disposed(by: disposeBag)
-    }
 
-    private func presentTagInputAlert(existingTags: [RealmTag]) {
-        let alert = UIAlertController(
-            title: "태그 추가",
-            message: "#을 기준으로 태그를 입력하세요. (예: #판타지 #과학)",
-            preferredStyle: .alert
+        // 현재 책의 태그와 전체 태그 목록을 동시에 로드
+        Observable.zip(
+            tagRepository.getTags(for: bookId),
+            tagRepository.getAllTags()
         )
-
-        // 기존 태그를 # 형식으로 결합
-        let existingTagText = existingTags.map { "#\($0.tagName)" }.joined(separator: " ")
-
-        alert.addTextField { textField in
-            textField.placeholder = "예: #판타지 #과학"
-            textField.text = existingTagText
-            textField.autocapitalizationType = .none
-        }
-
-        // 저장 액션
-        let saveAction = UIAlertAction(title: "저장", style: .default) { [weak self, weak alert] _ in
-            guard let textField = alert?.textFields?.first,
-                  let inputText = textField.text?.trimmingCharacters(in: .whitespacesAndNewlines),
-                  !inputText.isEmpty else { return }
-
-            self?.saveTags(from: inputText)
-        }
-
-        // 취소 액션
-        let cancelAction = UIAlertAction(title: "취소", style: .cancel)
-
-        alert.addAction(saveAction)
-        alert.addAction(cancelAction)
-
-        present(alert, animated: true)
+        .observe(on: MainScheduler.instance)
+        .subscribe(onNext: { [weak self] currentTags, allTags in
+            self?.presentTagEditView(currentTags: currentTags, allTags: allTags)
+        }, onError: { error in
+            print("Failed to load tags: \(error.localizedDescription)")
+        })
+        .disposed(by: disposeBag)
     }
 
-    private func saveTags(from inputText: String) {
+    private func presentTagEditView(currentTags: [RealmTag], allTags: [RealmTag]) {
+        let tagEditVC = TagEditViewController()
+
+        let currentTagNames = currentTags.map { $0.tagName }
+        let allUniqueTagNames = Array(Set(allTags.map { $0.tagName }))
+
+        tagEditVC.configure(currentTags: currentTagNames, allTags: allUniqueTagNames)
+
+        tagEditVC.onTagsSaved = { [weak self] tags in
+            self?.saveTags(tags)
+        }
+
+        let navController = UINavigationController(rootViewController: tagEditVC)
+        present(navController, animated: true)
+    }
+
+    private func saveTags(_ tags: [String]) {
         guard let reactor = reactor,
               let serviceFactory = serviceFactory else { return }
 
         let bookId = String(describing: reactor.currentState.book.id)
-
-        // # 기준으로 태그 파싱
-        let tags = parseTagsFromInput(inputText)
-
-        guard !tags.isEmpty else {
-            print("⚠️ No valid tags to save")
-            return
-        }
-
         let tagRepository = serviceFactory.createTagRepository()
 
         // 1. 기존 태그 삭제
         tagRepository.deleteTags(for: bookId)
             .flatMap { _ -> Observable<[RealmTag]> in
+                guard !tags.isEmpty else {
+                    return Observable.just([])
+                }
                 // 2. 새 태그 생성 및 저장
                 let realmTags = tags.map { RealmTag(bookId: bookId, tagName: $0) }
                 return tagRepository.saveTags(realmTags)
@@ -835,24 +814,16 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
             .observe(on: MainScheduler.instance)
             .subscribe(
                 onNext: { [weak self] savedTags in
-                    print("✅ Tags saved: \(savedTags.map { $0.tagName })")
+                    if !savedTags.isEmpty {
+                        print("Tags saved: \(savedTags.map { $0.tagName })")
+                    }
                     self?.loadTagsAndUpdateUI()
                 },
                 onError: { error in
-                    print("❌ Failed to save tags: \(error.localizedDescription)")
+                    print("Failed to save tags: \(error.localizedDescription)")
                 }
             )
             .disposed(by: disposeBag)
-    }
-
-    private func parseTagsFromInput(_ input: String) -> [String] {
-        // # 기준으로 분리
-        let components = input.components(separatedBy: "#")
-
-        // 빈 문자열 제거 및 공백 정리
-        return components
-            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
-            .filter { !$0.isEmpty }
     }
 
     private func loadTagsAndUpdateUI() {
