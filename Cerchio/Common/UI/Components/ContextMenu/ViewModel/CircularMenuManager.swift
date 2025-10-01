@@ -11,6 +11,7 @@ class CircularMenuManager {
     static let shared = CircularMenuManager()
     private init() {}
     private var currentMenuViewController: CircularMenuViewController?
+    private var isMenuPresented: Bool = false
 
     func showMenu(
         at point: CGPoint,
@@ -20,6 +21,13 @@ class CircularMenuManager {
         highlightConfiguration: ViewHighlightConfiguration = .withContextualRotation(),
         customization: ((CircularMenuViewController) -> Void)? = nil
     ) {
+        // 이미 메뉴가 표시 중이면 무시
+        guard !isMenuPresented else {
+            print("⚠️ Menu is already presented, ignoring new menu request")
+            return
+        }
+
+        isMenuPresented = true
         let menuVC = CircularMenuViewController()
         menuVC.modalPresentationStyle = .overFullScreen
         menuVC.modalTransitionStyle = .crossDissolve
@@ -83,11 +91,17 @@ class CircularMenuManager {
 
     func touchEnded() {
         currentMenuViewController?.touchEnded()
-        currentMenuViewController = nil
+        // touchEnded는 메뉴를 dismiss하므로, dismissMenu의 completion에서 resetMenuState 호출됨
     }
 
     func touchCancelled() {
         currentMenuViewController?.touchCancelled()
+        // touchCancelled도 메뉴를 dismiss하므로, dismissMenu의 completion에서 resetMenuState 호출됨
+    }
+
+    func resetMenuState() {
+        // dismiss completion에서 호출되므로 즉시 리셋
         currentMenuViewController = nil
+        isMenuPresented = false
     }
 }

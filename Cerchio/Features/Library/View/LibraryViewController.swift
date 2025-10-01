@@ -212,11 +212,15 @@ final class LibraryViewController: BaseViewController<LibraryReactor>, UICollect
     }
     
     private func setupLongPressGesture(for cell: LibraryCollectionViewCell, with book: Book, at indexPath: IndexPath) {
-        // 기존 제스처 제거 (셀 재사용 시)
-        cell.gestureRecognizers?.removeAll()
-
         // 편집 모드에서는 롱 프레스 제스처 비활성화
-        guard !isEditMode else { return }
+        guard !isEditMode else {
+            // 편집 모드에서는 기존 롱 프레스 제스처 제거
+            removeLongPressGesture(from: cell)
+            return
+        }
+
+        // 기존 롱 프레스 제스처 제거 (셀 재사용 시 중복 방지)
+        removeLongPressGesture(from: cell)
 
         // 셀이 화면에 완전히 표시된 후에 제스처 추가
         DispatchQueue.main.async { [weak self, weak cell] in
@@ -239,6 +243,17 @@ final class LibraryViewController: BaseViewController<LibraryReactor>, UICollect
                 minimumPressDuration: LibraryConstants.Gesture.minimumPressDuration,
                 highlightConfiguration: highlightConfig
             )
+        }
+    }
+
+    private func removeLongPressGesture(from cell: LibraryCollectionViewCell) {
+        // 롱 프레스 제스처만 선택적으로 제거
+        if let gestureRecognizers = cell.gestureRecognizers {
+            for gesture in gestureRecognizers {
+                if gesture is UILongPressGestureRecognizer {
+                    cell.removeGestureRecognizer(gesture)
+                }
+            }
         }
     }
     

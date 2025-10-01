@@ -366,7 +366,10 @@ class CircularMenuViewController: UIViewController {
         }) { [weak self] _ in
             // Dismiss highlight using ViewHighlightManager
             self?.highlightManager?.dismiss(animated: false) {
-                self?.dismiss(animated: false)
+                self?.dismiss(animated: false) {
+                    // dismiss 완료 후 CircularMenuManager에 알림
+                    CircularMenuManager.shared.resetMenuState()
+                }
             }
         }
     }
