@@ -30,6 +30,14 @@ final class PhotoListViewController: BaseViewController<PhotoListReactor> {
     // MARK: - Properties
     var onAddPhotoTapped: (() -> Void)?
     private var isEditMode: Bool = false
+    private var selectedPhotoIds: Set<String> = []
+
+    // Navigation bar buttons
+    private var addButton: UIBarButtonItem!
+    private var editButton: UIBarButtonItem!
+    private var cancelButton: UIBarButtonItem!
+    private var selectAllButton: UIBarButtonItem!
+    private var deleteButton: UIBarButtonItem!
 
     // MARK: - Section Type
     nonisolated enum Section: CaseIterable {
@@ -49,35 +57,64 @@ final class PhotoListViewController: BaseViewController<PhotoListReactor> {
         title = String(localized: .bookDetailPhotos)
 
         // 추가 버튼
-        let addButton = UIBarButtonItem(
+        addButton = UIBarButtonItem(
             barButtonSystemItem: .add,
             target: self,
             action: #selector(addButtonTapped)
         )
 
         // 편집 버튼
-        let editButton = UIBarButtonItem(
-            title: NSLocalizedString("action.edit", comment: "Edit action"),
+        editButton = UIBarButtonItem(
+            title: String(localized: .actionEdit),
             style: .plain,
             target: self,
             action: #selector(editButtonTapped)
         )
 
+        // 취소 버튼
+        cancelButton = UIBarButtonItem(
+            title: String(localized: .actionCancel),
+            style: .plain,
+            target: self,
+            action: #selector(cancelButtonTapped)
+        )
+
+        // 전체 선택 버튼
+        selectAllButton = UIBarButtonItem(
+            title: "전체 선택",
+            style: .plain,
+            target: self,
+            action: #selector(selectAllButtonTapped)
+        )
+
+        // 삭제 버튼
+        deleteButton = UIBarButtonItem(
+            title: String(localized: .actionDelete),
+            style: .plain,
+            target: self,
+            action: #selector(deleteButtonTapped)
+        )
+        deleteButton.tintColor = .systemRed
+
         navigationItem.rightBarButtonItems = [addButton, editButton]
     }
 
     private func updateNavigationBar() {
-        guard let rightBarButtonItems = navigationItem.rightBarButtonItems,
-              rightBarButtonItems.count >= 2 else { return }
-
-        let editButton = rightBarButtonItems[1]
-
         if isEditMode {
-            editButton.title = NSLocalizedString("action.done", comment: "Done action")
-            editButton.style = .done
+            // 편집 모드
+            if selectedPhotoIds.isEmpty {
+                // 선택된 사진이 없으면: [취소] [전체 선택]
+                navigationItem.leftBarButtonItem = cancelButton
+                navigationItem.rightBarButtonItems = [selectAllButton]
+            } else {
+                // 선택된 사진이 있으면: [취소] [삭제]
+                navigationItem.leftBarButtonItem = cancelButton
+                navigationItem.rightBarButtonItems = [deleteButton]
+            }
         } else {
-            editButton.title = NSLocalizedString("action.edit", comment: "Edit action")
-            editButton.style = .plain
+            // 일반 모드: [추가] [편집]
+            navigationItem.leftBarButtonItem = nil
+            navigationItem.rightBarButtonItems = [addButton, editButton]
         }
     }
 
@@ -147,40 +184,113 @@ final class PhotoListViewController: BaseViewController<PhotoListReactor> {
     }
 
     @objc private func editButtonTapped() {
-        isEditMode.toggle()
-        updateNavigationBar()
+        enterEditMode()
+    }
 
-        if !isEditMode {
-            // 편집 모드 종료 시 선택 해제
-            collectionView.indexPathsForSelectedItems?.forEach {
-                collectionView.deselectItem(at: $0, animated: true)
-            }
+    @objc private func cancelButtonTapped() {
+        exitEditMode()
+    }
+
+    @objc private func selectAllButtonTapped() {
+        guard let reactor = reactor else { return }
+        let photos = reactor.currentState.photos
+
+        // 모든 사진 선택
+        for (index, photo) in photos.enumerated() {
+            selectedPhotoIds.insert(photo.id)
+            let indexPath = IndexPath(item: index, section: 0)
+            collectionView.selectItem(at: indexPath, animated: false, scrollPosition: [])
         }
+
+        // 햅틱 피드백
+        let generator = UIImpactFeedbackGenerator(style: .light)
+        generator.impactOccurred()
+
+        updateNavigationBar()
+    }
+
+    @objc private func deleteButtonTapped() {
+        deleteSelectedPhotos()
+    }
+
+    private func enterEditMode() {
+        isEditMode = true
+        selectedPhotoIds.removeAll()
+
+        // 햅틱 피드백
+        let generator = UIImpactFeedbackGenerator(style: .medium)
+        generator.impactOccurred()
+
+        updateNavigationBar()
+    }
+
+    private func exitEditMode() {
+        isEditMode = false
+        selectedPhotoIds.removeAll()
+
+        // 햅틱 피드백
+        let generator = UIImpactFeedbackGenerator(style: .light)
+        generator.impactOccurred()
+
+        // 모든 선택 해제
+        collectionView.indexPathsForSelectedItems?.forEach {
+            collectionView.deselectItem(at: $0, animated: true)
+        }
+
+        updateNavigationBar()
     }
 
     private func deleteSelectedPhotos() {
-        guard let selectedIndexPaths = collectionView.indexPathsForSelectedItems,
-              !selectedIndexPaths.isEmpty else { return }
+        guard !selectedPhotoIds.isEmpty else { return }
 
-        let photosToDelete = selectedIndexPaths.compactMap { dataSource.itemIdentifier(for: $0) }
+        let alert = UIAlertController(
+            title: String(localized: .actionDelete),
+            message: "선택한 \(selectedPhotoIds.count)개의 사진을 삭제하시겠습니까?",
+            preferredStyle: .alert
+        )
 
-        for photo in photosToDelete {
-            reactor?.action.onNext(.deletePhoto(photo.id))
+        alert.addAction(UIAlertAction(title: String(localized: .actionCancel), style: .cancel))
+        alert.addAction(UIAlertAction(title: String(localized: .actionDelete), style: .destructive) { [weak self] _ in
+            self?.performDeletion()
+        })
+
+        present(alert, animated: true)
+    }
+
+    private func performDeletion() {
+        let photoIdsToDelete = Array(selectedPhotoIds)
+
+        for photoId in photoIdsToDelete {
+            reactor?.action.onNext(.deletePhoto(photoId))
         }
+
+        // 편집 모드 종료
+        exitEditMode()
+
+        // 햅틱 피드백
+        let generator = UINotificationFeedbackGenerator()
+        generator.notificationOccurred(.success)
     }
 }
 
 // MARK: - UICollectionViewDelegate
 extension PhotoListViewController: UICollectionViewDelegate {
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+        guard let photo = dataSource.itemIdentifier(for: indexPath) else { return }
+
         if isEditMode {
-            // 편집 모드에서는 선택 표시만
-            return
+            // 편집 모드에서는 선택/해제 토글
+            if selectedPhotoIds.contains(photo.id) {
+                selectedPhotoIds.remove(photo.id)
+                collectionView.deselectItem(at: indexPath, animated: true)
+            } else {
+                selectedPhotoIds.insert(photo.id)
+            }
+            updateNavigationBar()
         } else {
             // 일반 모드에서는 사진 보기
             collectionView.deselectItem(at: indexPath, animated: true)
-            guard let photo = dataSource.itemIdentifier(for: indexPath),
-                  let image = ImageStorageManager.shared.loadImage(fromPath: photo.localImagePath) else { return }
+            guard let image = ImageStorageManager.shared.loadImage(fromPath: photo.localImagePath) else { return }
             showImagePreview(image)
         }
     }
