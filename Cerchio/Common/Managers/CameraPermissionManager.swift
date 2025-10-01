@@ -68,19 +68,19 @@ class CameraPermissionManager {
         completion: @escaping () -> Void
     ) {
         let alert = UIAlertController(
-            title: NSLocalizedString("camera.permission.title", comment: "Camera permission title"),
-            message: NSLocalizedString("camera.permission.message", comment: "Camera permission message"),
+            title: String(localized: .cameraPermissionTitle),
+            message: String(localized: .cameraPermissionMessage),
             preferredStyle: .alert
         )
 
-        alert.addAction(UIAlertAction(title: NSLocalizedString("camera.permission.go_to_settings", comment: "Go to settings button"), style: .default) { _ in
+        alert.addAction(UIAlertAction(title: String(localized: .cameraPermissionGoToSettings), style: .default) { _ in
             if let settingsURL = URL(string: UIApplication.openSettingsURLString) {
                 UIApplication.shared.open(settingsURL)
             }
             completion()
         })
 
-        alert.addAction(UIAlertAction(title: NSLocalizedString("action.cancel", comment: "Cancel button"), style: .cancel) { _ in
+        alert.addAction(UIAlertAction(title: String(localized: .actionCancel), style: .cancel) { _ in
             completion()
         })
 

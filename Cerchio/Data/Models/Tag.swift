@@ -10,7 +10,7 @@ import RealmSwift
 
 // MARK: - RealmTag Model
 
-class RealmTag: Object, Sendable {
+class RealmTag: Object {
     @Persisted(primaryKey: true) var id: ObjectId
     @Persisted var bookId: String
     @Persisted var tagName: String

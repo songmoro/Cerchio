@@ -94,6 +94,18 @@
         }
       }
     },
+    "action.name" : {
+      "comment" : "Button name",
+      "extractionState" : "manual",
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "메뉴"
+          }
+        }
+      }
+    },
     "action.save" : {
       "comment" : "Save button"
     },

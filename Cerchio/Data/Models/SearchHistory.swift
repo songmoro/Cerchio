@@ -9,7 +9,7 @@ import Foundation
 import RealmSwift
 
 // MARK: - Realm Model
-final class RealmSearchHistory: Object, Sendable {
+final class RealmSearchHistory: Object {
     @Persisted(primaryKey: true) var id: ObjectId
     @Persisted var keyword: String
     @Persisted var searchedAt: Date

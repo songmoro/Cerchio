@@ -120,7 +120,7 @@ final class TabBarCoordinator: BaseCoordinator, Coordinatable {
             .filter { $0 == true }
             .observe(on: MainScheduler.instance)
             .subscribe(onNext: { [weak self] _ in
-                self?.tabBarController.selectedIndex = 0
+                self?.tabBarController.selectedIndex = AppConstants.TabBar.Tags.library
             })
             .disposed(by: disposeBag)
 

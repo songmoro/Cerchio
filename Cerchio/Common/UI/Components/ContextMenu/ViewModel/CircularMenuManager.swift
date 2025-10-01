@@ -23,7 +23,7 @@ class CircularMenuManager {
     ) {
         // 이미 메뉴가 표시 중이면 무시
         guard !isMenuPresented else {
-            print("⚠️ Menu is already presented, ignoring new menu request")
+            print("Menu is already presented, ignoring new menu request")
             return
         }
 

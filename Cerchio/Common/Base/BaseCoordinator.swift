@@ -103,6 +103,6 @@ class BaseCoordinator: NSObject, Coordinator {
     }
 
     deinit {
-        print("✅ \(String(describing: type(of: self))) deinit")
+        print("\(String(describing: type(of: self))) deinit")
     }
 }

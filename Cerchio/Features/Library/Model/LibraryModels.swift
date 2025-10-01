@@ -28,7 +28,7 @@ enum LibraryMutation {
 
 // MARK: - Library State
 struct LibraryState {
-    var books: [Book] = Book.sample
+    var books: [Book] = []
     var isLoading: Bool = false
     var error: Error?
     var searchQuery: String = ""

@@ -39,16 +39,16 @@ class ImageStorageManager {
         let imageURL = imagesDirectory.appendingPathComponent("\(imageName).jpg")
 
         guard let imageData = image.jpegData(compressionQuality: 0.8) else {
-            print("❌ Failed to convert image to JPEG data")
+            print("Failed to convert image to JPEG data")
             return nil
         }
 
         do {
             try imageData.write(to: imageURL)
-            print("✅ Image saved successfully at: \(imageURL.path)")
+            print("Image saved successfully at: \(imageURL.path)")
             return imageURL.path
         } catch {
-            print("❌ Failed to save image: \(error.localizedDescription)")
+            print("Failed to save image: \(error.localizedDescription)")
             return nil
         }
     }
@@ -62,10 +62,10 @@ class ImageStorageManager {
     func deleteImage(atPath path: String) -> Bool {
         do {
             try FileManager.default.removeItem(atPath: path)
-            print("✅ Image deleted successfully from: \(path)")
+            print("Image deleted successfully from: \(path)")
             return true
         } catch {
-            print("❌ Failed to delete image: \(error.localizedDescription)")
+            print("Failed to delete image: \(error.localizedDescription)")
             return false
         }
     }
@@ -86,7 +86,7 @@ class ImageStorageManager {
             let bookImageFiles = files.filter { $0.contains("book_\(bookId)_") && $0.hasSuffix(".jpg") }
             return bookImageFiles.map { imagesDirectory.appendingPathComponent($0).path }
         } catch {
-            print("❌ Failed to get image paths: \(error.localizedDescription)")
+            print("Failed to get image paths: \(error.localizedDescription)")
             return []
         }
     }

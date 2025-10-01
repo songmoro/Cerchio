@@ -52,6 +52,13 @@ enum CircleTabBarConstants {
         static let tabBarOffsetX: CGFloat = 0
         static let tabBarOffsetY: CGFloat = -2
     }
+    
+    enum SystemImages {
+        static let questionmark = SystemImage.questionmark
+        static let filter = SystemImage.filter
+        static let heart = SystemImage.heart
+        static let trash = SystemImage.trash
+    }
 
     enum CoordinateSpace {
         static let tabBar = "TabBarCoordinate"

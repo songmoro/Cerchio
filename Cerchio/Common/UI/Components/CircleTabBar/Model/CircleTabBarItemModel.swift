@@ -15,7 +15,7 @@ struct CircleTabBarItemModel: Identifiable {
     
     init(title: String, image: UIImage?, tag: Int) {
         self.title = title
-        self.image = image ?? UIImage(systemName: "questionmark") ?? UIImage()
+        self.image = image ?? UIImage(systemName: CircleTabBarConstants.SystemImages.questionmark) ?? UIImage()
         self.tag = tag
     }
 }

@@ -14,6 +14,7 @@ enum Localized: String {
     case `action.done`
     case `action.edit`
     case `action.save`
+    case `action.name`
     case `action.view_all`
     case `book_detail.add_quote`
     case `book_detail.no_quotes`

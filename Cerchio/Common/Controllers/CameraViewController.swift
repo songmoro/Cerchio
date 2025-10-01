@@ -70,17 +70,17 @@ final class CameraViewController: UIViewController {
         view.addSubview(captureButton)
 
         // Cancel Button
-        cancelButton.setTitle(NSLocalizedString("action.cancel", comment: "Cancel button"), for: .normal)
+        cancelButton.setTitle(String(localized: .actionCancel), for: .normal)
         cancelButton.setTitleColor(.white, for: .normal)
         cancelButton.titleLabel?.font = .systemFont(ofSize: 16, weight: .medium)
         cancelButton.addTarget(self, action: #selector(cancelTapped), for: .touchUpInside)
         view.addSubview(cancelButton)
 
         // Flash Button
-        flashButton.setImage(UIImage(systemName: "bolt.slash"), for: .normal)
-        flashButton.tintColor = .white
-        flashButton.addTarget(self, action: #selector(flashTapped), for: .touchUpInside)
-        view.addSubview(flashButton)
+//        flashButton.setImage(UIImage(systemName: "bolt.slash"), for: .normal)
+//        flashButton.tintColor = .white
+//        flashButton.addTarget(self, action: #selector(flashTapped), for: .touchUpInside)
+//        view.addSubview(flashButton)
 
         setupConstraints()
     }

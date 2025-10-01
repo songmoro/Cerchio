@@ -148,7 +148,7 @@ class CircleTabBarController: BaseTabBarController {
     private func setupLibraryNavigationBar(_ libraryVC: LibraryViewController) {
         // 필터 버튼
         let filterButton = UIBarButtonItem(
-            image: UIImage(systemName: "line.3.horizontal.decrease.circle"),
+            image: UIImage(systemName: CircleTabBarConstants.SystemImages.filter),
             style: .plain,
             target: libraryVC,
             action: #selector(LibraryViewController.filterButtonTapped)
@@ -156,7 +156,7 @@ class CircleTabBarController: BaseTabBarController {
 
         // 편집 버튼
         let editButton = UIBarButtonItem(
-            title: NSLocalizedString("action.edit", comment: "Edit button"),
+            title: String(localized: .actionEdit),
             style: .plain,
             target: libraryVC,
             action: #selector(LibraryViewController.editButtonTapped)
@@ -176,7 +176,7 @@ class CircleTabBarController: BaseTabBarController {
     private func setupBookDetailNavigationBar(_ bookDetailVC: BookDetailViewController) {
         // 즐겨찾기 버튼
         let favoriteButton = UIBarButtonItem(
-            image: UIImage(systemName: "heart"),
+            image: UIImage(systemName: CircleTabBarConstants.SystemImages.heart),
             style: .plain,
             target: bookDetailVC,
             action: #selector(BookDetailViewController.favoriteButtonTapped)
@@ -184,7 +184,7 @@ class CircleTabBarController: BaseTabBarController {
 
         // 삭제 버튼
         let deleteButton = UIBarButtonItem(
-            image: UIImage(systemName: "trash"),
+            image: UIImage(systemName: CircleTabBarConstants.SystemImages.trash),
             style: .plain,
             target: bookDetailVC,
             action: #selector(BookDetailViewController.deleteButtonTapped)

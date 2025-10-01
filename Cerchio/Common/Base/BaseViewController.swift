@@ -130,6 +130,6 @@ class BaseViewController<T: Reactor>: UIViewController, BaseViewControllerType, 
     }
 
     deinit {
-        print("✅ \(String(describing: type(of: self))) deinit")
+        print("\(String(describing: type(of: self))) deinit")
     }
 }

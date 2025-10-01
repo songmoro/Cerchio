@@ -50,7 +50,7 @@ final class LanguageManager {
                 return language
             }
         } catch {
-            print("❌ Failed to load language from Realm: \(error)")
+            print("Failed to load language from Realm: \(error)")
         }
         return .korean // 기본값
     }
@@ -70,7 +70,7 @@ final class LanguageManager {
             // Bundle 재설정을 위한 notification
             NotificationCenter.default.post(name: .languageChanged, object: nil)
         } catch {
-            print("❌ Failed to save language to Realm: \(error)")
+            print("Failed to save language to Realm: \(error)")
         }
     }
 }

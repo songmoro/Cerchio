@@ -94,7 +94,7 @@ class CircularMenuViewController: UIViewController {
     }
 
     private func getLabelText(for button: CircularMenuButton) -> String {
-        return button.menuItem?.name ?? "메뉴"
+        return button.menuItem?.name ?? String(localized: .actionName)
     }
 
     private func calculateLabelPosition(for button: CircularMenuButton) -> LabelPosition {
@@ -274,9 +274,9 @@ class CircularMenuViewController: UIViewController {
         let centerY = bounds.height / 2
 
         let leftBoundary = centerX * CircularMenuConstants.PositionRatios.leftBoundaryRatio
-        let rightBoundary = centerX * CircularMenuConstants.PositionRatios.rightBoundaryRatio
+//        let rightBoundary = centerX * CircularMenuConstants.PositionRatios.rightBoundaryRatio
         let topBoundary = centerY * CircularMenuConstants.PositionRatios.topBoundaryRatio
-        let bottomBoundary = centerY * CircularMenuConstants.PositionRatios.bottomBoundaryRatio
+//        let bottomBoundary = centerY * CircularMenuConstants.PositionRatios.bottomBoundaryRatio
 
 //        if point.x < leftBoundary {
 //            if point.y < topBoundary { return 0 }
@@ -293,7 +293,6 @@ class CircularMenuViewController: UIViewController {
         
         if point.y > topBoundary {
             return -CGFloat.pi / 2
-            
         }
         else {
             if point.x < leftBoundary {
