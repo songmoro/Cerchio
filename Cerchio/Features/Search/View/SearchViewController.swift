@@ -121,6 +121,16 @@ final class SearchViewController: BaseViewController<SearchReactor> {
             })
             .disposed(by: disposeBag)
 
+        // 저장된 책 상태 관찰 - 저장 완료 시 상세 화면으로 이동
+        reactor.state
+            .map { $0.lastSavedBook }
+            .distinctUntilChanged { $0?.isbn == $1?.isbn }
+            .compactMap { $0 }
+            .observe(on: MainScheduler.instance)
+            .subscribe(onNext: { [weak self] savedBook in
+                self?.showNavigationConfirmAlert(for: savedBook)
+            })
+            .disposed(by: disposeBag)
     }
 
     // MARK: - Setup Methods
@@ -177,11 +187,8 @@ final class SearchViewController: BaseViewController<SearchReactor> {
             cell.configure(with: book) { [weak self] selectedBook in
                 guard let self = self else { return }
 
-                // 책 저장
+                // 책 저장 (저장 완료 후 lastSavedBook이 업데이트되고, bind의 구독이 알림을 처리)
                 self.reactor?.action.onNext(.addBookToLibrary(selectedBook))
-
-                // 상세 화면 이동 확인 얼럿
-                self.showNavigationConfirmAlert(for: selectedBook)
             }
             return cell
         }

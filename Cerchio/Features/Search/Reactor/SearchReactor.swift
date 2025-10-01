@@ -23,6 +23,7 @@ final class SearchReactor: Reactor {
         case setLoading(Bool)
         case setError(String?)
         case setOriginalSearchItems([BookSearchItem])
+        case setLastSavedBook(Book?)
     }
 
     struct State {
@@ -31,6 +32,7 @@ final class SearchReactor: Reactor {
         var isLoading: Bool = false
         var error: String?
         var originalSearchItems: [BookSearchItem] = []  // 원본 데이터 보존
+        var lastSavedBook: Book?  // 마지막으로 저장된 책
     }
     
     let initialState = State()
@@ -84,7 +86,7 @@ final class SearchReactor: Reactor {
                         // 원본 데이터를 RealmBook으로 변환
                         let realmBook = matchingItem.toRealmBook()
 
-                        // Realm에 저장
+                        // Realm에 저장 후 업데이트된 Book 가져오기
                         return self.saveBookWithRepository(realmBook)
                             .do(onNext: { success in
                                 if success {
@@ -100,7 +102,23 @@ final class SearchReactor: Reactor {
                                     print("❌ 책 저장 실패: \(realmBook.cleanTitle)")
                                 }
                             })
-                            .map { _ in .setError(nil) }
+                            .flatMap { success -> Observable<Mutation> in
+                                guard success else {
+                                    return Observable.just(.setError(nil))
+                                }
+                                // 저장 후 업데이트된 Book 가져오기
+                                return self.bookRepository.getBookByISBN(book.isbn)
+                                    .flatMap { savedBook -> Observable<Mutation> in
+                                        if let savedBook = savedBook {
+                                            return Observable.concat([
+                                                Observable.just(.setLastSavedBook(savedBook)),
+                                                Observable.just(.setError(nil))
+                                            ])
+                                        } else {
+                                            return Observable.just(.setError(nil))
+                                        }
+                                    }
+                            }
                     } else {
                         print("⚠️ 매칭되는 원본 데이터를 찾을 수 없음: \(book.title)")
                         return Observable.just(.setError("원본 데이터를 찾을 수 없습니다."))
@@ -111,7 +129,7 @@ final class SearchReactor: Reactor {
 
     func reduce(state: State, mutation: Mutation) -> State {
         var newState = state
-        
+
         switch mutation {
         case .setSearchText(let text):
             newState.searchText = text
@@ -127,6 +145,9 @@ final class SearchReactor: Reactor {
 
         case .setOriginalSearchItems(let items):
             newState.originalSearchItems = items
+
+        case .setLastSavedBook(let book):
+            newState.lastSavedBook = book
         }
 
         return newState

@@ -51,10 +51,14 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
         configureDataSource()
     }
 
-    override func viewWillDisappear(_ animated: Bool) {
-        super.viewWillDisappear(animated)
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
 
-        // 화면을 벗어날 때 도서 정보 다시 로드
+        // 화면이 다시 나타날 때마다 최신 도서 정보 로드
+        reloadBookDetailData()
+    }
+
+    private func reloadBookDetailData() {
         guard let reactor = reactor,
               let serviceFactory = serviceFactory else { return }
 
@@ -63,7 +67,8 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
             .observe(on: MainScheduler.instance)
             .subscribe(onNext: { [weak self] updatedBook in
                 guard let updatedBook = updatedBook else { return }
-                self?.reactor?.action.onNext(.loadBookDetail)
+                // Reactor의 book을 업데이트하고 bookDetail을 다시 로드
+                self?.reactor?.action.onNext(.updateBookAndReload(updatedBook))
             })
             .disposed(by: disposeBag)
     }

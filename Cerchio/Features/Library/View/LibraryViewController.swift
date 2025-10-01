@@ -33,6 +33,9 @@ final class LibraryViewController: BaseViewController<LibraryReactor>, UICollect
     private var bookRepository: BookRepositoryProtocol?
     private var tagRepository: TagRepositoryProtocol?
 
+    // Temp storage for photo capture
+    private var tempBookForPhoto: Book?
+
     nonisolated enum Section: CaseIterable {
         case book
     }
@@ -219,7 +222,7 @@ final class LibraryViewController: BaseViewController<LibraryReactor>, UICollect
         DispatchQueue.main.async { [weak self, weak cell] in
             guard let self = self, let cell = cell else { return }
 
-            let menuItems = self.createMenuItems()
+            let menuItems = self.createMenuItems(for: book, at: indexPath)
 
             // 하이라이트 효과 설정 (필요시 커스터마이즈 가능)
             // 예시:
@@ -239,64 +242,100 @@ final class LibraryViewController: BaseViewController<LibraryReactor>, UICollect
         }
     }
     
-    private func createMenuItems() -> [CircularMenuItem] {
+    private func createMenuItems(for book: Book, at indexPath: IndexPath) -> [CircularMenuItem] {
         let menuItems: [CircularMenuItem] = [
-            CircularMenuItem(image: UIImage(systemName: "camera")) {
-                print("카메라 선택됨")
+            // 1. 사진 찍기
+            CircularMenuItem(image: UIImage(systemName: "camera")) { [weak self] in
+                self?.capturePhoto(for: book)
             },
-            CircularMenuItem(image: UIImage(systemName: "photo")) {
-                print("갤러리 선택됨")
+            // 2. 문장 저장
+            CircularMenuItem(image: UIImage(systemName: "quote.bubble")) { [weak self] in
+                self?.saveQuote(for: book)
             },
-            CircularMenuItem(image: UIImage(systemName: "video")) {
-                print("비디오 선택됨")
+            // 3. 즐겨찾기
+            CircularMenuItem(image: UIImage(systemName: book.isFavorite ? "heart.fill" : "heart")) { [weak self] in
+                self?.toggleFavorite(book)
             },
-            CircularMenuItem(image: UIImage(systemName: "doc")) {
-                print("문서 선택됨")
+            // 4. 삭제
+            CircularMenuItem(image: UIImage(systemName: "trash")) { [weak self] in
+                self?.deleteBook(book, at: indexPath)
             },
-            CircularMenuItem(image: UIImage(systemName: "star")) {
-                print("즐겨찾기 선택됨")
+            // 5. 수정 (도서 정보 수정)
+            CircularMenuItem(image: UIImage(systemName: "pencil")) { [weak self] in
+                self?.editBookInfo(for: book)
             }
         ]
-        
+
         return menuItems
     }
 
     // MARK: - Menu Actions
-    private func readBook(_ book: Book) {
-        print("Reading book: \(book.title)")
-//        bookSelectionHandler?(book)
+
+    // 1. 사진 찍기
+    private func capturePhoto(for book: Book) {
+        let imagePicker = UIImagePickerController()
+        imagePicker.delegate = self
+        imagePicker.sourceType = .camera
+        imagePicker.allowsEditing = false
+
+        // Book 정보를 저장해두기 위해 임시로 저장
+        self.tempBookForPhoto = book
+
+        present(imagePicker, animated: true)
     }
 
+    // 2. 문장 저장
+    private func saveQuote(for book: Book) {
+        showQuoteInputAlert(for: book)
+    }
+
+    // 3. 즐겨찾기 토글
     private func toggleFavorite(_ book: Book) {
-        print("Toggle favorite for book: \(book.title)")
-        // TODO: 즐겨찾기 상태 변경 로직
-        // reactor?.action.onNext(.toggleFavorite(book))
+        guard let bookRepository = bookRepository else { return }
+
+        bookRepository.toggleFavorite(bookId: book.id)
+            .observe(on: MainScheduler.instance)
+            .subscribe(onNext: { [weak self] isFavorite in
+                print("✅ Favorite toggled: \(isFavorite)")
+                // 데이터 새로고침
+                self?.reactor?.action.onNext(.loadBooks)
+            }, onError: { error in
+                print("❌ Failed to toggle favorite: \(error.localizedDescription)")
+            })
+            .disposed(by: disposeBag)
     }
 
-    private func editBook(_ book: Book) {
-        print("Edit book: \(book.title)")
-        // TODO: 책 편집 화면으로 이동
-        // coordinator?.showEditBook(book)
+    // 5. 도서 정보 수정
+    private func editBookInfo(for book: Book) {
+        showReadingInfoEdit(for: book)
     }
 
+    // 4. 삭제
     private func deleteBook(_ book: Book, at indexPath: IndexPath) {
-        print("Delete book: \(book.title)")
-        // TODO: 삭제 확인 알럿 표시 후 삭제 로직
         showDeleteConfirmation(for: book, at: indexPath)
     }
 
     private func showDeleteConfirmation(for book: Book, at indexPath: IndexPath) {
         let alert = UIAlertController(
-            title: "책 삭제",
+            title: "도서 삭제",
             message: "'\(book.title)'을(를) 삭제하시겠습니까?",
             preferredStyle: .alert
         )
 
         alert.addAction(UIAlertAction(title: "취소", style: .cancel))
         alert.addAction(UIAlertAction(title: "삭제", style: .destructive) { [weak self] _ in
-            // TODO: 실제 삭제 로직
-            // self?.reactor?.action.onNext(.deleteBook(book))
-            print("Confirmed delete for book: \(book.title)")
+            guard let self = self, let bookRepository = self.bookRepository else { return }
+
+            bookRepository.deleteBooksByISBNs([book.isbn])
+                .observe(on: MainScheduler.instance)
+                .subscribe(onNext: { [weak self] _ in
+                    print("✅ Book deleted: \(book.cleanTitle)")
+                    // 데이터 새로고침
+                    self?.reactor?.action.onNext(.loadBooks)
+                }, onError: { error in
+                    print("❌ Failed to delete book: \(error.localizedDescription)")
+                })
+                .disposed(by: self.disposeBag)
         })
 
         present(alert, animated: true)
@@ -556,6 +595,126 @@ final class LibraryViewController: BaseViewController<LibraryReactor>, UICollect
         )
         alert.addAction(UIAlertAction(title: "확인", style: .default))
         present(alert, animated: true)
+    }
+}
+
+// MARK: - Quote Input
+extension LibraryViewController {
+    private func showQuoteInputAlert(for book: Book) {
+        let alert = UIAlertController(
+            title: "문장 저장",
+            message: "저장할 문장을 입력하세요",
+            preferredStyle: .alert
+        )
+
+        alert.addTextField { textField in
+            textField.placeholder = "문장 입력"
+        }
+
+        alert.addTextField { textField in
+            textField.placeholder = "페이지 번호 (선택사항)"
+            textField.keyboardType = .numberPad
+        }
+
+        alert.addAction(UIAlertAction(title: "취소", style: .cancel))
+        alert.addAction(UIAlertAction(title: "저장", style: .default) { [weak self, weak alert] _ in
+            guard let quote = alert?.textFields?[0].text, !quote.isEmpty else { return }
+            let pageNumberText = alert?.textFields?[1].text
+            let pageNumber = pageNumberText.flatMap { Int($0) }
+
+            self?.saveQuoteToRealm(quote: quote, pageNumber: pageNumber, for: book)
+        })
+
+        present(alert, animated: true)
+    }
+
+    private func saveQuoteToRealm(quote: String, pageNumber: Int?, for book: Book) {
+        // TODO: QuoteRepository 주입 필요
+        print("✅ Quote saved: \(quote), page: \(pageNumber ?? 0) for book: \(book.cleanTitle)")
+    }
+}
+
+// MARK: - Photo Capture
+extension LibraryViewController: UIImagePickerControllerDelegate, UINavigationControllerDelegate {
+    func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
+        picker.dismiss(animated: true)
+
+        guard let image = info[.originalImage] as? UIImage,
+              let book = tempBookForPhoto else { return }
+
+        savePhotoToRealm(image: image, for: book)
+        tempBookForPhoto = nil
+    }
+
+    func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
+        picker.dismiss(animated: true)
+        tempBookForPhoto = nil
+    }
+
+    private func savePhotoToRealm(image: UIImage, for book: Book) {
+        // TODO: PhotoRepository 주입 및 저장 로직
+        print("✅ Photo saved for book: \(book.cleanTitle)")
+    }
+}
+
+// MARK: - Reading Info Edit
+extension LibraryViewController {
+    private func showReadingInfoEdit(for book: Book) {
+        let readingInfoEditVC = ReadingInfoEditViewController()
+        readingInfoEditVC.configure(
+            totalPages: book.totalPages ?? 0,
+            startDate: book.startDate,
+            endDate: book.endDate
+        )
+        readingInfoEditVC.onSaved = { [weak self] totalPages, startDate, endDate in
+            self?.updateBookReadingInfo(for: book, totalPages: totalPages, startDate: startDate, endDate: endDate)
+        }
+
+        let navController = UINavigationController(rootViewController: readingInfoEditVC)
+        present(navController, animated: true)
+    }
+
+    private func updateBookReadingInfo(for book: Book, totalPages: Int, startDate: Date?, endDate: Date?) {
+        guard let bookRepository = bookRepository else { return }
+
+        let updatedBook = Book(
+            id: book.id,
+            title: book.title,
+            cleanTitle: book.cleanTitle,
+            link: book.link,
+            image: book.image,
+            author: book.author,
+            isbn: book.isbn,
+            publisher: book.publisher,
+            bookDescription: book.bookDescription,
+            cleanDescription: book.cleanDescription,
+            pubdate: book.pubdate,
+            discount: book.discount,
+            formattedPubDate: book.formattedPubDate,
+            formattedPrice: book.formattedPrice,
+            priceAsInt: book.priceAsInt,
+            createAt: book.createAt,
+            genre: book.genre,
+            totalPages: totalPages,
+            startDate: startDate,
+            endDate: endDate,
+            isFavorite: book.isFavorite,
+            dateAdded: book.dateAdded,
+            dateRead: book.dateRead,
+            readingStatus: book.readingStatus,
+            category: book.category,
+            rating: book.rating
+        )
+
+        bookRepository.saveBookStruct(updatedBook)
+            .observe(on: MainScheduler.instance)
+            .subscribe(onNext: { [weak self] _ in
+                print("✅ Book reading info updated")
+                self?.reactor?.action.onNext(.loadBooks)
+            }, onError: { error in
+                print("❌ Failed to update book reading info: \(error.localizedDescription)")
+            })
+            .disposed(by: disposeBag)
     }
 }
 

@@ -17,6 +17,7 @@ final class BookDetailReactor: Reactor {
         case toggleFavorite
         case addQuote(String)
         case deleteBook
+        case updateBookAndReload(Book)
     }
 
     enum Mutation {
@@ -161,6 +162,15 @@ final class BookDetailReactor: Reactor {
         case .deleteBook:
             // TODO: 실제 삭제 로직 구현
             return Observable.empty()
+
+        case .updateBookAndReload(let updatedBook):
+            // Book 업데이트 후 BookDetail 다시 로드
+            return Observable.concat([
+                Observable.just(.updateBook(updatedBook)),
+                Observable.just(.setLoading(true)),
+                loadBookDetailDataWithBook(updatedBook),
+                Observable.just(.setLoading(false))
+            ])
         }
     }
 
@@ -197,7 +207,20 @@ final class BookDetailReactor: Reactor {
             book: currentState.book,
             totalPages: currentState.book.totalPages ?? 0,
             startDate: currentState.book.startDate,
-            endDate: nil,
+            endDate: currentState.book.endDate,
+            tags: [] // 실제 태그는 Realm에서 로드
+        )
+
+        return Observable.just(.setBookDetail(bookDetail))
+    }
+
+    private func loadBookDetailDataWithBook(_ book: Book) -> Observable<Mutation> {
+        // 업데이트된 Book으로 BookDetail 생성
+        let bookDetail = BookDetail(
+            book: book,
+            totalPages: book.totalPages ?? 0,
+            startDate: book.startDate,
+            endDate: book.endDate,
             tags: [] // 실제 태그는 Realm에서 로드
         )
 
