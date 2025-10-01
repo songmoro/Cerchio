@@ -106,9 +106,7 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
         reactor.state
             .map { $0.bookDetail }
             .compactMap { $0 }
-            .distinctUntilChanged { lhs, rhs in
-                lhs.book.isbn == rhs.book.isbn
-            }
+            .distinctUntilChanged()
             .observe(on: MainScheduler.instance)
             .subscribe(onNext: { [weak self] bookDetail in
                 self?.updateSnapshot(with: bookDetail)

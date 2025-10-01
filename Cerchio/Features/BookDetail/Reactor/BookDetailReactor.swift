@@ -71,8 +71,11 @@ final class BookDetailReactor: Reactor {
         case .updateReadingInfo(let totalPages, let startDate, let endDate):
             // BookDetail 업데이트
             guard var bookDetail = currentState.bookDetail else {
+                print("❌ No bookDetail in currentState")
                 return Observable.empty()
             }
+
+            print("📖 Updating reading info - totalPages: \(totalPages), startDate: \(String(describing: startDate)), endDate: \(String(describing: endDate))")
 
             let updatedBookDetail = BookDetail(
                 book: bookDetail.book,
@@ -86,8 +89,11 @@ final class BookDetailReactor: Reactor {
             return bookRepository.getBookByISBN(currentState.book.isbn)
                 .flatMap { [weak self] existingBook -> Observable<Mutation> in
                     guard let self = self, var existingBook = existingBook else {
+                        print("❌ No existing book found for ISBN: \(self?.currentState.book.isbn ?? "unknown")")
                         return Observable.empty()
                     }
+
+                    print("📖 Found existing book - current startDate: \(String(describing: existingBook.startDate))")
 
                     // Book 업데이트
                     let updatedBook = Book(
@@ -119,15 +125,18 @@ final class BookDetailReactor: Reactor {
                         rating: existingBook.rating
                     )
 
+                    print("📖 Created updatedBook - startDate: \(String(describing: updatedBook.startDate))")
+
                     return self.bookRepository.saveBookStruct(updatedBook)
                         .flatMap { savedBook -> Observable<Mutation> in
+                            print("✅ Book saved - startDate: \(String(describing: savedBook.startDate))")
                             return Observable.concat([
                                 Observable.just(.updateBook(savedBook)),
                                 Observable.just(.setBookDetail(updatedBookDetail))
                             ])
                         }
                         .catch { error in
-                            print("Failed to update reading info: \(error.localizedDescription)")
+                            print("❌ Failed to update reading info: \(error.localizedDescription)")
                             return Observable.empty()
                         }
                 }

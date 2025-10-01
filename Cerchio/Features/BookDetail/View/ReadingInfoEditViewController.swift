@@ -16,6 +16,8 @@ final class ReadingInfoEditViewController: UIViewController {
     private var currentTotalPages: Int = 0
     private var currentStartDate: Date?
     private var currentEndDate: Date?
+    private var isStartDateCleared = false
+    private var isEndDateCleared = false
     var onSaved: ((Int, Date?, Date?) -> Void)?
 
     // MARK: - UI Components
@@ -260,17 +262,17 @@ final class ReadingInfoEditViewController: UIViewController {
         let pagesText = pagesTextField.text?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
         let totalPages = Int(pagesText) ?? currentTotalPages
 
-        // 시작 날짜
-        let startDate = currentStartDate != nil ? startDatePicker.date : nil
+        // 시작 날짜: 초기화 버튼을 눌렀으면 nil, 아니면 picker의 날짜
+        let startDate = isStartDateCleared ? nil : startDatePicker.date
 
-        // 완료 날짜: "읽는 중"이면 nil, "완료"면 선택된 날짜
+        // 완료 날짜: "읽는 중"이면 nil, "완료"면 선택된 날짜 (초기화된 경우 nil)
         let endDate: Date?
         if readingStatusSegmentedControl.selectedSegmentIndex == 0 {
             // "읽는 중" 선택됨
             endDate = nil
         } else {
             // "완료" 선택됨
-            endDate = currentEndDate != nil ? endDatePicker.date : endDatePicker.date
+            endDate = isEndDateCleared ? nil : endDatePicker.date
         }
 
         onSaved?(totalPages, startDate, endDate)
@@ -278,7 +280,7 @@ final class ReadingInfoEditViewController: UIViewController {
     }
 
     @objc private func clearStartDateTapped() {
-        currentStartDate = nil
+        isStartDateCleared = true
         startDatePicker.date = Date()
 
         let alert = UIAlertController(
@@ -291,7 +293,7 @@ final class ReadingInfoEditViewController: UIViewController {
     }
 
     @objc private func clearEndDateTapped() {
-        currentEndDate = nil
+        isEndDateCleared = true
         endDatePicker.date = Date()
 
         let alert = UIAlertController(
