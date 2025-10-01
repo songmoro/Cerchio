@@ -55,10 +55,21 @@ final class ReadingInfoEditViewController: UIViewController {
     }()
 
     private let clearStartDateButton: UIButton = {
-        let button = UIButton(type: .system)
-        button.setTitle("시작 날짜 초기화", for: .normal)
-        button.titleLabel?.font = .systemFont(ofSize: 14)
-        button.setTitleColor(.systemRed, for: .normal)
+        var config = UIButton.Configuration.plain()
+        config.title = "시작 날짜 초기화"
+        config.baseForegroundColor = .systemRed
+        config.contentInsets = .zero
+
+        let button = UIButton(configuration: config)
+        button.configurationUpdateHandler = { button in
+            var config = button.configuration
+            config?.titleTextAttributesTransformer = UIConfigurationTextAttributesTransformer { incoming in
+                var outgoing = incoming
+                outgoing.font = .custom(weight: .regular, size: 14)
+                return outgoing
+            }
+            button.configuration = config
+        }
         return button
     }()
 
@@ -85,10 +96,21 @@ final class ReadingInfoEditViewController: UIViewController {
     }()
 
     private let clearEndDateButton: UIButton = {
-        let button = UIButton(type: .system)
-        button.setTitle("완료 날짜 초기화", for: .normal)
-        button.titleLabel?.font = .systemFont(ofSize: 14)
-        button.setTitleColor(.systemRed, for: .normal)
+        var config = UIButton.Configuration.plain()
+        config.title = "완료 날짜 초기화"
+        config.baseForegroundColor = .systemRed
+        config.contentInsets = .zero
+
+        let button = UIButton(configuration: config)
+        button.configurationUpdateHandler = { button in
+            var config = button.configuration
+            config?.titleTextAttributesTransformer = UIConfigurationTextAttributesTransformer { incoming in
+                var outgoing = incoming
+                outgoing.font = .custom(weight: .regular, size: 14)
+                return outgoing
+            }
+            button.configuration = config
+        }
         return button
     }()
 

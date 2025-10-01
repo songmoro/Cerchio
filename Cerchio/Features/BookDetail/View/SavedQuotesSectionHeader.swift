@@ -11,7 +11,24 @@ import SnapKit
 final class SavedQuotesSectionHeader: UICollectionReusableView, IsIdentifiable {
     // MARK: - UI Components
     private let titleLabel = UILabel()
-    private let editButton = UIButton()
+    private let editButton: UIButton = {
+        var config = UIButton.Configuration.plain()
+        config.title = String(localized: .actionViewAll)
+        config.baseForegroundColor = .systemBlue
+        config.contentInsets = .zero
+
+        let button = UIButton(configuration: config)
+        button.configurationUpdateHandler = { button in
+            var config = button.configuration
+            config?.titleTextAttributesTransformer = UIConfigurationTextAttributesTransformer { incoming in
+                var outgoing = incoming
+                outgoing.font = .custom(weight: .medium, size: 16)
+                return outgoing
+            }
+            button.configuration = config
+        }
+        return button
+    }()
 
     // MARK: - Properties
     var onViewAllTapped: (() -> Void)?
@@ -38,9 +55,6 @@ final class SavedQuotesSectionHeader: UICollectionReusableView, IsIdentifiable {
         addSubview(titleLabel)
 
         // 전체 보기 버튼
-        editButton.setTitle(String(localized: .actionViewAll), for: .normal)
-        editButton.setTitleColor(.systemBlue, for: .normal)
-        editButton.titleLabel?.font = .systemFont(ofSize: 16, weight: .medium)
         editButton.addTarget(self, action: #selector(viewAllButtonTapped), for: .touchUpInside)
         addSubview(editButton)
     }

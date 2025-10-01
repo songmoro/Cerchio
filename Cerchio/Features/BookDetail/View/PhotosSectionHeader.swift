@@ -11,7 +11,24 @@ import SnapKit
 final class PhotosSectionHeader: UICollectionReusableView, IsIdentifiable {
     // MARK: - UI Components
     private let titleLabel = UILabel()
-    private let viewAllButton = UIButton()
+    private let viewAllButton: UIButton = {
+        var config = UIButton.Configuration.plain()
+        config.title = String(localized: .actionViewAll)
+        config.baseForegroundColor = .systemBlue
+        config.contentInsets = .zero
+
+        let button = UIButton(configuration: config)
+        button.configurationUpdateHandler = { button in
+            var config = button.configuration
+            config?.titleTextAttributesTransformer = UIConfigurationTextAttributesTransformer { incoming in
+                var outgoing = incoming
+                outgoing.font = .custom(weight: .medium, size: 16)
+                return outgoing
+            }
+            button.configuration = config
+        }
+        return button
+    }()
 
     // MARK: - Properties
     var onViewAllTapped: (() -> Void)?
@@ -38,9 +55,6 @@ final class PhotosSectionHeader: UICollectionReusableView, IsIdentifiable {
         addSubview(titleLabel)
 
         // 전체 보기 버튼
-        viewAllButton.setTitle(String(localized: .actionViewAll), for: .normal)
-        viewAllButton.setTitleColor(.systemBlue, for: .normal)
-        viewAllButton.titleLabel?.font = .systemFont(ofSize: 16, weight: .medium)
         viewAllButton.addTarget(self, action: #selector(viewAllButtonTapped), for: .touchUpInside)
         addSubview(viewAllButton)
     }
