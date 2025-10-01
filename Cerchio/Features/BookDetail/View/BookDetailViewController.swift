@@ -232,16 +232,16 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
     }
     
     private func createPhotoPagesSection() -> NSCollectionLayoutSection {
-        // 찍은 사진 섹션 - 3개 가로 배치
+        // 찍은 사진 섹션 - 셀 높이는 너비의 1/3 (가로 3등분 시 정사각형)
         let itemSize = NSCollectionLayoutSize(
             widthDimension: .fractionalWidth(1.0),
-            heightDimension: .estimated(120)
+            heightDimension: .estimated(150) // 예상 높이
         )
         let item = NSCollectionLayoutItem(layoutSize: itemSize)
 
         let groupSize = NSCollectionLayoutSize(
             widthDimension: .fractionalWidth(1.0),
-            heightDimension: .estimated(120)
+            heightDimension: .estimated(150)
         )
         let group = NSCollectionLayoutGroup.horizontal(layoutSize: groupSize, subitems: [item])
 
@@ -523,10 +523,13 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
         quoteItems.append(.addQuoteButton)
         snapshot.appendItems(quoteItems, toSection: .savedQuotes)
 
-        // 찍은 사진 - 실제 데이터로 업데이트
+        // 찍은 사진 - 최대 2개까지 표시
         if let photos = photos {
-            let images = photos.compactMap { ImageStorageManager.shared.loadImage(fromPath: $0.localImagePath) }
-            let photoItem: Item = images.isEmpty ? .photoPage(nil) : .photoPage(images.first)
+            let maxPhotos = min(photos.count, 2)
+            let images = photos.prefix(maxPhotos).compactMap { ImageStorageManager.shared.loadImage(fromPath: $0.localImagePath) }
+
+            // 이미지가 없으면 빈 배열 전달 (카메라 버튼만 표시됨)
+            let photoItem: Item = .photoPage(images.isEmpty ? nil : images.first)
             snapshot.appendItems([photoItem], toSection: .photoPages)
         } else {
             // 사진 데이터가 제공되지 않은 경우 별도로 로드
@@ -545,15 +548,16 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
             let realm = try Realm()
             let photos = realm.objects(RealmPhoto.self).filter("bookId == %@", bookId)
             let photoArray = Array(photos)
-            
+
             var updatedSnapshot = snapshot
-            let images = photoArray.compactMap { ImageStorageManager.shared.loadImage(fromPath: $0.localImagePath) }
+            let maxPhotos = min(photoArray.count, 2)
+            let images = photoArray.prefix(maxPhotos).compactMap { ImageStorageManager.shared.loadImage(fromPath: $0.localImagePath) }
             let photoItem: Item = images.isEmpty ? .photoPage(nil) : .photoPage(images.first)
-            
+
             // 기존 photoPages 섹션 업데이트
             updatedSnapshot.deleteItems(updatedSnapshot.itemIdentifiers(inSection: .photoPages))
             updatedSnapshot.appendItems([photoItem], toSection: .photoPages)
-            
+
             dataSource.apply(updatedSnapshot, animatingDifferences: true)
         } catch {
             print("❌ Failed to load photos for snapshot: \(error.localizedDescription)")

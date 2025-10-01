@@ -86,10 +86,6 @@ final class PhotoPageCell: UICollectionViewCell, IsIdentifiable {
         imageView.layer.borderColor = UIColor.systemGray4.cgColor
         imageView.isUserInteractionEnabled = true
 
-        // 플레이스홀더 이미지 설정
-        let placeholderImage = UIImage(systemName: "photo")?.withTintColor(.systemGray3, renderingMode: .alwaysOriginal)
-        imageView.image = placeholderImage
-
         // 롱 프레스 제스처 추가
         let longPress = UILongPressGestureRecognizer(target: self, action: #selector(handleLongPress(_:)))
         imageView.addGestureRecognizer(longPress)
@@ -102,6 +98,11 @@ final class PhotoPageCell: UICollectionViewCell, IsIdentifiable {
 
         imageStackView.snp.makeConstraints {
             $0.edges.equalToSuperview()
+        }
+
+        // 전체 컨테이너의 높이를 너비의 1/3로 설정 (가로 1/3 크기가 정사각형이 되도록)
+        containerView.snp.makeConstraints {
+            $0.height.equalTo(containerView.snp.width).dividedBy(3)
         }
     }
 
@@ -128,25 +129,37 @@ final class PhotoPageCell: UICollectionViewCell, IsIdentifiable {
     // MARK: - Configuration
     func configure(with images: [UIImage?]) {
         self.photos = images.compactMap { $0 }
-        let imageViews = [image1, image2]
 
-        for (index, imageView) in imageViews.enumerated() {
-            if index < images.count, let image = images[index] {
-                imageView.image = image
-            } else {
-                // 플레이스홀더 이미지 설정
-                let placeholderImage = UIImage(systemName: "photo")?.withTintColor(.systemGray3, renderingMode: .alwaysOriginal)
-                imageView.image = placeholderImage
+        // 이미지가 없으면 카메라 버튼만 표시
+        if images.isEmpty {
+            image1.isHidden = true
+            image2.isHidden = true
+            cameraButton.isHidden = false
+        } else {
+            // 이미지가 있으면 최대 2개까지 표시
+            let imageViews = [image1, image2]
+
+            for (index, imageView) in imageViews.enumerated() {
+                if index < images.count, let image = images[index] {
+                    imageView.image = image
+                    imageView.isHidden = false
+                } else {
+                    imageView.isHidden = true
+                }
             }
+
+            // 3번째는 카메라 버튼
+            cameraButton.isHidden = false
         }
     }
 
     override func prepareForReuse() {
         super.prepareForReuse()
-        // 플레이스홀더 이미지로 리셋
-        let placeholderImage = UIImage(systemName: "photo")?.withTintColor(.systemGray3, renderingMode: .alwaysOriginal)
-        image1.image = placeholderImage
-        image2.image = placeholderImage
+        image1.image = nil
+        image2.image = nil
+        image1.isHidden = false
+        image2.isHidden = false
+        cameraButton.isHidden = false
         onAddPhotoTapped = nil
         onPhotoLongPressed = nil
         photos.removeAll()
