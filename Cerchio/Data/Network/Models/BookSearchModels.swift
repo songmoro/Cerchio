@@ -28,6 +28,7 @@ enum BookSearchSort: String, CaseIterable {
     case date = "date"       // 출간일순
 
     var displayName: String {
+        // TODO: Localization
         switch self {
         case .accuracy: return "정확도순"
         case .date: return "출간일순"
@@ -96,6 +97,7 @@ enum BookSearchError: Error, LocalizedError {
     case unknownError(String)
 
     var errorDescription: String? {
+        // TODO: Localization
         switch self {
         case .incorrectQuery:
             return "잘못된 쿼리 요청입니다."

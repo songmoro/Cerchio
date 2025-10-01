@@ -150,6 +150,7 @@ final class SearchViewController: BaseViewController<SearchReactor> {
         tableView.rowHeight = SearchResultConstants.Layout.rowHeight
         tableView.contentInset.bottom = 20
         tableView.verticalScrollIndicatorInsets = .init(top: 0, left: 0, bottom: 20, right: 0)
+        tableView.delegate = self
     }
 
     private func setupEmptyState() {
@@ -279,5 +280,19 @@ final class SearchViewController: BaseViewController<SearchReactor> {
 extension SearchViewController: UISearchBarDelegate {
     func searchBarCancelButtonClicked(_ searchBar: UISearchBar) {
         searchBar.resignFirstResponder()
+    }
+}
+
+// MARK: - UITableViewDelegate
+extension SearchViewController: UITableViewDelegate {
+    func scrollViewDidScroll(_ scrollView: UIScrollView) {
+        let offsetY = scrollView.contentOffset.y
+        let contentHeight = scrollView.contentSize.height
+        let frameHeight = scrollView.frame.size.height
+
+        // 하단에서 100pt 이내로 스크롤 시 다음 페이지 로드
+        if offsetY > contentHeight - frameHeight - 100 {
+            reactor?.action.onNext(.loadMore)
+        }
     }
 }

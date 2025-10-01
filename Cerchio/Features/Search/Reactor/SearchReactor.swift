@@ -15,6 +15,7 @@ final class SearchReactor: Reactor {
         case searchTextChanged(String)
         case searchButtonTapped
         case addBookToLibrary(Book)
+        case loadMore
     }
 
     enum Mutation {
@@ -24,6 +25,10 @@ final class SearchReactor: Reactor {
         case setError(String?)
         case setOriginalSearchItems([BookSearchItem])
         case setLastSavedBook(Book?)
+        case appendSearchResults([Book], [BookSearchItem])
+        case setCurrentPage(Int)
+        case setHasMore(Bool)
+        case setIsLoadingMore(Bool)
     }
 
     struct State {
@@ -33,6 +38,9 @@ final class SearchReactor: Reactor {
         var error: String?
         var originalSearchItems: [BookSearchItem] = []  // 원본 데이터 보존
         var lastSavedBook: Book?  // 마지막으로 저장된 책
+        var currentPage: Int = 1
+        var hasMore: Bool = false
+        var isLoadingMore: Bool = false
     }
     
     let initialState = State()
@@ -59,13 +67,29 @@ final class SearchReactor: Reactor {
                 return Observable.just(.setSearchState(.initial))
             }
 
-            // 검색 이력 저장
+            // 검색 이력 저장 및 첫 페이지 검색
             return Observable.concat([
                 Observable.just(.setLoading(true)),
                 Observable.just(.setSearchState(.searching)),
+                Observable.just(.setCurrentPage(1)),
                 saveSearchHistory(keyword: searchText),
-                performSearch(query: searchText),
+                performSearch(query: searchText, page: 1),
                 Observable.just(.setLoading(false))
+            ])
+
+        case .loadMore:
+            guard !currentState.isLoadingMore,
+                  currentState.hasMore else {
+                return Observable.empty()
+            }
+
+            let searchText = currentState.searchText.trimmingCharacters(in: .whitespacesAndNewlines)
+            let nextPage = currentState.currentPage + 1
+
+            return Observable.concat([
+                Observable.just(.setIsLoadingMore(true)),
+                performSearch(query: searchText, page: nextPage, isLoadMore: true),
+                Observable.just(.setIsLoadingMore(false))
             ])
 
         case .addBookToLibrary(let book):
@@ -148,6 +172,23 @@ final class SearchReactor: Reactor {
 
         case .setLastSavedBook(let book):
             newState.lastSavedBook = book
+
+        case .appendSearchResults(let books, let items):
+            if case .results(var existingBooks, var existingItems) = newState.searchState {
+                existingBooks.append(contentsOf: books)
+                existingItems.append(contentsOf: items)
+                newState.searchState = .results(existingBooks, existingItems)
+                newState.originalSearchItems.append(contentsOf: items)
+            }
+
+        case .setCurrentPage(let page):
+            newState.currentPage = page
+
+        case .setHasMore(let hasMore):
+            newState.hasMore = hasMore
+
+        case .setIsLoadingMore(let isLoadingMore):
+            newState.isLoadingMore = isLoadingMore
         }
 
         return newState
@@ -163,23 +204,47 @@ final class SearchReactor: Reactor {
             }
     }
 
-    private func performSearch(query: String) -> Observable<Mutation> {
+    private func performSearch(query: String, page: Int, isLoadMore: Bool = false) -> Observable<Mutation> {
+        let display = 100
+        let start = (page - 1) * display + 1
+
         return bookSearchService
-            .searchBooks(query: query, display: 100, start: 1, sort: .accuracy)
-            .flatMap { response -> Observable<Mutation> in
+            .searchBooks(query: query, display: display, start: start, sort: .accuracy)
+            .flatMap { [weak self] response -> Observable<Mutation> in
+                guard let self = self else { return Observable.empty() }
+
                 let books = BookSearchMapper.mapResponseToBooks(response)
                 let originalItems = response.items
+                let hasMore = response.start + response.display <= response.total
 
-                if books.isEmpty {
-                    return Observable.concat([
-                        Observable.just(.setOriginalSearchItems([])),
-                        Observable.just(.setSearchState(.noResults))
-                    ])
+                if isLoadMore {
+                    // 페이지네이션: 기존 결과에 추가
+                    if books.isEmpty {
+                        return Observable.concat([
+                            Observable.just(.setHasMore(false))
+                        ])
+                    } else {
+                        return Observable.concat([
+                            Observable.just(.appendSearchResults(books, originalItems)),
+                            Observable.just(.setCurrentPage(page)),
+                            Observable.just(.setHasMore(hasMore))
+                        ])
+                    }
                 } else {
-                    return Observable.concat([
-                        Observable.just(.setOriginalSearchItems(originalItems)),
-                        Observable.just(.setSearchState(.results(books, originalItems)))
-                    ])
+                    // 새 검색: 결과 교체
+                    if books.isEmpty {
+                        return Observable.concat([
+                            Observable.just(.setOriginalSearchItems([])),
+                            Observable.just(.setSearchState(.noResults)),
+                            Observable.just(.setHasMore(false))
+                        ])
+                    } else {
+                        return Observable.concat([
+                            Observable.just(.setOriginalSearchItems(originalItems)),
+                            Observable.just(.setSearchState(.results(books, originalItems))),
+                            Observable.just(.setHasMore(hasMore))
+                        ])
+                    }
                 }
             }
             .catch { error in
@@ -191,7 +256,8 @@ final class SearchReactor: Reactor {
                 }
                 return Observable.concat([
                     Observable.just(.setOriginalSearchItems([])),
-                    Observable.just(.setSearchState(.error(errorMessage)))
+                    Observable.just(.setSearchState(.error(errorMessage))),
+                    Observable.just(.setHasMore(false))
                 ])
             }
     }
