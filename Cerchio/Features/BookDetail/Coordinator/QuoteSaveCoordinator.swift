@@ -42,11 +42,22 @@ final class QuoteSaveCoordinator: BaseCoordinator {
     // MARK: - Navigation
     private func showQuoteSave() {
         let quoteSaveVC = QuoteSaveViewController(bookId: dependencies.bookId)
-        quoteSaveVC.delegate = self
 
         // Repository 주입
         let quoteRepository = dependencies.serviceFactory.createQuoteRepository()
         quoteSaveVC.setQuoteRepository(quoteRepository)
+
+        // Rx event binding
+        quoteSaveVC.events
+            .subscribe(onNext: { [weak self] event in
+                switch event {
+                case .quoteSaved(let quote):
+                    self?.finish(with: .quoteSaved(quote))
+                case .cancelled:
+                    self?.finish(with: .cancelled)
+                }
+            })
+            .disposed(by: disposeBag)
 
         let quoteSaveNavController = UINavigationController(rootViewController: quoteSaveVC)
         quoteSaveNavController.modalPresentationStyle = .pageSheet
@@ -75,16 +86,5 @@ final class QuoteSaveCoordinator: BaseCoordinator {
         } else {
             finish()
         }
-    }
-}
-
-// MARK: - QuoteSaveViewControllerDelegate
-extension QuoteSaveCoordinator: QuoteSaveViewControllerDelegate {
-    func quoteSaveViewController(_ controller: QuoteSaveViewController, didSaveQuote quote: String) {
-        finish(with: .quoteSaved(quote))
-    }
-
-    func quoteSaveViewControllerDidCancel(_ controller: QuoteSaveViewController) {
-        finish(with: .cancelled)
     }
 }

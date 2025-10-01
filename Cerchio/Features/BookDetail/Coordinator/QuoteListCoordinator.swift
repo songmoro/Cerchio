@@ -95,7 +95,25 @@ final class QuoteListCoordinator: BaseCoordinator {
         let quoteRepository = dependencies.serviceFactory.createQuoteRepository()
         quoteSaveVC.setQuoteRepository(quoteRepository)
 
-        quoteSaveVC.delegate = self
+        // Rx event binding
+        quoteSaveVC.events
+            .subscribe(onNext: { [weak self] event in
+                switch event {
+                case .quoteSaved(let savedQuote):
+                    quoteSaveVC.dismiss(animated: true) { [weak self] in
+                        print("✅ Quote updated: \(savedQuote)")
+                        self?.resultRelay.accept(.quotesUpdated)
+
+                        // QuoteListViewController 새로고침
+                        if let quoteListVC = self?.navigationController.topViewController as? QuoteListViewController {
+                            quoteListVC.reactor?.action.onNext(.loadQuotes)
+                        }
+                    }
+                case .cancelled:
+                    quoteSaveVC.dismiss(animated: true)
+                }
+            })
+            .disposed(by: disposeBag)
 
         let navController = UINavigationController(rootViewController: quoteSaveVC)
         navController.modalPresentationStyle = .pageSheet
@@ -106,24 +124,5 @@ final class QuoteListCoordinator: BaseCoordinator {
         }
 
         navigationController.present(navController, animated: true)
-    }
-}
-
-// MARK: - QuoteSaveViewControllerDelegate
-extension QuoteListCoordinator: QuoteSaveViewControllerDelegate {
-    func quoteSaveViewController(_ controller: QuoteSaveViewController, didSaveQuote quote: String) {
-        controller.dismiss(animated: true) { [weak self] in
-            print("✅ Quote updated: \(quote)")
-            self?.resultRelay.accept(.quotesUpdated)
-
-            // QuoteListViewController 새로고침
-            if let quoteListVC = self?.navigationController.topViewController as? QuoteListViewController {
-                quoteListVC.reactor?.action.onNext(.loadQuotes)
-            }
-        }
-    }
-
-    func quoteSaveViewControllerDidCancel(_ controller: QuoteSaveViewController) {
-        controller.dismiss(animated: true)
     }
 }

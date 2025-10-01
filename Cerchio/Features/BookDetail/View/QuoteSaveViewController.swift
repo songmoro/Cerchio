@@ -9,14 +9,17 @@ import UIKit
 import SnapKit
 import RealmSwift
 import RxSwift
-
-protocol QuoteSaveViewControllerDelegate: AnyObject {
-    func quoteSaveViewController(_ controller: QuoteSaveViewController, didSaveQuote quote: String)
-    func quoteSaveViewControllerDidCancel(_ controller: QuoteSaveViewController)
-}
+import RxCocoa
 
 final class QuoteSaveViewController: UIViewController {
-    weak var delegate: QuoteSaveViewControllerDelegate?
+    // MARK: - Events
+    enum Event {
+        case quoteSaved(String)
+        case cancelled
+    }
+
+    private let eventRelay = PublishRelay<Event>()
+    var events: Observable<Event> { eventRelay.asObservable() }
 
     // MARK: - Properties
     private let bookId: String
@@ -235,7 +238,7 @@ final class QuoteSaveViewController: UIViewController {
         if !textView.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
             showDiscardConfirmation()
         } else {
-            delegate?.quoteSaveViewControllerDidCancel(self)
+            eventRelay.accept(.cancelled)
         }
     }
 
@@ -260,7 +263,7 @@ final class QuoteSaveViewController: UIViewController {
                 .observe(on: MainScheduler.instance)
                 .subscribe(
                     onNext: { [weak self] _ in
-                        self?.delegate?.quoteSaveViewController(self!, didSaveQuote: quote)
+                        self?.eventRelay.accept(.quoteSaved(quote))
                     },
                     onError: { [weak self] error in
                         print("❌ Failed to save quote: \(error.localizedDescription)")
@@ -285,7 +288,7 @@ final class QuoteSaveViewController: UIViewController {
                 realmQuote.pageNumber = newPageNumber
             }
 
-            delegate?.quoteSaveViewController(self, didSaveQuote: newQuote)
+            eventRelay.accept(.quoteSaved(newQuote))
         } catch {
             print("❌ Failed to update quote: \(error.localizedDescription)")
             showSaveErrorAlert()
@@ -352,8 +355,8 @@ final class QuoteSaveViewController: UIViewController {
             preferredStyle: .alert
         )
 
-        alert.addAction(UIAlertAction(title: String(localized: .quoteSaveDiscard), style: .destructive) { _ in
-            self.delegate?.quoteSaveViewControllerDidCancel(self)
+        alert.addAction(UIAlertAction(title: String(localized: .quoteSaveDiscard), style: .destructive) { [weak self] _ in
+            self?.eventRelay.accept(.cancelled)
         })
 
         alert.addAction(UIAlertAction(title: String(localized: .actionCancel), style: .cancel))

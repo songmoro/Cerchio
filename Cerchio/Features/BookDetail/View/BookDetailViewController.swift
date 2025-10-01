@@ -1087,19 +1087,6 @@ extension BookDetailViewController: CameraViewControllerDelegate {
     }
 }
 
-// MARK: - QuoteSaveViewControllerDelegate
-extension BookDetailViewController: QuoteSaveViewControllerDelegate {
-    func quoteSaveViewController(_ controller: QuoteSaveViewController, didSaveQuote quote: String) {
-        controller.dismiss(animated: true) { [weak self] in
-            print("✅ Quote saved/updated: \(quote)")
-            self?.loadQuotesAndUpdateUI()
-        }
-    }
-
-    func quoteSaveViewControllerDidCancel(_ controller: QuoteSaveViewController) {
-        controller.dismiss(animated: true)
-    }
-}
 
 // MARK: - UICollectionViewDelegate
 extension BookDetailViewController: UICollectionViewDelegate {
@@ -1151,7 +1138,20 @@ extension BookDetailViewController: UICollectionViewDelegate {
             quoteSaveVC.setQuoteRepository(quoteRepository)
         }
 
-        quoteSaveVC.delegate = self
+        // Rx event binding
+        quoteSaveVC.events
+            .subscribe(onNext: { [weak self] event in
+                switch event {
+                case .quoteSaved(let savedQuote):
+                    quoteSaveVC.dismiss(animated: true) { [weak self] in
+                        print("✅ Quote saved/updated: \(savedQuote)")
+                        self?.loadQuotesAndUpdateUI()
+                    }
+                case .cancelled:
+                    quoteSaveVC.dismiss(animated: true)
+                }
+            })
+            .disposed(by: disposeBag)
 
         let navController = UINavigationController(rootViewController: quoteSaveVC)
         navController.modalPresentationStyle = .pageSheet
