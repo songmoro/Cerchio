@@ -40,7 +40,45 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
         case bookInfo(BookDetail)
         case savedQuote(String, Int?, Date) // 문장 텍스트, 페이지, 저장 날짜
         case addQuoteButton // 문장 추가 버튼
-        case photoPage([UIImage]) // 최대 3개의 이미지
+        case photoItem(UIImage) // 개별 사진
+        case addPhotoButton // 사진 추가 버튼
+
+        func hash(into hasher: inout Hasher) {
+            switch self {
+            case .bookInfo(let detail):
+                hasher.combine("bookInfo")
+                hasher.combine(detail)
+            case .savedQuote(let quote, let page, let date):
+                hasher.combine("savedQuote")
+                hasher.combine(quote)
+                hasher.combine(page)
+                hasher.combine(date)
+            case .addQuoteButton:
+                hasher.combine("addQuoteButton")
+            case .photoItem(let image):
+                hasher.combine("photoItem")
+                hasher.combine(image.pngData())
+            case .addPhotoButton:
+                hasher.combine("addPhotoButton")
+            }
+        }
+
+        static func == (lhs: Item, rhs: Item) -> Bool {
+            switch (lhs, rhs) {
+            case (.bookInfo(let l), .bookInfo(let r)):
+                return l == r
+            case (.savedQuote(let lq, let lp, let ld), .savedQuote(let rq, let rp, let rd)):
+                return lq == rq && lp == rp && ld == rd
+            case (.addQuoteButton, .addQuoteButton):
+                return true
+            case (.photoItem(let l), .photoItem(let r)):
+                return l.pngData() == r.pngData()
+            case (.addPhotoButton, .addPhotoButton):
+                return true
+            default:
+                return false
+            }
+        }
     }
     
     // MARK: - Lifecycle
@@ -158,7 +196,8 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
         collectionView.register(BookInfoCollectionViewCell.self)
         collectionView.register(SavedQuoteCell.self)
         collectionView.register(AddQuoteButtonCell.self)
-        collectionView.register(PhotoPageCell.self)
+        collectionView.register(PhotoItemCell.self)
+        collectionView.register(AddPhotoCell.self)
 
         // 헤더 등록
         collectionView.register(
@@ -254,21 +293,27 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
     }
     
     private func createPhotoPagesSection() -> NSCollectionLayoutSection {
-        // 찍은 사진 섹션 - 셀 높이는 너비의 1/3 (가로 3등분 시 정사각형)
+        // 찍은 사진 섹션 - Orthogonal 가로 스크롤
+        // 아이템: 정사각형 (1:1 비율)
         let itemSize = NSCollectionLayoutSize(
-            widthDimension: .fractionalWidth(1.0),
-            heightDimension: .estimated(150) // 예상 높이
+            widthDimension: .absolute(120),
+            heightDimension: .absolute(120)
         )
         let item = NSCollectionLayoutItem(layoutSize: itemSize)
+        item.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 8)
 
+        // 그룹: 가로로 스크롤되는 아이템들
         let groupSize = NSCollectionLayoutSize(
-            widthDimension: .fractionalWidth(1.0),
-            heightDimension: .estimated(150)
+            widthDimension: .estimated(120),
+            heightDimension: .absolute(120)
         )
         let group = NSCollectionLayoutGroup.horizontal(layoutSize: groupSize, subitems: [item])
 
         let section = NSCollectionLayoutSection(group: group)
         section.contentInsets = NSDirectionalEdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16)
+
+        // Orthogonal 스크롤 활성화
+        section.orthogonalScrollingBehavior = .continuous
 
         // 섹션 헤더 추가
         let headerSize = NSCollectionLayoutSize(
@@ -312,17 +357,21 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
                 }
                 return cell
 
-            case .photoPage(let images):
-                let cell: PhotoPageCell = collectionView.dequeueReusableCell(PhotoPageCell.self, for: indexPath)
-                cell.configure(with: images)
-                cell.onAddPhotoTapped = { [weak self] in
-                    self?.showPhotoCapture()
-                }
+            case .photoItem(let image):
+                let cell: PhotoItemCell = collectionView.dequeueReusableCell(PhotoItemCell.self, for: indexPath)
+                cell.configure(with: image)
                 cell.onPhotoTapped = { [weak self] image in
                     self?.showImagePreview(image)
                 }
                 cell.onPhotoLongPressed = { [weak self] imageView, image in
                     self?.showPhotoContextMenu(for: imageView, with: image)
+                }
+                return cell
+
+            case .addPhotoButton:
+                let cell: AddPhotoCell = collectionView.dequeueReusableCell(AddPhotoCell.self, for: indexPath)
+                cell.onAddPhotoTapped = { [weak self] in
+                    self?.showPhotoCapture()
                 }
                 return cell
             }
@@ -376,7 +425,7 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
         snapshot.appendItems([.savedQuote("", nil, Date())], toSection: .savedQuotes)
 
         // 찍은 사진 (기본 빈 데이터, 실제 데이터는 별도 로드)
-        snapshot.appendItems([.photoPage([])], toSection: .photoPages)
+        snapshot.appendItems([.addPhotoButton], toSection: .photoPages)
 
         dataSource.apply(snapshot, animatingDifferences: true)
     }
@@ -557,15 +606,20 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
         }
         snapshot.appendItems(quoteItems, toSection: .savedQuotes)
 
-        // 찍은 사진 - 최신순 내림차순, 최대 3개까지 표시
+        // 찍은 사진 - 최신순 내림차순, 가로 스크롤
+        var photoItems: [Item] = []
         if let photos = photos {
             // 최신순 정렬 (createdAt 내림차순)
             let sortedPhotos = photos.sorted { $0.createdAt > $1.createdAt }
-            let maxPhotos = min(sortedPhotos.count, 3)
-            let images = sortedPhotos.prefix(maxPhotos).compactMap { ImageStorageManager.shared.loadImage(fromPath: $0.localImagePath) }
+            let images = sortedPhotos.compactMap { ImageStorageManager.shared.loadImage(fromPath: $0.localImagePath) }
 
-            let photoItem: Item = .photoPage(images)
-            snapshot.appendItems([photoItem], toSection: .photoPages)
+            // 추가 버튼을 맨 앞에 배치
+            photoItems.append(.addPhotoButton)
+
+            // 각 이미지를 개별 아이템으로 추가
+            photoItems.append(contentsOf: images.map { .photoItem($0) })
+
+            snapshot.appendItems(photoItems, toSection: .photoPages)
         } else {
             // 사진 데이터가 제공되지 않은 경우 별도로 로드
             loadPhotosForSnapshot(snapshot: snapshot)
@@ -588,13 +642,17 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
             let photoArray = Array(sortedPhotos)
 
             var updatedSnapshot = snapshot
-            let maxPhotos = min(photoArray.count, 3)
-            let images = photoArray.prefix(maxPhotos).compactMap { ImageStorageManager.shared.loadImage(fromPath: $0.localImagePath) }
-            let photoItem: Item = .photoPage(images)
+            let images = photoArray.compactMap { ImageStorageManager.shared.loadImage(fromPath: $0.localImagePath) }
+
+            var photoItems: [Item] = []
+            // 추가 버튼을 맨 앞에 배치
+            photoItems.append(.addPhotoButton)
+            // 각 이미지를 개별 아이템으로 추가
+            photoItems.append(contentsOf: images.map { .photoItem($0) })
 
             // 기존 photoPages 섹션 업데이트
             updatedSnapshot.deleteItems(updatedSnapshot.itemIdentifiers(inSection: .photoPages))
-            updatedSnapshot.appendItems([photoItem], toSection: .photoPages)
+            updatedSnapshot.appendItems(photoItems, toSection: .photoPages)
 
             dataSource.apply(updatedSnapshot, animatingDifferences: true)
         } catch {
