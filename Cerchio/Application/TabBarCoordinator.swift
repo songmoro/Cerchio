@@ -142,7 +142,8 @@ final class TabBarCoordinator: BaseCoordinator, Coordinatable {
     }
 
     private func setupSearchNavigation(_ searchViewController: SearchViewController) {
-        // 향후 검색 결과에서 도서 상세로 이동하는 로직 추가 가능
-        // 현재는 "담기" 버튼 동작만 처리됨
+        searchViewController.onBookSaved = { [weak self] book in
+            self?.navigateToBookDetail(book: book)
+        }
     }
 }

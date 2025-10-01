@@ -15,6 +15,9 @@ final class SearchViewController: BaseViewController<SearchReactor> {
     private typealias DataSource = UITableViewDiffableDataSource<Section, Book>
     private typealias Snapshot = NSDiffableDataSourceSnapshot<Section, Book>
 
+    // MARK: - Callbacks
+    var onBookSaved: ((Book) -> Void)?
+
     // MARK: - UI Components
     private let searchBar: UISearchBar = {
         let searchBar = UISearchBar()
@@ -161,12 +164,38 @@ final class SearchViewController: BaseViewController<SearchReactor> {
         dataSource = DataSource(tableView: tableView) { [weak self] (tableView: UITableView, indexPath: IndexPath, book: Book) -> UITableViewCell? in
             let cell = tableView.dequeueReusableCell(withIdentifier: SearchResultTableViewCell.identifier, for: indexPath) as! SearchResultTableViewCell
             cell.configure(with: book) { [weak self] selectedBook in
-                self?.reactor?.action.onNext(.addBookToLibrary(selectedBook))
+                guard let self = self else { return }
+
+                // 책 저장
+                self.reactor?.action.onNext(.addBookToLibrary(selectedBook))
+
+                // 상세 화면 이동 확인 얼럿
+                self.showNavigationConfirmAlert(for: selectedBook)
             }
             return cell
         }
 
         tableView.dataSource = dataSource
+    }
+
+    // MARK: - Alert
+    private func showNavigationConfirmAlert(for book: Book) {
+        let alert = UIAlertController(
+            title: "책이 서재에 담겼습니다",
+            message: "책 상세 화면으로 이동하시겠습니까?",
+            preferredStyle: .alert
+        )
+
+        let cancelAction = UIAlertAction(title: "취소", style: .cancel)
+
+        let goToDetailAction = UIAlertAction(title: "이동", style: .default) { [weak self] _ in
+            self?.onBookSaved?(book)
+        }
+
+        alert.addAction(cancelAction)
+        alert.addAction(goToDetailAction)
+
+        present(alert, animated: true)
     }
 
     // MARK: - UI Updates
