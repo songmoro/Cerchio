@@ -144,6 +144,11 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
             forSupplementaryViewOfKind: UICollectionView.elementKindSectionHeader,
             withReuseIdentifier: SavedQuotesSectionHeader.identifier
         )
+        collectionView.register(
+            PhotosSectionHeader.self,
+            forSupplementaryViewOfKind: UICollectionView.elementKindSectionHeader,
+            withReuseIdentifier: PhotosSectionHeader.identifier
+        )
         
         view.addSubview(collectionView)
     }
@@ -227,22 +232,34 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
     }
     
     private func createPhotoPagesSection() -> NSCollectionLayoutSection {
-        // 찍은 사진 섹션 - 화면 높이의 1/3
+        // 찍은 사진 섹션 - 3개 가로 배치
         let itemSize = NSCollectionLayoutSize(
             widthDimension: .fractionalWidth(1.0),
-            heightDimension: .fractionalHeight(1.0)
+            heightDimension: .estimated(120)
         )
         let item = NSCollectionLayoutItem(layoutSize: itemSize)
-        
+
         let groupSize = NSCollectionLayoutSize(
             widthDimension: .fractionalWidth(1.0),
-            heightDimension: .fractionalHeight(1.0/3.0) // 화면 높이의 1/3
+            heightDimension: .estimated(120)
         )
         let group = NSCollectionLayoutGroup.horizontal(layoutSize: groupSize, subitems: [item])
-        
+
         let section = NSCollectionLayoutSection(group: group)
         section.contentInsets = NSDirectionalEdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16)
-        
+
+        // 섹션 헤더 추가
+        let headerSize = NSCollectionLayoutSize(
+            widthDimension: .fractionalWidth(1.0),
+            heightDimension: .estimated(44)
+        )
+        let header = NSCollectionLayoutBoundarySupplementaryItem(
+            layoutSize: headerSize,
+            elementKind: UICollectionView.elementKindSectionHeader,
+            alignment: .top
+        )
+        section.boundarySupplementaryItems = [header]
+
         return section
     }
     
@@ -286,7 +303,9 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
             guard kind == UICollectionView.elementKindSectionHeader else { return nil }
 
             let section = Section.allCases[indexPath.section]
-            if section == .savedQuotes {
+
+            switch section {
+            case .savedQuotes:
                 let header = collectionView.dequeueReusableSupplementaryView(
                     ofKind: kind,
                     withReuseIdentifier: SavedQuotesSectionHeader.identifier,
@@ -297,9 +316,22 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
                     self?.showAllQuotes()
                 }
                 return header
-            }
 
-            return nil
+            case .photoPages:
+                let header = collectionView.dequeueReusableSupplementaryView(
+                    ofKind: kind,
+                    withReuseIdentifier: PhotosSectionHeader.identifier,
+                    for: indexPath
+                ) as! PhotosSectionHeader
+
+                header.onViewAllTapped = { [weak self] in
+                    self?.showAllPhotos()
+                }
+                return header
+
+            default:
+                return nil
+            }
         }
     }
     
@@ -681,6 +713,39 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
             .disposed(by: disposeBag)
 
         quoteListCoordinator.start()
+    }
+
+    // MARK: - Show All Photos
+    private func showAllPhotos() {
+        guard let reactor = reactor else { return }
+        let bookId = String(describing: reactor.currentState.book.id)
+
+        let photoListCoordinator = PhotoListCoordinator(
+            navigationController: navigationController ?? UINavigationController(),
+            dependencies: PhotoListCoordinator.Dependencies(
+                bookId: bookId,
+                onAddPhotoTapped: { [weak self] in
+                    self?.showPhotoCapture()
+                }
+            )
+        )
+
+        addChildCoordinator(photoListCoordinator)
+
+        photoListCoordinator.result
+            .subscribe(onNext: { [weak self] result in
+                switch result {
+                case .photosUpdated:
+                    print("✅ Photos updated, refreshing...")
+                    self?.loadPhotosAndUpdateUI()
+                case .dismissed:
+                    print("📷 Photo list dismissed")
+                }
+                self?.removeChildCoordinator(photoListCoordinator)
+            })
+            .disposed(by: disposeBag)
+
+        photoListCoordinator.start()
     }
 }
 
