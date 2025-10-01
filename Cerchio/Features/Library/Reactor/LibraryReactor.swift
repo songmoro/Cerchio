@@ -21,6 +21,7 @@ final class LibraryReactor: Reactor {
     enum Mutation {
         case setBooks([Book])
         case setFilteredBooks([Book])
+        case clearFilteredBooks
         case setActiveFilters([String])
         case setFavoriteFilter(Bool)
         case setLoading(Bool)
@@ -78,7 +79,8 @@ final class LibraryReactor: Reactor {
             return Observable.concat([
                 Observable.just(.setFilteredBooks([])),
                 Observable.just(.setActiveFilters([])),
-                Observable.just(.setFavoriteFilter(false))
+                Observable.just(.setFavoriteFilter(false)),
+                Observable.just(.clearFilteredBooks)
             ])
         }
     }
@@ -91,7 +93,12 @@ final class LibraryReactor: Reactor {
             newState.books = books
 
         case .setFilteredBooks(let books):
-            newState.filteredBooks = books.isEmpty ? nil : books
+            // 빈 배열도 유효한 필터 결과로 처리 (필터 적용했지만 결과가 없는 경우)
+            newState.filteredBooks = books
+
+        case .clearFilteredBooks:
+            // 필터를 완전히 제거하여 모든 책 표시
+            newState.filteredBooks = nil
 
         case .setActiveFilters(let filters):
             newState.activeFilters = filters

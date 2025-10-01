@@ -148,11 +148,15 @@ final class LibraryViewController: BaseViewController<LibraryReactor>, UICollect
 
         // State - Active Filters (for navigation title)
         reactor.state
-            .map { $0.activeFilters }
-            .distinctUntilChanged()
+            .map { ($0.activeFilters, $0.isFavoriteFilterEnabled) }
+            .distinctUntilChanged { lhs, rhs in
+                let filtersEqual = lhs.0 == rhs.0
+                let favoriteEqual = lhs.1 == rhs.1
+                return filtersEqual && favoriteEqual
+            }
             .observe(on: MainScheduler.instance)
-            .subscribe(onNext: { [weak self] filters in
-                self?.updateNavigationTitle(with: filters)
+            .subscribe(onNext: { [weak self] filters, isFavoriteEnabled in
+                self?.updateNavigationTitle(with: filters, isFavoriteEnabled: isFavoriteEnabled)
             })
             .disposed(by: disposeBag)
 
@@ -390,14 +394,26 @@ final class LibraryViewController: BaseViewController<LibraryReactor>, UICollect
     }
 
     // MARK: - Navigation Title Update
-    private func updateNavigationTitle(with filters: [String]) {
+    private func updateNavigationTitle(with filters: [String], isFavoriteEnabled: Bool) {
         guard let tabBarController = tabBarController else { return }
 
-        if filters.isEmpty {
+        var titleComponents: [String] = []
+
+        // 즐겨찾기 필터가 활성화된 경우
+        if isFavoriteEnabled {
+            titleComponents.append("♥")
+        }
+
+        // 태그 필터가 활성화된 경우
+        if !filters.isEmpty {
+            let tagText = filters.map { "#\($0)" }.joined(separator: " ")
+            titleComponents.append(tagText)
+        }
+
+        if titleComponents.isEmpty {
             tabBarController.navigationItem.title = "서재"
         } else {
-            let filterText = filters.map { "#\($0)" }.joined(separator: " ")
-            tabBarController.navigationItem.title = filterText
+            tabBarController.navigationItem.title = titleComponents.joined(separator: " ")
         }
     }
 
