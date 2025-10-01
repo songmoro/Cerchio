@@ -31,16 +31,6 @@ final class TagFilterViewController: UIViewController {
         return table
     }()
 
-    private let emptyLabel: UILabel = {
-        let label = UILabel()
-        label.text = "사용 가능한 태그가 없습니다"
-        label.textColor = .secondaryLabel
-        label.font = .systemFont(ofSize: 16)
-        label.textAlignment = .center
-        label.isHidden = true
-        return label
-    }()
-
     // MARK: - Lifecycle
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -54,14 +44,9 @@ final class TagFilterViewController: UIViewController {
         view.backgroundColor = .systemBackground
 
         view.addSubview(tableView)
-        view.addSubview(emptyLabel)
 
         tableView.snp.makeConstraints {
             $0.edges.equalToSuperview()
-        }
-
-        emptyLabel.snp.makeConstraints {
-            $0.center.equalToSuperview()
         }
     }
 
@@ -104,7 +89,6 @@ final class TagFilterViewController: UIViewController {
         self.selectedTags = Set(selectedTags)
         self.isFavoriteFilterEnabled = isFavoriteEnabled
 
-        emptyLabel.isHidden = !tags.isEmpty
         tableView.reloadData()
     }
 
@@ -135,7 +119,8 @@ extension TagFilterViewController: UITableViewDataSource {
         if section == 0 {
             return 1 // Favorite filter
         } else {
-            return availableTags.count
+            // 태그가 없으면 1개 행(빈 메시지), 있으면 태그 개수
+            return availableTags.isEmpty ? 1 : availableTags.count
         }
     }
 
@@ -148,19 +133,35 @@ extension TagFilterViewController: UITableViewDataSource {
     }
 
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        guard let cell = tableView.dequeueReusableCell(withIdentifier: TagFilterCell.identifier, for: indexPath) as? TagFilterCell else {
-            return UITableViewCell()
-        }
-
         if indexPath.section == 0 {
+            // 즐겨찾기 필터 셀
+            guard let cell = tableView.dequeueReusableCell(withIdentifier: TagFilterCell.identifier, for: indexPath) as? TagFilterCell else {
+                return UITableViewCell()
+            }
             cell.configure(with: "즐겨찾기", isSelected: isFavoriteFilterEnabled, isFavoriteOption: true)
+            return cell
         } else {
-            let tag = availableTags[indexPath.row]
-            let isSelected = selectedTags.contains(tag)
-            cell.configure(with: tag, isSelected: isSelected, isFavoriteOption: false)
+            // 태그 섹션
+            if availableTags.isEmpty {
+                // 빈 태그 메시지 셀
+                let cell = UITableViewCell()
+                cell.textLabel?.text = "사용 가능한 태그가 없습니다"
+                cell.textLabel?.textColor = .secondaryLabel
+                cell.textLabel?.font = .systemFont(ofSize: 14)
+                cell.textLabel?.textAlignment = .center
+                cell.selectionStyle = .none
+                return cell
+            } else {
+                // 태그 필터 셀
+                guard let cell = tableView.dequeueReusableCell(withIdentifier: TagFilterCell.identifier, for: indexPath) as? TagFilterCell else {
+                    return UITableViewCell()
+                }
+                let tag = availableTags[indexPath.row]
+                let isSelected = selectedTags.contains(tag)
+                cell.configure(with: tag, isSelected: isSelected, isFavoriteOption: false)
+                return cell
+            }
         }
-
-        return cell
     }
 }
 
@@ -172,7 +173,11 @@ extension TagFilterViewController: UITableViewDelegate {
         if indexPath.section == 0 {
             // Favorite filter toggle
             isFavoriteFilterEnabled.toggle()
+            tableView.reloadRows(at: [indexPath], with: .automatic)
         } else {
+            // 태그가 없으면 아무 동작 안 함
+            guard !availableTags.isEmpty else { return }
+
             // Tag filter toggle
             let tag = availableTags[indexPath.row]
 
@@ -181,9 +186,9 @@ extension TagFilterViewController: UITableViewDelegate {
             } else {
                 selectedTags.insert(tag)
             }
-        }
 
-        tableView.reloadRows(at: [indexPath], with: .automatic)
+            tableView.reloadRows(at: [indexPath], with: .automatic)
+        }
     }
 }
 

@@ -414,25 +414,12 @@ final class LibraryViewController: BaseViewController<LibraryReactor>, UICollect
                 // 중복 제거하여 고유한 태그 이름 목록 생성
                 let uniqueTags = Array(Set(allTags.map { $0.tagName })).sorted()
 
-                if uniqueTags.isEmpty {
-                    self.showNoTagsAlert()
-                } else {
-                    self.presentTagFilterView(with: uniqueTags)
-                }
+                // 태그가 없어도 즐겨찾기 필터링을 위해 필터 화면 표시
+                self.presentTagFilterView(with: uniqueTags)
             }, onError: { error in
                 print("Failed to load tags: \(error.localizedDescription)")
             })
             .disposed(by: disposeBag)
-    }
-
-    private func showNoTagsAlert() {
-        let alert = UIAlertController(
-            title: "태그 없음",
-            message: "사용 가능한 태그가 없습니다. 책 상세 화면에서 태그를 추가해주세요.",
-            preferredStyle: .alert
-        )
-        alert.addAction(UIAlertAction(title: "확인", style: .default))
-        present(alert, animated: true)
     }
 
     private func presentTagFilterView(with tags: [String]) {
