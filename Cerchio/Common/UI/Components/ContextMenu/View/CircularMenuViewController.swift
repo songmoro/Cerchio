@@ -94,21 +94,7 @@ class CircularMenuViewController: UIViewController {
     }
 
     private func getLabelText(for button: CircularMenuButton) -> String {
-        guard let image = button.menuItem?.image else { return "" }
-
-        if image.isEqual(UIImage(systemName: "camera")) {
-            return "카메라"
-        } else if image.isEqual(UIImage(systemName: "photo")) {
-            return "갤러리"
-        } else if image.isEqual(UIImage(systemName: "video")) {
-            return "비디오"
-        } else if image.isEqual(UIImage(systemName: "doc")) {
-            return "문서"
-        } else if image.isEqual(UIImage(systemName: "star")) {
-            return "즐겨찾기"
-        }
-
-        return "메뉴"
+        return button.menuItem?.name ?? "메뉴"
     }
 
     private func calculateLabelPosition(for button: CircularMenuButton) -> LabelPosition {

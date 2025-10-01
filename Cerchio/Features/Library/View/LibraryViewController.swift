@@ -260,23 +260,23 @@ final class LibraryViewController: BaseViewController<LibraryReactor>, UICollect
     private func createMenuItems(for book: Book, at indexPath: IndexPath) -> [CircularMenuItem] {
         let menuItems: [CircularMenuItem] = [
             // 1. 사진 찍기
-            CircularMenuItem(image: UIImage(systemName: "camera")) { [weak self] in
+            CircularMenuItem(name: "사진", image: UIImage(systemName: "camera")) { [weak self] in
                 self?.capturePhoto(for: book)
             },
             // 2. 문장 저장
-            CircularMenuItem(image: UIImage(systemName: "quote.bubble")) { [weak self] in
+            CircularMenuItem(name: "문장", image: UIImage(systemName: "quote.bubble")) { [weak self] in
                 self?.saveQuote(for: book)
             },
             // 3. 즐겨찾기
-            CircularMenuItem(image: UIImage(systemName: book.isFavorite ? "heart.fill" : "heart")) { [weak self] in
+            CircularMenuItem(name: book.isFavorite ? "즐겨찾기 해제" : "즐겨찾기", image: UIImage(systemName: book.isFavorite ? "heart.fill" : "heart")) { [weak self] in
                 self?.toggleFavorite(book)
             },
             // 4. 삭제
-            CircularMenuItem(image: UIImage(systemName: "trash")) { [weak self] in
+            CircularMenuItem(name: "삭제", image: UIImage(systemName: "trash")) { [weak self] in
                 self?.deleteBook(book, at: indexPath)
             },
             // 5. 수정 (도서 정보 수정)
-            CircularMenuItem(image: UIImage(systemName: "pencil")) { [weak self] in
+            CircularMenuItem(name: "수정", image: UIImage(systemName: "pencil")) { [weak self] in
                 self?.editBookInfo(for: book)
             }
         ]
