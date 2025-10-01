@@ -113,6 +113,7 @@ final class QuoteListViewController: BaseViewController<QuoteListReactor> {
 
             var config = cell.defaultContentConfiguration()
             config.text = "\"\(quote.quote)\""
+            config.textProperties.font = .custom(weight: .regular, size: 15)
             config.textProperties.numberOfLines = 0
 
             let formatter = DateFormatter()
@@ -126,6 +127,7 @@ final class QuoteListViewController: BaseViewController<QuoteListReactor> {
             secondaryTextParts.append(formatter.string(from: quote.createdAt))
 
             config.secondaryText = secondaryTextParts.joined(separator: " · ")
+            config.secondaryTextProperties.font = .custom(weight: .regular, size: 12)
             config.secondaryTextProperties.color = .secondaryLabel
 
             cell.contentConfiguration = config
