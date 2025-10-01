@@ -110,6 +110,17 @@ final class SearchViewController: BaseViewController<SearchReactor> {
             })
             .disposed(by: disposeBag)
 
+        // Error 상태 처리 (중복 책 등)
+        reactor.state
+            .map { $0.error }
+            .distinctUntilChanged()
+            .compactMap { $0 }
+            .observe(on: MainScheduler.instance)
+            .subscribe(onNext: { [weak self] errorMessage in
+                self?.showErrorAlert(message: errorMessage)
+            })
+            .disposed(by: disposeBag)
+
     }
 
     // MARK: - Setup Methods
@@ -194,6 +205,19 @@ final class SearchViewController: BaseViewController<SearchReactor> {
 
         alert.addAction(cancelAction)
         alert.addAction(goToDetailAction)
+
+        present(alert, animated: true)
+    }
+
+    private func showErrorAlert(message: String) {
+        let alert = UIAlertController(
+            title: "알림",
+            message: message,
+            preferredStyle: .alert
+        )
+
+        let okAction = UIAlertAction(title: "확인", style: .default)
+        alert.addAction(okAction)
 
         present(alert, animated: true)
     }

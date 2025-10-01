@@ -107,6 +107,15 @@ final class ServiceFactory: BaseServiceFactory<ServiceDependencies> {
         }
     }
 
+    /// Creates a SearchHistoryRepository instance
+    func createSearchHistoryRepository() -> SearchHistoryRepositoryProtocol {
+        do {
+            return try SearchHistoryRepository()
+        } catch {
+            fatalError("Failed to create SearchHistoryRepository: \(error)")
+        }
+    }
+
     // MARK: - Cache Management
     func clearServiceCache() {
         cacheQueue.async(flags: .barrier) {

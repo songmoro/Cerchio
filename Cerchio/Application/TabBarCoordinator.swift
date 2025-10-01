@@ -84,7 +84,12 @@ final class TabBarCoordinator: BaseCoordinator, Coordinatable {
         let searchViewController = SearchViewController()
         let bookSearchService = dependencies.serviceFactory.createBookSearchService()
         let bookRepository = dependencies.serviceFactory.createBookRepository()
-        let searchReactor = SearchReactor(bookSearchService: bookSearchService, bookRepository: bookRepository)
+        let searchHistoryRepository = dependencies.serviceFactory.createSearchHistoryRepository()
+        let searchReactor = SearchReactor(
+            bookSearchService: bookSearchService,
+            bookRepository: bookRepository,
+            searchHistoryRepository: searchHistoryRepository
+        )
 
         searchViewController.reactor = searchReactor
         searchViewController.tabBarItem = UITabBarItem(

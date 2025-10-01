@@ -37,10 +37,12 @@ final class SearchReactor: Reactor {
 
     private let bookSearchService: BookSearchServiceProtocol
     private let bookRepository: BookRepositoryProtocol
+    private let searchHistoryRepository: SearchHistoryRepositoryProtocol
 
-    init(bookSearchService: BookSearchServiceProtocol, bookRepository: BookRepositoryProtocol) {
+    init(bookSearchService: BookSearchServiceProtocol, bookRepository: BookRepositoryProtocol, searchHistoryRepository: SearchHistoryRepositoryProtocol) {
         self.bookSearchService = bookSearchService
         self.bookRepository = bookRepository
+        self.searchHistoryRepository = searchHistoryRepository
     }
 
     func mutate(action: Action) -> Observable<Mutation> {
@@ -55,42 +57,55 @@ final class SearchReactor: Reactor {
                 return Observable.just(.setSearchState(.initial))
             }
 
+            // 검색 이력 저장
             return Observable.concat([
                 Observable.just(.setLoading(true)),
                 Observable.just(.setSearchState(.searching)),
+                saveSearchHistory(keyword: searchText),
                 performSearch(query: searchText),
                 Observable.just(.setLoading(false))
             ])
 
         case .addBookToLibrary(let book):
-            // 현재 상태에서 매칭되는 원본 BookSearchItem 찾기
-            let originalItems = currentState.originalSearchItems
+            // ISBN 중복 체크 먼저 수행
+            return bookRepository.bookExistsByISBN(book.isbn)
+                .flatMap { [weak self] exists -> Observable<Mutation> in
+                    guard let self = self else { return Observable.just(.setError("내부 오류")) }
 
-            if let matchingItem = originalItems.first(where: { $0.isbn == book.isbn }) {
-                // 원본 데이터를 RealmBook으로 변환
-                let realmBook = matchingItem.toRealmBook()
+                    if exists {
+                        print("⚠️ 이미 서재에 있는 책: \(book.cleanTitle)")
+                        return Observable.just(.setError("이미 서재에 있는 책입니다."))
+                    }
 
-                // Realm에 저장
-                return saveBookWithRepository(realmBook)
-                    .do(onNext: { success in
-                        if success {
-                            print("✅ 책 저장 성공: \(realmBook.cleanTitle)")
-                            print("📚 저장된 데이터:")
-                            print("  - 제목: \(realmBook.cleanTitle)")
-                            print("  - 저자: \(realmBook.author)")
-                            print("  - 출판사: \(realmBook.publisher)")
-                            print("  - 출간일: \(realmBook.pubdate)")
-                            print("  - 가격: \(realmBook.formattedPrice ?? "정보 없음")")
-                            print("  - ISBN: \(realmBook.isbn)")
-                        } else {
-                            print("❌ 책 저장 실패: \(realmBook.cleanTitle)")
-                        }
-                    })
-                    .map { _ in .setError(nil) }
-            } else {
-                print("⚠️ 매칭되는 원본 데이터를 찾을 수 없음: \(book.title)")
-                return Observable.just(.setError("원본 데이터를 찾을 수 없습니다."))
-            }
+                    // 현재 상태에서 매칭되는 원본 BookSearchItem 찾기
+                    let originalItems = self.currentState.originalSearchItems
+
+                    if let matchingItem = originalItems.first(where: { $0.isbn == book.isbn }) {
+                        // 원본 데이터를 RealmBook으로 변환
+                        let realmBook = matchingItem.toRealmBook()
+
+                        // Realm에 저장
+                        return self.saveBookWithRepository(realmBook)
+                            .do(onNext: { success in
+                                if success {
+                                    print("✅ 책 저장 성공: \(realmBook.cleanTitle)")
+                                    print("📚 저장된 데이터:")
+                                    print("  - 제목: \(realmBook.cleanTitle)")
+                                    print("  - 저자: \(realmBook.author)")
+                                    print("  - 출판사: \(realmBook.publisher)")
+                                    print("  - 출간일: \(realmBook.pubdate)")
+                                    print("  - 가격: \(realmBook.formattedPrice ?? "정보 없음")")
+                                    print("  - ISBN: \(realmBook.isbn)")
+                                } else {
+                                    print("❌ 책 저장 실패: \(realmBook.cleanTitle)")
+                                }
+                            })
+                            .map { _ in .setError(nil) }
+                    } else {
+                        print("⚠️ 매칭되는 원본 데이터를 찾을 수 없음: \(book.title)")
+                        return Observable.just(.setError("원본 데이터를 찾을 수 없습니다."))
+                    }
+                }
         }
     }
 
@@ -118,6 +133,15 @@ final class SearchReactor: Reactor {
     }
 
     // MARK: - Private Methods
+    private func saveSearchHistory(keyword: String) -> Observable<Mutation> {
+        return searchHistoryRepository.saveSearchHistory(keyword: keyword)
+            .map { _ in .setError(nil) }
+            .catch { error in
+                print("⚠️ 검색 이력 저장 실패: \(error.localizedDescription)")
+                return Observable.just(.setError(nil)) // 이력 저장 실패는 검색에 영향 없음
+            }
+    }
+
     private func performSearch(query: String) -> Observable<Mutation> {
         return bookSearchService
             .searchBooks(query: query, display: 100, start: 1, sort: .accuracy)

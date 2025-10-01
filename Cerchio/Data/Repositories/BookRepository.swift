@@ -21,6 +21,7 @@ protocol BookRepositoryProtocol {
     // Book struct-based methods (preferred)
     func getAllBooksAsStruct() -> Observable<[Book]>
     func getBookByISBN(_ isbn: String) -> Observable<Book?>
+    func bookExistsByISBN(_ isbn: String) -> Observable<Bool>
     func saveBookStruct(_ book: Book) -> Observable<Book>
     func deleteBookByISBN(_ isbn: String) -> Observable<Void>
     func deleteBooksByISBNs(_ isbns: [String]) -> Observable<Void>
@@ -128,6 +129,15 @@ final class BookRepository: BaseRepository<RealmBook>, BookRepositoryProtocol {
             } else {
                 observer.onNext(nil)
             }
+            observer.onCompleted()
+            return Disposables.create()
+        }
+    }
+
+    func bookExistsByISBN(_ isbn: String) -> Observable<Bool> {
+        return Observable.create { observer in
+            let books = self.realm.objects(RealmBook.self).filter("isbn == %@", isbn)
+            observer.onNext(!books.isEmpty)
             observer.onCompleted()
             return Disposables.create()
         }
