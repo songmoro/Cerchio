@@ -154,7 +154,8 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
         collectionView.backgroundColor = .systemBackground
         collectionView.showsVerticalScrollIndicator = false
         collectionView.alwaysBounceVertical = true
-        
+        collectionView.delegate = self
+
         // 셀 등록
         collectionView.register(BookInfoCollectionViewCell.self)
         collectionView.register(SavedQuoteCell.self)
@@ -172,7 +173,7 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
             forSupplementaryViewOfKind: UICollectionView.elementKindSectionHeader,
             withReuseIdentifier: PhotosSectionHeader.identifier
         )
-        
+
         view.addSubview(collectionView)
     }
     
@@ -541,15 +542,19 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
         // 책 정보
         snapshot.appendItems([.bookInfo(bookDetail)], toSection: .bookInfo)
 
-        // 저장한 문장 - 최대 2개 + 추가 버튼
+        // 저장한 문장 - 최대 3개 또는 문장이 없으면 추가 버튼만
         var quoteItems: [Item] = []
-        let maxQuotes = min(quotes.count, 2)
-        for i in 0..<maxQuotes {
-            let quote = quotes[i]
-            quoteItems.append(.savedQuote(quote.quote, quote.pageNumber, quote.createdAt))
+        if quotes.isEmpty {
+            // 문장이 없으면 추가 버튼만 표시
+            quoteItems.append(.addQuoteButton)
+        } else {
+            // 문장이 있으면 최대 3개까지 표시
+            let maxQuotes = min(quotes.count, 3)
+            for i in 0..<maxQuotes {
+                let quote = quotes[i]
+                quoteItems.append(.savedQuote(quote.quote, quote.pageNumber, quote.createdAt))
+            }
         }
-        // 3번째에 추가 버튼
-        quoteItems.append(.addQuoteButton)
         snapshot.appendItems(quoteItems, toSection: .savedQuotes)
 
         // 찍은 사진 - 최대 2개까지 표시
@@ -921,9 +926,87 @@ extension BookDetailViewController: CameraViewControllerDelegate {
             self?.savePhoto(image)
         }
     }
-    
+
     func cameraViewControllerDidCancel(_ controller: CameraViewController) {
         controller.dismiss(animated: true)
+    }
+}
+
+// MARK: - QuoteSaveViewControllerDelegate
+extension BookDetailViewController: QuoteSaveViewControllerDelegate {
+    func quoteSaveViewController(_ controller: QuoteSaveViewController, didSaveQuote quote: String) {
+        controller.dismiss(animated: true) { [weak self] in
+            print("✅ Quote saved/updated: \(quote)")
+            self?.loadQuotesAndUpdateUI()
+        }
+    }
+
+    func quoteSaveViewControllerDidCancel(_ controller: QuoteSaveViewController) {
+        controller.dismiss(animated: true)
+    }
+}
+
+// MARK: - UICollectionViewDelegate
+extension BookDetailViewController: UICollectionViewDelegate {
+    func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+        guard let item = dataSource.itemIdentifier(for: indexPath) else { return }
+
+        switch item {
+        case .savedQuote(let quote, let pageNumber, let date):
+            // 문장 수정
+            editQuote(quote: quote, pageNumber: pageNumber, date: date)
+        default:
+            break
+        }
+    }
+
+    private func editQuote(quote: String, pageNumber: Int?, date: Date) {
+        guard let reactor = reactor,
+              let serviceFactory = serviceFactory else { return }
+
+        let bookId = String(describing: reactor.currentState.book.id)
+
+        // Realm에서 해당 문장 찾기
+        do {
+            let realm = try Realm()
+            let quotes = realm.objects(RealmQuote.self)
+                .filter("bookId == %@ AND quote == %@ AND createdAt == %@", bookId, quote, date)
+
+            guard let realmQuote = quotes.first else {
+                print("❌ Quote not found")
+                return
+            }
+
+            // QuoteEditViewController 표시
+            showQuoteEdit(quoteId: String(describing: realmQuote.id), quote: quote, pageNumber: pageNumber)
+        } catch {
+            print("❌ Failed to find quote: \(error.localizedDescription)")
+        }
+    }
+
+    private func showQuoteEdit(quoteId: String, quote: String, pageNumber: Int?) {
+        guard let reactor = reactor else { return }
+        let bookId = String(describing: reactor.currentState.book.id)
+
+        let quoteSaveVC = QuoteSaveViewController(bookId: bookId)
+        quoteSaveVC.configureForEdit(quoteId: quoteId, quote: quote, pageNumber: pageNumber)
+
+        if let serviceFactory = serviceFactory {
+            let quoteRepository = serviceFactory.createQuoteRepository()
+            quoteSaveVC.setQuoteRepository(quoteRepository)
+        }
+
+        quoteSaveVC.delegate = self
+
+        let navController = UINavigationController(rootViewController: quoteSaveVC)
+        navController.modalPresentationStyle = .pageSheet
+
+        if let sheet = navController.sheetPresentationController {
+            sheet.detents = [.medium(), .large()]
+            sheet.prefersGrabberVisible = true
+        }
+
+        present(navController, animated: true)
     }
 }
 

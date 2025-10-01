@@ -23,6 +23,10 @@ final class QuoteSaveViewController: UIViewController {
     private var quoteRepository: QuoteRepositoryProtocol?
     private let disposeBag = DisposeBag()
 
+    // Edit mode properties
+    private var isEditMode: Bool = false
+    private var editingQuoteId: String?
+
     // MARK: - UI Components
     private let textView: UITextView = {
         let textView = UITextView()
@@ -72,6 +76,18 @@ final class QuoteSaveViewController: UIViewController {
 
     func setQuoteRepository(_ repository: QuoteRepositoryProtocol) {
         quoteRepository = repository
+    }
+
+    func configureForEdit(quoteId: String, quote: String, pageNumber: Int?) {
+        isEditMode = true
+        editingQuoteId = quoteId
+
+        // 뷰가 로드된 후에 설정
+        loadViewIfNeeded()
+        textView.text = quote
+        pageNumberTextField.text = pageNumber.map { String($0) }
+        updatePlaceholderVisibility()
+        updateSaveButtonState()
     }
 
     required init?(coder: NSCoder) {
@@ -140,7 +156,7 @@ final class QuoteSaveViewController: UIViewController {
     }
 
     private func setupNavigationBar() {
-        navigationItem.title = String(localized: .quoteSaveTitle)
+        navigationItem.title = isEditMode ? "문장 수정" : String(localized: .quoteSaveTitle)
 
         // 취소 버튼
         let cancelButton = UIBarButtonItem(
@@ -229,25 +245,51 @@ final class QuoteSaveViewController: UIViewController {
 
         let pageNumber = Int(pageNumberTextField.text ?? "")
 
-        // Repository를 통해 저장
-        let realmQuote = RealmQuote(
-            bookId: bookId,
-            quote: quote,
-            pageNumber: pageNumber
-        )
-
-        quoteRepository.saveQuote(realmQuote)
-            .observe(on: MainScheduler.instance)
-            .subscribe(
-                onNext: { [weak self] _ in
-                    self?.delegate?.quoteSaveViewController(self!, didSaveQuote: quote)
-                },
-                onError: { [weak self] error in
-                    print("❌ Failed to save quote: \\(error.localizedDescription)")
-                    self?.showSaveErrorAlert()
-                }
+        if isEditMode, let quoteId = editingQuoteId {
+            // 수정 모드: 기존 문장 업데이트
+            updateExistingQuote(quoteId: quoteId, newQuote: quote, newPageNumber: pageNumber)
+        } else {
+            // 새로 저장
+            let realmQuote = RealmQuote(
+                bookId: bookId,
+                quote: quote,
+                pageNumber: pageNumber
             )
-            .disposed(by: disposeBag)
+
+            quoteRepository.saveQuote(realmQuote)
+                .observe(on: MainScheduler.instance)
+                .subscribe(
+                    onNext: { [weak self] _ in
+                        self?.delegate?.quoteSaveViewController(self!, didSaveQuote: quote)
+                    },
+                    onError: { [weak self] error in
+                        print("❌ Failed to save quote: \(error.localizedDescription)")
+                        self?.showSaveErrorAlert()
+                    }
+                )
+                .disposed(by: disposeBag)
+        }
+    }
+
+    private func updateExistingQuote(quoteId: String, newQuote: String, newPageNumber: Int?) {
+        do {
+            let realm = try Realm()
+            guard let objectId = try? ObjectId(string: quoteId),
+                  let realmQuote = realm.object(ofType: RealmQuote.self, forPrimaryKey: objectId) else {
+                print("❌ Quote not found for update")
+                return
+            }
+
+            try realm.write {
+                realmQuote.quote = newQuote
+                realmQuote.pageNumber = newPageNumber
+            }
+
+            delegate?.quoteSaveViewController(self, didSaveQuote: newQuote)
+        } catch {
+            print("❌ Failed to update quote: \(error.localizedDescription)")
+            showSaveErrorAlert()
+        }
     }
 
     @objc private func dismissKeyboard() {

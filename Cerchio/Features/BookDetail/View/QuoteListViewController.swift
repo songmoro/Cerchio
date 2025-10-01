@@ -21,6 +21,7 @@ final class QuoteListViewController: BaseViewController<QuoteListReactor> {
 
     // MARK: - Properties
     var onAddQuoteTapped: (() -> Void)?
+    var onQuoteEditTapped: ((Quote) -> Void)?
     private var isEditMode: Bool = false
 
     // MARK: - Section Type
@@ -167,7 +168,9 @@ final class QuoteListViewController: BaseViewController<QuoteListReactor> {
 extension QuoteListViewController: UITableViewDelegate {
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         tableView.deselectRow(at: indexPath, animated: true)
-        // TODO: 상세 화면으로 이동
+
+        guard let quote = dataSource.itemIdentifier(for: indexPath) else { return }
+        onQuoteEditTapped?(quote)
     }
 
     func tableView(_ tableView: UITableView, trailingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {

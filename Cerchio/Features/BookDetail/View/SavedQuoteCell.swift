@@ -28,8 +28,7 @@ final class SavedQuoteCell: UICollectionViewCell, IsIdentifiable {
 
     // MARK: - Setup
     private func setupViews() {
-        contentView.backgroundColor = .systemGray6
-        contentView.layer.cornerRadius = 12
+        contentView.backgroundColor = .clear
 
         containerView.backgroundColor = .clear
         contentView.addSubview(containerView)

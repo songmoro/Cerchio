@@ -43,6 +43,11 @@ final class QuoteListCoordinator: BaseCoordinator {
             self?.showQuoteEntry()
         }
 
+        // 문장 수정 액션
+        viewController.onQuoteEditTapped = { [weak self] quote in
+            self?.showQuoteEdit(quote: quote)
+        }
+
         navigationController.pushViewController(viewController, animated: true)
     }
 
@@ -81,5 +86,44 @@ final class QuoteListCoordinator: BaseCoordinator {
             .disposed(by: disposeBag)
 
         quoteSaveCoordinator.start()
+    }
+
+    private func showQuoteEdit(quote: Quote) {
+        let quoteSaveVC = QuoteSaveViewController(bookId: dependencies.bookId)
+        quoteSaveVC.configureForEdit(quoteId: quote.id, quote: quote.quote, pageNumber: quote.pageNumber)
+
+        let quoteRepository = dependencies.serviceFactory.createQuoteRepository()
+        quoteSaveVC.setQuoteRepository(quoteRepository)
+
+        quoteSaveVC.delegate = self
+
+        let navController = UINavigationController(rootViewController: quoteSaveVC)
+        navController.modalPresentationStyle = .pageSheet
+
+        if let sheet = navController.sheetPresentationController {
+            sheet.detents = [.medium(), .large()]
+            sheet.prefersGrabberVisible = true
+        }
+
+        navigationController.present(navController, animated: true)
+    }
+}
+
+// MARK: - QuoteSaveViewControllerDelegate
+extension QuoteListCoordinator: QuoteSaveViewControllerDelegate {
+    func quoteSaveViewController(_ controller: QuoteSaveViewController, didSaveQuote quote: String) {
+        controller.dismiss(animated: true) { [weak self] in
+            print("✅ Quote updated: \(quote)")
+            self?.resultRelay.accept(.quotesUpdated)
+
+            // QuoteListViewController 새로고침
+            if let quoteListVC = self?.navigationController.topViewController as? QuoteListViewController {
+                quoteListVC.reactor?.action.onNext(.loadQuotes)
+            }
+        }
+    }
+
+    func quoteSaveViewControllerDidCancel(_ controller: QuoteSaveViewController) {
+        controller.dismiss(animated: true)
     }
 }

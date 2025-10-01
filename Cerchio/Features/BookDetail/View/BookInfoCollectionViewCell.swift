@@ -97,11 +97,6 @@ final class BookInfoCollectionViewCell: UICollectionViewCell, IsIdentifiable {
     // MARK: - Setup
     private func setupUI() {
         backgroundColor = .systemBackground
-        layer.cornerRadius = BookDetailConstants.Layout.cellCornerRadius
-        layer.shadowColor = UIColor.black.cgColor
-        layer.shadowOffset = BookDetailConstants.Shadow.offset
-        layer.shadowRadius = BookDetailConstants.Shadow.radius
-        layer.shadowOpacity = BookDetailConstants.Shadow.opacity
 
         contentView.addSubview(coverImageView)
         contentView.addSubview(infoStackView)
@@ -238,7 +233,7 @@ final class BookInfoCollectionViewCell: UICollectionViewCell, IsIdentifiable {
     }
 
     private func createTagLabel(text: String) -> UILabel {
-        let label = UILabel()
+        let label = PaddingLabel()
         label.text = "#\(text)"
         label.font = .custom(weight: .medium, size: BookDetailConstants.Typography.tagFontSize)
         label.textColor = .forestGreen
@@ -246,8 +241,9 @@ final class BookInfoCollectionViewCell: UICollectionViewCell, IsIdentifiable {
         label.layer.cornerRadius = BookDetailConstants.Layout.tagCornerRadius
         label.clipsToBounds = true
         label.textAlignment = .center
+        label.padding = UIEdgeInsets(top: 4, left: 8, bottom: 4, right: 8)
 
-        // 패딩 추가
+        // 높이 제약
         label.snp.makeConstraints {
             $0.height.equalTo(BookDetailConstants.Layout.tagHeight)
         }
@@ -256,7 +252,7 @@ final class BookInfoCollectionViewCell: UICollectionViewCell, IsIdentifiable {
     }
 
     private func createPlaceholderLabel() -> UILabel {
-        let label = UILabel()
+        let label = PaddingLabel()
         label.text = "#태그 추가"
         label.font = .custom(weight: .medium, size: BookDetailConstants.Typography.tagFontSize)
         label.textColor = .systemGray
@@ -264,12 +260,29 @@ final class BookInfoCollectionViewCell: UICollectionViewCell, IsIdentifiable {
         label.layer.cornerRadius = BookDetailConstants.Layout.tagCornerRadius
         label.clipsToBounds = true
         label.textAlignment = .center
+        label.padding = UIEdgeInsets(top: 4, left: 8, bottom: 4, right: 8)
 
-        // 패딩 추가
+        // 높이 제약
         label.snp.makeConstraints {
             $0.height.equalTo(BookDetailConstants.Layout.tagHeight)
         }
 
         return label
+    }
+}
+
+// MARK: - PaddingLabel
+private class PaddingLabel: UILabel {
+    var padding = UIEdgeInsets.zero
+
+    override func drawText(in rect: CGRect) {
+        super.drawText(in: rect.inset(by: padding))
+    }
+
+    override var intrinsicContentSize: CGSize {
+        var contentSize = super.intrinsicContentSize
+        contentSize.width += padding.left + padding.right
+        contentSize.height += padding.top + padding.bottom
+        return contentSize
     }
 }
