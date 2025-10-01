@@ -10,22 +10,31 @@ import SnapKit
 
 final class PhotoPageCell: UICollectionViewCell, IsIdentifiable {
     // MARK: - UI Components
-    private let containerView = UIView()
-    private let imageStackView = UIStackView()
-    private let image1 = UIImageView()
-    private let image2 = UIImageView()
-    private let cameraButton = UIView()
+    private lazy var containerView: UIView = {
+        let view = UIView()
+        view.backgroundColor = .clear
+        return view
+    }()
+
+    private lazy var gridStackView: UIStackView = {
+        let stack = UIStackView()
+        stack.axis = .horizontal
+        stack.spacing = 8
+        stack.distribution = .fillEqually
+        return stack
+    }()
 
     // MARK: - Properties
     var onAddPhotoTapped: (() -> Void)?
+    var onPhotoTapped: ((UIImage) -> Void)?
     var onPhotoLongPressed: ((UIImageView, UIImage) -> Void)?
-    private var photos: [UIImage] = []
+    private var photoImageViews: [UIImageView] = []
+    private var addPhotoButton: UIView?
 
     // MARK: - Initialization
     override init(frame: CGRect) {
         super.init(frame: frame)
         setupViews()
-        setupConstraints()
     }
 
     required init?(coder: NSCoder) {
@@ -35,74 +44,16 @@ final class PhotoPageCell: UICollectionViewCell, IsIdentifiable {
     // MARK: - Setup
     private func setupViews() {
         contentView.backgroundColor = .clear
-        containerView.backgroundColor = .clear
         contentView.addSubview(containerView)
+        containerView.addSubview(gridStackView)
 
-        // 이미지 스택뷰 설정
-        imageStackView.axis = .horizontal
-        imageStackView.distribution = .fillEqually
-        imageStackView.spacing = 8
-        containerView.addSubview(imageStackView)
-
-        // 이미지뷰 설정
-        setupImageView(image1)
-        setupImageView(image2)
-
-        imageStackView.addArrangedSubview(image1)
-        imageStackView.addArrangedSubview(image2)
-
-        // 카메라 버튼 (3번째 위치)
-        setupCameraButton()
-        imageStackView.addArrangedSubview(cameraButton)
-    }
-
-    private func setupCameraButton() {
-        cameraButton.backgroundColor = .systemGray6
-        cameraButton.layer.cornerRadius = 8
-        cameraButton.layer.borderWidth = 1
-        cameraButton.layer.borderColor = UIColor.systemGray4.cgColor
-
-        let iconImageView = UIImageView(image: UIImage(systemName: "camera.fill"))
-        iconImageView.tintColor = .systemBlue
-        iconImageView.contentMode = .scaleAspectFit
-        cameraButton.addSubview(iconImageView)
-
-        iconImageView.snp.makeConstraints {
-            $0.center.equalToSuperview()
-            $0.width.height.equalTo(32)
-        }
-
-        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(addButtonTapped))
-        cameraButton.addGestureRecognizer(tapGesture)
-        cameraButton.isUserInteractionEnabled = true
-    }
-
-    private func setupImageView(_ imageView: UIImageView) {
-        imageView.contentMode = .scaleAspectFill
-        imageView.clipsToBounds = true
-        imageView.layer.cornerRadius = 8
-        imageView.backgroundColor = .systemGray6
-        imageView.layer.borderWidth = 1
-        imageView.layer.borderColor = UIColor.systemGray4.cgColor
-        imageView.isUserInteractionEnabled = true
-
-        // 롱 프레스 제스처 추가
-        let longPress = UILongPressGestureRecognizer(target: self, action: #selector(handleLongPress(_:)))
-        imageView.addGestureRecognizer(longPress)
-    }
-
-    private func setupConstraints() {
         containerView.snp.makeConstraints {
-            $0.edges.equalToSuperview()
+            $0.edges.equalToSuperview().inset(UIEdgeInsets(top: 0, left: 20, bottom: 0, right: 20))
         }
 
-        imageStackView.snp.makeConstraints {
+        gridStackView.snp.makeConstraints {
             $0.edges.equalToSuperview()
-        }
-
-        // 전체 컨테이너의 높이를 너비의 1/3로 설정 (가로 1/3 크기가 정사각형이 되도록)
-        containerView.snp.makeConstraints {
-            $0.height.equalTo(containerView.snp.width).dividedBy(3)
+            $0.height.equalTo(gridStackView.snp.width).dividedBy(3)
         }
     }
 
@@ -111,57 +62,122 @@ final class PhotoPageCell: UICollectionViewCell, IsIdentifiable {
         onAddPhotoTapped?()
     }
 
+    @objc private func photoTapped(_ gesture: UITapGestureRecognizer) {
+        guard let imageView = gesture.view as? UIImageView,
+              let image = imageView.image else { return }
+        onPhotoTapped?(image)
+    }
+
     @objc private func handleLongPress(_ gesture: UILongPressGestureRecognizer) {
         guard gesture.state == .began,
               let imageView = gesture.view as? UIImageView,
-              let image = imageView.image,
-              !isPlaceholderImage(image) else { return }
+              let image = imageView.image else { return }
 
         onPhotoLongPressed?(imageView, image)
     }
 
-    private func isPlaceholderImage(_ image: UIImage) -> Bool {
-        // 플레이스홀더 이미지인지 확인
-        let placeholderImage = UIImage(systemName: "photo")?.withTintColor(.systemGray3, renderingMode: .alwaysOriginal)
-        return image.pngData() == placeholderImage?.pngData()
-    }
-
     // MARK: - Configuration
-    func configure(with images: [UIImage?]) {
-        self.photos = images.compactMap { $0 }
+    func configure(with images: [UIImage]) {
+        // 기존 뷰 제거
+        gridStackView.arrangedSubviews.forEach {
+            gridStackView.removeArrangedSubview($0)
+            $0.removeFromSuperview()
+        }
+        photoImageViews.removeAll()
+        addPhotoButton = nil
 
-        // 이미지가 없으면 카메라 버튼만 표시
+        // 사진이 없으면 추가 버튼만 표시 (1x1 그리드)
         if images.isEmpty {
-            image1.isHidden = true
-            image2.isHidden = true
-            cameraButton.isHidden = false
+            let button = createAddPhotoButton()
+            gridStackView.addArrangedSubview(button)
+            addPhotoButton = button
         } else {
-            // 이미지가 있으면 최대 2개까지 표시
-            let imageViews = [image1, image2]
+            // 최대 3개 사진을 3열로 표시
+            let photoCount = min(images.count, 3)
 
-            for (index, imageView) in imageViews.enumerated() {
-                if index < images.count, let image = images[index] {
-                    imageView.image = image
-                    imageView.isHidden = false
+            for i in 0..<3 {
+                if i < photoCount {
+                    // 사진 표시
+                    let imageView = createPhotoImageView(with: images[i])
+                    gridStackView.addArrangedSubview(imageView)
+                    photoImageViews.append(imageView)
                 } else {
-                    imageView.isHidden = true
+                    // 빈 공간에 추가 버튼 (첫 번째 빈 공간에만)
+                    if addPhotoButton == nil {
+                        let button = createAddPhotoButton()
+                        gridStackView.addArrangedSubview(button)
+                        addPhotoButton = button
+                    } else {
+                        // 나머지 빈 공간
+                        let placeholder = createPlaceholderView()
+                        gridStackView.addArrangedSubview(placeholder)
+                    }
                 }
             }
-
-            // 3번째는 카메라 버튼
-            cameraButton.isHidden = false
         }
+    }
+
+    private func createPhotoImageView(with image: UIImage) -> UIImageView {
+        let imageView = UIImageView(image: image)
+        imageView.contentMode = .scaleAspectFill
+        imageView.clipsToBounds = true
+        imageView.layer.cornerRadius = 8
+        imageView.backgroundColor = .systemGray6
+        imageView.layer.borderWidth = 0.5
+        imageView.layer.borderColor = UIColor.systemGray5.cgColor
+        imageView.isUserInteractionEnabled = true
+
+        // 탭 제스처
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(photoTapped(_:)))
+        imageView.addGestureRecognizer(tapGesture)
+
+        // 롱 프레스 제스처
+        let longPress = UILongPressGestureRecognizer(target: self, action: #selector(handleLongPress(_:)))
+        imageView.addGestureRecognizer(longPress)
+
+        return imageView
+    }
+
+    private func createAddPhotoButton() -> UIView {
+        let view = UIView()
+        view.backgroundColor = .systemGray6
+        view.layer.cornerRadius = 8
+        view.layer.borderWidth = 1.5
+        view.layer.borderColor = UIColor.systemGray4.withAlphaComponent(0.5).cgColor
+
+        let iconImageView = UIImageView(image: UIImage(systemName: "camera.fill"))
+        iconImageView.tintColor = .systemBlue
+        iconImageView.contentMode = .scaleAspectFit
+        view.addSubview(iconImageView)
+
+        iconImageView.snp.makeConstraints {
+            $0.center.equalToSuperview()
+            $0.width.height.equalTo(24)
+        }
+
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(addButtonTapped))
+        view.addGestureRecognizer(tapGesture)
+        view.isUserInteractionEnabled = true
+
+        return view
+    }
+
+    private func createPlaceholderView() -> UIView {
+        let view = UIView()
+        view.backgroundColor = .clear
+        return view
     }
 
     override func prepareForReuse() {
         super.prepareForReuse()
-        image1.image = nil
-        image2.image = nil
-        image1.isHidden = false
-        image2.isHidden = false
-        cameraButton.isHidden = false
+        gridStackView.arrangedSubviews.forEach {
+            gridStackView.removeArrangedSubview($0)
+            $0.removeFromSuperview()
+        }
+        photoImageViews.removeAll()
+        addPhotoButton = nil
         onAddPhotoTapped = nil
+        onPhotoTapped = nil
         onPhotoLongPressed = nil
-        photos.removeAll()
     }
 }

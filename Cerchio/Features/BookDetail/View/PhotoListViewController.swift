@@ -16,12 +16,8 @@ final class PhotoListViewController: BaseViewController<PhotoListReactor> {
     private typealias Snapshot = NSDiffableDataSourceSnapshot<Section, Photo>
 
     // MARK: - UI Components
-    private let collectionView: UICollectionView = {
-        let layout = UICollectionViewFlowLayout()
-        layout.scrollDirection = .vertical
-        layout.minimumInteritemSpacing = 4
-        layout.minimumLineSpacing = 4
-        layout.sectionInset = UIEdgeInsets(top: 8, left: 8, bottom: 8, right: 8)
+    private lazy var collectionView: UICollectionView = {
+        let layout = createLayout()
         return UICollectionView(frame: .zero, collectionViewLayout: layout)
     }()
 
@@ -51,6 +47,28 @@ final class PhotoListViewController: BaseViewController<PhotoListReactor> {
         setupCollectionView()
         setupLayout()
         configureDataSource()
+        setupRxBindings()
+    }
+
+    private func createLayout() -> UICollectionViewLayout {
+        let itemSize = NSCollectionLayoutSize(
+            widthDimension: .fractionalWidth(1/3),
+            heightDimension: .fractionalHeight(1.0)
+        )
+        let item = NSCollectionLayoutItem(layoutSize: itemSize)
+
+        let groupSize = NSCollectionLayoutSize(
+            widthDimension: .fractionalWidth(1.0),
+            heightDimension: .fractionalWidth(1/3) // 정사각형 (1:1 비율)
+        )
+        let group = NSCollectionLayoutGroup.horizontal(layoutSize: groupSize, subitems: [item])
+        group.interItemSpacing = .fixed(2)
+
+        let section = NSCollectionLayoutSection(group: group)
+        section.interGroupSpacing = 2
+        section.contentInsets = NSDirectionalEdgeInsets(top: 2, leading: 0, bottom: 2, trailing: 0)
+
+        return UICollectionViewCompositionalLayout(section: section)
     }
 
     private func setupNavigationBar() {
@@ -124,7 +142,9 @@ final class PhotoListViewController: BaseViewController<PhotoListReactor> {
         collectionView.register(PhotoGridCell.self, forCellWithReuseIdentifier: PhotoGridCell.identifier)
 
         view.addSubview(collectionView)
+    }
 
+    private func setupRxBindings() {
         // Collection View Selection - 일반 모드
         collectionView.rx.itemSelected(dataSource)
             .filter { [weak self] _ in self?.isEditMode == false }
@@ -334,22 +354,6 @@ extension PhotoListViewController {
 
     @objc private func dismissImagePreview() {
         dismiss(animated: true)
-    }
-}
-
-// MARK: - UICollectionViewDelegateFlowLayout
-extension PhotoListViewController: UICollectionViewDelegateFlowLayout {
-    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
-        let layout = collectionViewLayout as! UICollectionViewFlowLayout
-        let spacing = layout.minimumInteritemSpacing
-        let insets = layout.sectionInset
-
-        // 3열 그리드: 전체 너비에서 좌우 인셋과 아이템 간 간격(2개)를 빼고 3으로 나눔
-        let totalWidth = collectionView.bounds.width
-        let availableWidth = totalWidth - insets.left - insets.right - (spacing * 2)
-        let itemWidth = floor(availableWidth / 3)
-
-        return CGSize(width: itemWidth, height: itemWidth)
     }
 }
 

@@ -40,7 +40,7 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
         case bookInfo(BookDetail)
         case savedQuote(String, Int?, Date) // 문장 텍스트, 페이지, 저장 날짜
         case addQuoteButton // 문장 추가 버튼
-        case photoPage(UIImage?) // 임시 이미지 데이터
+        case photoPage([UIImage]) // 최대 3개의 이미지
     }
     
     // MARK: - Lifecycle
@@ -314,10 +314,12 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
 
             case .photoPage(let images):
                 let cell: PhotoPageCell = collectionView.dequeueReusableCell(PhotoPageCell.self, for: indexPath)
-                let imageArray: [UIImage?] = images != nil ? [images] : []
-                cell.configure(with: imageArray)
+                cell.configure(with: images)
                 cell.onAddPhotoTapped = { [weak self] in
                     self?.showPhotoCapture()
+                }
+                cell.onPhotoTapped = { [weak self] image in
+                    self?.showImagePreview(image)
                 }
                 cell.onPhotoLongPressed = { [weak self] imageView, image in
                     self?.showPhotoContextMenu(for: imageView, with: image)
@@ -374,7 +376,7 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
         snapshot.appendItems([.savedQuote("", nil, Date())], toSection: .savedQuotes)
 
         // 찍은 사진 (기본 빈 데이터, 실제 데이터는 별도 로드)
-        snapshot.appendItems([.photoPage(nil)], toSection: .photoPages)
+        snapshot.appendItems([.photoPage([])], toSection: .photoPages)
 
         dataSource.apply(snapshot, animatingDifferences: true)
     }
@@ -555,13 +557,14 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
         }
         snapshot.appendItems(quoteItems, toSection: .savedQuotes)
 
-        // 찍은 사진 - 최대 2개까지 표시
+        // 찍은 사진 - 최신순 내림차순, 최대 3개까지 표시
         if let photos = photos {
-            let maxPhotos = min(photos.count, 2)
-            let images = photos.prefix(maxPhotos).compactMap { ImageStorageManager.shared.loadImage(fromPath: $0.localImagePath) }
+            // 최신순 정렬 (createdAt 내림차순)
+            let sortedPhotos = photos.sorted { $0.createdAt > $1.createdAt }
+            let maxPhotos = min(sortedPhotos.count, 3)
+            let images = sortedPhotos.prefix(maxPhotos).compactMap { ImageStorageManager.shared.loadImage(fromPath: $0.localImagePath) }
 
-            // 이미지가 없으면 빈 배열 전달 (카메라 버튼만 표시됨)
-            let photoItem: Item = .photoPage(images.isEmpty ? nil : images.first)
+            let photoItem: Item = .photoPage(images)
             snapshot.appendItems([photoItem], toSection: .photoPages)
         } else {
             // 사진 데이터가 제공되지 않은 경우 별도로 로드
@@ -579,12 +582,15 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
         do {
             let realm = try Realm()
             let photos = realm.objects(RealmPhoto.self).filter("bookId == %@", bookId)
-            let photoArray = Array(photos)
+
+            // 최신순 정렬 (createdAt 내림차순)
+            let sortedPhotos = photos.sorted(byKeyPath: "createdAt", ascending: false)
+            let photoArray = Array(sortedPhotos)
 
             var updatedSnapshot = snapshot
-            let maxPhotos = min(photoArray.count, 2)
+            let maxPhotos = min(photoArray.count, 3)
             let images = photoArray.prefix(maxPhotos).compactMap { ImageStorageManager.shared.loadImage(fromPath: $0.localImagePath) }
-            let photoItem: Item = images.isEmpty ? .photoPage(nil) : .photoPage(images.first)
+            let photoItem: Item = .photoPage(images)
 
             // 기존 photoPages 섹션 업데이트
             updatedSnapshot.deleteItems(updatedSnapshot.itemIdentifiers(inSection: .photoPages))
