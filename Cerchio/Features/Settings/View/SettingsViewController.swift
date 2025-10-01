@@ -96,6 +96,7 @@ final class SettingsViewController: BaseViewController<SettingsReactor> {
         reactor.state
             .map { $0.currentLanguage }
             .distinctUntilChanged()
+            .skip(1) // 초기 바인딩 시 얼럿 표시 방지
             .observe(on: MainScheduler.instance)
             .subscribe(onNext: { [weak self] _ in
                 self?.tableView.reloadData()

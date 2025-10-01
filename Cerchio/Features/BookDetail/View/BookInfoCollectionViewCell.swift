@@ -12,6 +12,7 @@ import Kingfisher
 final class BookInfoCollectionViewCell: UICollectionViewCell, IsIdentifiable {
     // MARK: - Callback
     var onTagsTapped: (() -> Void)?
+    var onReadingInfoTapped: (() -> Void)?
 
     // MARK: - UI Components
     private let coverImageView: UIImageView = {
@@ -43,6 +44,7 @@ final class BookInfoCollectionViewCell: UICollectionViewCell, IsIdentifiable {
         let label = UILabel()
         label.font = .custom(weight: .regular, size: BookDetailConstants.Typography.pagesFontSize)
         label.textColor = .secondaryLabel
+        label.isUserInteractionEnabled = true
         return label
     }()
 
@@ -50,7 +52,14 @@ final class BookInfoCollectionViewCell: UICollectionViewCell, IsIdentifiable {
         let label = UILabel()
         label.font = .custom(weight: .regular, size: BookDetailConstants.Typography.dateRangeFontSize)
         label.textColor = .secondaryLabel
+        label.isUserInteractionEnabled = true
         return label
+    }()
+
+    private let readingInfoContainer: UIView = {
+        let view = UIView()
+        view.isUserInteractionEnabled = true
+        return view
     }()
 
     private let tagsStackView: UIStackView = {
@@ -100,22 +109,33 @@ final class BookInfoCollectionViewCell: UICollectionViewCell, IsIdentifiable {
         // 태그 컨테이너 설정
         tagsContainerView.addSubview(tagsStackView)
 
+        // 독서 정보 컨테이너 설정
+        readingInfoContainer.addSubview(pagesLabel)
+        readingInfoContainer.addSubview(dateRangeLabel)
+
         // 정보 스택 뷰 구성
         infoStackView.addArrangedSubview(titleLabel)
         infoStackView.addArrangedSubview(authorLabel)
-        infoStackView.addArrangedSubview(pagesLabel)
-        infoStackView.addArrangedSubview(dateRangeLabel)
+        infoStackView.addArrangedSubview(readingInfoContainer)
         infoStackView.addArrangedSubview(tagsContainerView)
 
         // 태그 컨테이너 탭 제스처 추가
-        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(handleTagsTapped))
-        tagsContainerView.addGestureRecognizer(tapGesture)
+        let tagsTapGesture = UITapGestureRecognizer(target: self, action: #selector(handleTagsTapped))
+        tagsContainerView.addGestureRecognizer(tagsTapGesture)
+
+        // 독서 정보 탭 제스처 추가
+        let readingInfoTapGesture = UITapGestureRecognizer(target: self, action: #selector(handleReadingInfoTapped))
+        readingInfoContainer.addGestureRecognizer(readingInfoTapGesture)
 
         setupConstraints()
     }
 
     @objc private func handleTagsTapped() {
         onTagsTapped?()
+    }
+
+    @objc private func handleReadingInfoTapped() {
+        onReadingInfoTapped?()
     }
 
     private func setupConstraints() {
@@ -132,6 +152,20 @@ final class BookInfoCollectionViewCell: UICollectionViewCell, IsIdentifiable {
             $0.trailing.equalToSuperview().inset(BookDetailConstants.Layout.cellInset)
             $0.top.equalToSuperview().inset(BookDetailConstants.Layout.cellInset)
             $0.bottom.lessThanOrEqualToSuperview().inset(BookDetailConstants.Layout.cellInset)
+        }
+
+        // 독서 정보 컨테이너
+        readingInfoContainer.snp.makeConstraints {
+            $0.height.greaterThanOrEqualTo(44)
+        }
+
+        pagesLabel.snp.makeConstraints {
+            $0.top.leading.trailing.equalToSuperview()
+        }
+
+        dateRangeLabel.snp.makeConstraints {
+            $0.top.equalTo(pagesLabel.snp.bottom).offset(4)
+            $0.leading.trailing.bottom.equalToSuperview()
         }
 
         // 태그 컨테이너

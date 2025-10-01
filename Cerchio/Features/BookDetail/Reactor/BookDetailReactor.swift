@@ -13,6 +13,7 @@ final class BookDetailReactor: Reactor {
     enum Action {
         case loadBookDetail
         case updateReadingProgress(currentPage: Int)
+        case updateReadingInfo(totalPages: Int, startDate: Date?)
         case toggleFavorite
         case addQuote(String)
         case deleteBook
@@ -64,6 +65,65 @@ final class BookDetailReactor: Reactor {
 //            )
 //            return Observable.just(.setReadingProgress(progress))
             return .empty()
+
+        case .updateReadingInfo(let totalPages, let startDate):
+            // BookDetail 업데이트
+            guard var bookDetail = currentState.bookDetail else {
+                return Observable.empty()
+            }
+
+            let updatedBookDetail = BookDetail(
+                book: bookDetail.book,
+                totalPages: totalPages,
+                startDate: startDate,
+                endDate: bookDetail.endDate,
+                tags: bookDetail.tags
+            )
+
+            // Realm에 저장
+            return bookRepository.getBookByISBN(currentState.book.isbn)
+                .flatMap { [weak self] existingBook -> Observable<Mutation> in
+                    guard let self = self, var existingBook = existingBook else {
+                        return Observable.empty()
+                    }
+
+                    // Book 업데이트
+                    let updatedBook = Book(
+                        id: existingBook.id,
+                        title: existingBook.title,
+                        cleanTitle: existingBook.cleanTitle,
+                        link: existingBook.link,
+                        image: existingBook.image,
+                        author: existingBook.author,
+                        isbn: existingBook.isbn,
+                        publisher: existingBook.publisher,
+                        bookDescription: existingBook.bookDescription,
+                        cleanDescription: existingBook.cleanDescription,
+                        pubdate: existingBook.pubdate,
+                        discount: existingBook.discount,
+                        formattedPubDate: existingBook.formattedPubDate,
+                        formattedPrice: existingBook.formattedPrice,
+                        priceAsInt: existingBook.priceAsInt,
+                        createAt: existingBook.createAt,
+                        genre: existingBook.genre,
+                        totalPages: totalPages,
+                        startDate: startDate,
+                        isFavorite: existingBook.isFavorite,
+                        dateAdded: existingBook.dateAdded,
+                        dateRead: existingBook.dateRead,
+                        readingStatus: existingBook.readingStatus,
+                        category: existingBook.category,
+                        rating: existingBook.rating
+                    )
+
+                    return self.bookRepository.saveBookStruct(updatedBook)
+                        .map { _ in .setBookDetail(updatedBookDetail) }
+                        .catch { error in
+                            print("Failed to update reading info: \(error.localizedDescription)")
+                            return Observable.empty()
+                        }
+                }
+
         case .toggleFavorite:
             return bookRepository.toggleFavorite(bookId: currentState.book.id)
                 .map { .setFavorite($0) }

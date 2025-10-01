@@ -274,6 +274,9 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
                 cell.onTagsTapped = { [weak self] in
                     self?.showTagInputAlert()
                 }
+                cell.onReadingInfoTapped = { [weak self] in
+                    self?.showReadingInfoEdit(bookDetail: bookDetail)
+                }
                 return cell
 
             case .savedQuote(let quote, let pageNumber, let date):
@@ -841,6 +844,21 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
                 print("❌ Failed to load tags: \(error.localizedDescription)")
             })
             .disposed(by: disposeBag)
+    }
+
+    // MARK: - Reading Info Edit
+    private func showReadingInfoEdit(bookDetail: BookDetail) {
+        let readingInfoEditVC = ReadingInfoEditViewController()
+        readingInfoEditVC.configure(
+            totalPages: bookDetail.totalPages,
+            startDate: bookDetail.startDate
+        )
+        readingInfoEditVC.onSaved = { [weak self] totalPages, startDate in
+            self?.reactor?.action.onNext(.updateReadingInfo(totalPages: totalPages, startDate: startDate))
+        }
+
+        let navController = UINavigationController(rootViewController: readingInfoEditVC)
+        present(navController, animated: true)
     }
 
     private func updateBookDetailWithTags(_ tags: [RealmTag]) {
