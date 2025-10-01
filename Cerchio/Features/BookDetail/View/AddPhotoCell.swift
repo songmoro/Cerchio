@@ -29,7 +29,7 @@ final class AddPhotoCell: UICollectionViewCell, IsIdentifiable {
     private lazy var label: UILabel = {
         let label = UILabel()
         label.text = "추가"
-        label.font = .systemFont(ofSize: 12, weight: .medium)
+        label.font = .custom(weight: .medium, size: 12)
         label.textColor = .systemBlue
         label.textAlignment = .center
         return label

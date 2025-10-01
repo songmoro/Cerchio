@@ -23,14 +23,14 @@ final class TagEditViewController: UIViewController {
         field.placeholder = "예: #판타지 #과학"
         field.borderStyle = .roundedRect
         field.autocapitalizationType = .none
-        field.font = .systemFont(ofSize: 16)
+        field.font = .custom(weight: .regular, size: 16)
         return field
     }()
 
     private let instructionLabel: UILabel = {
         let label = UILabel()
         label.text = "#을 기준으로 태그를 입력하세요"
-        label.font = .systemFont(ofSize: 14)
+        label.font = .custom(weight: .regular, size: 14)
         label.textColor = .secondaryLabel
         label.numberOfLines = 0
         return label
@@ -39,7 +39,7 @@ final class TagEditViewController: UIViewController {
     private let suggestionsLabel: UILabel = {
         let label = UILabel()
         label.text = "기존 태그 목록"
-        label.font = .systemFont(ofSize: 16, weight: .semibold)
+        label.font = UIFont.custom(weight: .semiBold, size: 16)
         label.textColor = .label
         return label
     }()
@@ -55,7 +55,7 @@ final class TagEditViewController: UIViewController {
         let label = UILabel()
         label.text = "사용 가능한 태그가 없습니다"
         label.textColor = .secondaryLabel
-        label.font = .systemFont(ofSize: 14)
+        label.font = .custom(weight: .regular, size: 14)
         label.textAlignment = .center
         label.isHidden = true
         return label
@@ -221,7 +221,7 @@ final class TagSuggestionCell: UITableViewCell {
 
     private let tagLabel: UILabel = {
         let label = UILabel()
-        label.font = .systemFont(ofSize: 16)
+        label.font = .custom(weight: .regular, size: 16)
         label.textColor = .label
         return label
     }()

@@ -50,7 +50,7 @@ final class SavedQuotesSectionHeader: UICollectionReusableView, IsIdentifiable {
 
         // 타이틀 레이블
         titleLabel.text = String(localized: .bookDetailSavedQuotes)
-        titleLabel.font = .systemFont(ofSize: 20, weight: .bold)
+        titleLabel.font = .custom(weight: .bold, size: 20)
         titleLabel.textColor = .label
         addSubview(titleLabel)
 

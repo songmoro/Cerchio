@@ -50,7 +50,7 @@ final class PhotosSectionHeader: UICollectionReusableView, IsIdentifiable {
 
         // 타이틀 레이블
         titleLabel.text = String(localized: .bookDetailPhotos)
-        titleLabel.font = .systemFont(ofSize: 20, weight: .bold)
+        titleLabel.font = .custom(weight: .bold, size: 20)
         titleLabel.textColor = .label
         addSubview(titleLabel)
 

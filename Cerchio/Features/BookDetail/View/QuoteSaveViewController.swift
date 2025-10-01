@@ -33,7 +33,7 @@ final class QuoteSaveViewController: UIViewController {
     // MARK: - UI Components
     private let textView: UITextView = {
         let textView = UITextView()
-        textView.font = .systemFont(ofSize: 16, weight: .regular)
+        textView.font = .custom(weight: .regular, size: 16)
         textView.textColor = .label
         textView.backgroundColor = .systemBackground
         textView.layer.cornerRadius = 12
@@ -49,7 +49,7 @@ final class QuoteSaveViewController: UIViewController {
         let label = UILabel()
         label.text = String(localized: .quoteSavePlaceholder)
         label.textColor = .placeholderText
-        label.font = .systemFont(ofSize: 16, weight: .regular)
+        label.font = .custom(weight: .regular, size: 16)
         label.numberOfLines = 0
         return label
     }()
@@ -66,7 +66,7 @@ final class QuoteSaveViewController: UIViewController {
     private let pageLabel: UILabel = {
         let label = UILabel()
         label.text = String(localized: .quoteSavePageLabel)
-        label.font = .systemFont(ofSize: 14, weight: .medium)
+        label.font = .custom(weight: .medium, size: 14)
         label.textColor = .label
         return label
     }()
@@ -194,7 +194,7 @@ final class QuoteSaveViewController: UIViewController {
         appearance.configureWithDefaultBackground()
         appearance.backgroundColor = .systemBackground
         appearance.titleTextAttributes = [
-            .font: UIFont.systemFont(ofSize: 17, weight: .semibold),
+            .font: UIFont.custom(weight: .semiBold, size: 17),
             .foregroundColor: UIColor.label
         ]
 

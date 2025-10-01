@@ -26,14 +26,14 @@ final class ReadingInfoEditViewController: UIViewController {
         field.placeholder = "페이지 수 입력"
         field.borderStyle = .roundedRect
         field.keyboardType = .numberPad
-        field.font = .systemFont(ofSize: 16)
+        field.font = .custom(weight: .regular, size: 16)
         return field
     }()
 
     private let pagesLabel: UILabel = {
         let label = UILabel()
         label.text = "총 페이지"
-        label.font = .systemFont(ofSize: 16, weight: .semibold)
+        label.font = UIFont.custom(weight: .semiBold, size: 16)
         label.textColor = .label
         return label
     }()
@@ -41,7 +41,7 @@ final class ReadingInfoEditViewController: UIViewController {
     private let startDateLabel: UILabel = {
         let label = UILabel()
         label.text = "읽기 시작한 날짜"
-        label.font = .systemFont(ofSize: 16, weight: .semibold)
+        label.font = UIFont.custom(weight: .semiBold, size: 16)
         label.textColor = .label
         return label
     }()
@@ -76,7 +76,7 @@ final class ReadingInfoEditViewController: UIViewController {
     private let endDateLabel: UILabel = {
         let label = UILabel()
         label.text = "읽기 완료한 날짜"
-        label.font = .systemFont(ofSize: 16, weight: .semibold)
+        label.font = UIFont.custom(weight: .semiBold, size: 16)
         label.textColor = .label
         return label
     }()
