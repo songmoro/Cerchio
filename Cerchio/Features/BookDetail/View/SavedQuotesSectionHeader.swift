@@ -32,13 +32,13 @@ final class SavedQuotesSectionHeader: UICollectionReusableView, IsIdentifiable {
         backgroundColor = .clear
 
         // 타이틀 레이블
-        titleLabel.text = NSLocalizedString("book_detail.saved_quotes", comment: "Saved quotes section title")
+        titleLabel.text = String(localized: .bookDetailSavedQuotes)
         titleLabel.font = .systemFont(ofSize: 20, weight: .bold)
         titleLabel.textColor = .label
         addSubview(titleLabel)
 
         // 전체 보기 버튼
-        editButton.setTitle(NSLocalizedString("action.view_all", comment: "View all action"), for: .normal)
+        editButton.setTitle(String(localized: .actionViewAll), for: .normal)
         editButton.setTitleColor(.systemBlue, for: .normal)
         editButton.titleLabel?.font = .systemFont(ofSize: 16, weight: .medium)
         editButton.addTarget(self, action: #selector(viewAllButtonTapped), for: .touchUpInside)

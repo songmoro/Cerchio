@@ -32,13 +32,13 @@ final class PhotosSectionHeader: UICollectionReusableView, IsIdentifiable {
         backgroundColor = .clear
 
         // 타이틀 레이블
-        titleLabel.text = NSLocalizedString("book_detail.photos", comment: "Photos section title")
+        titleLabel.text = String(localized: .bookDetailPhotos)
         titleLabel.font = .systemFont(ofSize: 20, weight: .bold)
         titleLabel.textColor = .label
         addSubview(titleLabel)
 
         // 전체 보기 버튼
-        viewAllButton.setTitle(NSLocalizedString("action.view_all", comment: "View all action"), for: .normal)
+        viewAllButton.setTitle(String(localized: .actionViewAll), for: .normal)
         viewAllButton.setTitleColor(.systemBlue, for: .normal)
         viewAllButton.titleLabel?.font = .systemFont(ofSize: 16, weight: .medium)
         viewAllButton.addTarget(self, action: #selector(viewAllButtonTapped), for: .touchUpInside)

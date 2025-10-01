@@ -38,7 +38,7 @@ final class SearchResultTableViewCell: UITableViewCell, IsIdentifiable {
 
     private let addButton: UIButton = {
         let button = UIButton(type: .system)
-        button.setTitle(NSLocalizedString("action.add", comment: "Add button"), for: .normal)
+        button.setTitle(String(localized: .actionAdd), for: .normal)
         button.titleLabel?.font = .custom(weight: .medium, size: SearchResultConstants.Typography.buttonFontSize)
         button.backgroundColor = .forestGreen
         button.setTitleColor(.white, for: .normal)

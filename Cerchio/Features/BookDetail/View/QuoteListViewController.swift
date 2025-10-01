@@ -38,7 +38,7 @@ final class QuoteListViewController: BaseViewController<QuoteListReactor> {
     }
 
     private func setupNavigationBar() {
-        title = NSLocalizedString("book_detail.saved_quotes", comment: "Saved quotes section title")
+        title = String(localized: .bookDetailSavedQuotes)
 
         // 추가 버튼
         let addButton = UIBarButtonItem(

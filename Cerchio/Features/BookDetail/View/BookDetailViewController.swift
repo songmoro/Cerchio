@@ -595,31 +595,31 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
     
     private func showPhotoContextMenu(for imageView: UIImageView, with image: UIImage) {
         let alert = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
-        
+
         // 사진 보기
-        alert.addAction(UIAlertAction(title: NSLocalizedString("photo.view", comment: "View photo action"), style: .default) { _ in
+        alert.addAction(UIAlertAction(title: String(localized: .photoView), style: .default) { _ in
             self.showImagePreview(image)
         })
-        
+
         // 사진 저장 (사진 앱으로)
-        alert.addAction(UIAlertAction(title: NSLocalizedString("photo.save_to_gallery", comment: "Save to gallery action"), style: .default) { _ in
+        alert.addAction(UIAlertAction(title: String(localized: .photoSaveToGallery), style: .default) { _ in
             self.saveImageToPhotoLibrary(image)
         })
-        
+
         // 사진 삭제
-        alert.addAction(UIAlertAction(title: NSLocalizedString("action.delete", comment: "Delete action"), style: .destructive) { _ in
+        alert.addAction(UIAlertAction(title: String(localized: .actionDelete), style: .destructive) { _ in
             self.showDeletePhotoConfirmation(for: image)
         })
-        
+
         // 취소
-        alert.addAction(UIAlertAction(title: NSLocalizedString("action.cancel", comment: "Cancel action"), style: .cancel))
-        
+        alert.addAction(UIAlertAction(title: String(localized: .actionCancel), style: .cancel))
+
         // iPad 지원
         if let popover = alert.popoverPresentationController {
             popover.sourceView = imageView
             popover.sourceRect = imageView.bounds
         }
-        
+
         present(alert, animated: true)
     }
     
@@ -650,27 +650,27 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
     
     @objc private func imageSaveCompleted(_ image: UIImage, didFinishSavingWithError error: Error?, contextInfo: UnsafeRawPointer) {
         let alert = UIAlertController(
-            title: error == nil ? NSLocalizedString("photo.save_success.title", comment: "Save success title") : NSLocalizedString("photo.save_failure.title", comment: "Save failure title"),
-            message: error == nil ? NSLocalizedString("photo.save_success.message", comment: "Save success message") : NSLocalizedString("photo.save_failure.message", comment: "Save failure message"),
+            title: error == nil ? String(localized: .photoSaveSuccessTitle) : String(localized: .photoSaveFailureTitle),
+            message: error == nil ? String(localized: .photoSaveSuccessMessage) : String(localized: .photoSaveFailureMessage),
             preferredStyle: .alert
         )
-        alert.addAction(UIAlertAction(title: NSLocalizedString("action.confirm", comment: "Confirm action"), style: .default))
+        alert.addAction(UIAlertAction(title: String(localized: .actionConfirm), style: .default))
         present(alert, animated: true)
     }
     
     private func showDeletePhotoConfirmation(for image: UIImage) {
         let alert = UIAlertController(
-            title: NSLocalizedString("photo.delete_confirmation.title", comment: "Delete photo confirmation title"),
-            message: NSLocalizedString("photo.delete_confirmation.message", comment: "Delete photo confirmation message"),
+            title: String(localized: .photoDeleteConfirmationTitle),
+            message: String(localized: .photoDeleteConfirmationMessage),
             preferredStyle: .alert
         )
-        
-        alert.addAction(UIAlertAction(title: NSLocalizedString("action.delete", comment: "Delete action"), style: .destructive) { [weak self] _ in
+
+        alert.addAction(UIAlertAction(title: String(localized: .actionDelete), style: .destructive) { [weak self] _ in
             self?.deletePhoto(image)
         })
-        
-        alert.addAction(UIAlertAction(title: NSLocalizedString("action.cancel", comment: "Cancel action"), style: .cancel))
-        
+
+        alert.addAction(UIAlertAction(title: String(localized: .actionCancel), style: .cancel))
+
         present(alert, animated: true)
     }
     

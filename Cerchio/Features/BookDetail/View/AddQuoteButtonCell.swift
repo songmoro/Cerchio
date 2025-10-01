@@ -44,7 +44,7 @@ final class AddQuoteButtonCell: UICollectionViewCell, IsIdentifiable {
         containerView.addSubview(iconImageView)
 
         // 타이틀 레이블
-        titleLabel.text = NSLocalizedString("book_detail.add_quote", comment: "Add quote button")
+        titleLabel.text = String(localized: .bookDetailAddQuote)
         titleLabel.font = .systemFont(ofSize: 15, weight: .medium)
         titleLabel.textColor = .systemBlue
         titleLabel.textAlignment = .center

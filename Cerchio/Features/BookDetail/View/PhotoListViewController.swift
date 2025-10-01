@@ -46,7 +46,7 @@ final class PhotoListViewController: BaseViewController<PhotoListReactor> {
     }
 
     private func setupNavigationBar() {
-        title = NSLocalizedString("book_detail.photos", comment: "Photos section title")
+        title = String(localized: .bookDetailPhotos)
 
         // 추가 버튼
         let addButton = UIBarButtonItem(

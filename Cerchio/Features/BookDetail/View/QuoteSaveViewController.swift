@@ -40,7 +40,7 @@ final class QuoteSaveViewController: UIViewController {
 
     private let placeholderLabel: UILabel = {
         let label = UILabel()
-        label.text = NSLocalizedString("quote_save.placeholder", comment: "Quote placeholder text")
+        label.text = String(localized: .quoteSavePlaceholder)
         label.textColor = .placeholderText
         label.font = .systemFont(ofSize: 16, weight: .regular)
         label.numberOfLines = 0
@@ -49,7 +49,7 @@ final class QuoteSaveViewController: UIViewController {
 
     private let pageNumberTextField: UITextField = {
         let textField = UITextField()
-        textField.placeholder = NSLocalizedString("quote_save.page_placeholder", comment: "Page number placeholder")
+        textField.placeholder = String(localized: .quoteSavePagePlaceholder)
         textField.borderStyle = .roundedRect
         textField.keyboardType = .numberPad
         textField.clearButtonMode = .whileEditing
@@ -58,7 +58,7 @@ final class QuoteSaveViewController: UIViewController {
 
     private let pageLabel: UILabel = {
         let label = UILabel()
-        label.text = NSLocalizedString("quote_save.page_label", comment: "Page label")
+        label.text = String(localized: .quoteSavePageLabel)
         label.font = .systemFont(ofSize: 14, weight: .medium)
         label.textColor = .label
         return label
@@ -140,11 +140,11 @@ final class QuoteSaveViewController: UIViewController {
     }
 
     private func setupNavigationBar() {
-        navigationItem.title = NSLocalizedString("quote_save.title", comment: "Quote save screen title")
+        navigationItem.title = String(localized: .quoteSaveTitle)
 
         // 취소 버튼
         let cancelButton = UIBarButtonItem(
-            title: NSLocalizedString("action.cancel", comment: "Cancel button"),
+            title: String(localized: .actionCancel),
             style: .plain,
             target: self,
             action: #selector(cancelTapped)
@@ -154,7 +154,7 @@ final class QuoteSaveViewController: UIViewController {
 
         // 저장 버튼
         let saveButton = UIBarButtonItem(
-            title: NSLocalizedString("action.save", comment: "Save button"),
+            title: String(localized: .actionSave),
             style: .done,
             target: self,
             action: #selector(saveTapped)
@@ -301,28 +301,28 @@ final class QuoteSaveViewController: UIViewController {
 
     private func showDiscardConfirmation() {
         let alert = UIAlertController(
-            title: NSLocalizedString("quote_save.discard_title", comment: "Discard confirmation title"),
-            message: NSLocalizedString("quote_save.discard_message", comment: "Discard confirmation message"),
+            title: String(localized: .quoteSaveDiscardTitle),
+            message: String(localized: .quoteSaveDiscardMessage),
             preferredStyle: .alert
         )
 
-        alert.addAction(UIAlertAction(title: NSLocalizedString("quote_save.discard", comment: "Discard action"), style: .destructive) { _ in
+        alert.addAction(UIAlertAction(title: String(localized: .quoteSaveDiscard), style: .destructive) { _ in
             self.delegate?.quoteSaveViewControllerDidCancel(self)
         })
 
-        alert.addAction(UIAlertAction(title: NSLocalizedString("action.cancel", comment: "Cancel action"), style: .cancel))
+        alert.addAction(UIAlertAction(title: String(localized: .actionCancel), style: .cancel))
 
         present(alert, animated: true)
     }
 
     private func showSaveErrorAlert() {
         let alert = UIAlertController(
-            title: NSLocalizedString("quote_save.error_title", comment: "Save error title"),
-            message: NSLocalizedString("quote_save.error_message", comment: "Save error message"),
+            title: String(localized: .quoteSaveErrorTitle),
+            message: String(localized: .quoteSaveErrorMessage),
             preferredStyle: .alert
         )
 
-        alert.addAction(UIAlertAction(title: NSLocalizedString("action.confirm", comment: "Confirm action"), style: .default))
+        alert.addAction(UIAlertAction(title: String(localized: .actionConfirm), style: .default))
 
         present(alert, animated: true)
     }

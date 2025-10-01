@@ -80,7 +80,7 @@ final class LibraryViewController: BaseViewController<LibraryReactor>, UICollect
 
         // 취소 버튼 생성 (편집 모드에서 사용)
         cancelButton = UIBarButtonItem(
-            title: NSLocalizedString("action.cancel", comment: "Cancel button"),
+            title: String(localized: .actionCancel),
             style: .plain,
             target: self,
             action: #selector(cancelButtonTapped)
@@ -533,14 +533,14 @@ final class LibraryViewController: BaseViewController<LibraryReactor>, UICollect
     private func updateEditButtonState() {
         if isEditMode {
             if selectedISBNs.isEmpty {
-                editButton.title = NSLocalizedString("action.edit", comment: "Edit button")
+                editButton.title = String(localized: .actionEdit)
                 editButton.style = .plain
             } else {
-                editButton.title = NSLocalizedString("action.delete", comment: "Delete button")
+                editButton.title = String(localized: .actionDelete)
                 editButton.style = .plain
             }
         } else {
-            editButton.title = NSLocalizedString("action.edit", comment: "Edit button")
+            editButton.title = String(localized: .actionEdit)
             editButton.style = .plain
         }
     }
@@ -565,13 +565,13 @@ final class LibraryViewController: BaseViewController<LibraryReactor>, UICollect
 
     private func deleteSelectedBooks() {
         let alert = UIAlertController(
-            title: NSLocalizedString("action.delete", comment: "Delete action"),
+            title: String(localized: .actionDelete),
             message: "선택한 \(selectedISBNs.count)개의 책을 삭제하시겠습니까?",
             preferredStyle: .alert
         )
 
-        alert.addAction(UIAlertAction(title: NSLocalizedString("action.cancel", comment: "Cancel action"), style: .cancel))
-        alert.addAction(UIAlertAction(title: NSLocalizedString("action.delete", comment: "Delete action"), style: .destructive) { [weak self] _ in
+        alert.addAction(UIAlertAction(title: String(localized: .actionCancel), style: .cancel))
+        alert.addAction(UIAlertAction(title: String(localized: .actionDelete), style: .destructive) { [weak self] _ in
             self?.performDeletion()
         })
 
