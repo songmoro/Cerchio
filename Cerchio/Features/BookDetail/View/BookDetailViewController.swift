@@ -42,6 +42,7 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
         case addQuoteButton // 문장 추가 버튼
         case photoItem(UIImage) // 개별 사진
         case addPhotoButton // 사진 추가 버튼
+        case photoLoadingIndicator // 사진 로딩 인디케이터
 
         func hash(into hasher: inout Hasher) {
             switch self {
@@ -60,6 +61,8 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
                 hasher.combine(image.pngData())
             case .addPhotoButton:
                 hasher.combine("addPhotoButton")
+            case .photoLoadingIndicator:
+                hasher.combine("photoLoadingIndicator")
             }
         }
 
@@ -74,6 +77,8 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
             case (.photoItem(let l), .photoItem(let r)):
                 return l.pngData() == r.pngData()
             case (.addPhotoButton, .addPhotoButton):
+                return true
+            case (.photoLoadingIndicator, .photoLoadingIndicator):
                 return true
             default:
                 return false
@@ -198,6 +203,7 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
         collectionView.register(AddQuoteButtonCell.self)
         collectionView.register(PhotoItemCell.self)
         collectionView.register(AddPhotoCell.self)
+        collectionView.register(PhotoLoadingCell.self)
 
         // 헤더 등록
         collectionView.register(
@@ -374,6 +380,10 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
                 cell.onAddPhotoTapped = { [weak self] in
                     self?.showPhotoCapture()
                 }
+                return cell
+
+            case .photoLoadingIndicator:
+                let cell: PhotoLoadingCell = collectionView.dequeueReusableCell(PhotoLoadingCell.self, for: indexPath)
                 return cell
             }
         }
@@ -607,60 +617,120 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
         }
         snapshot.appendItems(quoteItems, toSection: .savedQuotes)
 
-        // 찍은 사진 - 최신순 내림차순, 가로 스크롤
+        // 찍은 사진 - 추가 버튼과 로딩 인디케이터 먼저 표시, 이미지는 비동기 로드
         var photoItems: [Item] = []
-        if let photos = photos {
-            // 최신순 정렬 (createdAt 내림차순)
-            let sortedPhotos = photos.sorted { $0.createdAt > $1.createdAt }
-            let images = sortedPhotos.compactMap { ImageStorageManager.shared.loadImage(fromPath: $0.localImagePath) }
+        photoItems.append(.addPhotoButton)
+        photoItems.append(.photoLoadingIndicator)
+        snapshot.appendItems(photoItems, toSection: .photoPages)
 
-            // 추가 버튼을 맨 앞에 배치
-            photoItems.append(.addPhotoButton)
-
-            // 각 이미지를 개별 아이템으로 추가
-            photoItems.append(contentsOf: images.map { .photoItem($0) })
-
-            snapshot.appendItems(photoItems, toSection: .photoPages)
-        } else {
-            // 사진 데이터가 제공되지 않은 경우 별도로 로드
-            loadPhotosForSnapshot(snapshot: snapshot)
-            return
-        }
-
+        // 스냅샷 먼저 적용
         dataSource.apply(snapshot, animatingDifferences: true)
+
+        // 사진은 비동기로 로드
+        if let photos = photos {
+            loadPhotosAsync(photos: photos)
+        } else {
+            loadPhotosFromRealm()
+        }
     }
 
-    private func loadPhotosForSnapshot(snapshot: Snapshot) {
+    private func loadPhotosAsync(photos: [RealmPhoto]) {
+        // 메인 스레드에서 Realm 객체 정렬 및 경로 추출
+        let sortedPhotos = photos.sorted { $0.createdAt > $1.createdAt }
+        let imagePaths = sortedPhotos.map { $0.localImagePath }
+
+        // 백그라운드에서 이미지만 로드
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            let images = imagePaths.compactMap { ImageStorageManager.shared.loadImage(fromPath: $0) }
+
+            DispatchQueue.main.async {
+                guard let self = self else { return }
+
+                var snapshot = self.dataSource.snapshot()
+                let currentPhotoItems = snapshot.itemIdentifiers(inSection: .photoPages)
+
+                // 로딩 인디케이터 제거
+                let loadingIndicatorItems = currentPhotoItems.filter {
+                    if case .photoLoadingIndicator = $0 { return true }
+                    return false
+                }
+                snapshot.deleteItems(loadingIndicatorItems)
+
+                // 기존 사진 아이템 제거 (추가 버튼 제외)
+                let photoItemsToRemove = currentPhotoItems.filter {
+                    if case .photoItem = $0 { return true }
+                    return false
+                }
+                snapshot.deleteItems(photoItemsToRemove)
+
+                // 새 사진 아이템 추가 (추가 버튼 뒤에)
+                if let addButtonIndex = snapshot.itemIdentifiers(inSection: .photoPages).firstIndex(where: {
+                    if case .addPhotoButton = $0 { return true }
+                    return false
+                }) {
+                    let addButtonItem = snapshot.itemIdentifiers(inSection: .photoPages)[addButtonIndex]
+                    snapshot.insertItems(images.map { .photoItem($0) }, afterItem: addButtonItem)
+                }
+
+                self.dataSource.apply(snapshot, animatingDifferences: true)
+            }
+        }
+    }
+
+    private func loadPhotosFromRealm() {
         guard let reactor = reactor else { return }
         let bookId = String(describing: reactor.currentState.book.id)
 
         do {
             let realm = try Realm()
             let photos = realm.objects(RealmPhoto.self).filter("bookId == %@", bookId)
-
-            // 최신순 정렬 (createdAt 내림차순)
             let sortedPhotos = photos.sorted(byKeyPath: "createdAt", ascending: false)
             let photoArray = Array(sortedPhotos)
 
-            var updatedSnapshot = snapshot
-            let images = photoArray.compactMap { ImageStorageManager.shared.loadImage(fromPath: $0.localImagePath) }
+            // 메인 스레드에서 이미지 경로 추출
+            let imagePaths = photoArray.map { $0.localImagePath }
 
-            var photoItems: [Item] = []
-            // 추가 버튼을 맨 앞에 배치
-            photoItems.append(.addPhotoButton)
-            // 각 이미지를 개별 아이템으로 추가
-            photoItems.append(contentsOf: images.map { .photoItem($0) })
+            // 이미지 로드만 백그라운드에서 처리
+            DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+                let images = imagePaths.compactMap { ImageStorageManager.shared.loadImage(fromPath: $0) }
 
-            // 기존 photoPages 섹션 업데이트
-            updatedSnapshot.deleteItems(updatedSnapshot.itemIdentifiers(inSection: .photoPages))
-            updatedSnapshot.appendItems(photoItems, toSection: .photoPages)
+                DispatchQueue.main.async {
+                    guard let self = self else { return }
 
-            dataSource.apply(updatedSnapshot, animatingDifferences: true)
+                    var snapshot = self.dataSource.snapshot()
+                    let currentPhotoItems = snapshot.itemIdentifiers(inSection: .photoPages)
+
+                    // 로딩 인디케이터 제거
+                    let loadingIndicatorItems = currentPhotoItems.filter {
+                        if case .photoLoadingIndicator = $0 { return true }
+                        return false
+                    }
+                    snapshot.deleteItems(loadingIndicatorItems)
+
+                    // 기존 사진 아이템 제거 (추가 버튼 제외)
+                    let photoItemsToRemove = currentPhotoItems.filter {
+                        if case .photoItem = $0 { return true }
+                        return false
+                    }
+                    snapshot.deleteItems(photoItemsToRemove)
+
+                    // 새 사진 아이템 추가 (추가 버튼 뒤에)
+                    if let addButtonIndex = snapshot.itemIdentifiers(inSection: .photoPages).firstIndex(where: {
+                        if case .addPhotoButton = $0 { return true }
+                        return false
+                    }) {
+                        let addButtonItem = snapshot.itemIdentifiers(inSection: .photoPages)[addButtonIndex]
+                        snapshot.insertItems(images.map { .photoItem($0) }, afterItem: addButtonItem)
+                    }
+
+                    self.dataSource.apply(snapshot, animatingDifferences: true)
+                }
+            }
         } catch {
-            print("❌ Failed to load photos for snapshot: \(error.localizedDescription)")
+            print("❌ Failed to load photos from Realm: \(error.localizedDescription)")
         }
     }
-    
+
     private func setupPhotoContextMenu(for cell: PhotoItemCell, with image: UIImage) {
         let menuItems = createPhotoMenuItems(for: image)
         let highlightConfig = ViewHighlightConfiguration.withContextualRotation()
