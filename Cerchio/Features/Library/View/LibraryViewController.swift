@@ -31,6 +31,7 @@ final class LibraryViewController: BaseViewController<LibraryReactor>, UICollect
 
     // Repository
     private var bookRepository: BookRepositoryProtocol?
+    private var tagRepository: TagRepositoryProtocol?
 
     nonisolated enum Section: CaseIterable {
         case book
@@ -87,6 +88,10 @@ final class LibraryViewController: BaseViewController<LibraryReactor>, UICollect
         bookRepository = repository
     }
 
+    func setTagRepository(_ repository: TagRepositoryProtocol) {
+        tagRepository = repository
+    }
+
     override func bind(reactor: LibraryReactor) {
         // Action
         Observable.just(LibraryReactor.Action.loadBooks)
@@ -99,7 +104,7 @@ final class LibraryViewController: BaseViewController<LibraryReactor>, UICollect
                 guard let self = self,
                       let reactor = self.reactor else { return }
 
-                let books = reactor.currentState.books
+                let books = reactor.currentState.displayBooks
                 guard let books, indexPath.item < books.count else { return }
 
                 let selectedBook = books[indexPath.item]
@@ -121,9 +126,9 @@ final class LibraryViewController: BaseViewController<LibraryReactor>, UICollect
             })
             .disposed(by: disposeBag)
 
-        // State
+        // State - Display Books (filtered or all)
         reactor.state
-            .map { $0.books }
+            .map { $0.displayBooks }
             .distinctUntilChanged { oldBooks, newBooks in
                 // Compare by book ISBNs and count to detect changes
                 guard let oldBooks = oldBooks, let newBooks = newBooks else {
@@ -135,6 +140,16 @@ final class LibraryViewController: BaseViewController<LibraryReactor>, UICollect
             .observe(on: MainScheduler.instance)
             .subscribe(onNext: { [weak self] books in
                 self?.updateData(books: books)
+            })
+            .disposed(by: disposeBag)
+
+        // State - Active Filters (for navigation title)
+        reactor.state
+            .map { $0.activeFilters }
+            .distinctUntilChanged()
+            .observe(on: MainScheduler.instance)
+            .subscribe(onNext: { [weak self] filters in
+                self?.updateNavigationTitle(with: filters)
             })
             .disposed(by: disposeBag)
 
@@ -174,7 +189,7 @@ final class LibraryViewController: BaseViewController<LibraryReactor>, UICollect
         // 편집 모드에서 선택된 셀인 경우 border 다시 적용
         guard isEditMode,
               let reactor = reactor,
-              let books = reactor.currentState.books,
+              let books = reactor.currentState.displayBooks,
               indexPath.item < books.count else { return }
 
         let book = books[indexPath.item]
@@ -306,10 +321,71 @@ final class LibraryViewController: BaseViewController<LibraryReactor>, UICollect
         }
     }
 
+    // MARK: - Navigation Title Update
+    private func updateNavigationTitle(with filters: [String]) {
+        guard let tabBarController = tabBarController else { return }
+
+        if filters.isEmpty {
+            tabBarController.navigationItem.title = "서재"
+        } else {
+            let filterText = filters.map { "#\($0)" }.joined(separator: " ")
+            tabBarController.navigationItem.title = filterText
+        }
+    }
+
     // MARK: - Edit Mode Actions
     @objc public func filterButtonTapped() {
-        // TODO: 필터 기능 구현
-        print("Filter button tapped")
+        guard let tagRepository = tagRepository else { return }
+
+        // 모든 태그 로드
+        tagRepository.getAllTags()
+            .observe(on: MainScheduler.instance)
+            .subscribe(onNext: { [weak self] allTags in
+                guard let self = self else { return }
+
+                // 중복 제거하여 고유한 태그 이름 목록 생성
+                let uniqueTags = Array(Set(allTags.map { $0.tagName })).sorted()
+
+                if uniqueTags.isEmpty {
+                    self.showNoTagsAlert()
+                } else {
+                    self.presentTagFilterView(with: uniqueTags)
+                }
+            }, onError: { error in
+                print("Failed to load tags: \(error.localizedDescription)")
+            })
+            .disposed(by: disposeBag)
+    }
+
+    private func showNoTagsAlert() {
+        let alert = UIAlertController(
+            title: "태그 없음",
+            message: "사용 가능한 태그가 없습니다. 책 상세 화면에서 태그를 추가해주세요.",
+            preferredStyle: .alert
+        )
+        alert.addAction(UIAlertAction(title: "확인", style: .default))
+        present(alert, animated: true)
+    }
+
+    private func presentTagFilterView(with tags: [String]) {
+        let filterVC = TagFilterViewController()
+        let currentFilters = reactor?.currentState.activeFilters ?? []
+        filterVC.configure(with: tags, selectedTags: currentFilters)
+
+        filterVC.onFilterApplied = { [weak self] selectedTags in
+            guard let self = self, let reactor = self.reactor else { return }
+
+            if selectedTags.isEmpty {
+                // 필터 초기화
+                reactor.action.onNext(.clearFilters)
+            } else {
+                // 필터 적용
+                reactor.action.onNext(.applyTagFilters(selectedTags))
+            }
+        }
+
+        let navController = UINavigationController(rootViewController: filterVC)
+        present(navController, animated: true)
     }
 
     @objc public func editButtonTapped() {
@@ -475,7 +551,7 @@ extension LibraryViewController: MasonryLayoutProtocol {
     func collectionView(_ collectionView: UICollectionView, heightAtIndexPath indexPath: IndexPath) -> CGFloat {
         guard let reactor = reactor else { return LibraryConstants.HeightCalculation.defaultHeight }
 
-        let books = reactor.currentState.books
+        let books = reactor.currentState.displayBooks
         guard let books = books, indexPath.item < books.count else { return LibraryConstants.HeightCalculation.defaultHeight }
 
         let book = books[indexPath.item]
