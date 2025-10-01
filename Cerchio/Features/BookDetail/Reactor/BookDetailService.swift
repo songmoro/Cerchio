@@ -18,7 +18,7 @@ final class BookDetailService {
 
     // MARK: - Photo Operations
 
-    func loadPhotos(bookId: String) -> Observable<[Photo]> {
+    func loadPhotos(bookId: String) -> Observable<[RealmPhoto]> {
         return Observable.create { observer in
             do {
                 let realm = try Realm()
@@ -26,8 +26,7 @@ final class BookDetailService {
                     .filter("bookId == %@", bookId)
                     .sorted(byKeyPath: "createdAt", ascending: false)
 
-                let photoModels = photos.map { $0.toPhoto() }
-                observer.onNext(Array(photoModels))
+                observer.onNext(Array(photos))
                 observer.onCompleted()
             } catch {
                 observer.onError(error)

@@ -29,6 +29,7 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
 
     // MARK: - Dependencies
     private var serviceFactory: ServiceFactory?
+    private var service: BookDetailService?
     
     // MARK: - Section & Item Types
     nonisolated enum Section: CaseIterable {
@@ -148,6 +149,7 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
 
     func setServiceFactory(_ factory: ServiceFactory) {
         serviceFactory = factory
+        service = BookDetailService(serviceFactory: factory)
     }
 
     private func updateFavoriteButton(isFavorite: Bool) {
@@ -521,77 +523,53 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
     }
     
     private func savePhoto(_ image: UIImage) {
-        guard let reactor = reactor else { return }
+        guard let reactor = reactor,
+              let service = service else { return }
+
         let bookId = String(describing: reactor.currentState.book.id)
-        
-        // 로컬 저장
-        let imageName = ImageStorageManager.shared.generateUniqueImageName(for: bookId)
-        guard let localPath = ImageStorageManager.shared.saveImage(image, withName: imageName) else {
-            print("❌ Failed to save image locally")
-            return
-        }
-        
-        // Realm 저장
-        let realmPhoto = RealmPhoto(
-            bookId: bookId,
-            localImagePath: localPath
-        )
-        
-        if savePhotoToRealm(realmPhoto) {
-            print("✅ Photo saved successfully")
-            loadPhotosAndUpdateUI()
-        } else {
-            print("❌ Failed to save photo to Realm")
-            ImageStorageManager.shared.deleteImage(atPath: localPath)
-        }
-    }
-    
-    private func savePhotoToRealm(_ realmPhoto: RealmPhoto) -> Bool {
-        do {
-            let realm = try Realm()
-            try realm.write {
-                realm.add(realmPhoto)
-            }
-            return true
-        } catch {
-            return false
-        }
+
+        service.savePhoto(image, bookId: bookId)
+            .asDriver(onErrorDriveWith: .empty())
+            .drive(onNext: { [weak self] _ in
+                print("✅ Photo saved successfully")
+                self?.loadPhotosAndUpdateUI()
+            })
+            .disposed(by: disposeBag)
     }
     
     private func loadPhotosAndUpdateUI() {
-        guard let reactor = reactor else { return }
-        let bookId = String(describing: reactor.currentState.book.id)
-        
-        do {
-            let realm = try Realm()
-            let photos = realm.objects(RealmPhoto.self).filter("bookId == %@", bookId)
-            let photoArray = Array(photos)
-            
-            updateSnapshotWithPhotos(bookDetail: reactor.currentState.bookDetail, photos: photoArray)
-        } catch {
-            print("❌ Failed to load photos: \(error.localizedDescription)")
-        }
-    }
-    
-    private func loadQuotesAndUpdateUI() {
-        guard let reactor = reactor else { return }
+        guard let reactor = reactor,
+              let service = service else { return }
+
         let bookId = String(describing: reactor.currentState.book.id)
 
-        do {
-            let realm = try Realm()
-            let quotes = realm.objects(RealmQuote.self)
-                .filter("bookId == %@", bookId)
-                .sorted(byKeyPath: "createdAt", ascending: false)
-            let quoteArray = Array(quotes)
-            
-            updateSnapshotWithAllData(
-                bookDetail: reactor.currentState.bookDetail,
-                quotes: quoteArray,
-                photos: nil // 포토는 별도로 로드
-            )
-        } catch {
-            print("❌ Failed to load quotes: \(error.localizedDescription)")
-        }
+        service.loadPhotos(bookId: bookId)
+            .asDriver(onErrorJustReturn: [])
+            .drive(onNext: { [weak self] photos in
+                self?.updateSnapshotWithPhotos(
+                    bookDetail: self?.reactor?.currentState.bookDetail,
+                    photos: photos
+                )
+            })
+            .disposed(by: disposeBag)
+    }
+
+    private func loadQuotesAndUpdateUI() {
+        guard let reactor = reactor,
+              let service = service else { return }
+
+        let bookId = String(describing: reactor.currentState.book.id)
+
+        service.loadQuotes(bookId: bookId)
+            .asDriver(onErrorJustReturn: [])
+            .drive(onNext: { [weak self] quotes in
+                self?.updateSnapshotWithAllData(
+                    bookDetail: self?.reactor?.currentState.bookDetail,
+                    quotes: quotes,
+                    photos: nil
+                )
+            })
+            .disposed(by: disposeBag)
     }
 
     private func updateSnapshotWithPhotos(bookDetail: BookDetail?, photos: [RealmPhoto]) {
@@ -1020,17 +998,14 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
 
     private func loadTagsAndUpdateUI() {
         guard let reactor = reactor,
-              let serviceFactory = serviceFactory else { return }
+              let service = service else { return }
 
         let bookId = String(describing: reactor.currentState.book.id)
 
-        let tagRepository = serviceFactory.createTagRepository()
-        tagRepository.getTags(for: bookId)
-            .observe(on: MainScheduler.instance)
-            .subscribe(onNext: { [weak self] tags in
+        service.loadTags(bookId: bookId)
+            .asDriver(onErrorJustReturn: [])
+            .drive(onNext: { [weak self] tags in
                 self?.updateBookDetailWithTags(tags)
-            }, onError: { error in
-                print("❌ Failed to load tags: \(error.localizedDescription)")
             })
             .disposed(by: disposeBag)
     }
