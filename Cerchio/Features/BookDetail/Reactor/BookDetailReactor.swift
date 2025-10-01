@@ -107,7 +107,7 @@ final class BookDetailReactor: Reactor {
             totalPages: 320, // 기본값 (RealmBook에 totalPages 정보 없음)
             startDate: Calendar.current.date(byAdding: .day, value: -10, to: Date()),
             endDate: nil,
-            tags: ["소설", "클래식", "필독서"] // 기본값 (RealmBook에 태그 정보 없음)
+            tags: [] // 실제 태그는 Realm에서 로드
         )
 
         return Observable.just(.setBookDetail(bookDetail))

@@ -10,6 +10,9 @@ import SnapKit
 import Kingfisher
 
 final class BookInfoCollectionViewCell: UICollectionViewCell, IsIdentifiable {
+    // MARK: - Callback
+    var onTagsTapped: (() -> Void)?
+
     // MARK: - UI Components
     private let coverImageView: UIImageView = {
         let imageView = UIImageView()
@@ -58,6 +61,12 @@ final class BookInfoCollectionViewCell: UICollectionViewCell, IsIdentifiable {
         return stackView
     }()
 
+    private let tagsContainerView: UIView = {
+        let view = UIView()
+        view.isUserInteractionEnabled = true
+        return view
+    }()
+
     private let infoStackView: UIStackView = {
         let stackView = UIStackView()
         stackView.axis = .vertical
@@ -88,14 +97,25 @@ final class BookInfoCollectionViewCell: UICollectionViewCell, IsIdentifiable {
         contentView.addSubview(coverImageView)
         contentView.addSubview(infoStackView)
 
+        // 태그 컨테이너 설정
+        tagsContainerView.addSubview(tagsStackView)
+
         // 정보 스택 뷰 구성
         infoStackView.addArrangedSubview(titleLabel)
         infoStackView.addArrangedSubview(authorLabel)
         infoStackView.addArrangedSubview(pagesLabel)
         infoStackView.addArrangedSubview(dateRangeLabel)
-        infoStackView.addArrangedSubview(tagsStackView)
+        infoStackView.addArrangedSubview(tagsContainerView)
+
+        // 태그 컨테이너 탭 제스처 추가
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(handleTagsTapped))
+        tagsContainerView.addGestureRecognizer(tapGesture)
 
         setupConstraints()
+    }
+
+    @objc private func handleTagsTapped() {
+        onTagsTapped?()
     }
 
     private func setupConstraints() {
@@ -112,6 +132,16 @@ final class BookInfoCollectionViewCell: UICollectionViewCell, IsIdentifiable {
             $0.trailing.equalToSuperview().inset(BookDetailConstants.Layout.cellInset)
             $0.top.equalToSuperview().inset(BookDetailConstants.Layout.cellInset)
             $0.bottom.lessThanOrEqualToSuperview().inset(BookDetailConstants.Layout.cellInset)
+        }
+
+        // 태그 컨테이너
+        tagsContainerView.snp.makeConstraints {
+            $0.height.greaterThanOrEqualTo(BookDetailConstants.Layout.tagHeight)
+        }
+
+        // 태그 스택 뷰
+        tagsStackView.snp.makeConstraints {
+            $0.edges.equalToSuperview()
         }
     }
 

@@ -52,9 +52,16 @@ AppCoordinator (window management)
 - Automatic error handling and state management
 
 **Models**
-- Realm Object inheritance for persistence
+- Realm Object inheritance for persistence (`RealmBook`, `RealmQuote`, `RealmPhoto`, `RealmTag`)
 - Clean separation between domain models and database entities
 - Type-safe relationships and queries
+- Conversion methods: `toModel()` for Realm to domain, `toRealmModel()` for domain to Realm
+
+**ServiceFactory Pattern**
+- Centralized dependency injection via `ServiceFactory`
+- Repository creation methods: `createBookRepository()`, `createQuoteRepository()`, `createPhotoRepository()`, `createTagRepository()`
+- Service caching for performance optimization
+- Environment-based factory configuration (development, staging, production, testing)
 
 ## Dependencies (Swift Package Manager)
 
@@ -111,12 +118,20 @@ Cerchio/
 - UI state managed via Reactor pattern
 - Navigation events communicated reactively
 - Automatic dispose bag management in base classes
+- **RxSwift Best Practices**:
+  - Chain operations using `.flatMap()` for dependent async operations
+  - Use `.observe(on: MainScheduler.instance)` before UI updates
+  - Subscribe with `.subscribe(onNext:onError:)` for proper error handling
+  - Always call `.disposed(by: disposeBag)` to prevent memory leaks
 
 ### Memory Management
-- Weak coordinator references to prevent retain cycles
-- Automatic coordinator cleanup on view controller dismissal
-- Parent-child coordinator relationship management
-- Proper dispose bag lifecycle handling
+- **Weak References**: Use `[weak self]` in all closures and callbacks to prevent retain cycles
+- **Coordinator Lifecycle**: Automatic coordinator cleanup on view controller dismissal
+- **Parent-Child Relationships**: Child coordinators are stored in parent and automatically released
+- **DisposeBag Management**: Proper dispose bag lifecycle handling in base classes
+- **Callback Cleanup**: Set callbacks to `nil` when view controllers/cells are deallocated
+- **Observable Chains**: Use `.disposed(by: disposeBag)` on all RxSwift subscriptions
+- The architecture is designed to prevent memory leaks through proper reference management
 
 ### Code Organization
 - Feature-based folder structure
@@ -125,11 +140,19 @@ Cerchio/
 - Clear separation of concerns (View/Reactor/Coordinator)
 - Extension files organized by functionality
 
+**Common Patterns Across Features**
+- **Tag System**: User-defined tags stored per book, parsed from `#tag` format
+- **Photo Management**: Local image storage with Realm metadata references
+- **Quote Collection**: Text quotes with optional page numbers and notes
+- **ServiceFactory Injection**: Pass `serviceFactory` to view controllers for repository access
+- **Coordinator Result Patterns**: Use `PublishRelay<Result>` for coordinator completion events
+
 ### UI Conventions
 - Programmatic Auto Layout using SnapKit
 - Reactive UI binding in `bind(reactor:)` methods
 - Custom UI components in Common/UI/Components
 - Consistent navigation patterns via coordinators
+- **No Emojis**: Do not use emojis in code, comments, UI text, or commit messages unless explicitly requested by the user
 
 ### Development Guidelines
 
@@ -165,12 +188,49 @@ extension Coordinatable where Dependencies == Void {
 - Use `navigationEvents` relay for navigation actions
 - Create view protocols for complex components
 
+**Data Loading Pattern**
+```swift
+// Load initial data when book detail is set
+reactor.state
+    .map { $0.bookDetail }
+    .compactMap { $0 }
+    .distinctUntilChanged()
+    .observe(on: MainScheduler.instance)
+    .subscribe(onNext: { [weak self] bookDetail in
+        self?.updateSnapshot(with: bookDetail)
+        self?.loadRelatedData() // Load photos, quotes, tags, etc.
+    })
+    .disposed(by: disposeBag)
+```
+
+**Cell Configuration with Callbacks**
+```swift
+cell.onTapped = { [weak self] in
+    self?.handleCellAction()
+}
+```
+
 ### Repository Implementation
 - Inherit from `BaseRepository<RealmObjectType>`
 - Return Observable streams for all operations
 - Handle errors through reactive error handling
 - Maintain protocol interfaces for dependency injection
 - Use generic constraints for type-specific operations
+
+**Common Repository Patterns**
+```swift
+protocol TagRepositoryProtocol {
+    func getTags(for bookId: String) -> Observable<[RealmTag]>
+    func saveTags(_ tags: [RealmTag]) -> Observable<[RealmTag]>
+    func deleteTags(for bookId: String) -> Observable<Void>
+}
+
+final class TagRepository: BaseRepository<RealmTag>, TagRepositoryProtocol {
+    func getTags(for bookId: String) -> Observable<[RealmTag]> {
+        return filterAndSort("bookId == %@", sortBy: "createdAt", ascending: true, bookId)
+    }
+}
+```
 
 ### Extension Organization
 - Group related functionality in separate extension files
@@ -190,3 +250,36 @@ extension Coordinatable where Dependencies == Void {
 - iOS 16.0 minimum deployment target
 - iPhone only (Portrait orientation)
 - Korean localization with fallback to English
+
+## Build and Testing
+
+### Building the Project
+
+**Quick Compilation Check**
+- Use xcodebuild only for detecting and fixing compilation errors
+- Avoid full builds when possible to save time
+- Focus on targeted error detection and resolution
+
+**Build Commands**
+```bash
+# Quick syntax/compilation check (preferred)
+xcodebuild -scheme Cerchio -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 16 Pro,OS=18.5' build -configuration Debug -skipPackagePluginValidation -quiet 2>&1 | grep -E "error:"
+
+# Standard build with iPhone 16 Pro iOS 18.5 simulator
+xcodebuild -scheme Cerchio -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 16 Pro,OS=18.5' clean build
+
+# Generic iOS Simulator build (if specific device unavailable)
+xcodebuild -scheme Cerchio -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' build
+```
+
+**Build Strategy**
+- Use builds primarily to catch compilation errors early
+- Run quick checks after significant code changes
+- Full builds should be minimal and targeted
+- Simulator target: iPhone 16 Pro with iOS 18.5 (default)
+
+### Testing Approach
+- Protocol-based mocking for unit tests
+- Repository tests use in-memory Realm instances
+- Coordinator tests verify navigation flows
+- Reactor tests validate state transformations

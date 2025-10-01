@@ -92,6 +92,7 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
                 self?.updateSnapshot(with: bookDetail)
                 self?.loadPhotosAndUpdateUI() // 사진 데이터도 함께 로드
                 self?.loadQuotesAndUpdateUI() // 문장 데이터도 함께 로드
+                self?.loadTagsAndUpdateUI() // 태그 데이터도 함께 로드
             })
             .disposed(by: disposeBag)
         
@@ -270,6 +271,9 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
             case .bookInfo(let bookDetail):
                 let cell: BookInfoCollectionViewCell = collectionView.dequeueReusableCell(BookInfoCollectionViewCell.self, for: indexPath)
                 cell.configure(with: bookDetail)
+                cell.onTagsTapped = { [weak self] in
+                    self?.showTagInputAlert()
+                }
                 return cell
 
             case .savedQuote(let quote, let pageNumber, let date):
@@ -750,6 +754,151 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
             .disposed(by: disposeBag)
 
         photoListCoordinator.start()
+    }
+
+    // MARK: - Tag Input
+    private func showTagInputAlert() {
+        guard let reactor = reactor,
+              let serviceFactory = serviceFactory else { return }
+
+        let bookId = String(describing: reactor.currentState.book.id)
+
+        // 기존 태그 로드
+        let tagRepository = serviceFactory.createTagRepository()
+        tagRepository.getTags(for: bookId)
+            .observe(on: MainScheduler.instance)
+            .subscribe(onNext: { [weak self] existingTags in
+                self?.presentTagInputAlert(existingTags: existingTags)
+            }, onError: { error in
+                print("❌ Failed to load existing tags: \(error.localizedDescription)")
+            })
+            .disposed(by: disposeBag)
+    }
+
+    private func presentTagInputAlert(existingTags: [RealmTag]) {
+        let alert = UIAlertController(
+            title: "태그 추가",
+            message: "#을 기준으로 태그를 입력하세요. (예: #판타지 #과학)",
+            preferredStyle: .alert
+        )
+
+        // 기존 태그를 # 형식으로 결합
+        let existingTagText = existingTags.map { "#\($0.tagName)" }.joined(separator: " ")
+
+        alert.addTextField { textField in
+            textField.placeholder = "예: #판타지 #과학"
+            textField.text = existingTagText
+            textField.autocapitalizationType = .none
+        }
+
+        // 저장 액션
+        let saveAction = UIAlertAction(title: "저장", style: .default) { [weak self, weak alert] _ in
+            guard let textField = alert?.textFields?.first,
+                  let inputText = textField.text?.trimmingCharacters(in: .whitespacesAndNewlines),
+                  !inputText.isEmpty else { return }
+
+            self?.saveTags(from: inputText)
+        }
+
+        // 취소 액션
+        let cancelAction = UIAlertAction(title: "취소", style: .cancel)
+
+        alert.addAction(saveAction)
+        alert.addAction(cancelAction)
+
+        present(alert, animated: true)
+    }
+
+    private func saveTags(from inputText: String) {
+        guard let reactor = reactor,
+              let serviceFactory = serviceFactory else { return }
+
+        let bookId = String(describing: reactor.currentState.book.id)
+
+        // # 기준으로 태그 파싱
+        let tags = parseTagsFromInput(inputText)
+
+        guard !tags.isEmpty else {
+            print("⚠️ No valid tags to save")
+            return
+        }
+
+        let tagRepository = serviceFactory.createTagRepository()
+
+        // 1. 기존 태그 삭제
+        tagRepository.deleteTags(for: bookId)
+            .flatMap { _ -> Observable<[RealmTag]> in
+                // 2. 새 태그 생성 및 저장
+                let realmTags = tags.map { RealmTag(bookId: bookId, tagName: $0) }
+                return tagRepository.saveTags(realmTags)
+            }
+            .observe(on: MainScheduler.instance)
+            .subscribe(
+                onNext: { [weak self] savedTags in
+                    print("✅ Tags saved: \(savedTags.map { $0.tagName })")
+                    self?.loadTagsAndUpdateUI()
+                },
+                onError: { error in
+                    print("❌ Failed to save tags: \(error.localizedDescription)")
+                }
+            )
+            .disposed(by: disposeBag)
+    }
+
+    private func parseTagsFromInput(_ input: String) -> [String] {
+        // # 기준으로 분리
+        let components = input.components(separatedBy: "#")
+
+        // 빈 문자열 제거 및 공백 정리
+        return components
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+    }
+
+    private func loadTagsAndUpdateUI() {
+        guard let reactor = reactor,
+              let serviceFactory = serviceFactory else { return }
+
+        let bookId = String(describing: reactor.currentState.book.id)
+
+        let tagRepository = serviceFactory.createTagRepository()
+        tagRepository.getTags(for: bookId)
+            .observe(on: MainScheduler.instance)
+            .subscribe(onNext: { [weak self] tags in
+                self?.updateBookDetailWithTags(tags)
+            }, onError: { error in
+                print("❌ Failed to load tags: \(error.localizedDescription)")
+            })
+            .disposed(by: disposeBag)
+    }
+
+    private func updateBookDetailWithTags(_ tags: [RealmTag]) {
+        guard let reactor = reactor,
+              var bookDetail = reactor.currentState.bookDetail else { return }
+
+        // BookDetail 업데이트 (tags는 String 배열)
+        let tagNames = tags.map { $0.tagName }
+        let updatedBookDetail = BookDetail(
+            book: bookDetail.book,
+            totalPages: bookDetail.totalPages,
+            startDate: bookDetail.startDate,
+            endDate: bookDetail.endDate,
+            tags: tagNames
+        )
+
+        // 스냅샷 업데이트
+        updateSnapshotWithUpdatedBookDetail(updatedBookDetail)
+    }
+
+    private func updateSnapshotWithUpdatedBookDetail(_ bookDetail: BookDetail) {
+        var snapshot = dataSource.snapshot()
+
+        // 기존 bookInfo 항목 업데이트
+        let currentItems = snapshot.itemIdentifiers(inSection: .bookInfo)
+        snapshot.deleteItems(currentItems)
+        snapshot.appendItems([.bookInfo(bookDetail)], toSection: .bookInfo)
+
+        dataSource.apply(snapshot, animatingDifferences: true)
     }
 }
 

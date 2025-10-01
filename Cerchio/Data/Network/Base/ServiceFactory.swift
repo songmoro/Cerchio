@@ -98,6 +98,15 @@ final class ServiceFactory: BaseServiceFactory<ServiceDependencies> {
         }
     }
 
+    /// Creates a TagRepository instance
+    func createTagRepository() -> TagRepositoryProtocol {
+        do {
+            return try TagRepository()
+        } catch {
+            fatalError("Failed to create TagRepository: \(error)")
+        }
+    }
+
     // MARK: - Cache Management
     func clearServiceCache() {
         cacheQueue.async(flags: .barrier) {
