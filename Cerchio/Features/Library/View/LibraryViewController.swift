@@ -224,8 +224,8 @@ final class LibraryViewController: BaseViewController<LibraryReactor> {
                 guard oldBooks.count == newBooks.count else { return false }
                 return oldBooks.map { $0.isbn } == newBooks.map { $0.isbn }
             }
-            .observe(on: MainScheduler.instance)
-            .subscribe(onNext: { [weak self] books in
+            .asDriver(onErrorJustReturn: nil)
+            .drive(onNext: { [weak self] books in
                 self?.updateData(books: books)
             })
             .disposed(by: disposeBag)
@@ -238,8 +238,8 @@ final class LibraryViewController: BaseViewController<LibraryReactor> {
                 let favoriteEqual = lhs.1 == rhs.1
                 return filtersEqual && favoriteEqual
             }
-            .observe(on: MainScheduler.instance)
-            .subscribe(onNext: { [weak self] filters, isFavoriteEnabled in
+            .asDriver(onErrorJustReturn: ([], false))
+            .drive(onNext: { [weak self] filters, isFavoriteEnabled in
                 self?.updateNavigationTitle(with: filters, isFavoriteEnabled: isFavoriteEnabled)
             })
             .disposed(by: disposeBag)
@@ -247,8 +247,8 @@ final class LibraryViewController: BaseViewController<LibraryReactor> {
         reactor.state
             .map { $0.isLoading }
             .distinctUntilChanged()
-            .observe(on: MainScheduler.instance)
-            .subscribe(onNext: { [weak self] isLoading in
+            .asDriver(onErrorJustReturn: false)
+            .drive(onNext: { [weak self] isLoading in
                 self?.handleLoadingState(isLoading)
                 if !isLoading {
                     self?.refreshControl.endRefreshing()
