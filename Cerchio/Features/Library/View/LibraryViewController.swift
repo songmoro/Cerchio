@@ -370,17 +370,18 @@ final class LibraryViewController: BaseViewController<LibraryReactor>, UICollect
     private func presentTagFilterView(with tags: [String]) {
         let filterVC = TagFilterViewController()
         let currentFilters = reactor?.currentState.activeFilters ?? []
-        filterVC.configure(with: tags, selectedTags: currentFilters)
+        let isFavoriteEnabled = reactor?.currentState.isFavoriteFilterEnabled ?? false
+        filterVC.configure(with: tags, selectedTags: currentFilters, isFavoriteEnabled: isFavoriteEnabled)
 
-        filterVC.onFilterApplied = { [weak self] selectedTags in
+        filterVC.onFilterApplied = { [weak self] selectedTags, favoriteOnly in
             guard let self = self, let reactor = self.reactor else { return }
 
-            if selectedTags.isEmpty {
+            if selectedTags.isEmpty && !favoriteOnly {
                 // 필터 초기화
                 reactor.action.onNext(.clearFilters)
             } else {
                 // 필터 적용
-                reactor.action.onNext(.applyTagFilters(selectedTags))
+                reactor.action.onNext(.applyTagFilters(selectedTags, favoriteOnly: favoriteOnly))
             }
         }
 
@@ -513,6 +514,7 @@ final class LibraryViewController: BaseViewController<LibraryReactor>, UICollect
         // Copy selected ISBNs and current filters before clearing
         let isbnsToDelete = Array(selectedISBNs)
         let currentFilters = reactor.currentState.activeFilters
+        let isFavoriteEnabled = reactor.currentState.isFavoriteFilterEnabled
 
         guard !isbnsToDelete.isEmpty else { return }
 
@@ -530,9 +532,9 @@ final class LibraryViewController: BaseViewController<LibraryReactor>, UICollect
                     reactor.action.onNext(.loadBooks)
 
                     // 필터가 활성화되어 있었다면 다시 적용
-                    if !currentFilters.isEmpty {
+                    if !currentFilters.isEmpty || isFavoriteEnabled {
                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                            reactor.action.onNext(.applyTagFilters(currentFilters))
+                            reactor.action.onNext(.applyTagFilters(currentFilters, favoriteOnly: isFavoriteEnabled))
                         }
                     }
                 },

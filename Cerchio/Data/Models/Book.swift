@@ -25,8 +25,9 @@ class RealmBook: Object, Sendable {
     @Persisted var formattedPrice: String?
     @Persisted var priceAsInt: Int?
     @Persisted var createAt: Date
-    
-    convenience init(title: String, link: String, image: String, author: String, discount: String? = nil, publisher: String, isbn: String, description: String, pubdate: String, cleanTitle: String, cleanDescription: String, formattedPubDate: Date? = nil, formattedPrice: String? = nil, priceAsInt: Int? = nil, createAt: Date = Date()) {
+    @Persisted var isFavorite: Bool = false
+
+    convenience init(title: String, link: String, image: String, author: String, discount: String? = nil, publisher: String, isbn: String, description: String, pubdate: String, cleanTitle: String, cleanDescription: String, formattedPubDate: Date? = nil, formattedPrice: String? = nil, priceAsInt: Int? = nil, createAt: Date = Date(), isFavorite: Bool = false) {
         self.init()
         self.title = title
         self.link = link
@@ -43,6 +44,7 @@ class RealmBook: Object, Sendable {
         self.formattedPrice = formattedPrice
         self.priceAsInt = priceAsInt
         self.createAt = createAt
+        self.isFavorite = isFavorite
     }
 }
 
@@ -358,7 +360,7 @@ extension RealmBook {
             createAt: createAt,
             genre: nil,
             totalPages: nil,
-            isFavorite: false,
+            isFavorite: isFavorite,
             dateAdded: createAt,
             dateRead: nil,
             readingStatus: .toRead,
@@ -388,7 +390,8 @@ extension Book {
             formattedPubDate: formattedPubDate,
             formattedPrice: formattedPrice,
             priceAsInt: priceAsInt,
-            createAt: createAt
+            createAt: createAt,
+            isFavorite: isFavorite
         )
     }
 }

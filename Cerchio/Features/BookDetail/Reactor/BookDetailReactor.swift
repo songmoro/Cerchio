@@ -36,10 +36,12 @@ final class BookDetailReactor: Reactor {
     }
 
     let initialState: State
+    private let bookRepository: BookRepositoryProtocol
 
     // MARK: - Initialization
-    init(book: Book) {
-        self.initialState = State(book: book)
+    init(book: Book, bookRepository: BookRepositoryProtocol) {
+        self.initialState = State(book: book, isFavorite: book.isFavorite)
+        self.bookRepository = bookRepository
     }
 
     // MARK: - Reactor Methods
@@ -63,8 +65,12 @@ final class BookDetailReactor: Reactor {
 //            return Observable.just(.setReadingProgress(progress))
             return .empty()
         case .toggleFavorite:
-            let newFavoriteStatus = !currentState.isFavorite
-            return Observable.just(.setFavorite(newFavoriteStatus))
+            return bookRepository.toggleFavorite(bookId: currentState.book.id)
+                .map { .setFavorite($0) }
+                .catch { error in
+                    print("Failed to toggle favorite: \(error.localizedDescription)")
+                    return Observable.just(.setFavorite(self.currentState.isFavorite))
+                }
 
         case .addQuote:
             // TODO: 문장 추가 로직 구현 (현재 사용하지 않음)

@@ -14,7 +14,7 @@ final class LibraryReactor: Reactor {
     enum Action {
         case loadBooks
         case refreshBooks
-        case applyTagFilters([String])
+        case applyTagFilters([String], favoriteOnly: Bool)
         case clearFilters
     }
 
@@ -22,6 +22,7 @@ final class LibraryReactor: Reactor {
         case setBooks([Book])
         case setFilteredBooks([Book])
         case setActiveFilters([String])
+        case setFavoriteFilter(Bool)
         case setLoading(Bool)
         case setError(Error?)
     }
@@ -30,6 +31,7 @@ final class LibraryReactor: Reactor {
         var books: [Book]? = nil
         var filteredBooks: [Book]? = nil
         var activeFilters: [String] = []
+        var isFavoriteFilterEnabled: Bool = false
         var isLoading: Bool = false
         var error: Error?
 
@@ -63,22 +65,20 @@ final class LibraryReactor: Reactor {
                 Observable.just(.setLoading(false))
             ])
 
-        case .applyTagFilters(let tagNames):
-            guard !tagNames.isEmpty else {
-                return Observable.just(.setFilteredBooks([]))
-            }
-
+        case .applyTagFilters(let tagNames, let favoriteOnly):
             return Observable.concat([
                 Observable.just(.setLoading(true)),
-                filterBooksByTags(tagNames),
+                filterBooks(byTags: tagNames, favoriteOnly: favoriteOnly),
                 Observable.just(.setActiveFilters(tagNames)),
+                Observable.just(.setFavoriteFilter(favoriteOnly)),
                 Observable.just(.setLoading(false))
             ])
 
         case .clearFilters:
             return Observable.concat([
                 Observable.just(.setFilteredBooks([])),
-                Observable.just(.setActiveFilters([]))
+                Observable.just(.setActiveFilters([])),
+                Observable.just(.setFavoriteFilter(false))
             ])
         }
     }
@@ -95,6 +95,9 @@ final class LibraryReactor: Reactor {
 
         case .setActiveFilters(let filters):
             newState.activeFilters = filters
+
+        case .setFavoriteFilter(let isEnabled):
+            newState.isFavoriteFilterEnabled = isEnabled
 
         case .setLoading(let isLoading):
             newState.isLoading = isLoading
@@ -115,18 +118,57 @@ final class LibraryReactor: Reactor {
             }
     }
 
-    private func filterBooksByTags(_ tagNames: [String]) -> Observable<Mutation> {
-        return tagRepository.getAllTags()
-            .map { [weak self] allTags -> [Book] in
-                guard let self = self,
-                      let allBooks = self.currentState.books else { return [] }
+    private func filterBooks(byTags tagNames: [String], favoriteOnly: Bool) -> Observable<Mutation> {
+        guard let allBooks = currentState.books else {
+            return Observable.just(.setFilteredBooks([]))
+        }
 
+        // 즐겨찾기 필터만 활성화된 경우
+        if tagNames.isEmpty && favoriteOnly {
+            let favoriteBooks = allBooks.filter { $0.isFavorite }
+            return Observable.just(.setFilteredBooks(favoriteBooks))
+        }
+
+        // 태그 필터만 활성화된 경우
+        if !tagNames.isEmpty && !favoriteOnly {
+            return filterByTags(tagNames, books: allBooks)
+        }
+
+        // 둘 다 활성화된 경우
+        if !tagNames.isEmpty && favoriteOnly {
+            return tagRepository.getAllTags()
+                .map { [weak self] allTags -> [Book] in
+                    guard let self = self else { return [] }
+
+                    // 선택된 태그에 해당하는 bookId 추출
+                    let filteredTags = allTags.filter { tagNames.contains($0.tagName) }
+                    let bookIds = Set(filteredTags.map { $0.bookId })
+
+                    // bookId가 일치하고 즐겨찾기인 책들만 필터링
+                    return allBooks.filter { book in
+                        bookIds.contains(String(describing: book.id)) && book.isFavorite
+                    }
+                }
+                .map { .setFilteredBooks($0) }
+                .catch { error in
+                    print("Failed to filter books by tags and favorite: \(error.localizedDescription)")
+                    return Observable.just(.setError(error))
+                }
+        }
+
+        // 필터가 없는 경우
+        return Observable.just(.setFilteredBooks([]))
+    }
+
+    private func filterByTags(_ tagNames: [String], books: [Book]) -> Observable<Mutation> {
+        return tagRepository.getAllTags()
+            .map { allTags -> [Book] in
                 // 선택된 태그에 해당하는 bookId 추출
                 let filteredTags = allTags.filter { tagNames.contains($0.tagName) }
                 let bookIds = Set(filteredTags.map { $0.bookId })
 
                 // bookId가 일치하는 책들 필터링
-                return allBooks.filter { book in
+                return books.filter { book in
                     bookIds.contains(String(describing: book.id))
                 }
             }

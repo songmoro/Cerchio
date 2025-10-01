@@ -25,6 +25,10 @@ protocol BookRepositoryProtocol {
     func deleteBookByISBN(_ isbn: String) -> Observable<Void>
     func deleteBooksByISBNs(_ isbns: [String]) -> Observable<Void>
 
+    // Favorite methods
+    func toggleFavorite(bookId: String) -> Observable<Bool>
+    func getFavoriteBooks() -> Observable<[Book]>
+
     // Data management
     func deleteAllData() -> Observable<Void>
 }
@@ -193,10 +197,39 @@ final class BookRepository: BaseRepository<RealmBook>, BookRepositoryProtocol {
         }
     }
 
+    // MARK: - Favorite Methods
+
+    func toggleFavorite(bookId: String) -> Observable<Bool> {
+        return performWriteTransaction {
+            guard let objectId = try? ObjectId(string: bookId),
+                  let book = self.realm.object(ofType: RealmBook.self, forPrimaryKey: objectId),
+                  !book.isInvalidated else {
+                return false
+            }
+
+            book.isFavorite.toggle()
+            return book.isFavorite
+        }
+    }
+
+    func getFavoriteBooks() -> Observable<[Book]> {
+        return Observable.create { observer in
+            let favoriteBooks = self.realm.objects(RealmBook.self).filter("isFavorite == true")
+            let books = favoriteBooks.map { $0.toBook() }
+            observer.onNext(Array(books))
+            observer.onCompleted()
+            return Disposables.create()
+        }
+    }
+
     // MARK: - Data Management
 
     func deleteAllData() -> Observable<Void> {
         return performWriteTransaction {
+            // 모든 태그 삭제
+            let allTags = self.realm.objects(RealmTag.self)
+            self.realm.delete(allTags)
+
             // 모든 인용구 삭제
             let allQuotes = self.realm.objects(RealmQuote.self)
             self.realm.delete(allQuotes)
@@ -212,14 +245,6 @@ final class BookRepository: BaseRepository<RealmBook>, BookRepositoryProtocol {
             return ()
         }
     }
-
-    // TODO: isFavorite 프로퍼티가 RealmBook에 추가되면 구현
-    // func updateFavoriteStatus(_ book: RealmBook, isFavorite: Bool) -> Observable<RealmBook> {
-    //     return performWriteTransaction {
-    //         book.isFavorite = isFavorite
-    //         return book
-    //     }
-    // }
 
     // MARK: - Helper Methods
     private func performWriteTransaction<U>(_ operation: @escaping () throws -> U) -> Observable<U> {

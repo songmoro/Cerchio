@@ -15,7 +15,13 @@ final class TagFilterViewController: UIViewController {
     private let disposeBag = DisposeBag()
     private var availableTags: [String] = []
     private var selectedTags: Set<String> = []
-    var onFilterApplied: (([String]) -> Void)?
+    private var isFavoriteFilterEnabled: Bool = false
+    var onFilterApplied: (([String], Bool) -> Void)?
+
+    // MARK: - Constants
+    private enum FilterOption {
+        static let favorite = "favorite"
+    }
 
     // MARK: - UI Components
     private let tableView: UITableView = {
@@ -93,9 +99,10 @@ final class TagFilterViewController: UIViewController {
     }
 
     // MARK: - Public Methods
-    func configure(with tags: [String], selectedTags: [String]) {
+    func configure(with tags: [String], selectedTags: [String], isFavoriteEnabled: Bool = false) {
         self.availableTags = tags
         self.selectedTags = Set(selectedTags)
+        self.isFavoriteFilterEnabled = isFavoriteEnabled
 
         emptyLabel.isHidden = !tags.isEmpty
         tableView.reloadData()
@@ -107,20 +114,37 @@ final class TagFilterViewController: UIViewController {
     }
 
     @objc private func applyTapped() {
-        onFilterApplied?(Array(selectedTags))
+        onFilterApplied?(Array(selectedTags), isFavoriteFilterEnabled)
         dismiss(animated: true)
     }
 
     @objc private func clearTapped() {
         selectedTags.removeAll()
+        isFavoriteFilterEnabled = false
         tableView.reloadData()
     }
 }
 
 // MARK: - UITableViewDataSource
 extension TagFilterViewController: UITableViewDataSource {
+    func numberOfSections(in tableView: UITableView) -> Int {
+        return 2
+    }
+
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return availableTags.count
+        if section == 0 {
+            return 1 // Favorite filter
+        } else {
+            return availableTags.count
+        }
+    }
+
+    func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
+        if section == 0 {
+            return "필터 옵션"
+        } else {
+            return "태그"
+        }
     }
 
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
@@ -128,9 +152,13 @@ extension TagFilterViewController: UITableViewDataSource {
             return UITableViewCell()
         }
 
-        let tag = availableTags[indexPath.row]
-        let isSelected = selectedTags.contains(tag)
-        cell.configure(with: tag, isSelected: isSelected)
+        if indexPath.section == 0 {
+            cell.configure(with: "즐겨찾기", isSelected: isFavoriteFilterEnabled, isFavoriteOption: true)
+        } else {
+            let tag = availableTags[indexPath.row]
+            let isSelected = selectedTags.contains(tag)
+            cell.configure(with: tag, isSelected: isSelected, isFavoriteOption: false)
+        }
 
         return cell
     }
@@ -141,12 +169,18 @@ extension TagFilterViewController: UITableViewDelegate {
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         tableView.deselectRow(at: indexPath, animated: true)
 
-        let tag = availableTags[indexPath.row]
-
-        if selectedTags.contains(tag) {
-            selectedTags.remove(tag)
+        if indexPath.section == 0 {
+            // Favorite filter toggle
+            isFavoriteFilterEnabled.toggle()
         } else {
-            selectedTags.insert(tag)
+            // Tag filter toggle
+            let tag = availableTags[indexPath.row]
+
+            if selectedTags.contains(tag) {
+                selectedTags.remove(tag)
+            } else {
+                selectedTags.insert(tag)
+            }
         }
 
         tableView.reloadRows(at: [indexPath], with: .automatic)
@@ -198,8 +232,12 @@ final class TagFilterCell: UITableViewCell {
         }
     }
 
-    func configure(with tag: String, isSelected: Bool) {
-        tagLabel.text = "#\(tag)"
+    func configure(with tag: String, isSelected: Bool, isFavoriteOption: Bool = false) {
+        if isFavoriteOption {
+            tagLabel.text = tag
+        } else {
+            tagLabel.text = "#\(tag)"
+        }
         checkmarkImageView.isHidden = !isSelected
     }
 }

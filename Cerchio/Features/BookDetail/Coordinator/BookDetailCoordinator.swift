@@ -52,7 +52,8 @@ final class BookDetailCoordinator: BaseCoordinator, Coordinatable {
     // MARK: - Private Methods
     private func showBookDetailViewController() {
         let bookDetailViewController = BookDetailViewController()
-        let bookDetailReactor = BookDetailReactor(book: book)
+        let bookRepository = dependencies.serviceFactory.createBookRepository()
+        let bookDetailReactor = BookDetailReactor(book: book, bookRepository: bookRepository)
 
         bookDetailViewController.coordinator = self
         bookDetailViewController.reactor = bookDetailReactor
