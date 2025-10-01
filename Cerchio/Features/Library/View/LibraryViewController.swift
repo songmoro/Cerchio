@@ -18,6 +18,7 @@ final class LibraryViewController: BaseViewController<LibraryReactor> {
 
     private let collectionView = UICollectionView(frame: .zero, collectionViewLayout: .init())
     private var dataSource: DataSource!
+    private let refreshControl = UIRefreshControl()
 
     // Book selection handler
     var bookSelectionHandler: ((Book) -> Void)?
@@ -56,6 +57,7 @@ final class LibraryViewController: BaseViewController<LibraryReactor> {
         collectionView.contentInset.bottom = 20
         collectionView.verticalScrollIndicatorInsets = .init(top: 0, left: 0, bottom: 20, right: 0)
         collectionView.allowsMultipleSelection = true
+        collectionView.refreshControl = refreshControl
         view.addSubview(collectionView)
 
         collectionView.snp.makeConstraints {
@@ -81,33 +83,62 @@ final class LibraryViewController: BaseViewController<LibraryReactor> {
     // MARK: - Public Methods
     func setEditButton(_ button: UIBarButtonItem) {
         editButton = button
+
+        // Rx 바인딩
+        editButton.rx.tap
+            .subscribe(onNext: { [weak self] in
+                self?.editButtonTapped()
+            })
+            .disposed(by: disposeBag)
     }
 
     func setFilterButton(_ button: UIBarButtonItem) {
         filterButton = button
 
+        // Rx 바인딩
+        filterButton.rx.tap
+            .subscribe(onNext: { [weak self] in
+                self?.filterButtonTapped()
+            })
+            .disposed(by: disposeBag)
+
         // 편집 모드 버튼들 생성
         cancelButton = UIBarButtonItem(
             title: String(localized: .actionCancel),
             style: .plain,
-            target: self,
-            action: #selector(cancelButtonTapped)
+            target: nil,
+            action: nil
         )
+        cancelButton.rx.tap
+            .subscribe(onNext: { [weak self] in
+                self?.cancelButtonTapped()
+            })
+            .disposed(by: disposeBag)
 
         selectAllButton = UIBarButtonItem(
             title: "전체 선택",
             style: .plain,
-            target: self,
-            action: #selector(selectAllButtonTapped)
+            target: nil,
+            action: nil
         )
+        selectAllButton.rx.tap
+            .subscribe(onNext: { [weak self] in
+                self?.selectAllButtonTapped()
+            })
+            .disposed(by: disposeBag)
 
         deleteButton = UIBarButtonItem(
             title: String(localized: .actionDelete),
             style: .plain,
-            target: self,
-            action: #selector(deleteButtonTapped)
+            target: nil,
+            action: nil
         )
         deleteButton.tintColor = .systemRed
+        deleteButton.rx.tap
+            .subscribe(onNext: { [weak self] in
+                self?.deleteButtonTapped()
+            })
+            .disposed(by: disposeBag)
     }
 
     func setBookRepository(_ repository: BookRepositoryProtocol) {
@@ -129,6 +160,12 @@ final class LibraryViewController: BaseViewController<LibraryReactor> {
     override func bind(reactor: LibraryReactor) {
         // Action
         Observable.just(LibraryReactor.Action.loadBooks)
+            .bind(to: reactor.action)
+            .disposed(by: disposeBag)
+
+        // Refresh Control
+        refreshControl.rx.controlEvent(.valueChanged)
+            .map { LibraryReactor.Action.loadBooks }
             .bind(to: reactor.action)
             .disposed(by: disposeBag)
 
@@ -213,6 +250,9 @@ final class LibraryViewController: BaseViewController<LibraryReactor> {
             .observe(on: MainScheduler.instance)
             .subscribe(onNext: { [weak self] isLoading in
                 self?.handleLoadingState(isLoading)
+                if !isLoading {
+                    self?.refreshControl.endRefreshing()
+                }
             })
             .disposed(by: disposeBag)
 
@@ -448,7 +488,7 @@ final class LibraryViewController: BaseViewController<LibraryReactor> {
     }
 
     // MARK: - Edit Mode Actions
-    @objc public func filterButtonTapped() {
+    private func filterButtonTapped() {
         guard let tagRepository = tagRepository else { return }
 
         // 모든 태그 로드
@@ -490,7 +530,7 @@ final class LibraryViewController: BaseViewController<LibraryReactor> {
         present(navController, animated: true)
     }
 
-    @objc public func editButtonTapped() {
+    private func editButtonTapped() {
         // 편집 모드 진입
         enterEditMode()
     }
@@ -558,12 +598,12 @@ final class LibraryViewController: BaseViewController<LibraryReactor> {
         }
     }
 
-    @objc private func cancelButtonTapped() {
+    private func cancelButtonTapped() {
         // 편집 모드 종료
         exitEditMode()
     }
 
-    @objc private func selectAllButtonTapped() {
+    private func selectAllButtonTapped() {
         guard let reactor = reactor,
               let books = reactor.currentState.displayBooks else { return }
 
@@ -582,7 +622,7 @@ final class LibraryViewController: BaseViewController<LibraryReactor> {
         updateNavigationBarForEditMode()
     }
 
-    @objc private func deleteButtonTapped() {
+    private func deleteButtonTapped() {
         deleteSelectedBooks()
     }
 

@@ -118,11 +118,45 @@ Cerchio/
 - UI state managed via Reactor pattern
 - Navigation events communicated reactively
 - Automatic dispose bag management in base classes
-- **RxSwift Best Practices**:
-  - Chain operations using `.flatMap()` for dependent async operations
-  - Use `.observe(on: MainScheduler.instance)` before UI updates
-  - Subscribe with `.subscribe(onNext:onError:)` for proper error handling
-  - Always call `.disposed(by: disposeBag)` to prevent memory leaks
+
+**RxSwift Best Practices**:
+- **Use Driver for UI binding**: Convert state observables to Driver for main thread guarantee and no errors
+  ```swift
+  // Preferred
+  reactor.state.map { $0.title }
+      .asDriver(onErrorJustReturn: "")
+      .drive(titleLabel.rx.text)
+      .disposed(by: disposeBag)
+
+  // Avoid
+  reactor.state.map { $0.title }
+      .observe(on: MainScheduler.instance)
+      .subscribe(onNext: { [weak self] title in
+          self?.titleLabel.text = title
+      })
+      .disposed(by: disposeBag)
+  ```
+
+- **Use bind(to:) for direct bindings**: More concise than subscribe
+  ```swift
+  // Preferred
+  button.rx.tap
+      .map { MyAction.buttonTapped }
+      .bind(to: reactor.action)
+      .disposed(by: disposeBag)
+
+  // Avoid
+  button.rx.tap
+      .subscribe(onNext: { [weak self] in
+          self?.reactor?.action.onNext(.buttonTapped)
+      })
+      .disposed(by: disposeBag)
+  ```
+
+- **Use flatMap for dependent async operations**: Chain operations properly
+- **Share replays when needed**: Use `.share(replay: 1)` for expensive operations
+- **Always use `[weak self]`**: Prevent retain cycles in closures
+- **Always call `.disposed(by: disposeBag)`**: Prevent memory leaks
 
 ### Memory Management
 - **Weak References**: Use `[weak self]` in all closures and callbacks to prevent retain cycles
@@ -148,7 +182,63 @@ Cerchio/
 - **Coordinator Result Patterns**: Use `PublishRelay<Result>` for coordinator completion events
 
 ### UI Conventions
-- Programmatic Auto Layout using SnapKit
+
+**Auto Layout**
+- **Always use SnapKit**: Never use NSLayoutConstraint directly
+  ```swift
+  // Preferred
+  view.snp.makeConstraints {
+      $0.edges.equalToSuperview()
+  }
+
+  // Avoid
+  view.translatesAutoresizingMaskIntoConstraints = false
+  NSLayoutConstraint.activate([...])
+  ```
+
+**Button Configuration (iOS 15+)**
+- **Use UIButton.Configuration**: Modern, declarative button styling
+  ```swift
+  // Preferred
+  var config = UIButton.Configuration.filled()
+  config.title = "Submit"
+  config.image = UIImage(systemName: "checkmark")
+  config.imagePadding = 8
+  button.configuration = config
+
+  // Avoid
+  button.setTitle("Submit", for: .normal)
+  button.setImage(UIImage(systemName: "checkmark"), for: .normal)
+  ```
+
+**Cell Configuration (iOS 14+)**
+- **Use UIContentConfiguration**: For list cells and content views
+  ```swift
+  // Preferred
+  var config = cell.defaultContentConfiguration()
+  config.text = book.title
+  config.secondaryText = book.author
+  config.image = bookImage
+  cell.contentConfiguration = config
+
+  // Avoid
+  cell.textLabel?.text = book.title
+  cell.detailTextLabel?.text = book.author
+  ```
+
+**Typography**
+- **Use Custom Font System**: Never use `.systemFont()` directly
+  ```swift
+  // Preferred
+  label.font = .customFont(.body)
+  titleLabel.font = .customFont(.title, weight: .bold)
+
+  // Avoid
+  label.font = .systemFont(ofSize: 16)
+  titleLabel.font = .boldSystemFont(ofSize: 24)
+  ```
+
+**General UI Guidelines**
 - Reactive UI binding in `bind(reactor:)` methods
 - Custom UI components in Common/UI/Components
 - Consistent navigation patterns via coordinators
@@ -188,25 +278,91 @@ extension Coordinatable where Dependencies == Void {
 - Use `navigationEvents` relay for navigation actions
 - Create view protocols for complex components
 
-**Data Loading Pattern**
+**Modern Data Loading Pattern with Driver**
 ```swift
-// Load initial data when book detail is set
+// Preferred: Use Driver for UI updates
 reactor.state
     .map { $0.bookDetail }
     .compactMap { $0 }
     .distinctUntilChanged()
-    .observe(on: MainScheduler.instance)
-    .subscribe(onNext: { [weak self] bookDetail in
+    .asDriver(onErrorJustReturn: nil)
+    .compactMap { $0 }
+    .drive(onNext: { [weak self] bookDetail in
         self?.updateSnapshot(with: bookDetail)
-        self?.loadRelatedData() // Load photos, quotes, tags, etc.
     })
     .disposed(by: disposeBag)
 ```
 
-**Cell Configuration with Callbacks**
+**Callback Patterns**
+- **Simple callbacks**: Use closures for one-off events (e.g., cell taps)
+  ```swift
+  cell.onTapped = { [weak self] in
+      self?.handleCellAction()
+  }
+  ```
+
+- **Coordinator communication**: Use `PublishRelay` for multi-subscriber events
+  ```swift
+  private let resultRelay = PublishRelay<Result>()
+  var result: Observable<Result> { resultRelay.asObservable() }
+  ```
+
+- **ViewController data passing**: Use `PublishRelay` or `BehaviorRelay`
+  ```swift
+  let selectedItem = PublishRelay<Item>()
+  // Subscribe in parent
+  childVC.selectedItem
+      .bind(to: reactor.action)
+      .disposed(by: disposeBag)
+  ```
+
+### Reactor Service Layer Pattern
+
+**Separate business logic from Reactor**:
+- Create dedicated Service classes in the Feature/Reactor folder
+- Keep Reactors focused on state management only
+- Services handle complex Observable operations
+
+**File Structure**:
+```
+Features/
+  BookDetail/
+    Reactor/
+      BookDetailReactor.swift       // State management only
+      BookDetailService.swift        // Business logic & data operations
+```
+
+**Service Implementation**:
 ```swift
-cell.onTapped = { [weak self] in
-    self?.handleCellAction()
+// BookDetailService.swift
+final class BookDetailService {
+    private let serviceFactory: ServiceFactory
+
+    init(serviceFactory: ServiceFactory) {
+        self.serviceFactory = serviceFactory
+    }
+
+    func loadPhotos(bookId: String) -> Observable<[Photo]> {
+        return Observable.create { observer in
+            // Realm operations here
+            observer.onNext(photos)
+            observer.onCompleted()
+            return Disposables.create()
+        }
+    }
+}
+
+// BookDetailReactor.swift
+final class BookDetailReactor: Reactor {
+    private let service: BookDetailService
+
+    func mutate(action: Action) -> Observable<Mutation> {
+        switch action {
+        case .loadPhotos:
+            return service.loadPhotos(bookId: currentState.bookId)
+                .map { .setPhotos($0) }
+        }
+    }
 }
 ```
 
@@ -237,6 +393,61 @@ final class TagRepository: BaseRepository<RealmTag>, TagRepositoryProtocol {
 - Use `// MARK:` for clear section separation
 - Implement protocol conformances in dedicated extensions
 - Keep extensions focused on single responsibility
+
+### Concurrency Patterns
+
+**Use Swift Concurrency over GCD**:
+- iOS 16.0+ deployment target supports async/await
+- Prefer structured concurrency for better safety and readability
+
+**Image Loading Pattern**:
+```swift
+// Preferred: Swift Concurrency
+func loadImages(from paths: [String]) async -> [UIImage] {
+    await withTaskGroup(of: UIImage?.self) { group in
+        for path in paths {
+            group.addTask {
+                ImageStorageManager.shared.loadImage(fromPath: path)
+            }
+        }
+
+        var images: [UIImage] = []
+        for await image in group {
+            if let image = image {
+                images.append(image)
+            }
+        }
+        return images
+    }
+}
+
+// Usage in ViewController
+Task {
+    let images = await loadImages(from: imagePaths)
+    await MainActor.run {
+        updateUI(with: images)
+    }
+}
+```
+
+**Realm Operations**:
+- **Always on main thread**: Realm objects are thread-confined
+- Extract data (like image paths) before async operations
+- Never access Realm objects inside Task/DispatchQueue closures
+
+```swift
+// Correct pattern
+let realm = try Realm()
+let photos = realm.objects(RealmPhoto.self)
+let imagePaths = photos.map { $0.localImagePath } // Extract on main thread
+
+Task {
+    let images = await loadImages(from: imagePaths) // Use extracted data
+    await MainActor.run {
+        updateSnapshot(with: images)
+    }
+}
+```
 
 ### Testing Strategy
 - Protocol-based dependencies for mockability

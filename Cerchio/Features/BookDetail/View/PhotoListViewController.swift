@@ -25,6 +25,7 @@ final class PhotoListViewController: BaseViewController<PhotoListReactor> {
 
     // MARK: - Properties
     var onAddPhotoTapped: (() -> Void)?
+    var onPhotosDeleted: (() -> Void)?
     private var isEditMode: Bool = false
     private var selectedPhotoIds: Set<String> = []
 
@@ -75,46 +76,77 @@ final class PhotoListViewController: BaseViewController<PhotoListReactor> {
         title = String(localized: .bookDetailPhotos)
 
         // 추가 버튼
-        addButton = UIBarButtonItem(
-            barButtonSystemItem: .add,
-            target: self,
-            action: #selector(addButtonTapped)
-        )
+        addButton = UIBarButtonItem(barButtonSystemItem: .add, target: nil, action: nil)
 
         // 편집 버튼
         editButton = UIBarButtonItem(
             title: String(localized: .actionEdit),
             style: .plain,
-            target: self,
-            action: #selector(editButtonTapped)
+            target: nil,
+            action: nil
         )
 
         // 취소 버튼
         cancelButton = UIBarButtonItem(
             title: String(localized: .actionCancel),
             style: .plain,
-            target: self,
-            action: #selector(cancelButtonTapped)
+            target: nil,
+            action: nil
         )
 
         // 전체 선택 버튼
         selectAllButton = UIBarButtonItem(
             title: "전체 선택",
             style: .plain,
-            target: self,
-            action: #selector(selectAllButtonTapped)
+            target: nil,
+            action: nil
         )
 
         // 삭제 버튼
         deleteButton = UIBarButtonItem(
             title: String(localized: .actionDelete),
             style: .plain,
-            target: self,
-            action: #selector(deleteButtonTapped)
+            target: nil,
+            action: nil
         )
         deleteButton.tintColor = .systemRed
 
         navigationItem.rightBarButtonItems = [addButton, editButton]
+
+        // Rx 바인딩
+        setupNavigationBarRx()
+    }
+
+    private func setupNavigationBarRx() {
+        addButton.rx.tap
+            .subscribe(onNext: { [weak self] in
+                self?.onAddPhotoTapped?()
+            })
+            .disposed(by: disposeBag)
+
+        editButton.rx.tap
+            .subscribe(onNext: { [weak self] in
+                self?.enterEditMode()
+            })
+            .disposed(by: disposeBag)
+
+        cancelButton.rx.tap
+            .subscribe(onNext: { [weak self] in
+                self?.exitEditMode()
+            })
+            .disposed(by: disposeBag)
+
+        selectAllButton.rx.tap
+            .subscribe(onNext: { [weak self] in
+                self?.selectAllPhotos()
+            })
+            .disposed(by: disposeBag)
+
+        deleteButton.rx.tap
+            .subscribe(onNext: { [weak self] in
+                self?.deleteSelectedPhotos()
+            })
+            .disposed(by: disposeBag)
     }
 
     private func updateNavigationBar() {
@@ -212,21 +244,22 @@ final class PhotoListViewController: BaseViewController<PhotoListReactor> {
             .bind(to: reactor.action)
             .disposed(by: disposeBag)
 
-        // State
+        // State - Photos (use Driver for UI updates)
         reactor.state
             .map { $0.photos }
             .distinctUntilChanged()
-            .observe(on: MainScheduler.instance)
-            .subscribe(onNext: { [weak self] photos in
+            .asDriver(onErrorJustReturn: [])
+            .drive(onNext: { [weak self] photos in
                 self?.updateSnapshot(with: photos)
             })
             .disposed(by: disposeBag)
 
+        // State - Loading
         reactor.state
             .map { $0.isLoading }
             .distinctUntilChanged()
-            .observe(on: MainScheduler.instance)
-            .subscribe(onNext: { isLoading in
+            .asDriver(onErrorJustReturn: false)
+            .drive(onNext: { isLoading in
                 print("Loading: \(isLoading)")
             })
             .disposed(by: disposeBag)
@@ -240,19 +273,7 @@ final class PhotoListViewController: BaseViewController<PhotoListReactor> {
     }
 
     // MARK: - Actions
-    @objc private func addButtonTapped() {
-        onAddPhotoTapped?()
-    }
-
-    @objc private func editButtonTapped() {
-        enterEditMode()
-    }
-
-    @objc private func cancelButtonTapped() {
-        exitEditMode()
-    }
-
-    @objc private func selectAllButtonTapped() {
+    private func selectAllPhotos() {
         guard let reactor = reactor else { return }
         let photos = reactor.currentState.photos
 
@@ -268,10 +289,6 @@ final class PhotoListViewController: BaseViewController<PhotoListReactor> {
         generator.impactOccurred()
 
         updateNavigationBar()
-    }
-
-    @objc private func deleteButtonTapped() {
-        deleteSelectedPhotos()
     }
 
     private func enterEditMode() {
@@ -331,6 +348,9 @@ final class PhotoListViewController: BaseViewController<PhotoListReactor> {
         // 햅틱 피드백
         let generator = UINotificationFeedbackGenerator()
         generator.notificationOccurred(.success)
+
+        // 사진이 삭제되었음을 알림
+        onPhotosDeleted?()
     }
 }
 

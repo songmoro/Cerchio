@@ -44,6 +44,11 @@ final class PhotoListCoordinator: BaseCoordinator {
             self?.resultRelay.accept(.photosUpdated)
         }
 
+        // 사진 삭제 액션
+        viewController.onPhotosDeleted = { [weak self] in
+            self?.resultRelay.accept(.photosUpdated)
+        }
+
         navigationController.pushViewController(viewController, animated: true)
     }
 

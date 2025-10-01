@@ -19,6 +19,7 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
     // MARK: - UI Components
     private let collectionView = UICollectionView(frame: .zero, collectionViewLayout: .init())
     private var dataSource: DataSource!
+    private let refreshControl = UIRefreshControl()
 
     // MARK: - Child Coordinators
     private var childCoordinators: [Coordinator] = []
@@ -103,31 +104,46 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
 
     private func reloadBookDetailData() {
         guard let reactor = reactor,
-              let serviceFactory = serviceFactory else { return }
+              let serviceFactory = serviceFactory else {
+            refreshControl.endRefreshing()
+            return
+        }
 
         let bookRepository = serviceFactory.createBookRepository()
         bookRepository.getBookByISBN(reactor.currentState.book.isbn)
             .observe(on: MainScheduler.instance)
             .subscribe(onNext: { [weak self] updatedBook in
-                guard let updatedBook = updatedBook else { return }
+                guard let updatedBook = updatedBook else {
+                    self?.refreshControl.endRefreshing()
+                    return
+                }
                 // Reactor의 book을 업데이트하고 bookDetail을 다시 로드
                 self?.reactor?.action.onNext(.updateBookAndReload(updatedBook))
+                self?.refreshControl.endRefreshing()
             })
             .disposed(by: disposeBag)
     }
 
     
-    @objc public func favoriteButtonTapped() {
-        reactor?.action.onNext(.toggleFavorite)
-    }
-
-    @objc public func deleteButtonTapped() {
-        reactor?.action.onNext(.deleteBook)
-    }
-
     // MARK: - Public Methods
     func setFavoriteButton(_ button: UIBarButtonItem) {
         favoriteButton = button
+
+        // Rx 바인딩
+        favoriteButton?.rx.tap
+            .subscribe(onNext: { [weak self] in
+                self?.reactor?.action.onNext(.toggleFavorite)
+            })
+            .disposed(by: disposeBag)
+    }
+
+    func setDeleteButton(_ button: UIBarButtonItem) {
+        // Rx 바인딩
+        button.rx.tap
+            .subscribe(onNext: { [weak self] in
+                self?.reactor?.action.onNext(.deleteBook)
+            })
+            .disposed(by: disposeBag)
     }
 
     func setServiceFactory(_ factory: ServiceFactory) {
@@ -144,47 +160,58 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
         Observable.just(BookDetailReactor.Action.loadBookDetail)
             .bind(to: reactor.action)
             .disposed(by: disposeBag)
-        
-        // State
+
+        // Refresh Control
+        refreshControl.rx.controlEvent(.valueChanged)
+            .subscribe(onNext: { [weak self] in
+                self?.reloadBookDetailData()
+            })
+            .disposed(by: disposeBag)
+
+        // State - BookDetail (use Driver for main thread guarantee)
         reactor.state
             .map { $0.bookDetail }
             .compactMap { $0 }
             .distinctUntilChanged()
-            .observe(on: MainScheduler.instance)
-            .subscribe(onNext: { [weak self] bookDetail in
+            .asDriver(onErrorJustReturn: nil)
+            .compactMap { $0 }
+            .drive(onNext: { [weak self] bookDetail in
                 self?.updateSnapshot(with: bookDetail)
-                self?.loadPhotosAndUpdateUI() // 사진 데이터도 함께 로드
-                self?.loadQuotesAndUpdateUI() // 문장 데이터도 함께 로드
-                self?.loadTagsAndUpdateUI() // 태그 데이터도 함께 로드
+                self?.loadPhotosAndUpdateUI()
+                self?.loadQuotesAndUpdateUI()
+                self?.loadTagsAndUpdateUI()
             })
             .disposed(by: disposeBag)
-        
+
+        // State - Loading
         reactor.state
             .map { $0.isLoading }
             .distinctUntilChanged()
-            .observe(on: MainScheduler.instance)
-            .subscribe(onNext: { [weak self] isLoading in
+            .asDriver(onErrorJustReturn: false)
+            .drive(onNext: { isLoading in
                 // TODO: 로딩 인디케이터 처리
                 print("Loading: \(isLoading)")
             })
             .disposed(by: disposeBag)
-        
+
+        // State - Error
         reactor.state
             .map { $0.error }
             .compactMap { $0 }
-            .observe(on: MainScheduler.instance)
-            .subscribe(onNext: { [weak self] error in
+            .asDriver(onErrorJustReturn: nil as Error?)
+            .compactMap { $0 }
+            .drive(onNext: { error in
                 // TODO: 에러 처리
                 print("Error: \(error)")
             })
             .disposed(by: disposeBag)
-        
-        // 즐겨찾기 상태 바인딩
+
+        // State - Favorite status
         reactor.state
             .map { $0.isFavorite }
             .distinctUntilChanged()
-            .observe(on: MainScheduler.instance)
-            .subscribe(onNext: { [weak self] isFavorite in
+            .asDriver(onErrorJustReturn: false)
+            .drive(onNext: { [weak self] isFavorite in
                 self?.updateFavoriteButton(isFavorite: isFavorite)
             })
             .disposed(by: disposeBag)
@@ -196,6 +223,7 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
         collectionView.showsVerticalScrollIndicator = false
         collectionView.alwaysBounceVertical = true
         collectionView.delegate = self
+        collectionView.refreshControl = refreshControl
 
         // 셀 등록
         collectionView.register(BookInfoCollectionViewCell.self)

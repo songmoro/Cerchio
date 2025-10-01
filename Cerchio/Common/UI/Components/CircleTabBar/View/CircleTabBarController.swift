@@ -150,21 +150,21 @@ class CircleTabBarController: BaseTabBarController {
         let filterButton = UIBarButtonItem(
             image: UIImage(systemName: CircleTabBarConstants.SystemImages.filter),
             style: .plain,
-            target: libraryVC,
-            action: #selector(LibraryViewController.filterButtonTapped)
+            target: nil,
+            action: nil
         )
 
         // 편집 버튼
         let editButton = UIBarButtonItem(
             title: String(localized: .actionEdit),
             style: .plain,
-            target: libraryVC,
-            action: #selector(LibraryViewController.editButtonTapped)
+            target: nil,
+            action: nil
         )
 
         navigationItem.rightBarButtonItems = [editButton, filterButton]
 
-        // LibraryViewController의 버튼 참조 업데이트
+        // LibraryViewController의 버튼 참조 및 Rx 바인딩 설정
         libraryVC.setEditButton(editButton)
         libraryVC.setFilterButton(filterButton)
     }
@@ -178,21 +178,22 @@ class CircleTabBarController: BaseTabBarController {
         let favoriteButton = UIBarButtonItem(
             image: UIImage(systemName: CircleTabBarConstants.SystemImages.heart),
             style: .plain,
-            target: bookDetailVC,
-            action: #selector(BookDetailViewController.favoriteButtonTapped)
+            target: nil,
+            action: nil
         )
 
         // 삭제 버튼
         let deleteButton = UIBarButtonItem(
             image: UIImage(systemName: CircleTabBarConstants.SystemImages.trash),
             style: .plain,
-            target: bookDetailVC,
-            action: #selector(BookDetailViewController.deleteButtonTapped)
+            target: nil,
+            action: nil
         )
 
         navigationItem.rightBarButtonItems = [deleteButton, favoriteButton]
 
-        // BookDetailViewController에게 즐겨찾기 버튼 참조 전달
+        // BookDetailViewController에게 버튼 참조 전달 (Rx 바인딩은 VC에서 처리)
         bookDetailVC.setFavoriteButton(favoriteButton)
+        bookDetailVC.setDeleteButton(deleteButton)
     }
 }

@@ -44,19 +44,38 @@ final class QuoteListViewController: BaseViewController<QuoteListReactor> {
         // 추가 버튼
         let addButton = UIBarButtonItem(
             barButtonSystemItem: .add,
-            target: self,
-            action: #selector(addButtonTapped)
+            target: nil,
+            action: nil
         )
 
         // 편집 버튼
         let editButton = UIBarButtonItem(
             title: NSLocalizedString("action.edit", comment: "Edit action"),
             style: .plain,
-            target: self,
-            action: #selector(editButtonTapped)
+            target: nil,
+            action: nil
         )
 
         navigationItem.rightBarButtonItems = [addButton, editButton]
+
+        // Rx bindings
+        addButton.rx.tap
+            .subscribe(onNext: { [weak self] in
+                self?.onAddQuoteTapped?()
+            })
+            .disposed(by: disposeBag)
+
+        editButton.rx.tap
+            .subscribe(onNext: { [weak self] in
+                self?.toggleEditMode()
+            })
+            .disposed(by: disposeBag)
+    }
+
+    private func toggleEditMode() {
+        isEditMode.toggle()
+        tableView.setEditing(isEditMode, animated: true)
+        updateNavigationBar()
     }
 
     private func updateNavigationBar() {
@@ -125,21 +144,22 @@ final class QuoteListViewController: BaseViewController<QuoteListReactor> {
             .bind(to: reactor.action)
             .disposed(by: disposeBag)
 
-        // State
+        // State - Quotes (use Driver for UI updates)
         reactor.state
             .map { $0.quotes }
             .distinctUntilChanged()
-            .observe(on: MainScheduler.instance)
-            .subscribe(onNext: { [weak self] quotes in
+            .asDriver(onErrorJustReturn: [])
+            .drive(onNext: { [weak self] quotes in
                 self?.updateSnapshot(with: quotes)
             })
             .disposed(by: disposeBag)
 
+        // State - Loading
         reactor.state
             .map { $0.isLoading }
             .distinctUntilChanged()
-            .observe(on: MainScheduler.instance)
-            .subscribe(onNext: { isLoading in
+            .asDriver(onErrorJustReturn: false)
+            .drive(onNext: { isLoading in
                 print("Loading: \(isLoading)")
             })
             .disposed(by: disposeBag)
@@ -152,16 +172,6 @@ final class QuoteListViewController: BaseViewController<QuoteListReactor> {
         dataSource.apply(snapshot, animatingDifferences: true)
     }
 
-    // MARK: - Actions
-    @objc private func addButtonTapped() {
-        onAddQuoteTapped?()
-    }
-
-    @objc private func editButtonTapped() {
-        isEditMode.toggle()
-        tableView.setEditing(isEditMode, animated: true)
-        updateNavigationBar()
-    }
 }
 
 // MARK: - UITableViewDelegate
