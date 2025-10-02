@@ -2,7 +2,7 @@
 //  BookDetailService.swift
 //  Cerchio
 //
-//  Created by Claude on 10/2/25.
+//  Created by 송재훈 on 10/2/25.
 //
 
 import UIKit
@@ -68,7 +68,7 @@ final class BookDetailService {
             for (index, path) in paths.enumerated() {
                 group.addTask {
                     // 백그라운드에서 이미지 로드
-                    let image = ImageStorageManager.shared.loadImage(fromPath: path)
+                    let image = await ImageStorageManager.shared.loadImage(fromPath: path)
                     return (index, image)
                 }
             }
@@ -138,7 +138,7 @@ final class BookDetailService {
                 observer.onCompleted()
             } catch {
                 // 실패 시 로컬 이미지 삭제
-                ImageStorageManager.shared.deleteImage(atPath: localPath)
+                _ = ImageStorageManager.shared.deleteImage(atPath: localPath)
                 observer.onError(error)
             }
 

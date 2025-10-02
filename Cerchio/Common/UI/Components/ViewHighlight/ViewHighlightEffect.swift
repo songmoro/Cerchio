@@ -91,7 +91,7 @@ struct ViewHighlightConfiguration {
     /// Configuration with contextual rotation based on screen position
     /// Rotation direction is automatically determined: left side tilts left, right side tilts right
     static func withContextualRotation(tiltAngle: CGFloat = 5.0) -> ViewHighlightConfiguration {
-        var config = ViewHighlightConfiguration.default
+        let config = ViewHighlightConfiguration.default
         return ViewHighlightConfiguration(
             effect: .combined([
                 .rotation(degrees: 0) // 0 triggers contextual rotation calculation

@@ -42,7 +42,7 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
         case photoPages
     }
     
-    nonisolated enum Item: Hashable {
+    nonisolated enum Item: Hashable, Sendable {
         case bookInfo(BookDetail)
         case savedQuote(String, Int?, Date) // 문장 텍스트, 페이지, 저장 날짜
         case addQuoteButton // 문장 추가 버튼
@@ -690,7 +690,7 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
             await withTaskGroup(of: (String, UIImage?).self) { group in
                 for data in photoData {
                     group.addTask {
-                        let image = ImageStorageManager.shared.loadImage(fromPath: data.path)
+                        let image = await ImageStorageManager.shared.loadImage(fromPath: data.path)
                         return (data.id, image)
                     }
                 }
@@ -699,7 +699,7 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
                     guard let image = image else { continue }
 
                     // 이미지 딕셔너리에 저장
-                    await self.imageQueue.async(flags: .barrier) { [weak self] in
+                    self.imageQueue.async(flags: .barrier) { [weak self] in
                         self?.photoImages[photoId] = image
                     }
                 }
@@ -753,7 +753,7 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
                 await withTaskGroup(of: (String, UIImage?).self) { group in
                     for data in photoData {
                         group.addTask {
-                            let image = ImageStorageManager.shared.loadImage(fromPath: data.path)
+                            let image = await ImageStorageManager.shared.loadImage(fromPath: data.path)
                             return (data.id, image)
                         }
                     }
@@ -762,7 +762,7 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
                         guard let image = image else { continue }
 
                         // 이미지 딕셔너리에 저장
-                        await self.imageQueue.async(flags: .barrier) { [weak self] in
+                        self.imageQueue.async(flags: .barrier) { [weak self] in
                             self?.photoImages[photoId] = image
                         }
                     }
@@ -935,7 +935,7 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
         }
 
         // 로컬 파일 삭제
-        ImageStorageManager.shared.deleteImage(atPath: photo.localImagePath)
+        _ = ImageStorageManager.shared.deleteImage(atPath: photo.localImagePath)
 
         // 이미지 딕셔너리에서 제거
         imageQueue.async(flags: .barrier) { [weak self] in
@@ -1125,7 +1125,7 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
 
     private func updateBookDetailWithTags(_ tags: [RealmTag]) {
         guard let reactor = reactor,
-              var bookDetail = reactor.currentState.bookDetail else { return }
+              let bookDetail = reactor.currentState.bookDetail else { return }
 
         // BookDetail 업데이트 (tags는 String 배열)
         let tagNames = tags.map { $0.tagName }
@@ -1205,7 +1205,7 @@ extension BookDetailViewController: UICollectionViewDelegate {
 
     private func editQuote(quote: String, pageNumber: Int?, date: Date) {
         guard let reactor = reactor,
-              let serviceFactory = serviceFactory else { return }
+              let _ = serviceFactory else { return }
 
         let bookId = String(describing: reactor.currentState.book.id)
 

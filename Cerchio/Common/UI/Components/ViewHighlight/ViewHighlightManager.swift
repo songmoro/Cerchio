@@ -187,7 +187,7 @@ class ViewHighlightManager {
     }
 
     private func animateHighlight() {
-        guard let snapshot = highlightedSnapshotView else { return }
+        guard highlightedSnapshotView != nil else { return }
 
         // Optional: Add initial state and animate in
         // Currently the snapshot is already in final state

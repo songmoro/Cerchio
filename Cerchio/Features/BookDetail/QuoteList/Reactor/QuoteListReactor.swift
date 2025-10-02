@@ -2,7 +2,7 @@
 //  QuoteListReactor.swift
 //  Cerchio
 //
-//  Created by Claude on 9/30/25.
+//  Created by 송재훈 on 9/30/25.
 //
 
 import Foundation

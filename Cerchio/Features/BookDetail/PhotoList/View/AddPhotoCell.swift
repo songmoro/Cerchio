@@ -2,7 +2,7 @@
 //  AddPhotoCell.swift
 //  Cerchio
 //
-//  Created by Claude Code on 10/1/25.
+//  Created by 송재훈 on 10/1/25.
 //
 
 import UIKit

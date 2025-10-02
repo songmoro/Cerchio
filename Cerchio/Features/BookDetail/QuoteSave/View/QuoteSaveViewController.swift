@@ -283,8 +283,7 @@ final class QuoteSaveViewController: UIViewController {
     }
 
     @objc private func keyboardWillShow(_ notification: Notification) {
-        guard let keyboardFrame = notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect else { return }
-        let keyboardHeight = keyboardFrame.height
+//        let keyboardHeight = keyboardFrame.height
 
         // 텍스트뷰 높이 조정
         textView.snp.remakeConstraints {

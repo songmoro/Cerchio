@@ -2,7 +2,7 @@
 //  PhotoListViewController.swift
 //  Cerchio
 //
-//  Created by Claude on 10/1/25.
+//  Created by 송재훈 on 10/1/25.
 //
 
 import UIKit
@@ -322,7 +322,7 @@ final class PhotoListViewController: BaseViewController<PhotoListReactor> {
             await withTaskGroup(of: (String, UIImage?).self) { group in
                 for photo in photos {
                     group.addTask {
-                        let image = ImageStorageManager.shared.loadImage(fromPath: photo.localImagePath)
+                        let image = await ImageStorageManager.shared.loadImage(fromPath: photo.localImagePath)
                         return (photo.id, image)
                     }
                 }
@@ -331,7 +331,7 @@ final class PhotoListViewController: BaseViewController<PhotoListReactor> {
                     guard let image = image else { continue }
 
                     // 이미지 딕셔너리에 저장
-                    await self.imageQueue.async(flags: .barrier) { [weak self] in
+                    self.imageQueue.async(flags: .barrier) { [weak self] in
                         self?.photoImages[photoId] = image
                     }
                 }

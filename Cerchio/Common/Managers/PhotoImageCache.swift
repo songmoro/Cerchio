@@ -2,7 +2,7 @@
 //  PhotoImageCache.swift
 //  Cerchio
 //
-//  Created by Claude on 10/2/25.
+//  Created by 송재훈 on 10/2/25.
 //
 
 import UIKit
@@ -139,8 +139,8 @@ final class PhotoImageCache {
                 }
 
                 group.addTask { [weak self] in
-                    if let image = ImageStorageManager.shared.loadImage(fromPath: imagePath) {
-                        self?.setImage(image, forPhotoId: photoId, scope: scope)
+                    if let image = await ImageStorageManager.shared.loadImage(fromPath: imagePath) {
+                        await self?.setImage(image, forPhotoId: photoId, scope: scope)
                     }
                 }
             }

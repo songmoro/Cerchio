@@ -2,7 +2,7 @@
 //  PhotoListService.swift
 //  Cerchio
 //
-//  Created by Claude on 10/2/25.
+//  Created by 송재훈 on 10/2/25.
 //
 
 import UIKit
@@ -49,7 +49,8 @@ final class PhotoListService {
                 .sorted(byKeyPath: "createdAt", ascending: false)
 
             // 메인 스레드에서 필요한 데이터만 추출 (가벼운 작업)
-            return photos.map { (id: String(describing: $0.id), path: $0.localImagePath) }
+            // Array로 변환하여 Sendable 준수
+            return Array(photos.map { (id: String(describing: $0.id), path: $0.localImagePath) })
         }
 
         // 2. 백그라운드에서 이미지 로딩 (병렬 처리)
@@ -57,7 +58,7 @@ final class PhotoListService {
             for (index, data) in photoData.enumerated() {
                 group.addTask {
                     // 백그라운드에서 이미지 로드
-                    if let image = ImageStorageManager.shared.loadImage(fromPath: data.path) {
+                    if let image = await ImageStorageManager.shared.loadImage(fromPath: data.path) {
                         return (index, PhotoWithImage(id: data.id, image: image, path: data.path))
                     }
                     return (index, nil)
@@ -87,7 +88,7 @@ final class PhotoListService {
             for (index, path) in paths.enumerated() {
                 group.addTask {
                     // 백그라운드에서 이미지 로드
-                    let image = ImageStorageManager.shared.loadImage(fromPath: path)
+                    let image = await ImageStorageManager.shared.loadImage(fromPath: path)
                     return (index, image)
                 }
             }
@@ -120,7 +121,7 @@ final class PhotoListService {
                 }
 
                 // 로컬 파일 삭제
-                ImageStorageManager.shared.deleteImage(atPath: photo.localImagePath)
+                _ = ImageStorageManager.shared.deleteImage(atPath: photo.localImagePath)
 
                 try realm.write {
                     realm.delete(photo)

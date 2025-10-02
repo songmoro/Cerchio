@@ -211,8 +211,8 @@ final class SearchReactor: Reactor {
         return bookSearchService
             .searchBooks(query: query, display: display, start: start, sort: .accuracy)
             .flatMap { [weak self] response -> Observable<Mutation> in
-                guard let self = self else { return Observable.empty() }
-
+//                guard let self = self else { return Observable.empty() }
+                guard self != nil else { return Observable.empty() }
                 let books = BookSearchMapper.mapResponseToBooks(response)
                 let originalItems = response.items
                 let hasMore = response.start + response.display <= response.total

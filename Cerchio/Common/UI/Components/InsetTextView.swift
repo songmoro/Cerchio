@@ -2,7 +2,7 @@
 //  InsetTextView.swift
 //  Cerchio
 //
-//  Created by Claude Code on 10/2/25.
+//  Created by 송재훈 on 10/2/25.
 //
 
 import UIKit

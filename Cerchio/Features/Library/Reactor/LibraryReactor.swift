@@ -145,7 +145,8 @@ final class LibraryReactor: Reactor {
         if !tagNames.isEmpty && favoriteOnly {
             return tagRepository.getAllTags()
                 .map { [weak self] allTags -> [Book] in
-                    guard let self = self else { return [] }
+//                    guard let self = self else { return [] }
+                    guard self != nil else { return [] }
 
                     // 선택된 태그에 해당하는 bookId 추출
                     let filteredTags = allTags.filter { tagNames.contains($0.tagName) }

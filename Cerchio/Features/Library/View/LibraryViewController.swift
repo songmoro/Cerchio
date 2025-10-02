@@ -793,6 +793,7 @@ extension LibraryViewController {
             .observe(on: MainScheduler.instance)
             .subscribe(
                 onNext: { [weak self] savedQuote in
+                    guard self != nil else { return }
                     print("✅ Quote saved: \(quote), page: \(pageNumber ?? 0) for book: \(book.cleanTitle)")
                     // 필요시 UI 업데이트
                 },
@@ -846,13 +847,15 @@ extension LibraryViewController: UIImagePickerControllerDelegate, UINavigationCo
             .observe(on: MainScheduler.instance)
             .subscribe(
                 onNext: { [weak self] savedPhoto in
+                    guard self != nil else { return }
                     print("✅ Photo saved for book: \(book.cleanTitle)")
                     // 필요시 UI 업데이트
                 },
                 onError: { [weak self] error in
+                    guard self != nil else { return }
                     print("❌ Failed to save photo: \(error.localizedDescription)")
                     // 저장 실패 시 로컬 이미지 삭제
-                    ImageStorageManager.shared.deleteImage(atPath: localPath)
+                    _ = ImageStorageManager.shared.deleteImage(atPath: localPath)
                 }
             )
             .disposed(by: disposeBag)

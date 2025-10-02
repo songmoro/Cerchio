@@ -149,7 +149,7 @@ enum NetworkConstants {
 }
 
 // MARK: - Response Wrapper
-struct APIResponse<T: Decodable>: Decodable {
+nonisolated struct APIResponse<T: Decodable>: Decodable, @unchecked Sendable {
     let data: T
     let message: String?
     let success: Bool
@@ -164,7 +164,7 @@ struct APIResponse<T: Decodable>: Decodable {
 }
 
 // MARK: - Pagination Support
-struct PaginatedResponse<T: Decodable>: Decodable {
+nonisolated struct PaginatedResponse<T: Decodable>: Decodable {
     let items: [T]
     let totalCount: Int
     let page: Int

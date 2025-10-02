@@ -2,7 +2,7 @@
 //  ReadingInfoEditViewController.swift
 //  Cerchio
 //
-//  Created by Claude Code on 10/1/25.
+//  Created by 송재훈 on 10/1/25.
 //
 
 import UIKit
@@ -51,7 +51,7 @@ final class ReadingInfoEditViewController: UIViewController {
         picker.datePickerMode = .date
         picker.preferredDatePickerStyle = .inline
         picker.maximumDate = Date()
-        picker.addTarget(self, action: #selector(startDateChanged), for: .valueChanged)
+        picker.addTarget(ReadingInfoEditViewController.self, action: #selector(startDateChanged), for: .valueChanged)
         return picker
     }()
 

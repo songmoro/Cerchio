@@ -75,7 +75,8 @@ final class BookDetailReactor: Reactor {
                 Observable.just(.setLoading(false))
             ])
 
-        case .updateReadingProgress(let currentPage):
+//        case .updateReadingProgress(let currentPage):
+        case .updateReadingProgress(_):
 //            let progress = ReadingProgress(
 //                bookId: currentState.book.id.stringValue,
 //                currentPage: currentPage,
@@ -87,7 +88,7 @@ final class BookDetailReactor: Reactor {
 
         case .updateReadingInfo(let totalPages, let startDate, let endDate):
             // BookDetail 업데이트
-            guard var bookDetail = currentState.bookDetail else {
+            guard let bookDetail = currentState.bookDetail else {
                 print("❌ No bookDetail in currentState")
                 return Observable.empty()
             }
@@ -105,7 +106,7 @@ final class BookDetailReactor: Reactor {
             // Realm에 저장
             return bookRepository.getBookByISBN(currentState.book.isbn)
                 .flatMap { [weak self] existingBook -> Observable<Mutation> in
-                    guard let self = self, var existingBook = existingBook else {
+                    guard let self = self, let existingBook = existingBook else {
                         print("❌ No existing book found for ISBN: \(self?.currentState.book.isbn ?? "unknown")")
                         return Observable.empty()
                     }
@@ -264,7 +265,7 @@ final class BookDetailReactor: Reactor {
 }
 
 // MARK: - Supporting Models
-struct BookDetail: Hashable {
+nonisolated struct BookDetail: Hashable, Sendable {
     let book: Book
     let totalPages: Int
     let startDate: Date?
