@@ -30,6 +30,11 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
     // MARK: - Dependencies
     private var serviceFactory: ServiceFactory?
     private var service: BookDetailService?
+
+    // MARK: - Cache Scope
+    private var cacheScope: String {
+        return "BookDetail_\(reactor?.currentState.book.isbn ?? UUID().uuidString)"
+    }
     
     // MARK: - Section & Item Types
     nonisolated enum Section: CaseIterable {
@@ -101,6 +106,16 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
 
         // 화면이 다시 나타날 때마다 최신 도서 정보 로드
         reloadBookDetailData()
+    }
+
+    override func viewDidDisappear(_ animated: Bool) {
+        super.viewDidDisappear(animated)
+
+        // 화면을 완전히 벗어났을 때 (pop)
+        if isMovingFromParent {
+            // 이 화면의 캐시만 제거
+            PhotoImageCache.shared.clearScope(cacheScope)
+        }
     }
 
     private func reloadBookDetailData() {
@@ -421,8 +436,8 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
 
                         guard let image = image else { return }
 
-                        // 캐시에 저장
-                        PhotoImageCache.shared.setImage(image, forPhotoId: photoId)
+                        // 캐시에 저장 (스코프 지정)
+                        PhotoImageCache.shared.setImage(image, forPhotoId: photoId, scope: self?.cacheScope)
 
                         // UI 업데이트는 메인 스레드에서
                         await MainActor.run {
@@ -699,7 +714,8 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
 
             await PhotoImageCache.shared.loadAndCacheImages(
                 photoIds: photoData.map { $0.id },
-                imagePaths: photoData.map { $0.path }
+                imagePaths: photoData.map { $0.path },
+                scope: self.cacheScope
             )
 
             // 캐싱 완료 후 현재 스냅샷을 재적용하여 셀 갱신
@@ -727,6 +743,9 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
         let bookId = String(describing: reactor.currentState.book.id)
 
         Task { [weak self] in
+            guard let self = self else { return }
+            let scope = self.cacheScope
+
             do {
                 // 메인 스레드에서 Realm 접근하여 ID와 경로 추출
                 let photoData = try await MainActor.run {
@@ -748,7 +767,8 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
                 // 백그라운드에서 이미지 병렬 로드 및 캐싱
                 await PhotoImageCache.shared.loadAndCacheImages(
                     photoIds: photoData.map { $0.id },
-                    imagePaths: photoData.map { $0.path }
+                    imagePaths: photoData.map { $0.path },
+                    scope: scope
                 )
 
                 // 캐싱 완료 후 현재 스냅샷을 재적용하여 셀 갱신

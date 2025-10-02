@@ -30,6 +30,11 @@ final class PhotoListViewController: BaseViewController<PhotoListReactor> {
     private var selectedPhotoIds: Set<String> = []
     private var service: PhotoListService?
 
+    // MARK: - Cache Scope
+    private var cacheScope: String {
+        return "PhotoList_\(reactor?.currentState.bookId ?? UUID().uuidString)"
+    }
+
     // Navigation bar buttons
     private var addButton: UIBarButtonItem!
     private var editButton: UIBarButtonItem!
@@ -55,6 +60,16 @@ final class PhotoListViewController: BaseViewController<PhotoListReactor> {
         setupLayout()
         configureDataSource()
         setupRxBindings()
+    }
+
+    override func viewDidDisappear(_ animated: Bool) {
+        super.viewDidDisappear(animated)
+
+        // 화면을 완전히 벗어났을 때 (pop)
+        if isMovingFromParent {
+            // 이 화면의 캐시만 제거
+            PhotoImageCache.shared.clearScope(cacheScope)
+        }
     }
 
     private func createLayout() -> UICollectionViewLayout {
@@ -203,7 +218,7 @@ final class PhotoListViewController: BaseViewController<PhotoListReactor> {
                         }.value
 
                         guard let image = image else { return }
-                        PhotoImageCache.shared.setImage(image, forPhotoId: photo.id)
+                        PhotoImageCache.shared.setImage(image, forPhotoId: photo.id, scope: self.cacheScope)
 
                         await MainActor.run {
                             self.showImagePreview(image)
@@ -270,8 +285,8 @@ final class PhotoListViewController: BaseViewController<PhotoListReactor> {
 
                     guard let image = image else { return }
 
-                    // 캐시에 저장
-                    PhotoImageCache.shared.setImage(image, forPhotoId: photoId)
+                    // 캐시에 저장 (스코프 지정)
+                    PhotoImageCache.shared.setImage(image, forPhotoId: photoId, scope: self.cacheScope)
 
                     // UI 업데이트는 메인 스레드에서
                     await MainActor.run {
