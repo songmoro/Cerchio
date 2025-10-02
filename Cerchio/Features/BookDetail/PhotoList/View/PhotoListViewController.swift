@@ -30,10 +30,9 @@ final class PhotoListViewController: BaseViewController<PhotoListReactor> {
     private var selectedPhotoIds: Set<String> = []
     private var service: PhotoListService?
 
-    // MARK: - Cache Scope
-    private var cacheScope: String {
-        return "PhotoList_\(reactor?.currentState.bookId ?? UUID().uuidString)"
-    }
+    // MARK: - Image Storage
+    private var photoImages: [String: UIImage] = [:]  // photoId -> UIImage
+    private let imageQueue = DispatchQueue(label: "com.cerchio.photoList.imageQueue", attributes: .concurrent)
 
     // Navigation bar buttons
     private var addButton: UIBarButtonItem!
@@ -67,8 +66,10 @@ final class PhotoListViewController: BaseViewController<PhotoListReactor> {
 
         // 화면을 완전히 벗어났을 때 (pop)
         if isMovingFromParent {
-            // 이 화면의 캐시만 제거
-            PhotoImageCache.shared.clearScope(cacheScope)
+            // 이미지 딕셔너리 정리
+            imageQueue.async(flags: .barrier) { [weak self] in
+                self?.photoImages.removeAll()
+            }
         }
     }
 
@@ -207,23 +208,13 @@ final class PhotoListViewController: BaseViewController<PhotoListReactor> {
                     self.collectionView.deselectItem(at: indexPath, animated: true)
                 }
 
-                // 캐시에서 이미지 가져오기 (이미 로드되어 있을 가능성 높음)
-                if let cachedImage = PhotoImageCache.shared.getImage(forPhotoId: photo.id) {
-                    self.showImagePreview(cachedImage)
-                } else {
-                    // 캐시에 없으면 로드
-                    Task {
-                        let image = await Task.detached(priority: .userInitiated) {
-                            ImageStorageManager.shared.loadImage(fromPath: photo.localImagePath)
-                        }.value
+                // 딕셔너리에서 이미지 가져오기
+                let image = self.imageQueue.sync {
+                    self.photoImages[photo.id]
+                }
 
-                        guard let image = image else { return }
-                        PhotoImageCache.shared.setImage(image, forPhotoId: photo.id, scope: self.cacheScope)
-
-                        await MainActor.run {
-                            self.showImagePreview(image)
-                        }
-                    }
+                if let image = image {
+                    self.showImagePreview(image)
                 }
             })
             .disposed(by: disposeBag)
@@ -265,38 +256,21 @@ final class PhotoListViewController: BaseViewController<PhotoListReactor> {
     }
 
     private func configureDataSource() {
-        dataSource = DataSource(collectionView: collectionView) { collectionView, indexPath, photo in
+        dataSource = DataSource(collectionView: collectionView) { [weak self] collectionView, indexPath, photo in
             let cell = collectionView.dequeueReusableCell(withReuseIdentifier: PhotoGridCell.identifier, for: indexPath) as! PhotoGridCell
 
             let photoId = photo.id
 
-            // 캐시에서 이미지 가져오기
-            if let cachedImage = PhotoImageCache.shared.getImage(forPhotoId: photoId) {
-                cell.configure(with: cachedImage)
+            // 딕셔너리에서 이미지 가져오기
+            let image = self?.imageQueue.sync {
+                self?.photoImages[photoId]
+            }
+
+            if let image = image {
+                cell.configure(with: image)
             } else {
-                // 캐시에 없으면 백그라운드에서 로드
-                Task {
-                    let imagePath = photo.localImagePath
-
-                    // 백그라운드 스레드에서 이미지 디코딩
-                    let image = await Task.detached(priority: .userInitiated) {
-                        ImageStorageManager.shared.loadImage(fromPath: imagePath)
-                    }.value
-
-                    guard let image = image else { return }
-
-                    // 캐시에 저장 (스코프 지정)
-                    PhotoImageCache.shared.setImage(image, forPhotoId: photoId, scope: self.cacheScope)
-
-                    // UI 업데이트는 메인 스레드에서
-                    await MainActor.run {
-                        // 셀이 재사용되지 않았는지 확인
-                        if let currentIndexPath = collectionView.indexPath(for: cell),
-                           currentIndexPath == indexPath {
-                            cell.configure(with: image)
-                        }
-                    }
-                }
+                // 이미지가 아직 로드되지 않은 경우
+                cell.configure(with: nil)
             }
 
             return cell
@@ -315,7 +289,7 @@ final class PhotoListViewController: BaseViewController<PhotoListReactor> {
             .distinctUntilChanged()
             .asDriver(onErrorJustReturn: [])
             .drive(onNext: { [weak self] photos in
-                self?.updateSnapshot(with: photos)
+                self?.loadPhotosAndUpdateSnapshot(with: photos)
             })
             .disposed(by: disposeBag)
 
@@ -335,6 +309,47 @@ final class PhotoListViewController: BaseViewController<PhotoListReactor> {
         snapshot.appendSections([.photos])
         snapshot.appendItems(photos, toSection: .photos)
         dataSource.apply(snapshot, animatingDifferences: true)
+    }
+
+    private func loadPhotosAndUpdateSnapshot(with photos: [Photo]) {
+        // 스냅샷 먼저 업데이트 (photoId만)
+        updateSnapshot(with: photos)
+
+        // 백그라운드에서 이미지 로드
+        Task { [weak self] in
+            guard let self = self else { return }
+
+            await withTaskGroup(of: (String, UIImage?).self) { group in
+                for photo in photos {
+                    group.addTask {
+                        let image = ImageStorageManager.shared.loadImage(fromPath: photo.localImagePath)
+                        return (photo.id, image)
+                    }
+                }
+
+                for await (photoId, image) in group {
+                    guard let image = image else { continue }
+
+                    // 이미지 딕셔너리에 저장
+                    await self.imageQueue.async(flags: .barrier) { [weak self] in
+                        self?.photoImages[photoId] = image
+                    }
+                }
+            }
+
+            // 모든 이미지 로딩 완료 후 UI 갱신
+            await MainActor.run { [weak self] in
+                guard let self = self else { return }
+                var snapshot = self.dataSource.snapshot()
+                let allItems = snapshot.itemIdentifiers
+                if #available(iOS 15.0, *) {
+                    snapshot.reconfigureItems(allItems)
+                } else {
+                    snapshot.reloadItems(allItems)
+                }
+                self.dataSource.apply(snapshot, animatingDifferences: false)
+            }
+        }
     }
 
     // MARK: - Actions
@@ -476,7 +491,7 @@ final class PhotoGridCell: UICollectionViewCell {
         }
     }
 
-    func configure(with image: UIImage) {
+    func configure(with image: UIImage?) {
         imageView.image = image
     }
 

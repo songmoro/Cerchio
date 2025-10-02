@@ -56,7 +56,7 @@ final class PhotoItemCell: UICollectionViewCell, IsIdentifiable {
     }
 
     // MARK: - Configuration
-    func configure(with image: UIImage) {
+    func configure(with image: UIImage?) {
         imageView.image = image
     }
 

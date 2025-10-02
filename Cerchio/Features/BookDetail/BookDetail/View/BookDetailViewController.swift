@@ -31,10 +31,9 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
     private var serviceFactory: ServiceFactory?
     private var service: BookDetailService?
 
-    // MARK: - Cache Scope
-    private var cacheScope: String {
-        return "BookDetail_\(reactor?.currentState.book.isbn ?? UUID().uuidString)"
-    }
+    // MARK: - Image Storage
+    private var photoImages: [String: UIImage] = [:]  // photoId -> UIImage
+    private let imageQueue = DispatchQueue(label: "com.cerchio.bookDetail.imageQueue", attributes: .concurrent)
     
     // MARK: - Section & Item Types
     nonisolated enum Section: CaseIterable {
@@ -113,8 +112,10 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
 
         // 화면을 완전히 벗어났을 때 (pop)
         if isMovingFromParent {
-            // 이 화면의 캐시만 제거
-            PhotoImageCache.shared.clearScope(cacheScope)
+            // 이미지 딕셔너리 정리
+            imageQueue.async(flags: .barrier) { [weak self] in
+                self?.photoImages.removeAll()
+            }
         }
     }
 
@@ -411,45 +412,16 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
             case .photoItem(let photoId):
                 let cell: PhotoItemCell = collectionView.dequeueReusableCell(PhotoItemCell.self, for: indexPath)
 
-                // 캐시에서 이미지 가져오기
-                if let cachedImage = PhotoImageCache.shared.getImage(forPhotoId: photoId) {
-                    cell.configure(with: cachedImage)
+                // 딕셔너리에서 이미지 가져오기
+                let image = self?.imageQueue.sync {
+                    self?.photoImages[photoId]
+                }
+
+                if let image = image {
+                    cell.configure(with: image)
                 } else {
-                    // 캐시에 없으면 백그라운드에서 로드
-                    Task {
-                        // Realm에서 경로 찾기 (메인 스레드에서)
-                        let imagePath: String? = await MainActor.run {
-                            guard let realm = try? Realm(),
-                                  let objectId = try? ObjectId(string: photoId),
-                                  let photo = realm.object(ofType: RealmPhoto.self, forPrimaryKey: objectId) else {
-                                return nil
-                            }
-                            return photo.localImagePath
-                        }
-
-                        guard let imagePath = imagePath else { return }
-
-                        // 백그라운드에서 이미지 로드
-                        let image = await Task.detached(priority: .userInitiated) {
-                            ImageStorageManager.shared.loadImage(fromPath: imagePath)
-                        }.value
-
-                        guard let image = image else { return }
-
-                        // 캐시에 저장 (스코프 지정)
-                        PhotoImageCache.shared.setImage(image, forPhotoId: photoId, scope: self?.cacheScope)
-
-                        // UI 업데이트는 메인 스레드에서
-                        await MainActor.run {
-                            // 셀이 재사용되지 않았는지 확인
-                            if let currentCell = collectionView.cellForItem(at: indexPath) as? PhotoItemCell,
-                               let currentItem = self?.dataSource.itemIdentifier(for: indexPath),
-                               case .photoItem(let currentPhotoId) = currentItem,
-                               currentPhotoId == photoId {
-                                currentCell.configure(with: image)
-                            }
-                        }
-                    }
+                    // 이미지가 아직 로드되지 않은 경우 (비동기 로딩 중)
+                    cell.configure(with: nil)
                 }
 
                 cell.onPhotoTapped = { [weak self] image in
@@ -696,69 +668,54 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
         }
     }
 
-    /// 비동기로 사진 로드 (Service 사용)
-    /// - 캐시 확인 후 로딩 전략 결정
-    /// - 캐시된 이미지: 즉시 표시
-    /// - 미캐시 이미지: 백그라운드 로딩
+    /// 비동기로 사진 로드
+    /// - 메인: Realm 경로 추출, photoId만 스냅샷에 추가
+    /// - 백그라운드: 이미지 로딩 및 딕셔너리 저장
     private func loadPhotosAsync(photos: [RealmPhoto]) {
         // 메인 스레드에서 ID와 경로 추출 (가벼운 작업)
         let sortedPhotos = photos.sorted { $0.createdAt > $1.createdAt }
         let photoData = sortedPhotos.map { (id: String(describing: $0.id), path: $0.localImagePath) }
+        let photoIds = photoData.map { $0.id }
 
-        // 캐시 상태 확인
-        let cachedPhotoIds = photoData.filter {
-            PhotoImageCache.shared.getImage(forPhotoId: $0.id) != nil
-        }.map { $0.id }
+        // photoId만 먼저 스냅샷에 추가
+        updateSnapshotWithPhotoIds(photoIds)
 
-        let uncachedPhotoData = photoData.filter {
-            PhotoImageCache.shared.getImage(forPhotoId: $0.id) == nil
-        }
+        // 백그라운드에서 이미지 병렬 로드
+        Task { [weak self] in
+            guard let self = self else { return }
 
-        // 캐시된 데이터가 있으면 즉시 표시
-        if !cachedPhotoIds.isEmpty {
-            updateSnapshotWithPhotoIds(cachedPhotoIds)
-        }
-
-        // 캐시되지 않은 데이터가 있으면 로딩 인디케이터 표시 후 로드
-        if !uncachedPhotoData.isEmpty {
-            // 로딩 인디케이터가 아직 없으면 추가
-            if cachedPhotoIds.isEmpty {
-                var snapshot = dataSource.snapshot()
-                let currentPhotoItems = snapshot.itemIdentifiers(inSection: .photoPages)
-                let hasLoadingIndicator = currentPhotoItems.contains {
-                    if case .photoLoadingIndicator = $0 { return true }
-                    return false
+            await withTaskGroup(of: (String, UIImage?).self) { group in
+                for data in photoData {
+                    group.addTask {
+                        let image = ImageStorageManager.shared.loadImage(fromPath: data.path)
+                        return (data.id, image)
+                    }
                 }
 
-                if !hasLoadingIndicator {
-                    if let addButtonItem = currentPhotoItems.first(where: {
-                        if case .addPhotoButton = $0 { return true }
-                        return false
-                    }) {
-                        snapshot.insertItems([.photoLoadingIndicator], afterItem: addButtonItem)
-                        dataSource.apply(snapshot, animatingDifferences: false)
+                for await (photoId, image) in group {
+                    guard let image = image else { continue }
+
+                    // 이미지 딕셔너리에 저장
+                    await self.imageQueue.async(flags: .barrier) { [weak self] in
+                        self?.photoImages[photoId] = image
                     }
                 }
             }
 
-            // 백그라운드에서 이미지 병렬 로드 및 캐싱
-            Task { [weak self] in
+            // 모든 이미지 로딩 완료 후 UI 갱신
+            await MainActor.run { [weak self] in
                 guard let self = self else { return }
-
-                await PhotoImageCache.shared.loadAndCacheImages(
-                    photoIds: uncachedPhotoData.map { $0.id },
-                    imagePaths: uncachedPhotoData.map { $0.path },
-                    scope: self.cacheScope
-                )
-
-                // 로딩 완료 후 UI 업데이트
-                await MainActor.run { [weak self] in
-                    guard let self = self else { return }
-
-                    // 전체 photoId 목록으로 스냅샷 업데이트
-                    let allPhotoIds = photoData.map { $0.id }
-                    self.updateSnapshotWithPhotoIds(allPhotoIds)
+                var snapshot = self.dataSource.snapshot()
+                let photoItems = snapshot.itemIdentifiers(inSection: .photoPages).filter {
+                    if case .photoItem = $0 { return true }
+                    return false
                 }
+                if #available(iOS 15.0, *) {
+                    snapshot.reconfigureItems(photoItems)
+                } else {
+                    snapshot.reloadItems(photoItems)
+                }
+                self.dataSource.apply(snapshot, animatingDifferences: false)
             }
         }
     }
@@ -770,7 +727,6 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
 
         Task { [weak self] in
             guard let self = self else { return }
-            let scope = self.cacheScope
 
             do {
                 // 메인 스레드에서 Realm 접근하여 ID와 경로 추출
@@ -783,37 +739,46 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
                     return Array(photos.map { (id: String(describing: $0.id), path: $0.localImagePath) })
                 }
 
-                // 캐시 상태 확인
-                let cachedPhotoIds = photoData.filter {
-                    PhotoImageCache.shared.getImage(forPhotoId: $0.id) != nil
-                }.map { $0.id }
+                let photoIds = photoData.map { $0.id }
 
-                let uncachedPhotoData = photoData.filter {
-                    PhotoImageCache.shared.getImage(forPhotoId: $0.id) == nil
+                // photoId만 먼저 스냅샷에 추가
+                await MainActor.run { [weak self] in
+                    self?.updateSnapshotWithPhotoIds(photoIds)
                 }
 
-                // 캐시된 데이터가 있으면 즉시 표시
-                if !cachedPhotoIds.isEmpty {
-                    await MainActor.run { [weak self] in
-                        self?.updateSnapshotWithPhotoIds(cachedPhotoIds)
+                // 백그라운드에서 이미지 병렬 로드
+                await withTaskGroup(of: (String, UIImage?).self) { group in
+                    for data in photoData {
+                        group.addTask {
+                            let image = ImageStorageManager.shared.loadImage(fromPath: data.path)
+                            return (data.id, image)
+                        }
+                    }
+
+                    for await (photoId, image) in group {
+                        guard let image = image else { continue }
+
+                        // 이미지 딕셔너리에 저장
+                        await self.imageQueue.async(flags: .barrier) { [weak self] in
+                            self?.photoImages[photoId] = image
+                        }
                     }
                 }
 
-                // 캐시되지 않은 데이터가 있으면 로드
-                if !uncachedPhotoData.isEmpty {
-                    // 백그라운드에서 이미지 병렬 로드 및 캐싱
-                    await PhotoImageCache.shared.loadAndCacheImages(
-                        photoIds: uncachedPhotoData.map { $0.id },
-                        imagePaths: uncachedPhotoData.map { $0.path },
-                        scope: scope
-                    )
-
-                    // 로딩 완료 후 전체 photoId로 스냅샷 업데이트
-                    await MainActor.run { [weak self] in
-                        guard let self = self else { return }
-                        let allPhotoIds = photoData.map { $0.id }
-                        self.updateSnapshotWithPhotoIds(allPhotoIds)
+                // 모든 이미지 로딩 완료 후 UI 갱신
+                await MainActor.run { [weak self] in
+                    guard let self = self else { return }
+                    var snapshot = self.dataSource.snapshot()
+                    let photoItems = snapshot.itemIdentifiers(inSection: .photoPages).filter {
+                        if case .photoItem = $0 { return true }
+                        return false
                     }
+                    if #available(iOS 15.0, *) {
+                        snapshot.reconfigureItems(photoItems)
+                    } else {
+                        snapshot.reloadItems(photoItems)
+                    }
+                    self.dataSource.apply(snapshot, animatingDifferences: false)
                 }
             } catch {
                 print("❌ Failed to load photos: \(error.localizedDescription)")
@@ -870,14 +835,22 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
         return [
             // 1. 사진 보기
             CircularMenuItem(name: "보기", image: UIImage(systemName: "eye")) { [weak self] in
-                if let image = PhotoImageCache.shared.getImage(forPhotoId: photoId) {
-                    self?.showImagePreview(image)
+                guard let self = self else { return }
+                let image = self.imageQueue.sync {
+                    self.photoImages[photoId]
+                }
+                if let image = image {
+                    self.showImagePreview(image)
                 }
             },
             // 2. 사진 저장
             CircularMenuItem(name: "저장", image: UIImage(systemName: "square.and.arrow.down")) { [weak self] in
-                if let image = PhotoImageCache.shared.getImage(forPhotoId: photoId) {
-                    self?.saveImageToPhotoLibrary(image)
+                guard let self = self else { return }
+                let image = self.imageQueue.sync {
+                    self.photoImages[photoId]
+                }
+                if let image = image {
+                    self.saveImageToPhotoLibrary(image)
                 }
             },
             // 3. 사진 삭제
@@ -954,8 +927,10 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
         // 로컬 파일 삭제
         ImageStorageManager.shared.deleteImage(atPath: photo.localImagePath)
 
-        // 캐시에서 제거
-        PhotoImageCache.shared.removeImage(forPhotoId: photoId)
+        // 이미지 딕셔너리에서 제거
+        imageQueue.async(flags: .barrier) { [weak self] in
+            self?.photoImages.removeValue(forKey: photoId)
+        }
 
         // Repository에서 삭제
         photoRepository.deletePhoto(photo)
