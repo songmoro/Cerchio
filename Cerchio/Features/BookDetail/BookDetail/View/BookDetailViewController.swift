@@ -697,42 +697,68 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
     }
 
     /// 비동기로 사진 로드 (Service 사용)
-    /// - 메인 스레드: Realm 접근, ID와 경로 추출
-    /// - 백그라운드: 이미지 로딩 및 캐싱 (병렬)
+    /// - 캐시 확인 후 로딩 전략 결정
+    /// - 캐시된 이미지: 즉시 표시
+    /// - 미캐시 이미지: 백그라운드 로딩
     private func loadPhotosAsync(photos: [RealmPhoto]) {
         // 메인 스레드에서 ID와 경로 추출 (가벼운 작업)
         let sortedPhotos = photos.sorted { $0.createdAt > $1.createdAt }
         let photoData = sortedPhotos.map { (id: String(describing: $0.id), path: $0.localImagePath) }
-        let photoIds = photoData.map { $0.id }
 
-        // UI에 photoId 먼저 표시 (로딩 인디케이터 제거)
-        updateSnapshotWithPhotoIds(photoIds)
+        // 캐시 상태 확인
+        let cachedPhotoIds = photoData.filter {
+            PhotoImageCache.shared.getImage(forPhotoId: $0.id) != nil
+        }.map { $0.id }
 
-        // 백그라운드에서 이미지 병렬 로드 및 캐싱
-        Task { [weak self] in
-            guard let self = self else { return }
+        let uncachedPhotoData = photoData.filter {
+            PhotoImageCache.shared.getImage(forPhotoId: $0.id) == nil
+        }
 
-            await PhotoImageCache.shared.loadAndCacheImages(
-                photoIds: photoData.map { $0.id },
-                imagePaths: photoData.map { $0.path },
-                scope: self.cacheScope
-            )
+        // 캐시된 데이터가 있으면 즉시 표시
+        if !cachedPhotoIds.isEmpty {
+            updateSnapshotWithPhotoIds(cachedPhotoIds)
+        }
 
-            // 캐싱 완료 후 현재 스냅샷을 재적용하여 셀 갱신
-            await MainActor.run { [weak self] in
-                guard let self = self else { return }
-                var snapshot = self.dataSource.snapshot()
-                let photoItems = snapshot.itemIdentifiers(inSection: .photoPages).filter {
-                    if case .photoItem = $0 { return true }
+        // 캐시되지 않은 데이터가 있으면 로딩 인디케이터 표시 후 로드
+        if !uncachedPhotoData.isEmpty {
+            // 로딩 인디케이터가 아직 없으면 추가
+            if cachedPhotoIds.isEmpty {
+                var snapshot = dataSource.snapshot()
+                let currentPhotoItems = snapshot.itemIdentifiers(inSection: .photoPages)
+                let hasLoadingIndicator = currentPhotoItems.contains {
+                    if case .photoLoadingIndicator = $0 { return true }
                     return false
                 }
-                if #available(iOS 15.0, *) {
-                    snapshot.reconfigureItems(photoItems)
-                } else {
-                    // iOS 14 fallback: 스냅샷 재적용
-                    snapshot.reloadItems(photoItems)
+
+                if !hasLoadingIndicator {
+                    if let addButtonItem = currentPhotoItems.first(where: {
+                        if case .addPhotoButton = $0 { return true }
+                        return false
+                    }) {
+                        snapshot.insertItems([.photoLoadingIndicator], afterItem: addButtonItem)
+                        dataSource.apply(snapshot, animatingDifferences: false)
+                    }
                 }
-                self.dataSource.apply(snapshot, animatingDifferences: false)
+            }
+
+            // 백그라운드에서 이미지 병렬 로드 및 캐싱
+            Task { [weak self] in
+                guard let self = self else { return }
+
+                await PhotoImageCache.shared.loadAndCacheImages(
+                    photoIds: uncachedPhotoData.map { $0.id },
+                    imagePaths: uncachedPhotoData.map { $0.path },
+                    scope: self.cacheScope
+                )
+
+                // 로딩 완료 후 UI 업데이트
+                await MainActor.run { [weak self] in
+                    guard let self = self else { return }
+
+                    // 전체 photoId 목록으로 스냅샷 업데이트
+                    let allPhotoIds = photoData.map { $0.id }
+                    self.updateSnapshotWithPhotoIds(allPhotoIds)
+                }
             }
         }
     }
@@ -757,35 +783,37 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
                     return Array(photos.map { (id: String(describing: $0.id), path: $0.localImagePath) })
                 }
 
-                let photoIds = photoData.map { $0.id }
+                // 캐시 상태 확인
+                let cachedPhotoIds = photoData.filter {
+                    PhotoImageCache.shared.getImage(forPhotoId: $0.id) != nil
+                }.map { $0.id }
 
-                // UI에 photoId 먼저 표시
-                await MainActor.run { [weak self] in
-                    self?.updateSnapshotWithPhotoIds(photoIds)
+                let uncachedPhotoData = photoData.filter {
+                    PhotoImageCache.shared.getImage(forPhotoId: $0.id) == nil
                 }
 
-                // 백그라운드에서 이미지 병렬 로드 및 캐싱
-                await PhotoImageCache.shared.loadAndCacheImages(
-                    photoIds: photoData.map { $0.id },
-                    imagePaths: photoData.map { $0.path },
-                    scope: scope
-                )
+                // 캐시된 데이터가 있으면 즉시 표시
+                if !cachedPhotoIds.isEmpty {
+                    await MainActor.run { [weak self] in
+                        self?.updateSnapshotWithPhotoIds(cachedPhotoIds)
+                    }
+                }
 
-                // 캐싱 완료 후 현재 스냅샷을 재적용하여 셀 갱신
-                await MainActor.run { [weak self] in
-                    guard let self = self else { return }
-                    var snapshot = self.dataSource.snapshot()
-                    let photoItems = snapshot.itemIdentifiers(inSection: .photoPages).filter {
-                        if case .photoItem = $0 { return true }
-                        return false
+                // 캐시되지 않은 데이터가 있으면 로드
+                if !uncachedPhotoData.isEmpty {
+                    // 백그라운드에서 이미지 병렬 로드 및 캐싱
+                    await PhotoImageCache.shared.loadAndCacheImages(
+                        photoIds: uncachedPhotoData.map { $0.id },
+                        imagePaths: uncachedPhotoData.map { $0.path },
+                        scope: scope
+                    )
+
+                    // 로딩 완료 후 전체 photoId로 스냅샷 업데이트
+                    await MainActor.run { [weak self] in
+                        guard let self = self else { return }
+                        let allPhotoIds = photoData.map { $0.id }
+                        self.updateSnapshotWithPhotoIds(allPhotoIds)
                     }
-                    if #available(iOS 15.0, *) {
-                        snapshot.reconfigureItems(photoItems)
-                    } else {
-                        // iOS 14 fallback: 스냅샷 재적용
-                        snapshot.reloadItems(photoItems)
-                    }
-                    self.dataSource.apply(snapshot, animatingDifferences: false)
                 }
             } catch {
                 print("❌ Failed to load photos: \(error.localizedDescription)")
