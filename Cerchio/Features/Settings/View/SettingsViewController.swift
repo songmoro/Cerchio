@@ -78,6 +78,17 @@ final class SettingsViewController: BaseViewController<SettingsReactor> {
                 self?.handleResetState(isResetting)
             })
             .disposed(by: disposeBag)
+
+        // 리셋 완료 상태 감지
+        reactor.state
+            .map { $0.resetCompleted }
+            .distinctUntilChanged()
+            .filter { $0 == true }
+            .observe(on: MainScheduler.instance)
+            .subscribe(onNext: { [weak self] _ in
+                self?.handleResetCompleted()
+            })
+            .disposed(by: disposeBag)
     }
 
     // MARK: - Private Methods
@@ -119,6 +130,11 @@ final class SettingsViewController: BaseViewController<SettingsReactor> {
 
     private func performReset() {
         reactor?.action.onNext(.resetAllData)
+    }
+
+    private func handleResetCompleted() {
+        // 리셋 완료 알림 전송 (SceneDelegate에서 AppCoordinator 재시작)
+        NotificationCenter.default.post(name: .dataDidReset, object: nil)
     }
 }
 
