@@ -355,11 +355,13 @@ final class QuoteSaveViewController: UIViewController {
             preferredStyle: .alert
         )
 
+        // 1. 계속 작성 (취소 스타일 - 기본 액션)
+        alert.addAction(UIAlertAction(title: String(localized: .quoteSaveContinueEditing), style: .cancel))
+
+        // 2. 삭제 (파괴적 스타일)
         alert.addAction(UIAlertAction(title: String(localized: .quoteSaveDiscard), style: .destructive) { [weak self] _ in
             self?.eventRelay.accept(.cancelled)
         })
-
-        alert.addAction(UIAlertAction(title: String(localized: .actionCancel), style: .cancel))
 
         present(alert, animated: true)
     }

@@ -32,6 +32,10 @@ enum Localized: String {
     case `photo.save_success.title`
     case `photo.save_to_gallery`
     case `photo.view`
+    case `photo_library.permission.go_to_settings`
+    case `photo_library.permission.message`
+    case `photo_library.permission.title`
+    case `quote_save.continue_editing`
     case `quote_save.discard`
     case `quote_save.discard_message`
     case `quote_save.discard_title`

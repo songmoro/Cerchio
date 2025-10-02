@@ -18,26 +18,12 @@ final class SettingsViewController: BaseViewController<SettingsReactor> {
     private let tableView = UITableView(frame: .zero, style: .insetGrouped)
 
     private enum Section: Int, CaseIterable {
-        case general
         case data
 
         var title: String? {
             switch self {
-            case .general:
-                return SettingsConstants.Strings.generalSectionTitle
             case .data:
                 return SettingsConstants.Strings.dataSectionTitle
-            }
-        }
-    }
-
-    private enum GeneralRow: Int, CaseIterable {
-        case language
-
-        var title: String {
-            switch self {
-            case .language:
-                return SettingsConstants.Strings.languageRowTitle
             }
         }
     }
@@ -92,17 +78,6 @@ final class SettingsViewController: BaseViewController<SettingsReactor> {
                 self?.handleResetState(isResetting)
             })
             .disposed(by: disposeBag)
-
-        reactor.state
-            .map { $0.currentLanguage }
-            .distinctUntilChanged()
-            .skip(1) // 초기 바인딩 시 얼럿 표시 방지
-            .observe(on: MainScheduler.instance)
-            .subscribe(onNext: { [weak self] _ in
-                self?.tableView.reloadData()
-                self?.showLanguageChangedAlert()
-            })
-            .disposed(by: disposeBag)
     }
 
     // MARK: - Private Methods
@@ -145,55 +120,6 @@ final class SettingsViewController: BaseViewController<SettingsReactor> {
     private func performReset() {
         reactor?.action.onNext(.resetAllData)
     }
-
-    private func showLanguageSelection() {
-        let alert = UIAlertController(
-            title: SettingsConstants.Strings.languageSelectionTitle,
-            message: SettingsConstants.Strings.languageSelectionMessage,
-            preferredStyle: .actionSheet
-        )
-
-        for language in AppLanguage.allCases {
-            let action = UIAlertAction(title: language.displayName, style: .default) { [weak self] _ in
-                self?.changeLanguage(to: language)
-            }
-
-            // 현재 선택된 언어 표시
-            if language == LanguageManager.shared.currentLanguage {
-                action.setValue(true, forKey: "checked")
-            }
-
-            alert.addAction(action)
-        }
-
-        alert.addAction(UIAlertAction(title: SettingsConstants.Strings.cancelAction, style: .cancel))
-
-        // iPad 지원
-        if let popover = alert.popoverPresentationController {
-            popover.sourceView = tableView
-            if let cell = tableView.cellForRow(at: IndexPath(row: 0, section: 0)) {
-                popover.sourceRect = cell.frame
-            }
-        }
-
-        present(alert, animated: true)
-    }
-
-    private func changeLanguage(to language: AppLanguage) {
-        reactor?.action.onNext(.changeLanguage(language))
-    }
-
-    private func showLanguageChangedAlert() {
-        let alert = UIAlertController(
-            title: SettingsConstants.Strings.languageChangedTitle,
-            message: SettingsConstants.Strings.languageChangedMessage,
-            preferredStyle: .alert
-        )
-
-        alert.addAction(UIAlertAction(title: SettingsConstants.Strings.confirmAction, style: .default))
-
-        present(alert, animated: true)
-    }
 }
 
 // MARK: - UITableViewDataSource
@@ -207,8 +133,6 @@ extension SettingsViewController: UITableViewDataSource {
         guard let sectionType = Section(rawValue: section) else { return 0 }
 
         switch sectionType {
-        case .general:
-            return GeneralRow.allCases.count
         case .data:
             return DataRow.allCases.count
         }
@@ -220,23 +144,6 @@ extension SettingsViewController: UITableViewDataSource {
         }
 
         switch sectionType {
-        case .general:
-            let cell = UITableViewCell(style: .value1, reuseIdentifier: SettingsConstants.CellIdentifiers.valueCell)
-            if let rowType = GeneralRow(rawValue: indexPath.row) {
-                cell.textLabel?.text = rowType.title
-                cell.textLabel?.textColor = .label
-                cell.selectionStyle = .default
-                cell.accessoryType = .disclosureIndicator
-
-                // 현재 선택된 언어 표시
-                if rowType == .language {
-                    let currentLanguage = LanguageManager.shared.currentLanguage
-                    cell.detailTextLabel?.text = currentLanguage.displayName
-                    cell.detailTextLabel?.textColor = .secondaryLabel
-                }
-            }
-            return cell
-
         case .data:
             let cell = tableView.dequeueReusableCell(withIdentifier: SettingsConstants.CellIdentifiers.defaultCell, for: indexPath)
             if let rowType = DataRow(rawValue: indexPath.row) {
@@ -264,14 +171,6 @@ extension SettingsViewController: UITableViewDelegate {
         guard let sectionType = Section(rawValue: indexPath.section) else { return }
 
         switch sectionType {
-        case .general:
-            if let rowType = GeneralRow(rawValue: indexPath.row) {
-                switch rowType {
-                case .language:
-                    showLanguageSelection()
-                }
-            }
-
         case .data:
             if let rowType = DataRow(rawValue: indexPath.row) {
                 switch rowType {

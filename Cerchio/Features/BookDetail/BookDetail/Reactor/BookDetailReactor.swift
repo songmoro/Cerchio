@@ -51,9 +51,24 @@ final class BookDetailReactor: Reactor {
     func mutate(action: Action) -> Observable<Mutation> {
         switch action {
         case .loadBookDetail:
+            // 최신 Book 데이터를 먼저 로드하여 isFavorite 등의 상태를 동기화
             return Observable.concat([
                 Observable.just(.setLoading(true)),
-                loadBookDetailData()
+                bookRepository.getBookByISBN(currentState.book.isbn)
+                    .flatMap { [weak self] updatedBook -> Observable<Mutation> in
+                        guard let self = self else { return Observable.empty() }
+
+                        if let updatedBook = updatedBook {
+                            // Book이 업데이트되었으면 먼저 Book을 업데이트
+                            return Observable.concat([
+                                Observable.just(.updateBook(updatedBook)),
+                                self.loadBookDetailDataWithBook(updatedBook)
+                            ])
+                        } else {
+                            // Book을 찾지 못했으면 기존 Book으로 로드
+                            return self.loadBookDetailData()
+                        }
+                    }
                     .delay(.milliseconds(300), scheduler: MainScheduler.instance),
                 Observable.just(.setLoading(false))
             ])
@@ -204,6 +219,8 @@ final class BookDetailReactor: Reactor {
 
         case .updateBook(let book):
             newState.book = book
+            // Book이 업데이트되면 isFavorite 상태도 함께 업데이트
+            newState.isFavorite = book.isFavorite
         }
 
         return newState

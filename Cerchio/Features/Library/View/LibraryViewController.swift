@@ -346,6 +346,9 @@ final class LibraryViewController: BaseViewController<LibraryReactor> {
     }
     
     private func createMenuItems(for book: Book, at indexPath: IndexPath) -> [CircularMenuItem] {
+        // 최신 즐겨찾기 상태를 실시간으로 가져오기
+        let isFavorite = getCurrentFavoriteState(for: book)
+
         let menuItems: [CircularMenuItem] = [
             // 1. 사진 찍기
             CircularMenuItem(name: "사진", image: UIImage(systemName: "camera")) { [weak self] in
@@ -356,7 +359,7 @@ final class LibraryViewController: BaseViewController<LibraryReactor> {
                 self?.saveQuote(for: book)
             },
             // 3. 즐겨찾기
-            CircularMenuItem(name: book.isFavorite ? "즐겨찾기 해제" : "즐겨찾기", image: UIImage(systemName: book.isFavorite ? "heart.fill" : "heart")) { [weak self] in
+            CircularMenuItem(name: isFavorite ? "즐겨찾기 해제" : "즐겨찾기", image: UIImage(systemName: isFavorite ? "heart.fill" : "heart")) { [weak self] in
                 self?.toggleFavorite(book)
             },
             // 4. 삭제
@@ -370,6 +373,16 @@ final class LibraryViewController: BaseViewController<LibraryReactor> {
         ]
 
         return menuItems
+    }
+
+    private func getCurrentFavoriteState(for book: Book) -> Bool {
+        // Reactor의 최신 상태에서 해당 책의 즐겨찾기 상태를 가져옴
+        guard let reactor = reactor,
+              let books = reactor.currentState.displayBooks,
+              let currentBook = books.first(where: { $0.isbn == book.isbn }) else {
+            return book.isFavorite
+        }
+        return currentBook.isFavorite
     }
 
     // MARK: - Menu Actions
@@ -396,10 +409,13 @@ final class LibraryViewController: BaseViewController<LibraryReactor> {
     private func toggleFavorite(_ book: Book) {
         guard let bookRepository = bookRepository else { return }
 
-        bookRepository.toggleFavorite(bookId: book.id)
+        // book.id는 이미 ObjectId의 문자열 표현이므로 그대로 사용
+        let bookId = book.id
+
+        bookRepository.toggleFavorite(bookId: bookId)
             .observe(on: MainScheduler.instance)
             .subscribe(onNext: { [weak self] isFavorite in
-                print("✅ Favorite toggled: \(isFavorite)")
+                print("✅ Favorite toggled for '\(book.cleanTitle)': \(isFavorite)")
                 // 데이터 새로고침
                 self?.reactor?.action.onNext(.loadBooks)
             }, onError: { error in

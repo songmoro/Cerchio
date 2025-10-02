@@ -278,13 +278,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Camera access is required to take photos. Please allow camera permission in Settings."
+            "value" : "To save memorable pages from your books, camera access is needed.\n\nPlease enable camera permission in Settings."
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "사진 촬영을 위해 카메라 접근 권한이 필요합니다. 설정에서 권한을 허용해주세요."
+            "value" : "책의 인상 깊은 페이지를 촬영하여 저장하기 위해 카메라 권한이 필요합니다.\n\n설정에서 카메라 접근을 허용해주세요."
           }
         }
       }
@@ -296,13 +296,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Camera Access Required"
+            "value" : "Camera Access Needed"
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "카메라 접근 권한 필요"
+            "value" : "카메라 접근 권한이 필요해요"
           }
         }
       }
@@ -321,6 +321,60 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "이 사진을 삭제하시겠습니까?"
+          }
+        }
+      }
+    },
+    "photo_library.permission.go_to_settings" : {
+      "comment" : "Go to settings button for photo library",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Go to Settings"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "설정으로 이동"
+          }
+        }
+      }
+    },
+    "photo_library.permission.message" : {
+      "comment" : "Photo library permission message",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "To save book page photos to your device, photo library access is needed.\n\nPlease enable photo library permission in Settings."
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "촬영한 책 페이지 사진을 기기에 저장하기 위해 사진 라이브러리 권한이 필요합니다.\n\n설정에서 사진 접근을 허용해주세요."
+          }
+        }
+      }
+    },
+    "photo_library.permission.title" : {
+      "comment" : "Photo library permission title",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Photo Library Access Needed"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "사진 라이브러리 접근 권한이 필요해요"
           }
         }
       }
@@ -451,6 +505,24 @@
         }
       }
     },
+    "quote_save.continue_editing" : {
+      "comment" : "Continue editing action",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keep Editing"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "계속 작성"
+          }
+        }
+      }
+    },
     "quote_save.discard" : {
       "comment" : "Discard action",
       "extractionState" : "manual",
@@ -464,7 +536,7 @@
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "취소"
+            "value" : "삭제"
           }
         }
       }
@@ -476,13 +548,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Are you sure you want to discard the text you entered?"
+            "value" : "The text you entered will not be saved."
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "입력한 내용을 취소하시겠습니까?"
+            "value" : "입력한 내용이 저장되지 않습니다."
           }
         }
       }
@@ -494,13 +566,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Discard Changes"
+            "value" : "Discard Changes?"
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "변경사항 취소"
+            "value" : "작성을 취소하시겠습니까?"
           }
         }
       }
