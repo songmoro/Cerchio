@@ -129,6 +129,8 @@ final class BookDetailCoordinator: BaseCoordinator, Coordinatable {
         case .close:
             navigationController.dismiss(animated: true)
         case .finished:
+            // 화면을 pop한 후 coordinator 정리
+            navigationController.popViewController(animated: true)
             finish()
         }
     }

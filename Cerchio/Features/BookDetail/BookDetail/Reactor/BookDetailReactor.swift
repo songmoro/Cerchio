@@ -27,6 +27,7 @@ final class BookDetailReactor: Reactor {
         case setFavorite(Bool)
         case setReadingProgress(ReadingProgress)
         case updateBook(Book)
+        case bookDeleted
     }
 
     struct State {
@@ -36,6 +37,7 @@ final class BookDetailReactor: Reactor {
         var error: Error?
         var isFavorite: Bool = false
         var readingProgress: ReadingProgress?
+        var isDeleted: Bool = false
     }
 
     let initialState: State
@@ -184,8 +186,12 @@ final class BookDetailReactor: Reactor {
             return Observable.empty()
 
         case .deleteBook:
-            // TODO: 실제 삭제 로직 구현
-            return Observable.empty()
+            return bookRepository.deleteBookByISBN(currentState.book.isbn)
+                .map { _ in .bookDeleted }
+                .catch { error in
+                    print("❌ Failed to delete book: \(error.localizedDescription)")
+                    return Observable.just(.setError(error))
+                }
 
         case .updateBookAndReload(let updatedBook):
             // Book 업데이트 후 BookDetail 다시 로드
@@ -221,6 +227,9 @@ final class BookDetailReactor: Reactor {
             newState.book = book
             // Book이 업데이트되면 isFavorite 상태도 함께 업데이트
             newState.isFavorite = book.isFavorite
+
+        case .bookDeleted:
+            newState.isDeleted = true
         }
 
         return newState

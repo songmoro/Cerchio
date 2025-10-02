@@ -158,7 +158,7 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
         // Rx 바인딩
         button.rx.tap
             .subscribe(onNext: { [weak self] in
-                self?.reactor?.action.onNext(.deleteBook)
+                self?.showDeleteConfirmationAlert()
             })
             .disposed(by: disposeBag)
     }
@@ -231,6 +231,17 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
             .asDriver(onErrorJustReturn: false)
             .drive(onNext: { [weak self] isFavorite in
                 self?.updateFavoriteButton(isFavorite: isFavorite)
+            })
+            .disposed(by: disposeBag)
+
+        // State - Book deleted
+        reactor.state
+            .map { $0.isDeleted }
+            .distinctUntilChanged()
+            .filter { $0 == true }
+            .asDriver(onErrorJustReturn: false)
+            .drive(onNext: { [weak self] _ in
+                self?.navigationEvents.accept(.finished)
             })
             .disposed(by: disposeBag)
     }
@@ -1147,6 +1158,28 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
         snapshot.appendItems([.bookInfo(bookDetail)], toSection: .bookInfo)
 
         dataSource.apply(snapshot, animatingDifferences: true)
+    }
+
+    // MARK: - Delete Confirmation
+    private func showDeleteConfirmationAlert() {
+        guard let reactor = reactor else { return }
+        let bookTitle = reactor.currentState.book.cleanTitle
+
+        let alert = UIAlertController(
+            title: "도서 삭제",
+            message: "'\(bookTitle)'\n이 책과 관련된 모든 데이터(사진, 문장, 태그)가 함께 삭제됩니다.\n\n이 작업은 되돌릴 수 없습니다.",
+            preferredStyle: .alert
+        )
+
+        // 계속 보기 (취소 스타일 - 기본 액션)
+        alert.addAction(UIAlertAction(title: "계속 보기", style: .cancel))
+
+        // 삭제 (파괴적 스타일)
+        alert.addAction(UIAlertAction(title: "삭제", style: .destructive) { [weak self] _ in
+            self?.reactor?.action.onNext(.deleteBook)
+        })
+
+        present(alert, animated: true)
     }
 }
 

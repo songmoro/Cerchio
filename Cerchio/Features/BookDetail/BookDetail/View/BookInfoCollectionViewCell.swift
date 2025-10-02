@@ -253,10 +253,10 @@ final class BookInfoCollectionViewCell: UICollectionViewCell, IsIdentifiable {
 
     private func createPlaceholderLabel() -> UILabel {
         let label = PaddingLabel()
-        label.text = "#태그 추가"
+        label.text = "+ 태그"
         label.font = .custom(weight: .medium, size: BookDetailConstants.Typography.tagFontSize)
-        label.textColor = .systemGray
-        label.backgroundColor = UIColor.systemGray.withAlphaComponent(0.15)
+        label.textColor = .secondaryLabel
+        label.backgroundColor = UIColor.systemGray6
         label.layer.cornerRadius = BookDetailConstants.Layout.tagCornerRadius
         label.clipsToBounds = true
         label.textAlignment = .center

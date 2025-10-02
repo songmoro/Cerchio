@@ -31,27 +31,19 @@ final class QuoteSaveViewController: UIViewController {
     private var editingQuoteId: String?
 
     // MARK: - UI Components
-    private let textView: UITextView = {
-        let textView = UITextView()
+    private let textView: InsetTextView = {
+        let textView = InsetTextView()
         textView.font = .custom(weight: .regular, size: 16)
         textView.textColor = .label
         textView.backgroundColor = .systemBackground
         textView.layer.cornerRadius = 12
         textView.layer.borderWidth = 1
         textView.layer.borderColor = UIColor.systemGray4.cgColor
-        textView.textContainerInset = UIEdgeInsets(top: 16, left: 16, bottom: 16, right: 16)
+        textView.textInsets = UIEdgeInsets(top: 16, left: 16, bottom: 16, right: 16)
         textView.isScrollEnabled = true
         textView.showsVerticalScrollIndicator = true
+        textView.placeholder = String(localized: .quoteSavePlaceholder)
         return textView
-    }()
-
-    private let placeholderLabel: UILabel = {
-        let label = UILabel()
-        label.text = String(localized: .quoteSavePlaceholder)
-        label.textColor = .placeholderText
-        label.font = .custom(weight: .regular, size: 16)
-        label.numberOfLines = 0
-        return label
     }()
 
     private let pageNumberTextField: UITextField = {
@@ -89,7 +81,6 @@ final class QuoteSaveViewController: UIViewController {
         loadViewIfNeeded()
         textView.text = quote
         pageNumberTextField.text = pageNumber.map { String($0) }
-        updatePlaceholderVisibility()
         updateSaveButtonState()
     }
 
@@ -120,7 +111,6 @@ final class QuoteSaveViewController: UIViewController {
         view.backgroundColor = .systemBackground
 
         view.addSubview(textView)
-        view.addSubview(placeholderLabel)
         view.addSubview(pageLabel)
         view.addSubview(pageNumberTextField)
 
@@ -133,12 +123,6 @@ final class QuoteSaveViewController: UIViewController {
             $0.top.equalTo(view.safeAreaLayoutGuide).offset(16)
             $0.leading.trailing.equalToSuperview().inset(16)
             $0.height.equalToSuperview().multipliedBy(0.5) // 화면 높이의 반절
-        }
-
-        placeholderLabel.snp.makeConstraints {
-            $0.top.equalTo(textView).offset(16)
-            $0.leading.equalTo(textView).offset(16)
-            $0.trailing.equalTo(textView).inset(16)
         }
 
         pageLabel.snp.makeConstraints {
@@ -155,7 +139,6 @@ final class QuoteSaveViewController: UIViewController {
 
     private func setupTextView() {
         textView.delegate = self
-        updatePlaceholderVisibility()
     }
 
     private func setupNavigationBar() {
@@ -329,10 +312,6 @@ final class QuoteSaveViewController: UIViewController {
     }
 
     // MARK: - Helper Methods
-    private func updatePlaceholderVisibility() {
-        placeholderLabel.isHidden = !textView.text.isEmpty
-    }
-
     private func updateSaveButtonState() {
         let hasText = !textView.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
         navigationItem.rightBarButtonItem?.isEnabled = hasText
@@ -387,7 +366,6 @@ final class QuoteSaveViewController: UIViewController {
 // MARK: - UITextViewDelegate
 extension QuoteSaveViewController: UITextViewDelegate {
     func textViewDidChange(_ textView: UITextView) {
-        updatePlaceholderVisibility()
         updateSaveButtonState()
     }
 }
