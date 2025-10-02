@@ -217,12 +217,25 @@ final class LibraryViewController: BaseViewController<LibraryReactor> {
         reactor.state
             .map { $0.displayBooks }
             .distinctUntilChanged { oldBooks, newBooks in
-                // Compare by book ISBNs and count to detect changes
+                // Compare by book ISBNs, count, and isFavorite to detect changes
                 guard let oldBooks = oldBooks, let newBooks = newBooks else {
                     return oldBooks == nil && newBooks == nil
                 }
                 guard oldBooks.count == newBooks.count else { return false }
-                return oldBooks.map { $0.isbn } == newBooks.map { $0.isbn }
+
+                // ISBN 순서 비교
+                let oldISBNs = oldBooks.map { $0.isbn }
+                let newISBNs = newBooks.map { $0.isbn }
+                guard oldISBNs == newISBNs else { return false }
+
+                // isFavorite 상태 비교 (ISBN 순서가 같을 때만)
+                for (oldBook, newBook) in zip(oldBooks, newBooks) {
+                    if oldBook.isFavorite != newBook.isFavorite {
+                        return false
+                    }
+                }
+
+                return true
             }
             .asDriver(onErrorJustReturn: nil)
             .drive(onNext: { [weak self] books in
@@ -463,9 +476,14 @@ final class LibraryViewController: BaseViewController<LibraryReactor> {
     private func updateData(books: [Book]?) {
         guard let dataSource = dataSource, let books = books else { return }
 
+        // 항상 새 스냅샷 생성
+        // Book이 Hashable이므로 DiffableDataSource가 자동으로 변경 감지
         var snapshot = Snapshot()
         snapshot.appendSections([.book])
         snapshot.appendItems(books, toSection: .book)
+
+        // animatingDifferences: true로 부드러운 애니메이션 적용
+        // DiffableDataSource가 Book의 해시값 변경을 감지하여 해당 셀만 업데이트
         dataSource.apply(snapshot, animatingDifferences: true)
     }
 
