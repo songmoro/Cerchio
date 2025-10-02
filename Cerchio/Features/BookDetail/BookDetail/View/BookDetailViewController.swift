@@ -235,15 +235,7 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
             .disposed(by: disposeBag)
 
         // State - Book deleted
-        reactor.state
-            .map { $0.isDeleted }
-            .distinctUntilChanged()
-            .filter { $0 == true }
-            .asDriver(onErrorJustReturn: false)
-            .drive(onNext: { [weak self] _ in
-                self?.navigationEvents.accept(.finished)
-            })
-            .disposed(by: disposeBag)
+        // Coordinator가 직접 구독하므로 ViewController에서는 처리하지 않음
     }
     
     // MARK: - Setup Methods

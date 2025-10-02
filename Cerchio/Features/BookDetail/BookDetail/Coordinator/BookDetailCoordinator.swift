@@ -112,6 +112,20 @@ final class BookDetailCoordinator: BaseCoordinator, Coordinatable {
                 favoriteButton?.image = UIImage(systemName: imageName)
             })
             .disposed(by: disposeBag)
+
+        // 삭제 완료 감지 (Coordinator가 직접 구독)
+        reactor.state
+            .map { $0.isDeleted }
+            .distinctUntilChanged()
+            .filter { $0 == true }
+            .take(1) // 한 번만 실행
+            .observe(on: MainScheduler.instance)
+            .subscribe(onNext: { [weak self] _ in
+                // 삭제 완료 후 화면 닫기
+                self?.navigationController.popViewController(animated: true)
+                self?.finish()
+            })
+            .disposed(by: disposeBag)
     }
 
     private func bindNavigationEvents() {
@@ -129,9 +143,8 @@ final class BookDetailCoordinator: BaseCoordinator, Coordinatable {
         case .close:
             navigationController.dismiss(animated: true)
         case .finished:
-            // 화면을 pop한 후 coordinator 정리
-            navigationController.popViewController(animated: true)
-            finish()
+            // 삭제는 setupNavigationItems에서 직접 처리
+            break
         }
     }
 
