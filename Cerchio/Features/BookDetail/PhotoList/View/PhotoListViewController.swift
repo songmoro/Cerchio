@@ -28,6 +28,7 @@ final class PhotoListViewController: BaseViewController<PhotoListReactor> {
     var onPhotosDeleted: (() -> Void)?
     private var isEditMode: Bool = false
     private var selectedPhotoIds: Set<String> = []
+    private var service: PhotoListService?
 
     // Navigation bar buttons
     private var addButton: UIBarButtonItem!
@@ -39,6 +40,11 @@ final class PhotoListViewController: BaseViewController<PhotoListReactor> {
     // MARK: - Section Type
     nonisolated enum Section: CaseIterable {
         case photos
+    }
+
+    // MARK: - Public Methods
+    func setService(_ service: PhotoListService) {
+        self.service = service
     }
 
     // MARK: - Setup
@@ -185,8 +191,25 @@ final class PhotoListViewController: BaseViewController<PhotoListReactor> {
                 if let indexPath = self.dataSource.indexPath(for: photo) {
                     self.collectionView.deselectItem(at: indexPath, animated: true)
                 }
-                guard let image = ImageStorageManager.shared.loadImage(fromPath: photo.localImagePath) else { return }
-                self.showImagePreview(image)
+
+                // 캐시에서 이미지 가져오기 (이미 로드되어 있을 가능성 높음)
+                if let cachedImage = PhotoImageCache.shared.getImage(forPhotoId: photo.id) {
+                    self.showImagePreview(cachedImage)
+                } else {
+                    // 캐시에 없으면 로드
+                    Task {
+                        let image = await Task.detached(priority: .userInitiated) {
+                            ImageStorageManager.shared.loadImage(fromPath: photo.localImagePath)
+                        }.value
+
+                        guard let image = image else { return }
+                        PhotoImageCache.shared.setImage(image, forPhotoId: photo.id)
+
+                        await MainActor.run {
+                            self.showImagePreview(image)
+                        }
+                    }
+                }
             })
             .disposed(by: disposeBag)
 
@@ -227,22 +250,36 @@ final class PhotoListViewController: BaseViewController<PhotoListReactor> {
     }
 
     private func configureDataSource() {
-        dataSource = DataSource(collectionView: collectionView) { [weak self] collectionView, indexPath, photo in
+        dataSource = DataSource(collectionView: collectionView) { collectionView, indexPath, photo in
             let cell = collectionView.dequeueReusableCell(withReuseIdentifier: PhotoGridCell.identifier, for: indexPath) as! PhotoGridCell
 
-            // 백그라운드에서 이미지 로드
-            Task {
-                let imagePath = photo.localImagePath
-                let image = await Task.detached {
-                    ImageStorageManager.shared.loadImage(fromPath: imagePath)
-                }.value
+            let photoId = photo.id
 
-                // UI 업데이트는 메인 스레드에서
-                await MainActor.run {
-                    // 셀이 재사용되지 않았는지 확인
-                    if let currentCell = collectionView.cellForItem(at: indexPath) as? PhotoGridCell,
-                       let image = image {
-                        currentCell.configure(with: image)
+            // 캐시에서 이미지 가져오기
+            if let cachedImage = PhotoImageCache.shared.getImage(forPhotoId: photoId) {
+                cell.configure(with: cachedImage)
+            } else {
+                // 캐시에 없으면 백그라운드에서 로드
+                Task {
+                    let imagePath = photo.localImagePath
+
+                    // 백그라운드 스레드에서 이미지 디코딩
+                    let image = await Task.detached(priority: .userInitiated) {
+                        ImageStorageManager.shared.loadImage(fromPath: imagePath)
+                    }.value
+
+                    guard let image = image else { return }
+
+                    // 캐시에 저장
+                    PhotoImageCache.shared.setImage(image, forPhotoId: photoId)
+
+                    // UI 업데이트는 메인 스레드에서
+                    await MainActor.run {
+                        // 셀이 재사용되지 않았는지 확인
+                        if let currentIndexPath = collectionView.indexPath(for: cell),
+                           currentIndexPath == indexPath {
+                            cell.configure(with: image)
+                        }
                     }
                 }
             }

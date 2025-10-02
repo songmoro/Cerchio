@@ -18,6 +18,7 @@ enum PhotoListResult {
 final class PhotoListCoordinator: BaseCoordinator {
     struct Dependencies {
         let bookId: String
+        let serviceFactory: ServiceFactory
         let onAddPhotoTapped: () -> Void
     }
 
@@ -34,9 +35,11 @@ final class PhotoListCoordinator: BaseCoordinator {
     }
 
     override func start() {
-        let reactor = PhotoListReactor(bookId: dependencies.bookId)
+        let service = PhotoListService(serviceFactory: dependencies.serviceFactory)
+        let reactor = PhotoListReactor(bookId: dependencies.bookId, service: service)
         let viewController = PhotoListViewController()
         viewController.reactor = reactor
+        viewController.setService(service)
 
         // 추가 버튼 액션
         viewController.onAddPhotoTapped = { [weak self] in
