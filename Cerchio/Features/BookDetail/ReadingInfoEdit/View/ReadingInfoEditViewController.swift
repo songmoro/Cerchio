@@ -51,6 +51,7 @@ final class ReadingInfoEditViewController: UIViewController {
         picker.datePickerMode = .date
         picker.preferredDatePickerStyle = .inline
         picker.maximumDate = Date()
+        picker.addTarget(self, action: #selector(startDateChanged), for: .valueChanged)
         return picker
     }()
 
@@ -117,6 +118,7 @@ final class ReadingInfoEditViewController: UIViewController {
     private let scrollView: UIScrollView = {
         let scrollView = UIScrollView()
         scrollView.showsVerticalScrollIndicator = true
+        scrollView.keyboardDismissMode = .interactive
         return scrollView
     }()
 
@@ -246,6 +248,28 @@ final class ReadingInfoEditViewController: UIViewController {
         // "읽는 중" 선택 시 날짜 선택 UI 숨기기, "완료" 선택 시 보이기
         endDatePicker.isHidden = !isCompleted
         clearEndDateButton.isHidden = !isCompleted
+
+        // "완료"를 선택했을 때 종료 날짜 picker가 보이도록 스크롤
+        if isCompleted {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
+                guard let self = self else { return }
+                // 종료 날짜 picker가 화면에 보이도록 스크롤
+                let pickerFrame = self.endDatePicker.frame
+                let targetY = pickerFrame.origin.y - 20 // 약간의 여유 공간
+                self.scrollView.setContentOffset(CGPoint(x: 0, y: targetY), animated: true)
+            }
+        }
+    }
+
+    @objc private func startDateChanged() {
+        // 시작 날짜가 변경되면 종료 날짜의 minimumDate를 업데이트
+        isStartDateCleared = false
+        endDatePicker.minimumDate = startDatePicker.date
+
+        // 만약 종료 날짜가 시작 날짜보다 앞서면 자동으로 시작 날짜로 조정
+        if endDatePicker.date < startDatePicker.date {
+            endDatePicker.date = startDatePicker.date
+        }
     }
 
     // MARK: - Public Methods
@@ -258,8 +282,11 @@ final class ReadingInfoEditViewController: UIViewController {
 
         if let startDate = startDate {
             startDatePicker.date = startDate
+            // 종료 날짜는 시작 날짜 이후여야 함
+            endDatePicker.minimumDate = startDate
         } else {
             startDatePicker.date = Date()
+            endDatePicker.minimumDate = nil
         }
 
         if let endDate = endDate {
@@ -297,13 +324,33 @@ final class ReadingInfoEditViewController: UIViewController {
             endDate = isEndDateCleared ? nil : endDatePicker.date
         }
 
+        // 날짜 유효성 검사: 종료 날짜가 시작 날짜보다 앞서면 경고
+        if let start = startDate, let end = endDate {
+            if end < start {
+                showDateValidationAlert()
+                return
+            }
+        }
+
         onSaved?(totalPages, startDate, endDate)
         dismiss(animated: true)
+    }
+
+    private func showDateValidationAlert() {
+        let alert = UIAlertController(
+            title: "날짜 오류",
+            message: "종료 날짜는 시작 날짜보다 앞설 수 없습니다.",
+            preferredStyle: .alert
+        )
+        alert.addAction(UIAlertAction(title: "확인", style: .default))
+        present(alert, animated: true)
     }
 
     @objc private func clearStartDateTapped() {
         isStartDateCleared = true
         startDatePicker.date = Date()
+        // 시작 날짜를 초기화하면 종료 날짜 제약도 제거
+        endDatePicker.minimumDate = nil
 
         let alert = UIAlertController(
             title: "시작 날짜 초기화",
