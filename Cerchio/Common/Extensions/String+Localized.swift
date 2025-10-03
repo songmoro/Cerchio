@@ -12,8 +12,8 @@ extension String {
         self = localized.rawValue.localized
     }
     
-    init(localized: ArgumentLocalized, args: [CVarArg]) {
-        self = String(format: localized.rawValue.localized, args)
+    init(argumentLocalized: ArgumentLocalized, args: [CVarArg]) {
+        self = String(format: argumentLocalized.rawValue.localized, args)
     }
     
     private var localized: String {

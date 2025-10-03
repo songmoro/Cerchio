@@ -307,24 +307,6 @@
         }
       }
     },
-    "photo.delete_confirmation.message" : {
-      "comment" : "Delete photo confirmation message",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Are you sure you want to delete this photo?"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "이 사진을 삭제하시겠습니까?"
-          }
-        }
-      }
-    },
     "photo_library.permission.go_to_settings" : {
       "comment" : "Go to settings button for photo library",
       "extractionState" : "manual",
@@ -375,6 +357,24 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "사진 라이브러리 접근 권한이 필요해요"
+          }
+        }
+      }
+    },
+    "photo.delete_confirmation.message" : {
+      "comment" : "Delete photo confirmation message",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Are you sure you want to delete this photo?"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이 사진을 삭제하시겠습니까?"
           }
         }
       }
@@ -735,6 +735,25 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "설정"
+          }
+        }
+      }
+    },
+    "timer.minutes_format" : {
+      "comment" : "Timer minutes display format",
+      "extractionState" : "manual",
+      "generatesSymbol" : false,
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lldmin"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld분"
           }
         }
       }

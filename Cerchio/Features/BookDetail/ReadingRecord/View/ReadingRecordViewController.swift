@@ -39,10 +39,10 @@ final class ReadingRecordViewController: BaseViewController<ReadingRecordReactor
 
     private func setupTimerPicker() {
         timerPickerView.onTimeChanged = { [weak self] minutes in
-            self?.titleLabel.text = String(minutes)
+            self?.titleLabel.text = String(argumentLocalized: .`timer.minutes_format`, args: [minutes])
             print("Selected minutes: \(minutes)")
         }
-        titleLabel.text = String(timerPickerView.selectedMinutes)
+        titleLabel.text = String(argumentLocalized: .`timer.minutes_format`, args: [timerPickerView.selectedMinutes])
         view.addSubview(timerPickerView)
     }
 

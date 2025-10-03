@@ -456,6 +456,48 @@ Task {
 - Coordinator navigation testing via child relationship verification
 - Repository testing with in-memory Realm instances
 
+## Localization
+
+**Type-Safe Localization System**
+
+The project uses a custom type-safe localization system to prevent runtime errors from typos in localization keys.
+
+**Localization Files**:
+- `Localizable.xcstrings`: String catalog for localized strings (ko/en)
+- `Localized.swift`: Enum for simple localized strings (no arguments)
+- `ArgumentLocalized.swift`: Enum for localized strings with format arguments
+- `String+Localized.swift`: Extension providing type-safe localization initializers
+
+**Usage Patterns**:
+
+```swift
+// Simple localization (no arguments)
+enum Localized: String {
+    case `action.save`
+    case `tab.library`
+}
+
+let text = String(localized: .action.save)  // Returns "저장" (ko) or "Save" (en)
+
+// Localization with arguments
+enum ArgumentLocalized: String {
+    case `timer.minutes_format`  // "%lld분" or "%lld min"
+}
+
+let text = String(localized: .timer.minutes_format, args: [25])  // Returns "25분" or "25 min"
+```
+
+**Adding New Localized Strings**:
+1. Add the key to `Localizable.xcstrings` with translations
+2. Add corresponding case to `Localized` or `ArgumentLocalized` enum
+3. Use type-safe String initializer in code
+
+**Benefits**:
+- Compile-time checking for localization keys
+- No runtime crashes from typos
+- Autocomplete support in Xcode
+- Centralized string management
+
 ## Deployment Target
 
 - iOS 16.0 minimum deployment target
