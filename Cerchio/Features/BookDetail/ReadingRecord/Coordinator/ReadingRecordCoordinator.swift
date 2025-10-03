@@ -48,7 +48,36 @@ final class ReadingRecordCoordinator: BaseCoordinator {
         let readingRecordVC = ReadingRecordViewController()
         readingRecordVC.reactor = reactor
 
+        readingRecordVC.onStartTimer = { [weak self] minutes in
+            self?.showTimer(targetMinutes: minutes)
+        }
+
         navigationController.pushViewController(readingRecordVC, animated: true)
+    }
+
+    private func showTimer(targetMinutes: Int) {
+        let timerCoordinator = ReadingTimerCoordinator(
+            navigationController: navigationController,
+            serviceFactory: dependencies.serviceFactory,
+            bookId: dependencies.bookId,
+            targetMinutes: targetMinutes
+        )
+
+        addChildCoordinator(timerCoordinator)
+
+        timerCoordinator.completion
+            .take(1)
+            .subscribe(onNext: { [weak self] in
+                guard let self = self else { return }
+                // Find and remove the timer coordinator
+                if let coordinator = self.childCoordinators.first(where: { $0 is ReadingTimerCoordinator }) {
+                    self.removeChildCoordinator(coordinator)
+                }
+                self.finish(with: .recordSaved("Session completed"))
+            })
+            .disposed(by: disposeBag)
+
+        timerCoordinator.start()
     }
 
     private func finish(with result: Result) {

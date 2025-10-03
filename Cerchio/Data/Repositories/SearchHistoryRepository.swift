@@ -34,21 +34,4 @@ final class SearchHistoryRepository: BaseRepository<RealmSearchHistory>, SearchH
         }
     }
 
-    // MARK: - Helper Methods
-    private func performWriteTransaction<U>(_ operation: @escaping () throws -> U) -> Observable<U> {
-        return Observable.create { observer in
-            DispatchQueue.main.async {
-                do {
-                    let result = try self.realm.write {
-                        try operation()
-                    }
-                    observer.onNext(result)
-                    observer.onCompleted()
-                } catch {
-                    observer.onError(RepositoryError.transactionFailed(error))
-                }
-            }
-            return Disposables.create()
-        }
-    }
 }

@@ -16,6 +16,10 @@ final class ReadingRecordViewController: BaseViewController<ReadingRecordReactor
     private let titleLabel = TransitionAnimatedLabel()
 //    private let timerPickerView = TimerPickerView()
     private let timerPickerView = ImageTimerPickerView(maskImageName: "ClearLogo")
+    private let startButton = UIButton(type: .system)
+
+    // MARK: - Properties
+    var onStartTimer: ((Int) -> Void)?
 
     // MARK: - Lifecycle
     override func setupUI() {
@@ -25,6 +29,7 @@ final class ReadingRecordViewController: BaseViewController<ReadingRecordReactor
 
         setupTitleLabel()
         setupTimerPicker()
+        setupStartButton()
         setupLayout()
     }
 
@@ -46,6 +51,23 @@ final class ReadingRecordViewController: BaseViewController<ReadingRecordReactor
         view.addSubview(timerPickerView)
     }
 
+    private func setupStartButton() {
+        var config = UIButton.Configuration.filled()
+        config.title = "시작"
+        config.baseBackgroundColor = .forestGreen
+        config.baseForegroundColor = .white
+        config.cornerStyle = .medium
+        startButton.configuration = config
+
+        startButton.addTarget(self, action: #selector(startButtonTapped), for: .touchUpInside)
+
+        view.addSubview(startButton)
+    }
+
+    @objc private func startButtonTapped() {
+        onStartTimer?(timerPickerView.selectedMinutes)
+    }
+
     private func setupLayout() {
         titleLabel.snp.makeConstraints {
             $0.top.equalTo(view.safeAreaLayoutGuide).offset(40)
@@ -56,6 +78,13 @@ final class ReadingRecordViewController: BaseViewController<ReadingRecordReactor
         timerPickerView.snp.makeConstraints {
             $0.center.equalToSuperview()
             $0.width.height.equalTo(320)
+        }
+
+        startButton.snp.makeConstraints {
+            $0.centerX.equalToSuperview()
+            $0.bottom.equalTo(view.safeAreaLayoutGuide).offset(-40)
+            $0.width.equalTo(200)
+            $0.height.equalTo(50)
         }
     }
 

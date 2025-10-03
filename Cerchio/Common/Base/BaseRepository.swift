@@ -142,7 +142,7 @@ class BaseRepository<T: Object>: BaseRepositoryType {
     }
 
     // MARK: - Helper Methods
-    private func performOnMainThread<U>(_ operation: @escaping () -> U) -> Observable<U> {
+    func performOnMainThread<U>(_ operation: @escaping () -> U) -> Observable<U> {
         return Observable.create { observer in
             DispatchQueue.main.async {
                 let result = operation()
@@ -153,7 +153,7 @@ class BaseRepository<T: Object>: BaseRepositoryType {
         }
     }
 
-    private func performWriteTransaction<U>(_ operation: @escaping () throws -> U) -> Observable<U> {
+    func performWriteTransaction<U>(_ operation: @escaping () throws -> U) -> Observable<U> {
         return Observable.create { observer in
             DispatchQueue.main.async {
                 do {
