@@ -12,9 +12,8 @@ import RxCocoa
 import SnapKit
 
 final class ReadingRecordViewController: BaseViewController<ReadingRecordReactor> {
-
     // MARK: - UI Components
-    private let titleLabel = UILabel()
+    private let titleLabel = TransitionAnimatedLabel()
     private let timerPickerView = TimerPickerView()
 
     // MARK: - Lifecycle
@@ -29,16 +28,20 @@ final class ReadingRecordViewController: BaseViewController<ReadingRecordReactor
     }
 
     private func setupTitleLabel() {
-        titleLabel.font = .custom(weight: .bold, size: 20)
-        titleLabel.textColor = .label
+        titleLabel.font = .custom(weight: .bold, size: 24)
+        titleLabel.textColor = UIColor.forestGreen
         titleLabel.textAlignment = .center
+        titleLabel.animationOptions = .curveEaseIn
+
         view.addSubview(titleLabel)
     }
 
     private func setupTimerPicker() {
         timerPickerView.onTimeChanged = { [weak self] minutes in
+            self?.titleLabel.text = String(minutes)
             print("Selected minutes: \(minutes)")
         }
+        titleLabel.text = String(timerPickerView.selectedMinutes)
         view.addSubview(timerPickerView)
     }
 
@@ -46,6 +49,7 @@ final class ReadingRecordViewController: BaseViewController<ReadingRecordReactor
         titleLabel.snp.makeConstraints {
             $0.top.equalTo(view.safeAreaLayoutGuide).offset(40)
             $0.centerX.equalToSuperview()
+            $0.height.equalTo(80)
         }
 
         timerPickerView.snp.makeConstraints {
