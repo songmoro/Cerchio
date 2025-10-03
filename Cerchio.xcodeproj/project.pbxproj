@@ -7,6 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		F80022742E9015F10046D443 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F80022732E9015F10046D443 /* WidgetKit.framework */; };
+		F80022762E9015F10046D443 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F80022752E9015F10046D443 /* SwiftUI.framework */; };
+		F80022852E9015F30046D443 /* WidgetsExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = F80022712E9015F10046D443 /* WidgetsExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		F8137DA62E82AA210090F8FA /* SnapKit in Frameworks */ = {isa = PBXBuildFile; productRef = F8137DA52E82AA210090F8FA /* SnapKit */; };
 		F8137DA92E82AA330090F8FA /* RxCocoa in Frameworks */ = {isa = PBXBuildFile; productRef = F8137DA82E82AA330090F8FA /* RxCocoa */; };
 		F8137DA92E82AA330090F8FB /* RxCocoa in Frameworks */ = {isa = PBXBuildFile; productRef = F8137DA82E82AA330090F8FA /* RxCocoa */; };
@@ -22,6 +25,13 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
+		F80022832E9015F30046D443 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = F84E0EDA2E829796006B98C0 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = F80022702E9015F10046D443;
+			remoteInfo = WidgetsExtension;
+		};
 		F84E0EF92E829797006B98C0 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = F84E0EDA2E829796006B98C0 /* Project object */;
@@ -39,6 +49,17 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
+		F800228A2E9015F30046D443 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				F80022852E9015F30046D443 /* WidgetsExtension.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		F81384322E86E5E10090F8FA /* Embed Frameworks */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
@@ -53,6 +74,9 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		F80022712E9015F10046D443 /* WidgetsExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = WidgetsExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		F80022732E9015F10046D443 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
+		F80022752E9015F10046D443 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
 		F84E0EE22E829796006B98C0 /* Cerchio.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Cerchio.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		F84E0EF82E829797006B98C0 /* CerchioTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = CerchioTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		F84E0F022E829797006B98C0 /* CerchioUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = CerchioUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -60,6 +84,13 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		F80022892E9015F30046D443 /* Exceptions for "Widgets" folder in "WidgetsExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = F80022702E9015F10046D443 /* WidgetsExtension */;
+		};
 		F84E0F0A2E829797006B98C0 /* Exceptions for "Cerchio" folder in "Cerchio" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
@@ -70,6 +101,14 @@
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
+		F80022772E9015F10046D443 /* Widgets */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				F80022892E9015F30046D443 /* Exceptions for "Widgets" folder in "WidgetsExtension" target */,
+			);
+			path = Widgets;
+			sourceTree = "<group>";
+		};
 		F84E0EE42E829796006B98C0 /* Cerchio */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
@@ -91,6 +130,15 @@
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		F800226E2E9015F10046D443 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				F80022762E9015F10046D443 /* SwiftUI.framework in Frameworks */,
+				F80022742E9015F10046D443 /* WidgetKit.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		F84E0EDF2E829796006B98C0 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -125,6 +173,15 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		F80022722E9015F10046D443 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				F80022732E9015F10046D443 /* WidgetKit.framework */,
+				F80022752E9015F10046D443 /* SwiftUI.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 		F84E0ED92E829796006B98C0 = {
 			isa = PBXGroup;
 			children = (
@@ -132,6 +189,8 @@
 				F84E0EE42E829796006B98C0 /* Cerchio */,
 				F84E0EFB2E829797006B98C0 /* CerchioTests */,
 				F84E0F052E829797006B98C0 /* CerchioUITests */,
+				F80022772E9015F10046D443 /* Widgets */,
+				F80022722E9015F10046D443 /* Frameworks */,
 				F84E0EE32E829796006B98C0 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -142,6 +201,7 @@
 				F84E0EE22E829796006B98C0 /* Cerchio.app */,
 				F84E0EF82E829797006B98C0 /* CerchioTests.xctest */,
 				F84E0F022E829797006B98C0 /* CerchioUITests.xctest */,
+				F80022712E9015F10046D443 /* WidgetsExtension.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -149,6 +209,28 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		F80022702E9015F10046D443 /* WidgetsExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = F80022862E9015F30046D443 /* Build configuration list for PBXNativeTarget "WidgetsExtension" */;
+			buildPhases = (
+				F800226D2E9015F10046D443 /* Sources */,
+				F800226E2E9015F10046D443 /* Frameworks */,
+				F800226F2E9015F10046D443 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				F80022772E9015F10046D443 /* Widgets */,
+			);
+			name = WidgetsExtension;
+			packageProductDependencies = (
+			);
+			productName = WidgetsExtension;
+			productReference = F80022712E9015F10046D443 /* WidgetsExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 		F84E0EE12E829796006B98C0 /* Cerchio */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = F84E0F0B2E829797006B98C0 /* Build configuration list for PBXNativeTarget "Cerchio" */;
@@ -157,10 +239,12 @@
 				F84E0EDF2E829796006B98C0 /* Frameworks */,
 				F84E0EE02E829796006B98C0 /* Resources */,
 				F81384322E86E5E10090F8FA /* Embed Frameworks */,
+				F800228A2E9015F30046D443 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				F80022842E9015F30046D443 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				F84E0EE42E829796006B98C0 /* Cerchio */,
@@ -237,6 +321,9 @@
 				LastSwiftUpdateCheck = 2600;
 				LastUpgradeCheck = 2600;
 				TargetAttributes = {
+					F80022702E9015F10046D443 = {
+						CreatedOnToolsVersion = 26.0.1;
+					};
 					F84E0EE12E829796006B98C0 = {
 						CreatedOnToolsVersion = 26.0.1;
 					};
@@ -275,11 +362,19 @@
 				F84E0EE12E829796006B98C0 /* Cerchio */,
 				F84E0EF72E829797006B98C0 /* CerchioTests */,
 				F84E0F012E829797006B98C0 /* CerchioUITests */,
+				F80022702E9015F10046D443 /* WidgetsExtension */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		F800226F2E9015F10046D443 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		F84E0EE02E829796006B98C0 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -298,6 +393,13 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		F800226D2E9015F10046D443 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		F84E0EDE2E829796006B98C0 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -322,6 +424,11 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		F80022842E9015F30046D443 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = F80022702E9015F10046D443 /* WidgetsExtension */;
+			targetProxy = F80022832E9015F30046D443 /* PBXContainerItemProxy */;
+		};
 		F84E0EFA2E829797006B98C0 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = F84E0EE12E829796006B98C0 /* Cerchio */;
@@ -335,6 +442,76 @@
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
+		F80022872E9015F30046D443 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = VA3J8597P8;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Widgets/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Widgets;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.moro.Cerchio.Widgets;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		F80022882E9015F30046D443 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = VA3J8597P8;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Widgets/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Widgets;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.moro.Cerchio.Widgets;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
 		F84E0F0C2E829797006B98C0 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -618,6 +795,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		F80022862E9015F30046D443 /* Build configuration list for PBXNativeTarget "WidgetsExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				F80022872E9015F30046D443 /* Debug */,
+				F80022882E9015F30046D443 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		F84E0EDD2E829796006B98C0 /* Build configuration list for PBXProject "Cerchio" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (

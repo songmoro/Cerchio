@@ -2,7 +2,7 @@
 //  ReadingSessionRepository.swift
 //  Cerchio
 //
-//  Created by Claude on 10/3/25.
+//  Created by 송재훈 on 10/3/25.
 //
 
 import Foundation

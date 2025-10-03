@@ -42,7 +42,13 @@ final class BookRepository: BaseRepository<RealmBook>, BookRepositoryProtocol {
     }
 
     func getBook(by id: String) -> Observable<RealmBook?> {
-        return findById(id)
+        return performOnMainThread {
+            // Try to convert String to ObjectId
+            guard let objectId = try? ObjectId(string: id) else {
+                return nil
+            }
+            return self.realm.object(ofType: RealmBook.self, forPrimaryKey: objectId)
+        }
     }
 
     func saveBook(_ book: RealmBook) -> Observable<RealmBook> {

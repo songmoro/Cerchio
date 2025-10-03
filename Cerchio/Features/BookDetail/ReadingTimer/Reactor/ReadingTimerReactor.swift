@@ -2,7 +2,7 @@
 //  ReadingTimerReactor.swift
 //  Cerchio
 //
-//  Created by Claude on 10/3/25.
+//  Created by 송재훈 on 10/3/25.
 //
 
 import Foundation
@@ -15,16 +15,14 @@ final class ReadingTimerReactor: Reactor {
 
     enum Action {
         case viewDidLoad
-        case startTimer
+        case requestTimerStart
+        case startTimerConfirmed
         case pauseTimer
         case resumeTimer
         case stopTimer
         case timerTick
         case enterBackground
         case enterForeground
-        case notificationPermissionRequested
-        case notificationPermissionGranted(Bool)
-        case notificationPermissionDenied
     }
 
     enum Mutation {
@@ -32,7 +30,14 @@ final class ReadingTimerReactor: Reactor {
         case setTimerState(TimerState)
         case setElapsedSeconds(Int)
         case setRemainingSeconds(Int)
+        case setValidationError(ValidationError)
+        case clearValidationError
         case setError(Error)
+    }
+
+    enum ValidationError: Error, Equatable {
+        case notificationPermissionDenied
+        case liveActivityNotEnabled
     }
 
     struct State {
@@ -42,6 +47,8 @@ final class ReadingTimerReactor: Reactor {
         var remainingSeconds: Int = 0
         var targetMinutes: Int = 25
         var bookId: String
+        var bookTitle: String
+        var validationError: ValidationError?
 
         var elapsedTimeString: String {
             formatTime(elapsedSeconds)
@@ -79,13 +86,15 @@ final class ReadingTimerReactor: Reactor {
     private var timerDisposable: Disposable?
     private var backgroundTime: Date?
     private var notificationScheduled = false
+    private var liveActivityStarted = false
 
-    init(bookId: String, targetMinutes: Int, sessionRepository: ReadingSessionRepositoryProtocol) {
+    init(bookId: String, bookTitle: String, targetMinutes: Int, sessionRepository: ReadingSessionRepositoryProtocol) {
         self.sessionRepository = sessionRepository
         self.initialState = State(
             remainingSeconds: targetMinutes * 60,
             targetMinutes: targetMinutes,
-            bookId: bookId
+            bookId: bookId,
+            bookTitle: bookTitle
         )
     }
 
@@ -94,30 +103,39 @@ final class ReadingTimerReactor: Reactor {
         case .viewDidLoad:
             return createSession()
 
-        case .startTimer:
+        case .requestTimerStart:
+            return validateAndRequestPermissions()
+
+        case .startTimerConfirmed:
             startTimerTick()
-            scheduleNotification()
+            startLiveActivity()
             return .just(.setTimerState(.running))
 
         case .pauseTimer:
             stopTimerTick()
             cancelNotification()
+            updateLiveActivityPaused()
             return .just(.setTimerState(.paused))
 
         case .resumeTimer:
             startTimerTick()
             scheduleNotification()
+            updateLiveActivityResumed()
             return .just(.setTimerState(.running))
 
         case .stopTimer:
             stopTimerTick()
             cancelNotification()
+            endLiveActivity()
             return completeSession()
 
         case .timerTick:
             let targetSeconds = currentState.targetMinutes * 60
             let newElapsed = min(currentState.elapsedSeconds + 1, targetSeconds)
             let newRemaining = max(0, targetSeconds - newElapsed)
+
+            // Live Activity는 위젯 자체가 계산하므로 업데이트 불필요
+            // 10초마다 또는 주요 이벤트(일시정지, 재개, 종료)에만 업데이트
 
             var mutations: [Observable<Mutation>] = [
                 .just(.setElapsedSeconds(newElapsed)),
@@ -128,6 +146,7 @@ final class ReadingTimerReactor: Reactor {
             if newRemaining == 0 {
                 stopTimerTick()
                 cancelNotification()
+                updateLiveActivityCompleted()
                 mutations.append(completeSession())
             }
 
@@ -139,26 +158,6 @@ final class ReadingTimerReactor: Reactor {
 
         case .enterForeground:
             return handleForeground()
-
-        case .notificationPermissionRequested:
-            // 권한 요청 시 타이머 일시정지
-            stopTimerTick()
-            return .just(.setTimerState(.paused))
-
-        case .notificationPermissionGranted(let granted):
-            // 권한 응답 후 타이머 재개
-            if currentState.timerState == .paused {
-                startTimerTick()
-                if granted {
-                    scheduleNotificationWithoutPermissionCheck()
-                }
-                return .just(.setTimerState(.running))
-            }
-            return .empty()
-
-        case .notificationPermissionDenied:
-            // 권한 거부 시에도 타이머는 계속 진행
-            return .empty()
         }
     }
 
@@ -177,6 +176,12 @@ final class ReadingTimerReactor: Reactor {
 
         case .setRemainingSeconds(let seconds):
             newState.remainingSeconds = seconds
+
+        case .setValidationError(let error):
+            newState.validationError = error
+
+        case .clearValidationError:
+            newState.validationError = nil
 
         case .setError:
             break
@@ -265,11 +270,13 @@ final class ReadingTimerReactor: Reactor {
         if newRemaining == 0 {
             stopTimerTick()
             cancelNotification()
+            updateLiveActivityCompleted()
             mutations.append(completeSession())
         } else if currentState.timerState == .running {
             // 타이머가 실행 중이었다면 재시작
             startTimerTick()
             scheduleNotification()
+            updateLiveActivityResumed()
         }
 
         return .concat(mutations)
@@ -345,49 +352,65 @@ final class ReadingTimerReactor: Reactor {
         return commands
     }
 
-    // MARK: - Notification Management
+    // MARK: - Validation
 
-    private func scheduleNotification() {
-        // 이미 스케줄되었거나 남은 시간이 0이면 스케줄하지 않음
-        guard !notificationScheduled, currentState.remainingSeconds > 0 else { return }
-
-        // 알림 권한 요청 및 스케줄
-        notificationManager.checkAuthorizationStatus()
-            .do(onNext: { [weak self] status in
-                // 권한이 결정되지 않았으면 타이머 일시정지
-                if status == .notDetermined {
-                    self?.action.onNext(.notificationPermissionRequested)
-                }
-            })
-            .flatMap { [weak self] status -> Observable<Bool> in
-                guard let self = self else { return .just(false) }
+    private func validateAndRequestPermissions() -> Observable<Mutation> {
+        return notificationManager.checkAuthorizationStatus()
+            .flatMap { [weak self] status -> Observable<Mutation> in
+                guard let self = self else { return .empty() }
 
                 switch status {
                 case .notDetermined:
-                    // 권한이 결정되지 않았으면 요청
+                    // 권한 요청
                     return self.notificationManager.requestAuthorization()
-                        .do(onNext: { [weak self] granted in
-                            // 권한 응답 후 타이머 재개
-                            self?.action.onNext(.notificationPermissionGranted(granted))
-                        })
+                        .flatMap { granted -> Observable<Mutation> in
+                            if granted {
+                                // 권한 승인됨 - 알림 스케줄하고 타이머 시작
+                                self.scheduleNotificationWithoutPermissionCheck()
+                                return .concat([
+                                    .just(.clearValidationError),
+                                    .just(.setTimerState(.running))
+                                ])
+                            } else {
+                                // 권한 거부됨 - 에러 설정
+                                return .just(.setValidationError(.notificationPermissionDenied))
+                            }
+                        }
+
                 case .authorized, .provisional:
-                    return .just(true)
+                    // 권한 있음 - 알림 스케줄하고 타이머 시작
+                    self.scheduleNotificationWithoutPermissionCheck()
+                    return .concat([
+                        .just(.clearValidationError),
+                        .just(.setTimerState(.running))
+                    ])
+
                 case .denied, .ephemeral:
-                    return .just(false)
+                    // 권한 없음 - 에러 설정
+                    return .just(.setValidationError(.notificationPermissionDenied))
+
                 @unknown default:
-                    return .just(false)
+                    return .just(.setValidationError(.notificationPermissionDenied))
                 }
             }
-            .filter { $0 } // 권한이 있을 때만
-            .flatMap { [weak self] _ -> Observable<Void> in
-                guard let self = self else { return .empty() }
-                let remainingSeconds = TimeInterval(self.currentState.remainingSeconds)
-                return self.notificationManager.scheduleTimerCompletionNotification(afterSeconds: remainingSeconds)
+            .flatMap { [weak self] mutation -> Observable<Mutation> in
+                guard let self = self else { return .just(mutation) }
+
+                // 타이머 시작 mutation이면 실제로 타이머 시작
+                if case .setTimerState(.running) = mutation {
+                    self.startTimerTick()
+                    self.startLiveActivity()
+                }
+
+                return .just(mutation)
             }
-            .subscribe(onNext: { [weak self] in
-                self?.notificationScheduled = true
-            })
-            .disposed(by: disposeBag)
+    }
+
+    // MARK: - Notification Management
+
+    private func scheduleNotification() {
+        // Resume할 때 알림 재스케줄
+        scheduleNotificationWithoutPermissionCheck()
     }
 
     private func scheduleNotificationWithoutPermissionCheck() {
@@ -406,9 +429,97 @@ final class ReadingTimerReactor: Reactor {
         notificationScheduled = false
     }
 
+    // MARK: - Live Activity Management
+
+    private func startLiveActivity() {
+        guard #available(iOS 16.2, *) else {
+            print("[ReadingTimer] iOS 16.2+ required for Live Activity")
+            return
+        }
+
+        guard !liveActivityStarted else {
+            print("[ReadingTimer] Live Activity already started")
+            return
+        }
+
+        print("[ReadingTimer] Starting Live Activity - bookTitle: \(currentState.bookTitle), targetMinutes: \(currentState.targetMinutes)")
+        LiveActivityManager.shared.startActivity(
+            bookTitle: currentState.bookTitle,
+            targetMinutes: currentState.targetMinutes
+        )
+        .subscribe(
+            onNext: { [weak self] in
+                print("[ReadingTimer] ✅ Live Activity started successfully")
+                self?.liveActivityStarted = true
+            },
+            onError: { error in
+                print("[ReadingTimer] ❌ Failed to start Live Activity: \(error)")
+            }
+        )
+        .disposed(by: disposeBag)
+    }
+
+    private func updateLiveActivityPaused() {
+        guard #available(iOS 16.2, *), liveActivityStarted else {
+            print("[ReadingTimer] Cannot update paused - liveActivityStarted: \(liveActivityStarted)")
+            return
+        }
+
+        print("[ReadingTimer] Updating Live Activity to PAUSED - elapsed: \(currentState.elapsedSeconds)s")
+        LiveActivityManager.shared.updateActivity(
+            elapsedSeconds: currentState.elapsedSeconds,
+            isPaused: true,
+            targetSeconds: currentState.targetMinutes * 60
+        )
+        .subscribe(
+            onError: { error in
+                print("[ReadingTimer] ❌ Failed to update (paused): \(error)")
+            }
+        )
+        .disposed(by: disposeBag)
+    }
+
+    private func updateLiveActivityResumed() {
+        guard #available(iOS 16.2, *), liveActivityStarted else {
+            print("[ReadingTimer] Cannot update resumed - liveActivityStarted: \(liveActivityStarted)")
+            return
+        }
+
+        print("[ReadingTimer] Updating Live Activity to RESUMED - elapsed: \(currentState.elapsedSeconds)s")
+        LiveActivityManager.shared.updateActivity(
+            elapsedSeconds: currentState.elapsedSeconds,
+            isPaused: false,
+            targetSeconds: currentState.targetMinutes * 60
+        )
+        .subscribe(
+            onError: { error in
+                print("[ReadingTimer] ❌ Failed to update (resumed): \(error)")
+            }
+        )
+        .disposed(by: disposeBag)
+    }
+
+    private func updateLiveActivityCompleted() {
+        guard #available(iOS 16.2, *), liveActivityStarted else { return }
+
+        // 완료 상태로 업데이트 후 종료
+        endLiveActivity()
+    }
+
+    private func endLiveActivity() {
+        guard #available(iOS 16.2, *), liveActivityStarted else { return }
+
+        LiveActivityManager.shared.endActivity()
+            .subscribe(onNext: { [weak self] in
+                self?.liveActivityStarted = false
+            })
+            .disposed(by: disposeBag)
+    }
+
     deinit {
         stopTimerTick()
         cancelNotification()
+        endLiveActivity()
     }
 }
 

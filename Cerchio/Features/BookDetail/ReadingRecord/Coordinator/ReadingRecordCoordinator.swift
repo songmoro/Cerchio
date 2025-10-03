@@ -56,28 +56,38 @@ final class ReadingRecordCoordinator: BaseCoordinator {
     }
 
     private func showTimer(targetMinutes: Int) {
-        let timerCoordinator = ReadingTimerCoordinator(
-            navigationController: navigationController,
-            serviceFactory: dependencies.serviceFactory,
-            bookId: dependencies.bookId,
-            targetMinutes: targetMinutes
-        )
+        let bookRepository = dependencies.serviceFactory.createBookRepository()
 
-        addChildCoordinator(timerCoordinator)
-
-        timerCoordinator.completion
+        bookRepository.getBook(by: dependencies.bookId)
             .take(1)
-            .subscribe(onNext: { [weak self] in
-                guard let self = self else { return }
-                // Find and remove the timer coordinator
-                if let coordinator = self.childCoordinators.first(where: { $0 is ReadingTimerCoordinator }) {
-                    self.removeChildCoordinator(coordinator)
-                }
-                self.finish(with: .recordSaved("Session completed"))
+            .subscribe(onNext: { [weak self] book in
+                guard let self = self, let book = book else { return }
+
+                let timerCoordinator = ReadingTimerCoordinator(
+                    navigationController: self.navigationController,
+                    serviceFactory: self.dependencies.serviceFactory,
+                    bookId: self.dependencies.bookId,
+                    bookTitle: book.title,
+                    targetMinutes: targetMinutes
+                )
+
+                self.addChildCoordinator(timerCoordinator)
+
+                timerCoordinator.completion
+                    .take(1)
+                    .subscribe(onNext: { [weak self] in
+                        guard let self = self else { return }
+                        // Find and remove the timer coordinator
+                        if let coordinator = self.childCoordinators.first(where: { $0 is ReadingTimerCoordinator }) {
+                            self.removeChildCoordinator(coordinator)
+                        }
+                        self.finish(with: .recordSaved("Session completed"))
+                    })
+                    .disposed(by: self.disposeBag)
+
+                timerCoordinator.start()
             })
             .disposed(by: disposeBag)
-
-        timerCoordinator.start()
     }
 
     private func finish(with result: Result) {

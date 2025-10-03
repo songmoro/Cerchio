@@ -2,7 +2,7 @@
 //  ReadingTimerCoordinator.swift
 //  Cerchio
 //
-//  Created by Claude on 10/3/25.
+//  Created by 송재훈 on 10/3/25.
 //
 
 import UIKit
@@ -13,6 +13,7 @@ final class ReadingTimerCoordinator: BaseCoordinator {
 
     private let serviceFactory: ServiceFactory
     private let bookId: String
+    private let bookTitle: String
     private let targetMinutes: Int
 
     private let completionRelay = PublishRelay<Void>()
@@ -24,10 +25,12 @@ final class ReadingTimerCoordinator: BaseCoordinator {
         navigationController: UINavigationController,
         serviceFactory: ServiceFactory,
         bookId: String,
+        bookTitle: String,
         targetMinutes: Int
     ) {
         self.serviceFactory = serviceFactory
         self.bookId = bookId
+        self.bookTitle = bookTitle
         self.targetMinutes = targetMinutes
         super.init(navigationController: navigationController)
     }
@@ -36,6 +39,7 @@ final class ReadingTimerCoordinator: BaseCoordinator {
         let repository = serviceFactory.createReadingSessionRepository()
         let reactor = ReadingTimerReactor(
             bookId: bookId,
+            bookTitle: bookTitle,
             targetMinutes: targetMinutes,
             sessionRepository: repository
         )

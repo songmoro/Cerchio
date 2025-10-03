@@ -2,7 +2,7 @@
 //  ReadingTimerViewController.swift
 //  Cerchio
 //
-//  Created by Claude on 10/3/25.
+//  Created by 송재훈 on 10/3/25.
 //
 
 import UIKit
@@ -134,21 +134,8 @@ final class ReadingTimerViewController: BaseViewController<ReadingTimerReactor> 
             .bind(to: reactor.action)
             .disposed(by: disposeBag)
 
-        // 알림 권한 거부 시 얼럿 표시
-        reactor.state.map { _ in }
-            .take(1)
-            .flatMap { _ in
-                NotificationManager.shared.checkAuthorizationStatus()
-            }
-            .filter { $0 == .denied }
-            .asDriver(onErrorJustReturn: .notDetermined)
-            .drive(onNext: { [weak self] _ in
-                self?.showNotificationDeniedAlert()
-            })
-            .disposed(by: disposeBag)
-
         startButton.rx.tap
-            .map { Reactor.Action.startTimer }
+            .map { Reactor.Action.requestTimerStart }
             .bind(to: reactor.action)
             .disposed(by: disposeBag)
 
@@ -214,6 +201,16 @@ final class ReadingTimerViewController: BaseViewController<ReadingTimerReactor> 
             .asDriver(onErrorJustReturn: .completed)
             .drive(onNext: { [weak self] _ in
                 self?.handleCompletion()
+            })
+            .disposed(by: disposeBag)
+
+        // Validation Error 처리
+        reactor.state.map { $0.validationError }
+            .compactMap { $0 }
+            .distinctUntilChanged()
+            .asDriver(onErrorJustReturn: .notificationPermissionDenied)
+            .drive(onNext: { [weak self] error in
+                self?.handleValidationError(error)
             })
             .disposed(by: disposeBag)
     }
@@ -285,22 +282,44 @@ final class ReadingTimerViewController: BaseViewController<ReadingTimerReactor> 
         present(alert, animated: true)
     }
 
+    private func handleValidationError(_ error: ReadingTimerReactor.ValidationError) {
+        switch error {
+        case .notificationPermissionDenied:
+            showNotificationDeniedAlert()
+        case .liveActivityNotEnabled:
+            showLiveActivityDisabledAlert()
+        }
+    }
+
     private func showNotificationDeniedAlert() {
         let alert = UIAlertController(
             title: "알림 권한 필요",
-            message: "타이머 종료 알림을 받으려면 알림 권한이 필요합니다.\n설정에서 알림을 허용해주세요.",
+            message: "타이머 종료 알림을 받으려면 알림 권한이 필요합니다.\n알림 없이 타이머를 시작하거나 설정에서 알림을 허용해주세요.",
             preferredStyle: .alert
         )
 
-        alert.addAction(UIAlertAction(title: "나중에", style: .cancel) { [weak self] _ in
-            self?.reactor?.action.onNext(.notificationPermissionDenied)
+        alert.addAction(UIAlertAction(title: "알림 없이 시작", style: .default) { [weak self] _ in
+            self?.reactor?.action.onNext(.startTimerConfirmed)
         })
 
         alert.addAction(UIAlertAction(title: "설정으로 이동", style: .default) { [weak self] _ in
             if let settingsURL = URL(string: UIApplication.openSettingsURLString) {
                 UIApplication.shared.open(settingsURL)
             }
-            self?.reactor?.action.onNext(.notificationPermissionDenied)
+        })
+
+        present(alert, animated: true)
+    }
+
+    private func showLiveActivityDisabledAlert() {
+        let alert = UIAlertController(
+            title: "Live Activity 사용 불가",
+            message: "Live Activity를 사용할 수 없습니다. 타이머는 정상적으로 동작합니다.",
+            preferredStyle: .alert
+        )
+
+        alert.addAction(UIAlertAction(title: "확인", style: .default) { [weak self] _ in
+            self?.reactor?.action.onNext(.startTimerConfirmed)
         })
 
         present(alert, animated: true)
