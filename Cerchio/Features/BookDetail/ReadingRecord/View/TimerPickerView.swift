@@ -31,8 +31,8 @@ final class TimerPickerView: UIView {
     private let impactFeedback = UIImpactFeedbackGenerator(style: .light)
 
     // MARK: - Constants
-    private let gaugeColor = UIColor.systemRed
-    private let tickColor = UIColor.systemRed.withAlphaComponent(0.3)
+    private let gaugeColor = UIColor.forestGreen
+    private let tickColor = UIColor.forestGreen.withAlphaComponent(0.3)
     private let radius: CGFloat = 120
     private let gaugeLineWidth: CGFloat = 40
     private let handleSize: CGFloat = 20
@@ -110,7 +110,7 @@ final class TimerPickerView: UIView {
             let isMajorTick = minute % 5 == 0
 
             let tickLength: CGFloat = isMajorTick ? 15 : 8
-            let tickWidth: CGFloat = isMajorTick ? 2 : 1
+            let _: CGFloat = isMajorTick ? 2 : 1
 
             // Ticks pointing outward
             let startRadius = radius
@@ -198,8 +198,11 @@ final class TimerPickerView: UIView {
             angle += 2 * .pi
         }
 
-        // Convert angle to minutes (0-60)
-        var minutes = Int((angle / (2 * .pi)) * 60)
+        // Convert angle to minutes (1-60)
+        var minutes = Int(round((angle / (2 * .pi)) * 60))
+        if minutes == 0 {
+            minutes = 60
+        }
         minutes = max(minMinutes, min(maxMinutes, minutes))
 
         if minutes != selectedMinutes {
