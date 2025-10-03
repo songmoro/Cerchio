@@ -17,6 +17,13 @@ final class LiveActivityManager {
     private init() {}
 
     private var currentActivity: Activity<ReadingTimerAttributes>?
+    private var activityStateObserver: Task<Void, Never>?
+
+    // Activity가 사용자에 의해 닫혔을 때 알림
+    private let activityDismissedSubject = PublishSubject<Void>()
+    var activityDismissed: Observable<Void> {
+        activityDismissedSubject.asObservable()
+    }
 
     // MARK: - Start Activity
 
@@ -59,9 +66,17 @@ final class LiveActivityManager {
                 let staleDate = Calendar.current.date(byAdding: .second, value: targetSeconds, to: now)
                 print("  - staleDate: \(staleDate?.description ?? "nil")")
 
+                // 타이머 종료 시간에 자동으로 닫히도록 설정
+                let content = ActivityContent(
+                    state: initialState,
+                    staleDate: staleDate,
+                    relevanceScore: 1.0
+                )
+
                 let activity = try Activity.request(
                     attributes: attributes,
-                    content: .init(state: initialState, staleDate: staleDate)
+                    content: content,
+                    pushType: nil
                 )
 
                 print("[LiveActivity] ✅ Activity started successfully!")
@@ -69,6 +84,10 @@ final class LiveActivityManager {
                 print("  - activity.activityState: \(activity.activityState)")
 
                 self?.currentActivity = activity
+
+                // Activity 상태 변화 관찰
+                self?.observeActivityState(activity)
+
                 observer.onNext(())
                 observer.onCompleted()
             } catch {
@@ -143,12 +162,12 @@ final class LiveActivityManager {
                         dismissalPolicy: .immediate
                     )
                     print("[LiveActivity] Activity ended successfully")
-                    self?.currentActivity = nil
+                    self?.cleanupActivity()
                     observer.onNext(())
                     observer.onCompleted()
                 } catch {
                     print("[LiveActivity] Failed to end activity: \(error)")
-                    self?.currentActivity = nil
+                    self?.cleanupActivity()
                     observer.onNext(())
                     observer.onCompleted()
                 }
@@ -156,6 +175,44 @@ final class LiveActivityManager {
 
             return Disposables.create()
         }
+    }
+
+    // MARK: - Activity State Observer
+
+    private func observeActivityState(_ activity: Activity<ReadingTimerAttributes>) {
+        // 이전 관찰자 취소
+        activityStateObserver?.cancel()
+
+        // 새 관찰자 시작
+        activityStateObserver = Task {
+            for await state in activity.activityStateUpdates {
+                print("[LiveActivity] 📊 Activity state changed: \(state)")
+
+                switch state {
+                case .dismissed:
+                    print("[LiveActivity] 🗑️ User dismissed the Live Activity")
+                    self.activityDismissedSubject.onNext(())
+                    self.cleanupActivity()
+
+                case .ended:
+                    print("[LiveActivity] ⏹️ Activity ended")
+                    self.cleanupActivity()
+
+                case .active, .stale:
+                    break
+
+                @unknown default:
+                    break
+                }
+            }
+        }
+    }
+
+    private func cleanupActivity() {
+        print("[LiveActivity] 🧹 Cleaning up activity")
+        activityStateObserver?.cancel()
+        activityStateObserver = nil
+        currentActivity = nil
     }
 
     // MARK: - Error

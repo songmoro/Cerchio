@@ -59,13 +59,19 @@ struct DynamicIslandTimerView: View {
 
     var body: some View {
         VStack(alignment: alignment, spacing: 4) {
-            if showLabel {
+            if showLabel && !isCompleted {
                 Text("경과")
                     .font(.caption2)
                     .foregroundColor(.secondary)
             }
 
-            if let timerStart = context.state.timerStartTime, !context.state.isPaused {
+            if isCompleted {
+                // 완료
+                Text("완료")
+                    .font(showLabel ? .title3 : .caption2)
+                    .fontWeight(.bold)
+                    .foregroundColor(Color(hex: "#2C5F2D"))
+            } else if let timerStart = context.state.timerStartTime, !context.state.isPaused {
                 // 실행 중: Text의 timer 스타일 사용
                 Text(timerStart, style: .timer)
                     .font(showLabel ? .title3 : .caption2)
@@ -83,6 +89,10 @@ struct DynamicIslandTimerView: View {
         }
     }
 
+    private var isCompleted: Bool {
+        context.state.currentElapsedSeconds >= context.state.targetSeconds
+    }
+
     private func timeString(_ seconds: Int) -> String {
         let minutes = seconds / 60
         let secs = seconds % 60
@@ -96,11 +106,17 @@ struct DynamicIslandRemainingView: View {
 
     var body: some View {
         VStack(alignment: .trailing, spacing: 4) {
-            Text("남은 시간")
-                .font(.caption2)
-                .foregroundColor(.secondary)
+            if !isCompleted {
+                Text("남은 시간")
+                    .font(.caption2)
+                    .foregroundColor(.secondary)
+            }
 
-            if let timerStart = context.state.timerStartTime, !context.state.isPaused {
+            if isCompleted {
+                // 완료
+                Text("🎉")
+                    .font(.title3)
+            } else if let timerStart = context.state.timerStartTime, !context.state.isPaused {
                 // 실행 중: 종료 시간까지 카운트다운
                 let endDate = timerStart.addingTimeInterval(TimeInterval(context.state.targetSeconds - context.state.pausedElapsedSeconds))
                 Text(endDate, style: .timer)
@@ -115,6 +131,10 @@ struct DynamicIslandRemainingView: View {
                     .monospacedDigit()
             }
         }
+    }
+
+    private var isCompleted: Bool {
+        context.state.currentElapsedSeconds >= context.state.targetSeconds
     }
 
     private func timeString(_ seconds: Int) -> String {
@@ -139,45 +159,62 @@ struct ReadingTimerLockScreenView: View {
                 Spacer()
             }
 
-            HStack(spacing: 20) {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("경과 시간")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-
-                    if let timerStart = context.state.timerStartTime, !context.state.isPaused {
-                        Text(timerStart, style: .timer)
+            if isCompleted {
+                // 완료 상태
+                HStack {
+                    Spacer()
+                    VStack(spacing: 8) {
+                        Text("독서 완료!")
                             .font(.title2)
                             .fontWeight(.bold)
                             .foregroundColor(Color(hex: "#2C5F2D"))
-                            .monospacedDigit()
-                    } else {
-                        Text(timeString(context.state.pausedElapsedSeconds))
-                            .font(.title2)
-                            .fontWeight(.bold)
-                            .foregroundColor(Color(hex: "#2C5F2D"))
-                            .monospacedDigit()
+                        Text("🎉")
+                            .font(.largeTitle)
                     }
+                    Spacer()
                 }
+            } else {
+                // 진행 중
+                HStack(spacing: 20) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("경과 시간")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
 
-                Spacer()
+                        if let timerStart = context.state.timerStartTime, !context.state.isPaused {
+                            Text(timerStart, style: .timer)
+                                .font(.title2)
+                                .fontWeight(.bold)
+                                .foregroundColor(Color(hex: "#2C5F2D"))
+                                .monospacedDigit()
+                        } else {
+                            Text(timeString(context.state.pausedElapsedSeconds))
+                                .font(.title2)
+                                .fontWeight(.bold)
+                                .foregroundColor(Color(hex: "#2C5F2D"))
+                                .monospacedDigit()
+                        }
+                    }
 
-                VStack(alignment: .trailing, spacing: 4) {
-                    Text("남은 시간")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
+                    Spacer()
 
-                    if let timerStart = context.state.timerStartTime, !context.state.isPaused {
-                        let endDate = timerStart.addingTimeInterval(TimeInterval(context.state.targetSeconds - context.state.pausedElapsedSeconds))
-                        Text(endDate, style: .timer)
-                            .font(.title2)
-                            .fontWeight(.bold)
-                            .monospacedDigit()
-                    } else {
-                        Text(timeString(context.state.currentRemainingSeconds))
-                            .font(.title2)
-                            .fontWeight(.bold)
-                            .monospacedDigit()
+                    VStack(alignment: .trailing, spacing: 4) {
+                        Text("남은 시간")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+
+                        if let timerStart = context.state.timerStartTime, !context.state.isPaused {
+                            let endDate = timerStart.addingTimeInterval(TimeInterval(context.state.targetSeconds - context.state.pausedElapsedSeconds))
+                            Text(endDate, style: .timer)
+                                .font(.title2)
+                                .fontWeight(.bold)
+                                .monospacedDigit()
+                        } else {
+                            Text(timeString(context.state.currentRemainingSeconds))
+                                .font(.title2)
+                                .fontWeight(.bold)
+                                .monospacedDigit()
+                        }
                     }
                 }
             }
@@ -186,6 +223,10 @@ struct ReadingTimerLockScreenView: View {
                 .tint(Color(hex: "#2C5F2D"))
         }
         .padding(16)
+    }
+
+    private var isCompleted: Bool {
+        context.state.currentElapsedSeconds >= context.state.targetSeconds
     }
 
     private func timeString(_ seconds: Int) -> String {

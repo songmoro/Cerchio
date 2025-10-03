@@ -32,6 +32,7 @@ final class ReadingTimerReactor: Reactor {
         case setRemainingSeconds(Int)
         case setValidationError(ValidationError)
         case clearValidationError
+        case setTimerStartDate(Date?)
         case setError(Error)
     }
 
@@ -49,6 +50,7 @@ final class ReadingTimerReactor: Reactor {
         var bookId: String
         var bookTitle: String
         var validationError: ValidationError?
+        var timerStartDate: Date? // 타이머 시작 절대 시간
 
         var elapsedTimeString: String {
             formatTime(elapsedSeconds)
@@ -80,6 +82,7 @@ final class ReadingTimerReactor: Reactor {
     let initialState: State
     private let sessionRepository: ReadingSessionRepositoryProtocol
     private let notificationManager = NotificationManager.shared
+    private let timerSessionManager = TimerSessionManager.shared
     private let disposeBag = DisposeBag()
 
     // Timer management
@@ -87,14 +90,36 @@ final class ReadingTimerReactor: Reactor {
     private var backgroundTime: Date?
     private var notificationScheduled = false
     private var liveActivityStarted = false
+    private var sessionId: String
 
     init(bookId: String, bookTitle: String, targetMinutes: Int, sessionRepository: ReadingSessionRepositoryProtocol) {
         self.sessionRepository = sessionRepository
+        self.sessionId = UUID().uuidString
         self.initialState = State(
             remainingSeconds: targetMinutes * 60,
             targetMinutes: targetMinutes,
             bookId: bookId,
             bookTitle: bookTitle
+        )
+    }
+
+    // 앱 재시작 시 세션 복원용 initializer
+    init(session: TimerSessionManager.ActiveSession, sessionRepository: ReadingSessionRepositoryProtocol) {
+        self.sessionRepository = sessionRepository
+        self.sessionId = session.sessionId
+
+        // 경과 시간 계산
+        let totalElapsed = session.elapsedSeconds
+        let targetSeconds = session.targetMinutes * 60
+        let remainingSeconds = max(0, targetSeconds - totalElapsed)
+
+        self.initialState = State(
+            elapsedSeconds: totalElapsed,
+            remainingSeconds: remainingSeconds,
+            targetMinutes: session.targetMinutes,
+            bookId: session.bookId,
+            bookTitle: session.bookTitle,
+            timerStartDate: session.startTime
         )
     }
 
@@ -107,26 +132,34 @@ final class ReadingTimerReactor: Reactor {
             return validateAndRequestPermissions()
 
         case .startTimerConfirmed:
+            let startTime = Date()
+            saveActiveSession(elapsedSeconds: 0, startTime: startTime)
             startTimerTick()
             startLiveActivity()
-            return .just(.setTimerState(.running))
+            return .concat([
+                .just(.setTimerStartDate(startTime)),
+                .just(.setTimerState(.running))
+            ])
 
         case .pauseTimer:
             stopTimerTick()
             cancelNotification()
             updateLiveActivityPaused()
+            saveActiveSession(elapsedSeconds: currentState.elapsedSeconds, startTime: currentState.timerStartDate ?? Date())
             return .just(.setTimerState(.paused))
 
         case .resumeTimer:
             startTimerTick()
             scheduleNotification()
             updateLiveActivityResumed()
+            saveActiveSession(elapsedSeconds: currentState.elapsedSeconds, startTime: currentState.timerStartDate ?? Date())
             return .just(.setTimerState(.running))
 
         case .stopTimer:
             stopTimerTick()
             cancelNotification()
             endLiveActivity()
+            clearActiveSession()
             return completeSession()
 
         case .timerTick:
@@ -146,8 +179,15 @@ final class ReadingTimerReactor: Reactor {
             if newRemaining == 0 {
                 stopTimerTick()
                 cancelNotification()
-                updateLiveActivityCompleted()
+                // Live Activity 즉시 종료
+                endLiveActivity()
+                clearActiveSession()
                 mutations.append(completeSession())
+            } else {
+                // 타이머 실행 중 10초마다 세션 저장 (앱 종료 대비)
+                if newElapsed % 10 == 0 {
+                    saveActiveSession(elapsedSeconds: newElapsed, startTime: currentState.timerStartDate ?? Date())
+                }
             }
 
             return .concat(mutations)
@@ -182,6 +222,9 @@ final class ReadingTimerReactor: Reactor {
 
         case .clearValidationError:
             newState.validationError = nil
+
+        case .setTimerStartDate(let date):
+            newState.timerStartDate = date
 
         case .setError:
             break
@@ -244,13 +287,21 @@ final class ReadingTimerReactor: Reactor {
     }
 
     private func handleForeground() -> Observable<Mutation> {
+        print("[ReadingTimer] 🔄 Returning from background")
+        print("  - backgroundTime: \(backgroundTime?.description ?? "nil")")
+        print("  - currentState.timerState: \(currentState.timerState)")
+        print("  - currentState.elapsedSeconds: \(currentState.elapsedSeconds)")
+
         guard let backgroundTime = backgroundTime else {
+            print("[ReadingTimer] No background time recorded")
             return .empty()
         }
 
-        // 타이머가 이미 완료되었으면 아무것도 하지 않음
+        // 타이머가 이미 완료되었으면 Live Activity만 종료
         if currentState.timerState == .completed {
             self.backgroundTime = nil
+            print("[ReadingTimer] Timer already completed in background - ending Live Activity")
+            endLiveActivity()
             return .empty()
         }
 
@@ -258,6 +309,11 @@ final class ReadingTimerReactor: Reactor {
         let targetSeconds = currentState.targetMinutes * 60
         let newElapsed = min(currentState.elapsedSeconds + elapsed, targetSeconds)
         let newRemaining = max(0, targetSeconds - newElapsed)
+
+        print("[ReadingTimer] Calculating foreground state:")
+        print("  - elapsed in background: \(elapsed)s")
+        print("  - newElapsed: \(newElapsed)s")
+        print("  - newRemaining: \(newRemaining)s")
 
         self.backgroundTime = nil
 
@@ -268,15 +324,20 @@ final class ReadingTimerReactor: Reactor {
 
         // 백그라운드에서 타이머가 완료되었는지 확인
         if newRemaining == 0 {
+            print("[ReadingTimer] 🏁 Timer completed in background!")
             stopTimerTick()
             cancelNotification()
-            updateLiveActivityCompleted()
+            // Live Activity 즉시 종료
+            endLiveActivity()
+            clearActiveSession()
             mutations.append(completeSession())
         } else if currentState.timerState == .running {
+            print("[ReadingTimer] ▶️ Resuming timer from background")
             // 타이머가 실행 중이었다면 재시작
             startTimerTick()
             scheduleNotification()
             updateLiveActivityResumed()
+            saveActiveSession(elapsedSeconds: newElapsed, startTime: currentState.timerStartDate ?? Date())
         }
 
         return .concat(mutations)
@@ -443,6 +504,8 @@ final class ReadingTimerReactor: Reactor {
         }
 
         print("[ReadingTimer] Starting Live Activity - bookTitle: \(currentState.bookTitle), targetMinutes: \(currentState.targetMinutes)")
+
+        // Live Activity 시작
         LiveActivityManager.shared.startActivity(
             bookTitle: currentState.bookTitle,
             targetMinutes: currentState.targetMinutes
@@ -457,6 +520,15 @@ final class ReadingTimerReactor: Reactor {
             }
         )
         .disposed(by: disposeBag)
+
+        // 사용자가 Live Activity를 닫았을 때 처리
+        LiveActivityManager.shared.activityDismissed
+            .take(1)
+            .subscribe(onNext: { [weak self] in
+                print("[ReadingTimer] 🗑️ User dismissed Live Activity - resetting flag")
+                self?.liveActivityStarted = false
+            })
+            .disposed(by: disposeBag)
     }
 
     private func updateLiveActivityPaused() {
@@ -499,21 +571,42 @@ final class ReadingTimerReactor: Reactor {
         .disposed(by: disposeBag)
     }
 
-    private func updateLiveActivityCompleted() {
-        guard #available(iOS 16.2, *), liveActivityStarted else { return }
+    private func endLiveActivity() {
+        guard #available(iOS 16.2, *), liveActivityStarted else {
+            print("[ReadingTimer] Cannot end - liveActivityStarted: \(liveActivityStarted)")
+            return
+        }
 
-        // 완료 상태로 업데이트 후 종료
-        endLiveActivity()
+        print("[ReadingTimer] Ending Live Activity...")
+        LiveActivityManager.shared.endActivity()
+            .subscribe(
+                onNext: { [weak self] in
+                    print("[ReadingTimer] ✅ Live Activity ended successfully")
+                    self?.liveActivityStarted = false
+                },
+                onError: { [weak self] error in
+                    print("[ReadingTimer] ❌ Failed to end Live Activity: \(error)")
+                    self?.liveActivityStarted = false
+                }
+            )
+            .disposed(by: disposeBag)
     }
 
-    private func endLiveActivity() {
-        guard #available(iOS 16.2, *), liveActivityStarted else { return }
+    // MARK: - Session Management
 
-        LiveActivityManager.shared.endActivity()
-            .subscribe(onNext: { [weak self] in
-                self?.liveActivityStarted = false
-            })
-            .disposed(by: disposeBag)
+    private func saveActiveSession(elapsedSeconds: Int, startTime: Date) {
+        timerSessionManager.saveActiveSession(
+            sessionId: sessionId,
+            bookId: currentState.bookId,
+            bookTitle: currentState.bookTitle,
+            targetMinutes: currentState.targetMinutes,
+            startTime: startTime,
+            elapsedSeconds: elapsedSeconds
+        )
+    }
+
+    private func clearActiveSession() {
+        timerSessionManager.clearActiveSession()
     }
 
     deinit {
