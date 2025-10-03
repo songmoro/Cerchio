@@ -134,6 +134,19 @@ final class ReadingTimerViewController: BaseViewController<ReadingTimerReactor> 
             .bind(to: reactor.action)
             .disposed(by: disposeBag)
 
+        // 알림 권한 거부 시 얼럿 표시
+        reactor.state.map { _ in }
+            .take(1)
+            .flatMap { _ in
+                NotificationManager.shared.checkAuthorizationStatus()
+            }
+            .filter { $0 == .denied }
+            .asDriver(onErrorJustReturn: .notDetermined)
+            .drive(onNext: { [weak self] _ in
+                self?.showNotificationDeniedAlert()
+            })
+            .disposed(by: disposeBag)
+
         startButton.rx.tap
             .map { Reactor.Action.startTimer }
             .bind(to: reactor.action)
@@ -160,6 +173,10 @@ final class ReadingTimerViewController: BaseViewController<ReadingTimerReactor> 
             .disposed(by: disposeBag)
 
         NotificationCenter.default.rx.notification(UIApplication.willEnterForegroundNotification)
+            .do(onNext: { _ in
+                // Foreground로 돌아올 때 배지 제거
+                NotificationManager.shared.clearBadge()
+            })
             .map { _ in Reactor.Action.enterForeground }
             .bind(to: reactor.action)
             .disposed(by: disposeBag)
@@ -262,9 +279,28 @@ final class ReadingTimerViewController: BaseViewController<ReadingTimerReactor> 
         )
 
         alert.addAction(UIAlertAction(title: "확인", style: .default) { [weak self] _ in
-            print("✅ Completion alert - 확인 button tapped")
             self?.completionRelay.accept(())
-            print("✅ Completion relay accepted")
+        })
+
+        present(alert, animated: true)
+    }
+
+    private func showNotificationDeniedAlert() {
+        let alert = UIAlertController(
+            title: "알림 권한 필요",
+            message: "타이머 종료 알림을 받으려면 알림 권한이 필요합니다.\n설정에서 알림을 허용해주세요.",
+            preferredStyle: .alert
+        )
+
+        alert.addAction(UIAlertAction(title: "나중에", style: .cancel) { [weak self] _ in
+            self?.reactor?.action.onNext(.notificationPermissionDenied)
+        })
+
+        alert.addAction(UIAlertAction(title: "설정으로 이동", style: .default) { [weak self] _ in
+            if let settingsURL = URL(string: UIApplication.openSettingsURLString) {
+                UIApplication.shared.open(settingsURL)
+            }
+            self?.reactor?.action.onNext(.notificationPermissionDenied)
         })
 
         present(alert, animated: true)

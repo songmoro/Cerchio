@@ -46,10 +46,7 @@ final class ReadingTimerCoordinator: BaseCoordinator {
         // ViewController 완료 이벤트 구독
         viewController.completion
             .subscribe(onNext: { [weak self] in
-                print("✅ ReadingTimerCoordinator - completion event received")
-                print("✅ ReadingTimerCoordinator - calling finishSession")
                 self?.finishSession()
-                print("✅ ReadingTimerCoordinator - now sending completion to parent")
                 self?.completionRelay.accept(())
             })
             .disposed(by: disposeBag)
@@ -58,10 +55,6 @@ final class ReadingTimerCoordinator: BaseCoordinator {
     }
 
     private func finishSession() {
-        print("✅ ReadingTimerCoordinator - finishSession called")
-        print("✅ Navigation controller: \(navigationController)")
-        print("✅ View controllers count: \(navigationController.viewControllers.count)")
         navigationController.popViewController(animated: true)
-        print("✅ Pop executed")
     }
 }

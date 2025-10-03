@@ -9,6 +9,7 @@ import Foundation
 import ReactorKit
 import RxSwift
 import RxCocoa
+import UserNotifications
 
 final class ReadingTimerReactor: Reactor {
 
@@ -21,6 +22,9 @@ final class ReadingTimerReactor: Reactor {
         case timerTick
         case enterBackground
         case enterForeground
+        case notificationPermissionRequested
+        case notificationPermissionGranted(Bool)
+        case notificationPermissionDenied
     }
 
     enum Mutation {
@@ -68,11 +72,13 @@ final class ReadingTimerReactor: Reactor {
 
     let initialState: State
     private let sessionRepository: ReadingSessionRepositoryProtocol
+    private let notificationManager = NotificationManager.shared
     private let disposeBag = DisposeBag()
 
     // Timer management
     private var timerDisposable: Disposable?
     private var backgroundTime: Date?
+    private var notificationScheduled = false
 
     init(bookId: String, targetMinutes: Int, sessionRepository: ReadingSessionRepositoryProtocol) {
         self.sessionRepository = sessionRepository
@@ -90,18 +96,22 @@ final class ReadingTimerReactor: Reactor {
 
         case .startTimer:
             startTimerTick()
+            scheduleNotification()
             return .just(.setTimerState(.running))
 
         case .pauseTimer:
             stopTimerTick()
+            cancelNotification()
             return .just(.setTimerState(.paused))
 
         case .resumeTimer:
             startTimerTick()
+            scheduleNotification()
             return .just(.setTimerState(.running))
 
         case .stopTimer:
             stopTimerTick()
+            cancelNotification()
             return completeSession()
 
         case .timerTick:
@@ -117,6 +127,7 @@ final class ReadingTimerReactor: Reactor {
             // Check if timer completed
             if newRemaining == 0 {
                 stopTimerTick()
+                cancelNotification()
                 mutations.append(completeSession())
             }
 
@@ -128,6 +139,26 @@ final class ReadingTimerReactor: Reactor {
 
         case .enterForeground:
             return handleForeground()
+
+        case .notificationPermissionRequested:
+            // 권한 요청 시 타이머 일시정지
+            stopTimerTick()
+            return .just(.setTimerState(.paused))
+
+        case .notificationPermissionGranted(let granted):
+            // 권한 응답 후 타이머 재개
+            if currentState.timerState == .paused {
+                startTimerTick()
+                if granted {
+                    scheduleNotificationWithoutPermissionCheck()
+                }
+                return .just(.setTimerState(.running))
+            }
+            return .empty()
+
+        case .notificationPermissionDenied:
+            // 권한 거부 시에도 타이머는 계속 진행
+            return .empty()
         }
     }
 
@@ -233,10 +264,12 @@ final class ReadingTimerReactor: Reactor {
         // 백그라운드에서 타이머가 완료되었는지 확인
         if newRemaining == 0 {
             stopTimerTick()
+            cancelNotification()
             mutations.append(completeSession())
         } else if currentState.timerState == .running {
             // 타이머가 실행 중이었다면 재시작
             startTimerTick()
+            scheduleNotification()
         }
 
         return .concat(mutations)
@@ -312,8 +345,70 @@ final class ReadingTimerReactor: Reactor {
         return commands
     }
 
+    // MARK: - Notification Management
+
+    private func scheduleNotification() {
+        // 이미 스케줄되었거나 남은 시간이 0이면 스케줄하지 않음
+        guard !notificationScheduled, currentState.remainingSeconds > 0 else { return }
+
+        // 알림 권한 요청 및 스케줄
+        notificationManager.checkAuthorizationStatus()
+            .do(onNext: { [weak self] status in
+                // 권한이 결정되지 않았으면 타이머 일시정지
+                if status == .notDetermined {
+                    self?.action.onNext(.notificationPermissionRequested)
+                }
+            })
+            .flatMap { [weak self] status -> Observable<Bool> in
+                guard let self = self else { return .just(false) }
+
+                switch status {
+                case .notDetermined:
+                    // 권한이 결정되지 않았으면 요청
+                    return self.notificationManager.requestAuthorization()
+                        .do(onNext: { [weak self] granted in
+                            // 권한 응답 후 타이머 재개
+                            self?.action.onNext(.notificationPermissionGranted(granted))
+                        })
+                case .authorized, .provisional:
+                    return .just(true)
+                case .denied, .ephemeral:
+                    return .just(false)
+                @unknown default:
+                    return .just(false)
+                }
+            }
+            .filter { $0 } // 권한이 있을 때만
+            .flatMap { [weak self] _ -> Observable<Void> in
+                guard let self = self else { return .empty() }
+                let remainingSeconds = TimeInterval(self.currentState.remainingSeconds)
+                return self.notificationManager.scheduleTimerCompletionNotification(afterSeconds: remainingSeconds)
+            }
+            .subscribe(onNext: { [weak self] in
+                self?.notificationScheduled = true
+            })
+            .disposed(by: disposeBag)
+    }
+
+    private func scheduleNotificationWithoutPermissionCheck() {
+        guard !notificationScheduled, currentState.remainingSeconds > 0 else { return }
+
+        let remainingSeconds = TimeInterval(currentState.remainingSeconds)
+        notificationManager.scheduleTimerCompletionNotification(afterSeconds: remainingSeconds)
+            .subscribe(onNext: { [weak self] in
+                self?.notificationScheduled = true
+            })
+            .disposed(by: disposeBag)
+    }
+
+    private func cancelNotification() {
+        notificationManager.cancelTimerCompletionNotification()
+        notificationScheduled = false
+    }
+
     deinit {
         stopTimerTick()
+        cancelNotification()
     }
 }
 
