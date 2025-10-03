@@ -9,16 +9,16 @@
 /* Begin PBXBuildFile section */
 		F8137DA62E82AA210090F8FA /* SnapKit in Frameworks */ = {isa = PBXBuildFile; productRef = F8137DA52E82AA210090F8FA /* SnapKit */; };
 		F8137DA92E82AA330090F8FA /* RxCocoa in Frameworks */ = {isa = PBXBuildFile; productRef = F8137DA82E82AA330090F8FA /* RxCocoa */; };
+		F8137DA92E82AA330090F8FB /* RxCocoa in Frameworks */ = {isa = PBXBuildFile; productRef = F8137DA82E82AA330090F8FA /* RxCocoa */; };
 		F8137DAB2E82AA330090F8FA /* RxSwift in Frameworks */ = {isa = PBXBuildFile; productRef = F8137DAA2E82AA330090F8FA /* RxSwift */; };
+		F8137DAB2E82AA330090F8FB /* RxSwift in Frameworks */ = {isa = PBXBuildFile; productRef = F8137DAA2E82AA330090F8FA /* RxSwift */; };
 		F8137DAE2E82AA420090F8FA /* Kingfisher in Frameworks */ = {isa = PBXBuildFile; productRef = F8137DAD2E82AA420090F8FA /* Kingfisher */; };
 		F81383BD2E86ACD50090F8FA /* RealmSwift in Frameworks */ = {isa = PBXBuildFile; productRef = F81383BC2E86ACD50090F8FA /* RealmSwift */; };
+		F81383BD2E86ACD50090F8FB /* RealmSwift in Frameworks */ = {isa = PBXBuildFile; productRef = F81383BC2E86ACD50090F8FA /* RealmSwift */; };
 		F81383C02E86AD7F0090F8FA /* ReactorKit in Frameworks */ = {isa = PBXBuildFile; productRef = F81383BF2E86AD7F0090F8FA /* ReactorKit */; };
+		F81383C02E86AD7F0090F8FB /* ReactorKit in Frameworks */ = {isa = PBXBuildFile; productRef = F81383BF2E86AD7F0090F8FA /* ReactorKit */; };
 		F81384312E86E5E10090F8FA /* RealmSwift in Embed Frameworks */ = {isa = PBXBuildFile; productRef = F81383BC2E86ACD50090F8FA /* RealmSwift */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		F84E0FE92E829A00006B98C0 /* .gitignore in Resources */ = {isa = PBXBuildFile; fileRef = F84E0FE82E829A00006B98C0 /* .gitignore */; };
-		F8137DA92E82AA330090F8FB /* RxCocoa in Frameworks */ = {isa = PBXBuildFile; productRef = F8137DA82E82AA330090F8FA /* RxCocoa */; };
-		F8137DAB2E82AA330090F8FB /* RxSwift in Frameworks */ = {isa = PBXBuildFile; productRef = F8137DAA2E82AA330090F8FA /* RxSwift */; };
-		F81383BD2E86ACD50090F8FB /* RealmSwift in Frameworks */ = {isa = PBXBuildFile; productRef = F81383BC2E86ACD50090F8FA /* RealmSwift */; };
-		F81383C02E86AD7F0090F8FB /* ReactorKit in Frameworks */ = {isa = PBXBuildFile; productRef = F81383BF2E86AD7F0090F8FA /* ReactorKit */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -184,7 +184,6 @@
 			buildPhases = (
 				F84E0EF42E829797006B98C0 /* Sources */,
 				F84E0EF52E829797006B98C0 /* Frameworks */,
-				F84E0EF62E829797006B8C0 /* Resources */,
 			);
 			buildRules = (
 			);
@@ -286,13 +285,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				F84E0FE92E829A00006B98C0 /* .gitignore in Resources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		F84E0EF62E829797006B98C0 /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

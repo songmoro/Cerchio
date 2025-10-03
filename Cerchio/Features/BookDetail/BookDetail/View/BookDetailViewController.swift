@@ -38,12 +38,15 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
     // MARK: - Section & Item Types
     nonisolated enum Section: CaseIterable {
         case bookInfo
+        case readingRecords
         case savedQuotes
         case photoPages
     }
     
     nonisolated enum Item: Hashable, Sendable {
         case bookInfo(BookDetail)
+        case readingRecord(String, Date) // 독서 기록 내용, 생성 날짜
+        case addReadingRecordButton // 독서 기록 추가 버튼
         case savedQuote(String, Int?, Date) // 문장 텍스트, 페이지, 저장 날짜
         case addQuoteButton // 문장 추가 버튼
         case photoItem(String) // 사진 ID (UIImage 대신 ID만 저장)
@@ -55,6 +58,12 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
             case .bookInfo(let detail):
                 hasher.combine("bookInfo")
                 hasher.combine(detail)
+            case .readingRecord(let content, let date):
+                hasher.combine("readingRecord")
+                hasher.combine(content)
+                hasher.combine(date)
+            case .addReadingRecordButton:
+                hasher.combine("addReadingRecordButton")
             case .savedQuote(let quote, let page, let date):
                 hasher.combine("savedQuote")
                 hasher.combine(quote)
@@ -76,6 +85,10 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
             switch (lhs, rhs) {
             case (.bookInfo(let l), .bookInfo(let r)):
                 return l == r
+            case (.readingRecord(let lc, let ld), .readingRecord(let rc, let rd)):
+                return lc == rc && ld == rd
+            case (.addReadingRecordButton, .addReadingRecordButton):
+                return true
             case (.savedQuote(let lq, let lp, let ld), .savedQuote(let rq, let rp, let rd)):
                 return lq == rq && lp == rp && ld == rd
             case (.addQuoteButton, .addQuoteButton):
@@ -248,6 +261,7 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
 
         // 셀 등록
         collectionView.register(BookInfoCollectionViewCell.self)
+        collectionView.register(AddReadingRecordButtonCell.self)
         collectionView.register(SavedQuoteCell.self)
         collectionView.register(AddQuoteButtonCell.self)
         collectionView.register(PhotoItemCell.self)
@@ -255,6 +269,11 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
         collectionView.register(PhotoLoadingCell.self)
 
         // 헤더 등록
+        collectionView.register(
+            ReadingRecordsSectionHeader.self,
+            forSupplementaryViewOfKind: UICollectionView.elementKindSectionHeader,
+            withReuseIdentifier: ReadingRecordsSectionHeader.identifier
+        )
         collectionView.register(
             SavedQuotesSectionHeader.self,
             forSupplementaryViewOfKind: UICollectionView.elementKindSectionHeader,
@@ -286,6 +305,8 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
             switch section {
             case .bookInfo:
                 return self.createBookInfoSection()
+            case .readingRecords:
+                return self.createReadingRecordsSection()
             case .savedQuotes:
                 return self.createSavedQuotesSection()
             case .photoPages:
@@ -313,7 +334,40 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
         
         return section
     }
-    
+
+    private func createReadingRecordsSection() -> NSCollectionLayoutSection {
+        // 독서 기록 섹션 - 1열 레이아웃
+        let itemSize = NSCollectionLayoutSize(
+            widthDimension: .fractionalWidth(1.0),
+            heightDimension: .estimated(120)
+        )
+        let item = NSCollectionLayoutItem(layoutSize: itemSize)
+        item.contentInsets = NSDirectionalEdgeInsets(top: 4, leading: 0, bottom: 4, trailing: 0)
+
+        let groupSize = NSCollectionLayoutSize(
+            widthDimension: .fractionalWidth(1.0),
+            heightDimension: .estimated(120)
+        )
+        let group = NSCollectionLayoutGroup.vertical(layoutSize: groupSize, subitems: [item])
+
+        let section = NSCollectionLayoutSection(group: group)
+        section.contentInsets = NSDirectionalEdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16)
+
+        // 섹션 헤더 추가
+        let headerSize = NSCollectionLayoutSize(
+            widthDimension: .fractionalWidth(1.0),
+            heightDimension: .estimated(44)
+        )
+        let header = NSCollectionLayoutBoundarySupplementaryItem(
+            layoutSize: headerSize,
+            elementKind: UICollectionView.elementKindSectionHeader,
+            alignment: .top
+        )
+        section.boundarySupplementaryItems = [header]
+
+        return section
+    }
+
     private func createSavedQuotesSection() -> NSCollectionLayoutSection {
         // 저장한 문장 섹션 - 1열 레이아웃
         let itemSize = NSCollectionLayoutSize(
@@ -400,6 +454,18 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
                 }
                 return cell
 
+            case .readingRecord(let content, let date):
+                let cell: SavedQuoteCell = collectionView.dequeueReusableCell(SavedQuoteCell.self, for: indexPath)
+                cell.configure(with: content, pageNumber: nil, date: date)
+                return cell
+
+            case .addReadingRecordButton:
+                let cell: AddReadingRecordButtonCell = collectionView.dequeueReusableCell(AddReadingRecordButtonCell.self, for: indexPath)
+                cell.onAddRecordTapped = { [weak self] in
+                    self?.showReadingRecordEntry()
+                }
+                return cell
+
             case .savedQuote(let quote, let pageNumber, let date):
                 let cell: SavedQuoteCell = collectionView.dequeueReusableCell(SavedQuoteCell.self, for: indexPath)
                 cell.configure(with: quote, pageNumber: pageNumber, date: date)
@@ -456,6 +522,15 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
             let section = Section.allCases[indexPath.section]
 
             switch section {
+            case .readingRecords:
+                let header = collectionView.dequeueReusableSupplementaryView(
+                    ofKind: kind,
+                    withReuseIdentifier: ReadingRecordsSectionHeader.identifier,
+                    for: indexPath
+                ) as! ReadingRecordsSectionHeader
+
+                return header
+
             case .savedQuotes:
                 let header = collectionView.dequeueReusableSupplementaryView(
                     ofKind: kind,
@@ -488,10 +563,13 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
     
     private func updateSnapshot(with bookDetail: BookDetail) {
         var snapshot = Snapshot()
-        snapshot.appendSections([.bookInfo, .savedQuotes, .photoPages])
+        snapshot.appendSections([.bookInfo, .readingRecords, .savedQuotes, .photoPages])
 
         // 책 정보
         snapshot.appendItems([.bookInfo(bookDetail)], toSection: .bookInfo)
+
+        // 독서 기록 (기본 추가 버튼만 표시, 실제 데이터는 별도 로드)
+        snapshot.appendItems([.addReadingRecordButton], toSection: .readingRecords)
 
         // 저장한 문장 (기본 빈 데이터, 실제 데이터는 별도 로드)
         snapshot.appendItems([.savedQuote("", nil, Date())], toSection: .savedQuotes)
@@ -503,6 +581,35 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
     }
     
     // MARK: - Navigation Methods
+    private func showReadingRecordEntry() {
+        guard let reactor = reactor, let serviceFactory = serviceFactory else { return }
+        let bookId = String(describing: reactor.currentState.book.id)
+
+        let readingRecordCoordinator = ReadingRecordCoordinator(
+            navigationController: navigationController ?? UINavigationController(),
+            dependencies: ReadingRecordCoordinator.Dependencies(
+                bookId: bookId,
+                serviceFactory: serviceFactory
+            )
+        )
+
+        addChildCoordinator(readingRecordCoordinator)
+
+        readingRecordCoordinator.result
+            .subscribe(onNext: { [weak self] result in
+                switch result {
+                case .recordSaved(let content):
+                    print("✅ Reading record saved: \(content)")
+                case .cancelled:
+                    print("📝 Reading record cancelled")
+                }
+                self?.removeChildCoordinator(readingRecordCoordinator)
+            })
+            .disposed(by: disposeBag)
+
+        readingRecordCoordinator.start()
+    }
+
     private func showQuoteEntry() {
         guard let reactor = reactor, let serviceFactory = serviceFactory else { return }
         let bookId = String(describing: reactor.currentState.book.id)
@@ -634,10 +741,13 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
         guard let bookDetail = bookDetail else { return }
 
         var snapshot = Snapshot()
-        snapshot.appendSections([.bookInfo, .savedQuotes, .photoPages])
+        snapshot.appendSections([.bookInfo, .readingRecords, .savedQuotes, .photoPages])
 
         // 책 정보
         snapshot.appendItems([.bookInfo(bookDetail)], toSection: .bookInfo)
+
+        // 독서 기록 - 추가 버튼만 표시 (실제 데이터는 추후 구현)
+        snapshot.appendItems([.addReadingRecordButton], toSection: .readingRecords)
 
         // 저장한 문장 - 최대 3개 또는 문장이 없으면 추가 버튼만
         var quoteItems: [Item] = []

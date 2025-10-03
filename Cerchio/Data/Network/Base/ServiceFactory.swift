@@ -116,6 +116,15 @@ final class ServiceFactory: BaseServiceFactory<ServiceDependencies> {
         }
     }
 
+    /// Creates a ReadingRecordRepository instance
+    func createReadingRecordRepository() -> ReadingRecordRepositoryProtocol {
+        do {
+            return try ReadingRecordRepository()
+        } catch {
+            fatalError("Failed to create ReadingRecordRepository: \(error)")
+        }
+    }
+
     // MARK: - Cache Management
     func clearServiceCache() {
         cacheQueue.async(flags: .barrier) {
