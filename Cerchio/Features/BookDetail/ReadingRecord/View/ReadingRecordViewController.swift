@@ -14,7 +14,8 @@ import SnapKit
 final class ReadingRecordViewController: BaseViewController<ReadingRecordReactor> {
     // MARK: - UI Components
     private let titleLabel = TransitionAnimatedLabel()
-    private let timerPickerView = TimerPickerView()
+//    private let timerPickerView = TimerPickerView()
+    private let timerPickerView = ImageTimerPickerView(maskImageName: "ClearLogo")
 
     // MARK: - Lifecycle
     override func setupUI() {
