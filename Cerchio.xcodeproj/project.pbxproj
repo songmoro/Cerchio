@@ -15,6 +15,10 @@
 		F81383C02E86AD7F0090F8FA /* ReactorKit in Frameworks */ = {isa = PBXBuildFile; productRef = F81383BF2E86AD7F0090F8FA /* ReactorKit */; };
 		F81384312E86E5E10090F8FA /* RealmSwift in Embed Frameworks */ = {isa = PBXBuildFile; productRef = F81383BC2E86ACD50090F8FA /* RealmSwift */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		F84E0FE92E829A00006B98C0 /* .gitignore in Resources */ = {isa = PBXBuildFile; fileRef = F84E0FE82E829A00006B98C0 /* .gitignore */; };
+		F8137DA92E82AA330090F8FB /* RxCocoa in Frameworks */ = {isa = PBXBuildFile; productRef = F8137DA82E82AA330090F8FA /* RxCocoa */; };
+		F8137DAB2E82AA330090F8FB /* RxSwift in Frameworks */ = {isa = PBXBuildFile; productRef = F8137DAA2E82AA330090F8FA /* RxSwift */; };
+		F81383BD2E86ACD50090F8FB /* RealmSwift in Frameworks */ = {isa = PBXBuildFile; productRef = F81383BC2E86ACD50090F8FA /* RealmSwift */; };
+		F81383C02E86AD7F0090F8FB /* ReactorKit in Frameworks */ = {isa = PBXBuildFile; productRef = F81383BF2E86AD7F0090F8FA /* ReactorKit */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -104,6 +108,10 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				F81383BD2E86ACD50090F8FB /* RealmSwift in Frameworks */,
+				F8137DAB2E82AA330090F8FB /* RxSwift in Frameworks */,
+				F8137DA92E82AA330090F8FB /* RxCocoa in Frameworks */,
+				F81383C02E86AD7F0090F8FB /* ReactorKit in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -176,7 +184,7 @@
 			buildPhases = (
 				F84E0EF42E829797006B98C0 /* Sources */,
 				F84E0EF52E829797006B98C0 /* Frameworks */,
-				F84E0EF62E829797006B98C0 /* Resources */,
+				F84E0EF62E829797006B8C0 /* Resources */,
 			);
 			buildRules = (
 			);
@@ -188,6 +196,10 @@
 			);
 			name = CerchioTests;
 			packageProductDependencies = (
+				F81383BC2E86ACD50090F8FA /* RealmSwift */,
+				F8137DA82E82AA330090F8FA /* RxCocoa */,
+				F8137DAA2E82AA330090F8FA /* RxSwift */,
+				F81383BF2E86AD7F0090F8FA /* ReactorKit */,
 			);
 			productName = CerchioTests;
 			productReference = F84E0EF82E829797006B98C0 /* CerchioTests.xctest */;
@@ -535,7 +547,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = VA3J8597P8;
 				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.moro.CerchioTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -557,7 +569,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = VA3J8597P8;
 				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.moro.CerchioTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
