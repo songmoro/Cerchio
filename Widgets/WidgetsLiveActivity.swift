@@ -16,36 +16,36 @@ struct ReadingTimerLiveActivity: Widget {
         ActivityConfiguration(for: ReadingTimerAttributes.self) { context in
             // Lock screen/banner UI
             ReadingTimerLockScreenView(context: context)
-                .activityBackgroundTint(Color(hex: "#FFF5E5"))
-                .activitySystemActionForegroundColor(Color(hex: "#363C0F"))
+                .activityBackgroundTint(Color("BookBackground"))
+                .activitySystemActionForegroundColor(Color("ForestGreen"))
         } dynamicIsland: { context in
             DynamicIsland {
                 DynamicIslandExpandedRegion(.leading) {
-                    DynamicIslandTimerView(context: context, showLabel: true, alignment: .leading)
+                    DynamicIslandTimerView(context: context, showLabel: true, alignment: .leading, useBookBackground: true)
                 }
                 DynamicIslandExpandedRegion(.trailing) {
-                    DynamicIslandRemainingView(context: context)
+                    DynamicIslandRemainingView(context: context, useBookBackground: true)
                 }
                 DynamicIslandExpandedRegion(.bottom) {
                     VStack(spacing: 8) {
                         Text(context.attributes.bookTitle)
                             .font(.body)
-                            .foregroundColor(Color(hex: "#363C0F"))
+                            .foregroundColor(Color("BookBackground"))
                             .lineLimit(1)
 //                        ProgressView(value: context.state.progress)
-//                            .tint(Color(hex: "#363C0F"))
+//                            .tint(Color("BookBackground"))
                     }
                 }
             } compactLeading: {
                 Image(systemName: "book.fill")
-                    .foregroundColor(Color(hex: "#363C0F"))
+                    .foregroundColor(Color("BookBackground"))
             } compactTrailing: {
                 DynamicIslandTimerView(context: context, showLabel: false, alignment: .trailing)
             } minimal: {
                 Image(systemName: "book.fill")
-                    .foregroundColor(Color(hex: "#363C0F"))
+                    .foregroundColor(Color("BookBackground"))
             }
-            .keylineTint(Color(hex: "#363C0F"))
+            .keylineTint(Color("BookBackground"))
         }
     }
 }
@@ -57,34 +57,35 @@ struct DynamicIslandTimerView: View {
     let context: ActivityViewContext<ReadingTimerAttributes>
     let showLabel: Bool
     let alignment: HorizontalAlignment
-    
+    var useBookBackground: Bool = false
+
     var body: some View {
         VStack(alignment: alignment, spacing: 4) {
             if showLabel && !isCompleted {
                 Text("경과")
                     .font(.caption2)
-                    .foregroundColor(Color(hex: "#363C0F"))
+                    .foregroundColor(useBookBackground ? Color("BookBackground") : Color("ForestGreen"))
             }
-            
+
             if isCompleted {
                 // 완료
                 Text("완료")
                     .font(showLabel ? .title3 : .caption2)
                     .fontWeight(.bold)
-                    .foregroundColor(Color(hex: "#363C0F"))
+                    .foregroundColor(useBookBackground || !showLabel ? Color("BookBackground") : Color("ForestGreen"))
             } else if let timerStart = context.state.timerStartTime, !context.state.isPaused {
                 // 실행 중: Text의 timer 스타일 사용
                 Text(timerStart, style: .timer)
                     .font(showLabel ? .title3 : .caption2)
                     .fontWeight(showLabel ? .bold : .medium)
-                    .foregroundColor(Color(hex: "#363C0F"))
+                    .foregroundColor(useBookBackground || !showLabel ? Color("BookBackground") : Color("ForestGreen"))
                     .monospacedDigit()
             } else {
                 // 일시정지: 정적 텍스트
                 Text(timeString(context.state.pausedElapsedSeconds))
                     .font(showLabel ? .title3 : .caption2)
                     .fontWeight(showLabel ? .bold : .medium)
-                    .foregroundColor(Color(hex: "#363C0F"))
+                    .foregroundColor(useBookBackground || !showLabel ? Color("BookBackground") : Color("ForestGreen"))
                     .monospacedDigit()
             }
         }
@@ -104,15 +105,16 @@ struct DynamicIslandTimerView: View {
 @available(iOS 16.1, *)
 struct DynamicIslandRemainingView: View {
     let context: ActivityViewContext<ReadingTimerAttributes>
-    
+    var useBookBackground: Bool = false
+
     var body: some View {
         VStack(alignment: .trailing, spacing: 4) {
             if !isCompleted {
                 Text("남은 시간")
                     .font(.caption2)
-                    .foregroundColor(Color(hex: "#363C0F"))
+                    .foregroundColor(useBookBackground ? Color("BookBackground") : Color("ForestGreen"))
             }
-            
+
             if isCompleted {
                 // 완료
                 Text("🎉")
@@ -123,14 +125,14 @@ struct DynamicIslandRemainingView: View {
                 Text(endDate, style: .timer)
                     .font(.title3)
                     .fontWeight(.bold)
-                    .foregroundColor(Color(hex: "#363C0F"))
+                    .foregroundColor(useBookBackground ? Color("BookBackground") : Color("ForestGreen"))
                     .monospacedDigit()
             } else {
                 // 일시정지: 정적 텍스트
                 Text(timeString(context.state.currentRemainingSeconds))
                     .font(.title3)
                     .fontWeight(.bold)
-                    .foregroundColor(Color(hex: "#363C0F"))
+                    .foregroundColor(useBookBackground ? Color("BookBackground") : Color("ForestGreen"))
                     .monospacedDigit()
             }
         }
@@ -155,14 +157,14 @@ struct ReadingTimerLockScreenView: View {
         VStack(spacing: 12) {
             HStack {
                 Image(systemName: "book.fill")
-                    .foregroundColor(Color(hex: "#363C0F"))
+                    .foregroundColor(Color("ForestGreen"))
                 Text(context.attributes.bookTitle)
                     .font(.headline)
-                    .foregroundColor(Color(hex: "#363C0F"))
+                    .foregroundColor(Color("ForestGreen"))
                     .lineLimit(1)
                 Spacer()
             }
-            
+
             if isCompleted {
                 // 완료 상태
                 HStack {
@@ -171,7 +173,7 @@ struct ReadingTimerLockScreenView: View {
                         Text("독서 완료!")
                             .font(.title2)
                             .fontWeight(.bold)
-                            .foregroundColor(Color(hex: "#363C0F"))
+                            .foregroundColor(Color("ForestGreen"))
                         Text("🎉")
                             .font(.largeTitle)
                     }
@@ -183,50 +185,50 @@ struct ReadingTimerLockScreenView: View {
                     VStack(alignment: .leading, spacing: 4) {
                         Text("경과 시간")
                             .font(.caption)
-                            .foregroundColor(Color(hex: "#363C0F"))
-                        
+                            .foregroundColor(Color("ForestGreen"))
+
                         if let timerStart = context.state.timerStartTime, !context.state.isPaused {
                             Text(timerStart, style: .timer)
                                 .font(.title2)
                                 .fontWeight(.bold)
-                                .foregroundColor(Color(hex: "#363C0F"))
+                                .foregroundColor(Color("ForestGreen"))
                                 .monospacedDigit()
                         } else {
                             Text(timeString(context.state.pausedElapsedSeconds))
                                 .font(.title2)
                                 .fontWeight(.bold)
-                                .foregroundColor(Color(hex: "#363C0F"))
+                                .foregroundColor(Color("ForestGreen"))
                                 .monospacedDigit()
                         }
                     }
-                    
+
                     Spacer()
-                    
+
                     VStack(alignment: .trailing, spacing: 4) {
                         Text("남은 시간")
                             .font(.caption)
-                            .foregroundColor(Color(hex: "#363C0F"))
-                        
+                            .foregroundColor(Color("ForestGreen"))
+
                         if let timerStart = context.state.timerStartTime, !context.state.isPaused {
                             let endDate = timerStart.addingTimeInterval(TimeInterval(context.state.targetSeconds - context.state.pausedElapsedSeconds))
                             Text(endDate, style: .timer)
                                 .font(.title2)
                                 .fontWeight(.bold)
-                                .foregroundColor(Color(hex: "#363C0F"))
+                                .foregroundColor(Color("ForestGreen"))
                                 .monospacedDigit()
                         } else {
                             Text(timeString(context.state.currentRemainingSeconds))
                                 .font(.title2)
                                 .fontWeight(.bold)
-                                .foregroundColor(Color(hex: "#363C0F"))
+                                .foregroundColor(Color("ForestGreen"))
                                 .monospacedDigit()
                         }
                     }
                 }
             }
-            
+
             ProgressView(value: context.state.progress)
-                .tint(Color(hex: "#363C0F"))
+                .tint(Color("ForestGreen"))
         }
         .padding(16)
     }
@@ -239,35 +241,6 @@ struct ReadingTimerLockScreenView: View {
         let minutes = seconds / 60
         let secs = seconds % 60
         return String(format: "%02d:%02d", minutes, secs)
-    }
-}
-
-// MARK: - Color Extension
-
-extension Color {
-    init(hex: String) {
-        let hex = hex.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
-        var int: UInt64 = 0
-        Scanner(string: hex).scanHexInt64(&int)
-        let a, r, g, b: UInt64
-        switch hex.count {
-        case 3: // RGB (12-bit)
-            (a, r, g, b) = (255, (int >> 8) * 17, (int >> 4 & 0xF) * 17, (int & 0xF) * 17)
-        case 6: // RGB (24-bit)
-            (a, r, g, b) = (255, int >> 16, int >> 8 & 0xFF, int & 0xFF)
-        case 8: // ARGB (32-bit)
-            (a, r, g, b) = (int >> 24, int >> 16 & 0xFF, int >> 8 & 0xFF, int & 0xFF)
-        default:
-            (a, r, g, b) = (1, 1, 1, 0)
-        }
-        
-        self.init(
-            .sRGB,
-            red: Double(r) / 255,
-            green: Double(g) / 255,
-            blue:  Double(b) / 255,
-            opacity: Double(a) / 255
-        )
     }
 }
 

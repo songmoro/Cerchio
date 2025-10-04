@@ -175,24 +175,33 @@ final class ReadingTimerReactor: Reactor {
         // 라이브 액티비티를 일시정지 상태로 먼저 동기화
         syncLiveActivityOnRestore(elapsedSeconds: totalElapsed, isPaused: true, targetSeconds: targetSeconds, pausedDuration: pausedDuration)
 
-        // 원래 running 상태였다면 빠르게 자동 재개
+        // 원래 running 상태였다면 자동 재개 (Smart Delay)
         if session.state == "running" {
-            print("[ReadingTimer] ⏰ Auto-resume scheduled (0.1s delay)")
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
+            // 현재 경과 시간의 소수점 계산
+            let actualElapsed = Date().timeIntervalSince(self.sessionStartTime) - TimeInterval(pausedDuration)
+            let currentElapsed = floor(actualElapsed)
+            let fractionalPart = actualElapsed - currentElapsed  // 소수점 부분 (0.0 ~ 0.999...)
+
+            // 다음 정각(1초)까지 남은 시간
+            let delayToNextSecond = 1.0 - fractionalPart
+
+            // 다음 정각에 표시할 경과 시간
+            let nextElapsed = min(Int(ceil(actualElapsed)), targetSeconds)
+            let nextRemaining = max(0, targetSeconds - nextElapsed)
+
+            print("[ReadingTimer] ⏰ Smart delay resume scheduled:")
+            print("[ReadingTimer]   - actualElapsed: \(actualElapsed)s")
+            print("[ReadingTimer]   - fractionalPart: \(fractionalPart)s")
+            print("[ReadingTimer]   - delayToNextSecond: \(delayToNextSecond)s")
+            print("[ReadingTimer]   - nextElapsed: \(nextElapsed)s")
+
+            DispatchQueue.main.asyncAfter(deadline: .now() + delayToNextSecond) { [weak self] in
                 guard let self = self else { return }
 
-                // 재개 시점에 절대 기준 시간으로 재계산
-                let actualElapsed = Date().timeIntervalSince(self.sessionStartTime) - TimeInterval(pausedDuration)
-                let currentElapsed = min(Int(floor(actualElapsed)), targetSeconds)
-                let remainingSecs = max(0, targetSeconds - currentElapsed)
+                print("[ReadingTimer] 🔄 Resuming at exact second: \(nextElapsed)s")
 
-                print("[ReadingTimer] 🔄 Recalculating time at resume:")
-                print("[ReadingTimer]   - actualElapsed: \(actualElapsed)s")
-                print("[ReadingTimer]   - currentElapsed (floor): \(currentElapsed)s")
-                print("[ReadingTimer]   - initial difference: \(currentElapsed - totalElapsed)s")
-
-                self.action.onNext(.setElapsedSeconds(currentElapsed))
-                self.action.onNext(.setRemainingSeconds(remainingSecs))
+                self.action.onNext(.setElapsedSeconds(nextElapsed))
+                self.action.onNext(.setRemainingSeconds(nextRemaining))
 
                 // 재개
                 self.action.onNext(.resumeTimer)
