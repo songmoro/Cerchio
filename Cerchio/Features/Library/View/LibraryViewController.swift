@@ -288,8 +288,11 @@ final class LibraryViewController: BaseViewController<LibraryReactor> {
     private func configureDataSource() {
         dataSource = DataSource(collectionView: collectionView) { [weak self] collectionView, indexPath, item in
             let cell = collectionView.dequeueReusableCell(LibraryCollectionViewCell.self, for: indexPath)
-            cell.configure(with: item)
-            
+
+            // indexPath.item이 짝수면 왼쪽 컬럼, 홀수면 오른쪽 컬럼
+            let isLeftColumn = indexPath.item % 2 == 0
+            cell.configure(with: item, isLeftColumn: isLeftColumn)
+
             self?.setupLongPressGesture(for: cell, with: item, at: indexPath)
             return cell
         }

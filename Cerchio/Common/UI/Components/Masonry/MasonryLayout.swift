@@ -53,7 +53,18 @@ final class MasonryLayout: UICollectionViewLayout {
                                    y: yOffset[column],
                                    width: columnWidth,
                                    height: height)
-                let insetFrame = frame.insetBy(dx: cellPadding, dy: cellPadding)
+
+                // 좌우 패딩 대칭 적용
+                let isLeftColumn = column == 0
+                let leftInset = isLeftColumn ? cellPadding : cellPadding / 2
+                let rightInset = isLeftColumn ? cellPadding / 2 : cellPadding
+
+                let insetFrame = CGRect(
+                    x: frame.minX + leftInset,
+                    y: frame.minY + cellPadding,
+                    width: frame.width - leftInset - rightInset,
+                    height: frame.height - cellPadding * 2
+                )
 
                 let attributes = UICollectionViewLayoutAttributes(forCellWith: indexPath)
                 attributes.frame = insetFrame
