@@ -43,11 +43,17 @@ final class LibraryCollectionViewCell: UICollectionViewCell, IsIdentifiable {
         titleLabel.font = .custom(weight: .semiBold, size: LibraryConstants.Typography.titleFontSize)
         titleLabel.numberOfLines = LibraryConstants.Typography.multilineLabel
         titleLabel.textColor = .label
+        // 제목 레이블은 자신의 크기에 딱 맞게 (여백 없이)
+        titleLabel.setContentHuggingPriority(.required, for: .vertical)
+        titleLabel.setContentCompressionResistancePriority(.required, for: .vertical)
         contentView.addSubview(titleLabel)
 
         authorLabel.font = .custom(weight: .regular, size: LibraryConstants.Typography.authorFontSize)
         authorLabel.textColor = .secondaryLabel
         authorLabel.numberOfLines = LibraryConstants.Typography.multilineLabel
+        // 작가 레이블은 아래쪽 여백이 늘어날 수 있도록
+        authorLabel.setContentHuggingPriority(.defaultLow, for: .vertical)
+        authorLabel.setContentCompressionResistancePriority(.defaultHigh, for: .vertical)
         contentView.addSubview(authorLabel)
     }
     
@@ -72,7 +78,7 @@ final class LibraryCollectionViewCell: UICollectionViewCell, IsIdentifiable {
             $0.top.equalTo(titleLabel.snp.bottom).offset(LibraryConstants.Layout.stackOffset)
             $0.leading.trailing.equalTo(titleLabel)
             // bottom은 greaterThan으로 최소 여백 보장
-            $0.bottom.greaterThanOrEqualToSuperview().inset(LibraryConstants.Layout.stackOffset)
+            $0.bottom.lessThanOrEqualToSuperview().inset(LibraryConstants.Layout.stackOffset)
         }
     }
     
@@ -177,7 +183,7 @@ final class LibraryCollectionViewCell: UICollectionViewCell, IsIdentifiable {
     }
 
     private func updateCornerRadius() {
-        let cornerRadius: CGFloat = 12
+        let cornerRadius: CGFloat = 16
 
         if isLeftColumn {
             // 왼쪽 셀: 왼쪽 모서리만 둥글게
