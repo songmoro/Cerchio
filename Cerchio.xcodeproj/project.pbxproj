@@ -77,6 +77,7 @@
 		F80022712E9015F10046D443 /* WidgetsExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = WidgetsExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		F80022732E9015F10046D443 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
 		F80022752E9015F10046D443 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
+		F800229B2E90E6E90046D443 /* WidgetsExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = WidgetsExtension.entitlements; sourceTree = "<group>"; };
 		F84E0EE22E829796006B98C0 /* Cerchio.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Cerchio.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		F84E0EF82E829797006B98C0 /* CerchioTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = CerchioTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		F84E0F022E829797006B98C0 /* CerchioUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = CerchioUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -185,6 +186,7 @@
 		F84E0ED92E829796006B98C0 = {
 			isa = PBXGroup;
 			children = (
+				F800229B2E90E6E90046D443 /* WidgetsExtension.entitlements */,
 				F84E0FE82E829A00006B98C0 /* .gitignore */,
 				F84E0EE42E829796006B98C0 /* Cerchio */,
 				F84E0EFB2E829797006B98C0 /* CerchioTests */,
@@ -447,6 +449,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_ENTITLEMENTS = WidgetsExtension.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = VA3J8597P8;
@@ -482,6 +485,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_ENTITLEMENTS = WidgetsExtension.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = VA3J8597P8;
@@ -517,6 +521,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Cerchio/Cerchio.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = VA3J8597P8;
@@ -553,6 +558,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Cerchio/Cerchio.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = VA3J8597P8;
