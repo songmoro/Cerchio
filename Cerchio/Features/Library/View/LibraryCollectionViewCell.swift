@@ -16,6 +16,9 @@ final class LibraryCollectionViewCell: UICollectionViewCell, IsIdentifiable {
     private let authorLabel = UILabel()
     private var isLeftColumn = true
 
+    // 이미지 높이 제약조건 (동적 업데이트용)
+    private var imageHeightConstraint: Constraint?
+
     override init(frame: CGRect) {
         super.init(frame: frame)
         setupViews()
@@ -28,8 +31,9 @@ final class LibraryCollectionViewCell: UICollectionViewCell, IsIdentifiable {
 
     private func setupViews() {
         coverImageView.contentMode = .scaleAspectFit
+        coverImageView.layer.borderWidth = 2
+        coverImageView.layer.borderColor = UIColor.bookBackground.cgColor
         coverImageView.clipsToBounds = true
-        coverImageView.backgroundColor = .bookBackground
         contentView.addSubview(coverImageView)
 
         loadingIndicator.hidesWhenStopped = true
@@ -51,7 +55,8 @@ final class LibraryCollectionViewCell: UICollectionViewCell, IsIdentifiable {
         coverImageView.snp.makeConstraints {
             $0.top.equalToSuperview()
             $0.leading.trailing.equalToSuperview().inset(LibraryConstants.Layout.cellInset)
-            $0.height.equalTo(coverImageView.snp.width).multipliedBy(LibraryConstants.Layout.aspectRatio)
+            // 높이는 이미지 로드 후 동적으로 설정
+            imageHeightConstraint = $0.height.equalTo(100).constraint
         }
 
         loadingIndicator.snp.makeConstraints {
@@ -66,7 +71,8 @@ final class LibraryCollectionViewCell: UICollectionViewCell, IsIdentifiable {
         authorLabel.snp.makeConstraints {
             $0.top.equalTo(titleLabel.snp.bottom).offset(LibraryConstants.Layout.stackOffset)
             $0.leading.trailing.equalTo(titleLabel)
-            $0.bottom.lessThanOrEqualToSuperview().inset(LibraryConstants.Layout.stackOffset)
+            // bottom은 greaterThan으로 최소 여백 보장
+            $0.bottom.greaterThanOrEqualToSuperview().inset(LibraryConstants.Layout.stackOffset)
         }
     }
     
@@ -90,7 +96,83 @@ final class LibraryCollectionViewCell: UICollectionViewCell, IsIdentifiable {
                 .cacheOriginalImage
             ]
         ) { [weak self] result in
-            self?.loadingIndicator.stopAnimating()
+            guard let self = self else { return }
+            self.loadingIndicator.stopAnimating()
+
+            // 이미지 로드 성공 시 실제 이미지 비율로 높이 업데이트
+            switch result {
+            case .success(let imageResult):
+                let image = imageResult.image
+                self.updateImageHeight(with: image)
+
+                // 레이아웃 검증 (레이블이 벗어났는지 확인)
+                DispatchQueue.main.async {
+                    self.validateLayout()
+                }
+            case .failure:
+                break
+            }
+        }
+    }
+
+    private func validateLayout() {
+        // 레이아웃이 완전히 적용될 때까지 대기
+        layoutIfNeeded()
+
+        // 셀 바운드
+        let cellBounds = contentView.bounds
+
+        // 저자 레이블이 셀을 벗어났는지 확인
+        let authorFrame = authorLabel.frame
+        let authorMaxY = authorFrame.maxY
+
+        // 셀 높이보다 저자 레이블이 벗어난 경우
+        if authorMaxY > cellBounds.height - LibraryConstants.Layout.stackOffset {
+            print("[Cell Validation] ⚠️ Author label overflow detected")
+            print("  - Cell height: \(cellBounds.height)")
+            print("  - Author maxY: \(authorMaxY)")
+
+            // 컬렉션 뷰 레이아웃 무효화
+            if let collectionView = superview as? UICollectionView {
+                collectionView.collectionViewLayout.invalidateLayout()
+            }
+        }
+    }
+
+    private func updateImageHeight(with image: UIImage) {
+        let imageAspectRatio = image.size.height / image.size.width
+
+        // 현재 이미지 뷰의 너비 기준으로 높이 계산
+        let imageViewWidth = coverImageView.bounds.width
+
+        // 이미지 뷰 너비가 아직 설정되지 않았다면 레이아웃 후 재시도
+        guard imageViewWidth > 0 else {
+            DispatchQueue.main.async { [weak self] in
+                guard let self = self else { return }
+                self.updateImageHeight(with: image)
+            }
+            return
+        }
+
+        let calculatedHeight = imageViewWidth * imageAspectRatio
+        let currentHeight = coverImageView.bounds.height
+
+        // 높이가 크게 달라진 경우만 업데이트 (5pt 이상 차이)
+        guard abs(calculatedHeight - currentHeight) > 5 else { return }
+
+        // 높이 제약조건 업데이트
+        imageHeightConstraint?.update(offset: calculatedHeight)
+
+        // 셀 레이아웃 즉시 업데이트
+        setNeedsLayout()
+        layoutIfNeeded()
+
+        // 컬렉션 뷰에게 레이아웃 무효화 요청
+        if let collectionView = superview as? UICollectionView {
+            // 셀 크기가 변경되었으므로 레이아웃 무효화
+            DispatchQueue.main.async {
+                collectionView.collectionViewLayout.invalidateLayout()
+            }
         }
     }
 

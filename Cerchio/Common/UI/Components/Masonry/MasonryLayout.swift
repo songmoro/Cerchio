@@ -56,8 +56,8 @@ final class MasonryLayout: UICollectionViewLayout {
 
                 // 좌우 패딩 대칭 적용
                 let isLeftColumn = column == 0
-                let leftInset = isLeftColumn ? cellPadding : cellPadding / 2
-                let rightInset = isLeftColumn ? cellPadding / 2 : cellPadding
+                let leftInset = isLeftColumn ? 8.0 : 2.0
+                let rightInset = isLeftColumn ? 2.0 : 8.0
 
                 let insetFrame = CGRect(
                     x: frame.minX + leftInset,
