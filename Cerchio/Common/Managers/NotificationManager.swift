@@ -14,8 +14,21 @@ final class NotificationManager {
     static let shared = NotificationManager()
 
     private let notificationCenter = UNUserNotificationCenter.current()
+    private let notificationRepository: NotificationRepositoryProtocol
+    private let disposeBag = DisposeBag()
 
-    private init() {}
+    private init() {
+        // NotificationRepository 초기화 시도, 실패하면 fatal error
+        do {
+            self.notificationRepository = try NotificationRepository()
+        } catch {
+            fatalError("Failed to initialize NotificationRepository: \(error)")
+        }
+    }
+
+    init(notificationRepository: NotificationRepositoryProtocol) {
+        self.notificationRepository = notificationRepository
+    }
 
     // MARK: - Authorization
 
@@ -64,52 +77,103 @@ final class NotificationManager {
     // MARK: - Scheduling
 
     /// 타이머 완료 알림 스케줄
-    func scheduleTimerCompletionNotification(afterSeconds seconds: TimeInterval) -> Observable<Void> {
+    func scheduleTimerCompletionNotification(
+        afterSeconds seconds: TimeInterval,
+        sessionId: String,
+        bookTitle: String
+    ) -> Observable<String> {
         return Observable.create { [weak self] observer in
             guard let self = self else {
-                observer.onNext(())
                 observer.onCompleted()
                 return Disposables.create()
             }
 
-            // 알림 내용 설정
-            let content = UNMutableNotificationContent()
-            content.title = "독서 완료"
-            content.body = "목표 시간을 달성했습니다!"
-            content.sound = .default
-            content.badge = 1
+            let notificationId = UUID().uuidString
+            let scheduledDate = Date().addingTimeInterval(seconds)
 
-            // 트리거 설정 (시간 기반)
-            let trigger = UNTimeIntervalNotificationTrigger(timeInterval: seconds, repeats: false)
+            // Realm에 알림 저장 (메인 스레드에서)
+            let realmNotification = RealmNotification(
+                id: notificationId,
+                type: .timerCompletion,
+                status: .scheduled,
+                scheduledDate: scheduledDate,
+                relatedEntityId: sessionId,
+                relatedEntityType: .session,
+                title: "독서 완료",
+                body: "'\(bookTitle)' 목표 시간을 달성했습니다!",
+                badge: 1
+            )
 
-            // 요청 생성
-            let identifier = "timer_completion"
-            let request = UNNotificationRequest(identifier: identifier, content: content, trigger: trigger)
+            self.notificationRepository.saveNotification(realmNotification)
+                .observe(on: MainScheduler.instance)
+                .subscribe(onNext: { savedNotification in
+                    print("[NotificationManager] 💾 Saved notification to Realm: \(savedNotification.id)")
 
-            // 알림 스케줄
-            self.notificationCenter.add(request) { error in
-                if let error = error {
-                    print("❌ Failed to schedule notification: \(error)")
-                } else {
-                    print("✅ Notification scheduled for \(seconds) seconds")
-                }
-                observer.onNext(())
-                observer.onCompleted()
-            }
+                    // 시스템 알림 스케줄
+                    let content = UNMutableNotificationContent()
+                    content.title = savedNotification.title
+                    content.body = savedNotification.body
+                    content.sound = .default
+                    content.badge = NSNumber(value: savedNotification.badge)
+                    content.userInfo = ["notificationId": savedNotification.id]
+
+                    let trigger = UNTimeIntervalNotificationTrigger(timeInterval: seconds, repeats: false)
+                    let request = UNNotificationRequest(identifier: notificationId, content: content, trigger: trigger)
+
+                    self.notificationCenter.add(request) { error in
+                        if let error = error {
+                            print("[NotificationManager] ❌ Failed to schedule notification: \(error)")
+                        } else {
+                            print("[NotificationManager] ✅ Notification scheduled for \(seconds) seconds")
+                        }
+                        observer.onNext(notificationId)
+                        observer.onCompleted()
+                    }
+                }, onError: { error in
+                    print("[NotificationManager] ❌ Failed to save notification: \(error)")
+                    observer.onError(error)
+                })
+                .disposed(by: self.disposeBag)
 
             return Disposables.create()
         }
     }
 
     /// 특정 식별자의 알림 취소
-    func cancelNotification(withIdentifier identifier: String) {
-        notificationCenter.removePendingNotificationRequests(withIdentifiers: [identifier])
-        print("✅ Notification cancelled: \(identifier)")
+    func cancelNotification(withIdentifier identifier: String) -> Observable<Void> {
+        return Observable.create { [weak self] observer in
+            guard let self = self else {
+                observer.onCompleted()
+                return Disposables.create()
+            }
+
+            // 시스템 알림 취소
+            self.notificationCenter.removePendingNotificationRequests(withIdentifiers: [identifier])
+
+            // Realm에서 상태 업데이트 (메인 스레드에서)
+            self.notificationRepository.cancelNotification(identifier)
+                .observe(on: MainScheduler.instance)
+                .subscribe(onNext: {
+                    print("[NotificationManager] ✅ Notification cancelled: \(identifier)")
+                    observer.onNext(())
+                    observer.onCompleted()
+                }, onError: { error in
+                    print("[NotificationManager] ⚠️ Failed to update notification status: \(error)")
+                    // 시스템 알림은 이미 취소되었으므로 성공으로 처리
+                    observer.onNext(())
+                    observer.onCompleted()
+                })
+                .disposed(by: self.disposeBag)
+
+            return Disposables.create()
+        }
     }
 
-    /// 타이머 완료 알림 취소
+    /// 타이머 완료 알림 취소 (레거시 호환)
     func cancelTimerCompletionNotification() {
-        cancelNotification(withIdentifier: "timer_completion")
+        // 기존 호환성을 위한 동기 메서드
+        notificationCenter.removePendingNotificationRequests(withIdentifiers: ["timer_completion"])
+        print("[NotificationManager] ✅ Legacy timer notification cancelled")
     }
 
     /// 모든 예약된 알림 취소
@@ -128,5 +192,47 @@ final class NotificationManager {
     func clearBadge() {
         UNUserNotificationCenter.current().setBadgeCount(0)
         print("✅ Badge cleared")
+    }
+
+    // MARK: - Badge Management
+
+    /// 배지 카운트 업데이트
+    func updateBadgeCount() -> Observable<Int> {
+        return notificationRepository.getUnreadCount()
+            .observe(on: MainScheduler.instance)
+            .do(onNext: { count in
+                UNUserNotificationCenter.current().setBadgeCount(count)
+                print("[NotificationManager] 📛 Badge count updated: \(count)")
+            })
+    }
+
+    /// 알림을 전달됨으로 표시
+    func markAsDelivered(notificationId: String) -> Observable<Void> {
+        return notificationRepository.markAsDelivered(notificationId)
+            .observe(on: MainScheduler.instance)
+            .flatMap { [weak self] _ -> Observable<Void> in
+                guard let self = self else { return .just(()) }
+                return self.updateBadgeCount().map { _ in () }
+            }
+    }
+
+    /// 알림을 읽음으로 표시
+    func markAsDismissed(notificationId: String) -> Observable<Void> {
+        return notificationRepository.markAsDismissed(notificationId)
+            .observe(on: MainScheduler.instance)
+            .flatMap { [weak self] _ -> Observable<Void> in
+                guard let self = self else { return .just(()) }
+                return self.updateBadgeCount().map { _ in () }
+            }
+    }
+
+    /// 만료된 알림 정리 (30일 이상 된 dismissed/cancelled 알림)
+    func cleanupExpiredNotifications() -> Observable<Void> {
+        let thirtyDaysAgo = Calendar.current.date(byAdding: .day, value: -30, to: Date()) ?? Date()
+        return notificationRepository.deleteExpiredNotifications(olderThan: thirtyDaysAgo)
+            .observe(on: MainScheduler.instance)
+            .do(onNext: {
+                print("[NotificationManager] 🧹 Expired notifications cleaned up")
+            })
     }
 }

@@ -92,6 +92,7 @@ final class ReadingTimerReactor: Reactor {
     private var notificationScheduled = false
     private var liveActivityStarted = false
     private var sessionId: String
+    private var scheduledNotificationId: String?
 
     init(bookId: String, bookTitle: String, targetMinutes: Int, sessionRepository: ReadingSessionRepositoryProtocol) {
         self.sessionRepository = sessionRepository
@@ -524,17 +525,54 @@ final class ReadingTimerReactor: Reactor {
     private func scheduleNotificationWithoutPermissionCheck() {
         guard !notificationScheduled, currentState.remainingSeconds > 0 else { return }
 
-        let remainingSeconds = TimeInterval(currentState.remainingSeconds)
-        notificationManager.scheduleTimerCompletionNotification(afterSeconds: remainingSeconds)
+        // 메인 스레드에서 Realm 객체 속성 추출
+        Observable.just(())
+            .observe(on: MainScheduler.instance)
             .subscribe(onNext: { [weak self] in
-                self?.notificationScheduled = true
+                guard let self = self else { return }
+
+                let remainingSeconds = TimeInterval(self.currentState.remainingSeconds)
+
+                // Realm 객체의 속성을 메인 스레드에서 추출
+                guard let session = self.currentState.session else {
+                    print("[ReadingTimer] ⚠️ No session available for notification")
+                    return
+                }
+
+                let sessionId = session.id
+                let bookTitle = self.currentState.bookTitle
+
+                // 이제 안전하게 백그라운드에서 사용 가능
+                self.notificationManager.scheduleTimerCompletionNotification(
+                    afterSeconds: remainingSeconds,
+                    sessionId: sessionId,
+                    bookTitle: bookTitle
+                )
+                .subscribe(onNext: { [weak self] notificationId in
+                    self?.scheduledNotificationId = notificationId
+                    self?.notificationScheduled = true
+                    print("[ReadingTimer] 🔔 Notification scheduled with ID: \(notificationId)")
+                })
+                .disposed(by: self.disposeBag)
             })
             .disposed(by: disposeBag)
     }
 
     private func cancelNotification() {
-        notificationManager.cancelTimerCompletionNotification()
-        notificationScheduled = false
+        // 새 시스템으로 취소
+        if let notificationId = scheduledNotificationId {
+            notificationManager.cancelNotification(withIdentifier: notificationId)
+                .subscribe(onNext: { [weak self] in
+                    self?.scheduledNotificationId = nil
+                    self?.notificationScheduled = false
+                    print("[ReadingTimer] 🔕 Notification cancelled")
+                })
+                .disposed(by: disposeBag)
+        } else {
+            // 레거시 호환
+            notificationManager.cancelTimerCompletionNotification()
+            notificationScheduled = false
+        }
     }
 
     // MARK: - Live Activity Management
