@@ -16,8 +16,8 @@ struct ReadingTimerLiveActivity: Widget {
         ActivityConfiguration(for: ReadingTimerAttributes.self) { context in
             // Lock screen/banner UI
             ReadingTimerLockScreenView(context: context)
-                .activityBackgroundTint(Color(hex: "#F5F1E8"))
-                .activitySystemActionForegroundColor(Color(hex: "#2C5F2D"))
+                .activityBackgroundTint(Color(hex: "#FFF5E5"))
+                .activitySystemActionForegroundColor(Color(hex: "#363C0F"))
         } dynamicIsland: { context in
             DynamicIsland {
                 DynamicIslandExpandedRegion(.leading) {
@@ -30,21 +30,22 @@ struct ReadingTimerLiveActivity: Widget {
                     VStack(spacing: 8) {
                         Text(context.attributes.bookTitle)
                             .font(.body)
+                            .foregroundColor(Color(hex: "#363C0F"))
                             .lineLimit(1)
-                        ProgressView(value: context.state.progress)
-                            .tint(Color(hex: "#2C5F2D"))
+//                        ProgressView(value: context.state.progress)
+//                            .tint(Color(hex: "#363C0F"))
                     }
                 }
             } compactLeading: {
                 Image(systemName: "book.fill")
-                    .foregroundColor(Color(hex: "#2C5F2D"))
+                    .foregroundColor(Color(hex: "#363C0F"))
             } compactTrailing: {
                 DynamicIslandTimerView(context: context, showLabel: false, alignment: .trailing)
             } minimal: {
                 Image(systemName: "book.fill")
-                    .foregroundColor(Color(hex: "#2C5F2D"))
+                    .foregroundColor(Color(hex: "#363C0F"))
             }
-            .keylineTint(Color(hex: "#2C5F2D"))
+            .keylineTint(Color(hex: "#363C0F"))
         }
     }
 }
@@ -56,43 +57,43 @@ struct DynamicIslandTimerView: View {
     let context: ActivityViewContext<ReadingTimerAttributes>
     let showLabel: Bool
     let alignment: HorizontalAlignment
-
+    
     var body: some View {
         VStack(alignment: alignment, spacing: 4) {
             if showLabel && !isCompleted {
                 Text("경과")
                     .font(.caption2)
-                    .foregroundColor(.secondary)
+                    .foregroundColor(Color(hex: "#363C0F"))
             }
-
+            
             if isCompleted {
                 // 완료
                 Text("완료")
                     .font(showLabel ? .title3 : .caption2)
                     .fontWeight(.bold)
-                    .foregroundColor(Color(hex: "#2C5F2D"))
+                    .foregroundColor(Color(hex: "#363C0F"))
             } else if let timerStart = context.state.timerStartTime, !context.state.isPaused {
                 // 실행 중: Text의 timer 스타일 사용
                 Text(timerStart, style: .timer)
                     .font(showLabel ? .title3 : .caption2)
                     .fontWeight(showLabel ? .bold : .medium)
-                    .foregroundColor(Color(hex: "#2C5F2D"))
+                    .foregroundColor(Color(hex: "#363C0F"))
                     .monospacedDigit()
             } else {
                 // 일시정지: 정적 텍스트
                 Text(timeString(context.state.pausedElapsedSeconds))
                     .font(showLabel ? .title3 : .caption2)
                     .fontWeight(showLabel ? .bold : .medium)
-                    .foregroundColor(Color(hex: "#2C5F2D"))
+                    .foregroundColor(Color(hex: "#363C0F"))
                     .monospacedDigit()
             }
         }
     }
-
+    
     private var isCompleted: Bool {
         context.state.currentElapsedSeconds >= context.state.targetSeconds
     }
-
+    
     private func timeString(_ seconds: Int) -> String {
         let minutes = seconds / 60
         let secs = seconds % 60
@@ -103,15 +104,15 @@ struct DynamicIslandTimerView: View {
 @available(iOS 16.1, *)
 struct DynamicIslandRemainingView: View {
     let context: ActivityViewContext<ReadingTimerAttributes>
-
+    
     var body: some View {
         VStack(alignment: .trailing, spacing: 4) {
             if !isCompleted {
                 Text("남은 시간")
                     .font(.caption2)
-                    .foregroundColor(.secondary)
+                    .foregroundColor(Color(hex: "#363C0F"))
             }
-
+            
             if isCompleted {
                 // 완료
                 Text("🎉")
@@ -122,21 +123,23 @@ struct DynamicIslandRemainingView: View {
                 Text(endDate, style: .timer)
                     .font(.title3)
                     .fontWeight(.bold)
+                    .foregroundColor(Color(hex: "#363C0F"))
                     .monospacedDigit()
             } else {
                 // 일시정지: 정적 텍스트
                 Text(timeString(context.state.currentRemainingSeconds))
                     .font(.title3)
                     .fontWeight(.bold)
+                    .foregroundColor(Color(hex: "#363C0F"))
                     .monospacedDigit()
             }
         }
     }
-
+    
     private var isCompleted: Bool {
         context.state.currentElapsedSeconds >= context.state.targetSeconds
     }
-
+    
     private func timeString(_ seconds: Int) -> String {
         let minutes = seconds / 60
         let secs = seconds % 60
@@ -147,18 +150,19 @@ struct DynamicIslandRemainingView: View {
 @available(iOS 16.1, *)
 struct ReadingTimerLockScreenView: View {
     let context: ActivityViewContext<ReadingTimerAttributes>
-
+    
     var body: some View {
         VStack(spacing: 12) {
             HStack {
                 Image(systemName: "book.fill")
-                    .foregroundColor(Color(hex: "#2C5F2D"))
+                    .foregroundColor(Color(hex: "#363C0F"))
                 Text(context.attributes.bookTitle)
                     .font(.headline)
+                    .foregroundColor(Color(hex: "#363C0F"))
                     .lineLimit(1)
                 Spacer()
             }
-
+            
             if isCompleted {
                 // 완료 상태
                 HStack {
@@ -167,7 +171,7 @@ struct ReadingTimerLockScreenView: View {
                         Text("독서 완료!")
                             .font(.title2)
                             .fontWeight(.bold)
-                            .foregroundColor(Color(hex: "#2C5F2D"))
+                            .foregroundColor(Color(hex: "#363C0F"))
                         Text("🎉")
                             .font(.largeTitle)
                     }
@@ -179,56 +183,58 @@ struct ReadingTimerLockScreenView: View {
                     VStack(alignment: .leading, spacing: 4) {
                         Text("경과 시간")
                             .font(.caption)
-                            .foregroundColor(.secondary)
-
+                            .foregroundColor(Color(hex: "#363C0F"))
+                        
                         if let timerStart = context.state.timerStartTime, !context.state.isPaused {
                             Text(timerStart, style: .timer)
                                 .font(.title2)
                                 .fontWeight(.bold)
-                                .foregroundColor(Color(hex: "#2C5F2D"))
+                                .foregroundColor(Color(hex: "#363C0F"))
                                 .monospacedDigit()
                         } else {
                             Text(timeString(context.state.pausedElapsedSeconds))
                                 .font(.title2)
                                 .fontWeight(.bold)
-                                .foregroundColor(Color(hex: "#2C5F2D"))
+                                .foregroundColor(Color(hex: "#363C0F"))
                                 .monospacedDigit()
                         }
                     }
-
+                    
                     Spacer()
-
+                    
                     VStack(alignment: .trailing, spacing: 4) {
                         Text("남은 시간")
                             .font(.caption)
-                            .foregroundColor(.secondary)
-
+                            .foregroundColor(Color(hex: "#363C0F"))
+                        
                         if let timerStart = context.state.timerStartTime, !context.state.isPaused {
                             let endDate = timerStart.addingTimeInterval(TimeInterval(context.state.targetSeconds - context.state.pausedElapsedSeconds))
                             Text(endDate, style: .timer)
                                 .font(.title2)
                                 .fontWeight(.bold)
+                                .foregroundColor(Color(hex: "#363C0F"))
                                 .monospacedDigit()
                         } else {
                             Text(timeString(context.state.currentRemainingSeconds))
                                 .font(.title2)
                                 .fontWeight(.bold)
+                                .foregroundColor(Color(hex: "#363C0F"))
                                 .monospacedDigit()
                         }
                     }
                 }
             }
-
+            
             ProgressView(value: context.state.progress)
-                .tint(Color(hex: "#2C5F2D"))
+                .tint(Color(hex: "#363C0F"))
         }
         .padding(16)
     }
-
+    
     private var isCompleted: Bool {
         context.state.currentElapsedSeconds >= context.state.targetSeconds
     }
-
+    
     private func timeString(_ seconds: Int) -> String {
         let minutes = seconds / 60
         let secs = seconds % 60
@@ -254,7 +260,7 @@ extension Color {
         default:
             (a, r, g, b) = (1, 1, 1, 0)
         }
-
+        
         self.init(
             .sRGB,
             red: Double(r) / 255,
@@ -283,7 +289,7 @@ extension ReadingTimerAttributes.ContentState {
             isCompleted: false
         )
     }
-
+    
     fileprivate static var almostComplete: ReadingTimerAttributes.ContentState {
         ReadingTimerAttributes.ContentState(
             timerStartTime: Date().addingTimeInterval(-1440),
@@ -297,7 +303,7 @@ extension ReadingTimerAttributes.ContentState {
 
 @available(iOS 17.0, *)
 #Preview("Notification", as: .content, using: ReadingTimerAttributes.preview) {
-   ReadingTimerLiveActivity()
+    ReadingTimerLiveActivity()
 } contentStates: {
     ReadingTimerAttributes.ContentState.running
     ReadingTimerAttributes.ContentState.almostComplete

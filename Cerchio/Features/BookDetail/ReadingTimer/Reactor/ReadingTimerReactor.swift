@@ -23,6 +23,7 @@ final class ReadingTimerReactor: Reactor {
         case timerTick
         case enterBackground
         case enterForeground
+        case setSession(RealmReadingSession)
     }
 
     enum Mutation {
@@ -113,7 +114,14 @@ final class ReadingTimerReactor: Reactor {
         let targetSeconds = session.targetMinutes * 60
         let remainingSeconds = max(0, targetSeconds - totalElapsed)
 
+        print("[ReadingTimer] 🔄 Initializing with restored session:")
+        print("[ReadingTimer]   - sessionId: \(session.sessionId)")
+        print("[ReadingTimer]   - elapsedSeconds: \(totalElapsed)")
+        print("[ReadingTimer]   - remainingSeconds: \(remainingSeconds)")
+        print("[ReadingTimer]   - timerState: paused (default)")
+
         self.initialState = State(
+            timerState: .paused,  // 복원 시 일시정지 상태로 시작
             elapsedSeconds: totalElapsed,
             remainingSeconds: remainingSeconds,
             targetMinutes: session.targetMinutes,
@@ -121,11 +129,32 @@ final class ReadingTimerReactor: Reactor {
             bookTitle: session.bookTitle,
             timerStartDate: session.startTime
         )
+
+        // 기존 세션 로드 시도
+        loadExistingSession()
+    }
+
+    private func loadExistingSession() {
+        // RealmReadingSession 조회
+        _ = sessionRepository.getSessionById(sessionId)
+            .subscribe(onNext: { [weak self] realmSession in
+                if let realmSession = realmSession {
+                    print("[ReadingTimer] ✅ Found existing RealmSession: \(realmSession.id)")
+                    self?.action.onNext(.setSession(realmSession))
+                } else {
+                    print("[ReadingTimer] ⚠️ No existing RealmSession found - will create new one")
+                }
+            })
     }
 
     func mutate(action: Action) -> Observable<Mutation> {
         switch action {
         case .viewDidLoad:
+            // 복원된 세션인 경우 새로 생성하지 않음
+            if currentState.session != nil {
+                print("[ReadingTimer] 🔄 Restored session detected - skipping session creation")
+                return .empty()
+            }
             return createSession()
 
         case .requestTimerStart:
@@ -198,6 +227,9 @@ final class ReadingTimerReactor: Reactor {
 
         case .enterForeground:
             return handleForeground()
+
+        case .setSession(let session):
+            return .just(.setSession(session))
         }
     }
 
@@ -236,16 +268,24 @@ final class ReadingTimerReactor: Reactor {
     // MARK: - Private Methods
 
     private func createSession() -> Observable<Mutation> {
+        // sessionId를 사용하여 세션 생성
         let session = RealmReadingSession(
+            id: sessionId,
             bookId: currentState.bookId,
-            startTime: Date(),
+            startTime: currentState.timerStartDate ?? Date(),
             targetMinutes: currentState.targetMinutes,
             status: .inProgress
         )
 
+        print("[ReadingTimer] 💾 Creating new RealmSession with id: \(sessionId)")
+
         return sessionRepository.saveSession(session)
-            .map { .setSession($0) }
+            .map { savedSession in
+                print("[ReadingTimer] ✅ RealmSession created successfully: \(savedSession.id)")
+                return .setSession(savedSession)
+            }
             .catch { error in
+                print("[ReadingTimer] ❌ Failed to create RealmSession: \(error)")
                 return .just(.setError(error))
             }
     }
@@ -459,8 +499,15 @@ final class ReadingTimerReactor: Reactor {
 
                 // 타이머 시작 mutation이면 실제로 타이머 시작
                 if case .setTimerState(.running) = mutation {
+                    let startTime = Date()
+                    self.saveActiveSession(elapsedSeconds: 0, startTime: startTime)
                     self.startTimerTick()
                     self.startLiveActivity()
+                    // 시작 시간도 설정해야 함
+                    return .concat([
+                        .just(.setTimerStartDate(startTime)),
+                        .just(mutation)
+                    ])
                 }
 
                 return .just(mutation)

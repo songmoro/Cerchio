@@ -30,7 +30,11 @@ final class AppCoordinator: BaseCoordinator {
 
     override func start() {
         showTabBar()
-        checkAndRestoreActiveTimerSession()
+
+        // TabBar가 표시된 후 세션 복원
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
+            self?.checkAndRestoreActiveTimerSession()
+        }
     }
 
     private func showTabBar() {
@@ -47,12 +51,19 @@ final class AppCoordinator: BaseCoordinator {
     }
 
     private func checkAndRestoreActiveTimerSession() {
+        print("[AppCoordinator] 🔍 Checking for active timer session...")
+
         guard let activeSession = TimerSessionManager.shared.getActiveSession() else {
-            print("[AppCoordinator] No active timer session to restore")
+            print("[AppCoordinator] ❌ No active timer session to restore")
             return
         }
 
-        print("[AppCoordinator] 🔄 Restoring active timer session: \(activeSession.sessionId)")
+        print("[AppCoordinator] ✅ Found active timer session!")
+        print("[AppCoordinator]   - sessionId: \(activeSession.sessionId)")
+        print("[AppCoordinator]   - bookId: \(activeSession.bookId)")
+        print("[AppCoordinator]   - bookTitle: \(activeSession.bookTitle)")
+        print("[AppCoordinator]   - elapsedSeconds: \(activeSession.elapsedSeconds)")
+        print("[AppCoordinator] 🔄 Restoring timer session...")
 
         // 도서 정보 조회
         let bookRepository = dependencies.serviceFactory.createBookRepository()
@@ -77,7 +88,7 @@ final class AppCoordinator: BaseCoordinator {
     }
 
     private func navigateToTimerScreen(book: Book, session: TimerSessionManager.ActiveSession) {
-        // BookDetail 화면을 먼저 push
+        // BookDetail 화면을 먼저 push (애니메이션 없이)
         let bookDetailDependencies = BookDetailDependencies(
             serviceFactory: dependencies.serviceFactory,
             book: book
@@ -86,22 +97,17 @@ final class AppCoordinator: BaseCoordinator {
         addChildCoordinator(bookDetailCoordinator)
         bookDetailCoordinator.start(with: bookDetailDependencies)
 
-        // BookDetail이 표시된 후 타이머 화면 push
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
-            guard let self = self else { return }
+        // 타이머 화면 즉시 push
+        let readingTimerViewController = ReadingTimerViewController()
+        let sessionRepository = dependencies.serviceFactory.createReadingSessionRepository()
+        let readingTimerReactor = ReadingTimerReactor(
+            session: session,
+            sessionRepository: sessionRepository
+        )
 
-            let readingTimerViewController = ReadingTimerViewController()
-            let sessionRepository = self.dependencies.serviceFactory.createReadingSessionRepository()
-            let readingTimerReactor = ReadingTimerReactor(
-                session: session,
-                sessionRepository: sessionRepository
-            )
+        readingTimerViewController.reactor = readingTimerReactor
 
-            readingTimerViewController.reactor = readingTimerReactor
-            readingTimerViewController.hidesBottomBarWhenPushed = true
-
-            self.navigationController.pushViewController(readingTimerViewController, animated: true)
-            print("[AppCoordinator] ✅ Navigated to timer screen")
-        }
+        navigationController.pushViewController(readingTimerViewController, animated: false)
+        print("[AppCoordinator] ✅ Navigated to timer screen")
     }
 }

@@ -6,6 +6,7 @@
 //
 
 import UIKit
+import RxSwift
 
 final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     private var appCoordinator: AppCoordinator?
@@ -27,6 +28,9 @@ final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     }
 
     func sceneDidDisconnect(_ scene: UIScene) {
+        // 앱 종료 시 Live Activity와 알림 정리
+        cleanupTimerOnAppTermination()
+
         NotificationCenter.default.removeObserver(self)
         appCoordinator?.finish()
         appCoordinator = nil
@@ -94,6 +98,27 @@ final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         default:
             print("[SceneDelegate] ⚠️ Unknown deeplink action: \(action)")
         }
+    }
+
+    private func cleanupTimerOnAppTermination() {
+        print("[SceneDelegate] 🧹 Cleaning up timer on app termination...")
+
+        // Live Activity 종료
+        if #available(iOS 16.2, *) {
+            _ = LiveActivityManager.shared.endActivity()
+                .subscribe(onNext: {
+                    print("[SceneDelegate] ✅ Live Activity ended")
+                }, onError: { error in
+                    print("[SceneDelegate] ❌ Failed to end Live Activity: \(error)")
+                })
+        }
+
+        // 알림 취소
+        NotificationManager.shared.cancelTimerCompletionNotification()
+        print("[SceneDelegate] ✅ Notifications cancelled")
+
+        // 세션은 UserDefaults에 유지 (복원용)
+        print("[SceneDelegate] 💾 Timer session preserved for restoration")
     }
 }
 

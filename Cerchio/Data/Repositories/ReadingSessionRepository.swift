@@ -12,6 +12,7 @@ import RxSwift
 protocol ReadingSessionRepositoryProtocol {
     func getAllSessions() -> Observable<[RealmReadingSession]>
     func getSessionsByBookId(_ bookId: String) -> Observable<[RealmReadingSession]>
+    func getSessionById(_ sessionId: String) -> Observable<RealmReadingSession?>
     func getActiveSession() -> Observable<RealmReadingSession?>
     func saveSession(_ session: RealmReadingSession) -> Observable<RealmReadingSession>
     func updateSession(_ session: RealmReadingSession) -> Observable<RealmReadingSession>
@@ -44,6 +45,14 @@ final class ReadingSessionRepository: BaseRepository<RealmReadingSession>, Readi
 
     func saveSession(_ session: RealmReadingSession) -> Observable<RealmReadingSession> {
         return save(session)
+    }
+
+    func getSessionById(_ sessionId: String) -> Observable<RealmReadingSession?> {
+        return performOnMainThread {
+            return self.realm.objects(RealmReadingSession.self)
+                .filter("id == %@", sessionId)
+                .first
+        }
     }
 
     func updateSession(_ session: RealmReadingSession) -> Observable<RealmReadingSession> {

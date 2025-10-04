@@ -46,17 +46,35 @@ final class TimerSessionManager {
 
         if let encoded = try? JSONEncoder().encode(session) {
             userDefaults.set(encoded, forKey: sessionKey)
-            print("[TimerSession] 💾 Saved active session: \(sessionId)")
+            userDefaults.synchronize() // 즉시 저장
+            print("[TimerSession] 💾 Saved active session:")
+            print("[TimerSession]   - sessionId: \(sessionId)")
+            print("[TimerSession]   - bookId: \(bookId)")
+            print("[TimerSession]   - bookTitle: \(bookTitle)")
+            print("[TimerSession]   - elapsedSeconds: \(elapsedSeconds)")
+        } else {
+            print("[TimerSession] ❌ Failed to encode session")
         }
     }
 
     func getActiveSession() -> ActiveSession? {
-        guard let data = userDefaults.data(forKey: sessionKey),
-              let session = try? JSONDecoder().decode(ActiveSession.self, from: data) else {
+        print("[TimerSession] 🔍 Checking for stored session...")
+
+        guard let data = userDefaults.data(forKey: sessionKey) else {
+            print("[TimerSession] ❌ No data found for key: \(sessionKey)")
             return nil
         }
 
-        print("[TimerSession] 📂 Retrieved active session: \(session.sessionId)")
+        guard let session = try? JSONDecoder().decode(ActiveSession.self, from: data) else {
+            print("[TimerSession] ❌ Failed to decode session data")
+            return nil
+        }
+
+        print("[TimerSession] ✅ Retrieved active session:")
+        print("[TimerSession]   - sessionId: \(session.sessionId)")
+        print("[TimerSession]   - bookId: \(session.bookId)")
+        print("[TimerSession]   - bookTitle: \(session.bookTitle)")
+        print("[TimerSession]   - elapsedSeconds: \(session.elapsedSeconds)")
         return session
     }
 
