@@ -56,7 +56,8 @@ final class LiveActivityManager {
 
     func startActivity(
         bookTitle: String,
-        targetMinutes: Int
+        targetMinutes: Int,
+        sessionStartTime: Date
     ) -> Observable<Void> {
         return Observable.create { [weak self] observer in
             let authInfo = ActivityAuthorizationInfo()
@@ -69,15 +70,14 @@ final class LiveActivityManager {
             }
 
             do {
-                let now = Date()
                 let attributes = ReadingTimerAttributes(
                     bookTitle: bookTitle,
-                    sessionStartTime: now
+                    sessionStartTime: sessionStartTime
                 )
 
                 let targetSeconds = targetMinutes * 60
                 let initialState = ReadingTimerAttributes.ContentState(
-                    timerStartTime: now,
+                    timerStartTime: sessionStartTime,
                     pausedElapsedSeconds: 0,
                     targetSeconds: targetSeconds,
                     isPaused: false,
@@ -87,10 +87,10 @@ final class LiveActivityManager {
                 print("[LiveActivity] 🚀 Requesting activity:")
                 print("  - bookTitle: \(bookTitle)")
                 print("  - targetMinutes: \(targetMinutes) (\(targetSeconds)s)")
-                print("  - timerStartTime: \(now)")
+                print("  - sessionStartTime: \(sessionStartTime)")
 
                 // staleDate를 설정하여 시스템이 더 자주 업데이트하도록 힌트 제공
-                let staleDate = Calendar.current.date(byAdding: .second, value: targetSeconds, to: now)
+                let staleDate = Calendar.current.date(byAdding: .second, value: targetSeconds, to: sessionStartTime)
                 print("  - staleDate: \(staleDate?.description ?? "nil")")
 
                 // 타이머 종료 시간에 자동으로 닫히도록 설정
@@ -133,7 +133,9 @@ final class LiveActivityManager {
     func updateActivity(
         elapsedSeconds: Int,
         isPaused: Bool,
-        targetSeconds: Int
+        targetSeconds: Int,
+        sessionStartTime: Date? = nil,
+        pausedDuration: Int = 0
     ) -> Observable<Void> {
         return Observable.create { [weak self] observer in
             guard let activity = self?.currentActivity else {
@@ -142,12 +144,15 @@ final class LiveActivityManager {
                 return Disposables.create()
             }
 
-            // timerStartTime을 경과 시간을 고려하여 계산
-            // 예: 35초 경과 → timerStartTime = 현재 - 35초
+            // timerStartTime 계산
             let timerStartTime: Date?
             if isPaused {
                 timerStartTime = nil
+            } else if let sessionStart = sessionStartTime {
+                // 절대 기준 시간 사용: sessionStartTime + pausedDuration
+                timerStartTime = sessionStart.addingTimeInterval(TimeInterval(pausedDuration))
             } else {
+                // fallback: 이전 방식 (하위 호환성)
                 timerStartTime = Date().addingTimeInterval(-TimeInterval(elapsedSeconds))
             }
 

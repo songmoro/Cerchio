@@ -105,10 +105,12 @@ final class ReadingTimerReactor: Reactor {
     private var sessionId: String
     private var scheduledNotificationId: String?
     private var isRestoredSession = false
+    private var sessionStartTime: Date  // 절대 기준 시간 (타이머 최초 시작 시각)
 
     init(bookId: String, bookTitle: String, targetMinutes: Int, sessionRepository: ReadingSessionRepositoryProtocol) {
         self.sessionRepository = sessionRepository
         self.sessionId = UUID().uuidString
+        self.sessionStartTime = Date()  // 새 타이머 시작 시각
         self.initialState = State(
             remainingSeconds: targetMinutes * 60,
             targetMinutes: targetMinutes,
@@ -125,33 +127,32 @@ final class ReadingTimerReactor: Reactor {
         self.sessionRepository = sessionRepository
         self.sessionId = session.sessionId
         self.isRestoredSession = true
+        self.sessionStartTime = session.startTime  // 원본 세션 시작 시각 사용
 
-        // 경과 시간 동기화 계산
-        let savedElapsed = session.elapsedSeconds
-        let timeSinceLastUpdate = Int(Date().timeIntervalSince(session.lastUpdateTime))
         let targetSeconds = session.targetMinutes * 60
+        let pausedDuration = session.pausedDuration
 
-        // 세션 상태에 따라 경과 시간 계산
-        let calculatedElapsed: Int
+        // 절대 기준 시간으로 경과 시간 계산
+        let actualElapsed: TimeInterval
         if session.state == "running" {
-            // 실행 중이었으면 마지막 업데이트 이후 경과 시간 추가
-            calculatedElapsed = savedElapsed + timeSinceLastUpdate
+            // 실행 중: (현재 - 시작) - 일시정지 시간
+            actualElapsed = Date().timeIntervalSince(self.sessionStartTime) - TimeInterval(pausedDuration)
         } else {
-            // 일시정지였으면 저장된 시간만 사용
-            calculatedElapsed = savedElapsed
+            // 일시정지: 저장된 경과 시간 사용
+            actualElapsed = TimeInterval(session.elapsedSeconds)
         }
 
-        // ⚠️ 목표 시간을 초과하지 않도록 즉시 제한
-        let totalElapsed = min(calculatedElapsed, targetSeconds)
+        // floor() 명시적 사용으로 버림 보장
+        let totalElapsed = min(Int(floor(actualElapsed)), targetSeconds)
         let remainingSeconds = max(0, targetSeconds - totalElapsed)
 
         print("[ReadingTimer] 🔄 Initializing with restored session:")
         print("[ReadingTimer]   - sessionId: \(session.sessionId)")
-        print("[ReadingTimer]   - savedElapsedSeconds: \(savedElapsed)")
-        print("[ReadingTimer]   - timeSinceLastUpdate: \(timeSinceLastUpdate)s")
-        print("[ReadingTimer]   - session.state: \(session.state)")
-        print("[ReadingTimer]   - totalElapsedSeconds: \(totalElapsed)")
-        print("[ReadingTimer]   - remainingSeconds: \(remainingSeconds)")
+        print("[ReadingTimer]   - sessionStartTime: \(self.sessionStartTime)")
+        print("[ReadingTimer]   - pausedDuration: \(pausedDuration)s")
+        print("[ReadingTimer]   - actualElapsed: \(actualElapsed)s")
+        print("[ReadingTimer]   - totalElapsed (floor): \(totalElapsed)s")
+        print("[ReadingTimer]   - remainingSeconds: \(remainingSeconds)s")
 
         // 복구 시에는 항상 일시정지 상태로 시작
         self.initialState = State(
@@ -172,7 +173,7 @@ final class ReadingTimerReactor: Reactor {
         setupActivityStateMonitoring()
 
         // 라이브 액티비티를 일시정지 상태로 먼저 동기화
-        syncLiveActivityOnRestore(elapsedSeconds: totalElapsed, isPaused: true, targetSeconds: targetSeconds)
+        syncLiveActivityOnRestore(elapsedSeconds: totalElapsed, isPaused: true, targetSeconds: targetSeconds, pausedDuration: pausedDuration)
 
         // 원래 running 상태였다면 빠르게 자동 재개
         if session.state == "running" {
@@ -180,23 +181,15 @@ final class ReadingTimerReactor: Reactor {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
                 guard let self = self else { return }
 
-                // 재개 시점에 시간 재계산 (오차 최소화)
-                let recalculatedElapsed = self.calculateCurrentElapsedTime(
-                    savedElapsed: savedElapsed,
-                    lastUpdateTime: session.lastUpdateTime,
-                    sessionState: session.state
-                )
-
-                // ⚠️ 목표 시간을 초과하지 않도록 제한
-                let targetSecs = session.targetMinutes * 60
-                let currentElapsed = min(recalculatedElapsed, targetSecs)
-                let remainingSecs = max(0, targetSecs - currentElapsed)
+                // 재개 시점에 절대 기준 시간으로 재계산
+                let actualElapsed = Date().timeIntervalSince(self.sessionStartTime) - TimeInterval(pausedDuration)
+                let currentElapsed = min(Int(floor(actualElapsed)), targetSeconds)
+                let remainingSecs = max(0, targetSeconds - currentElapsed)
 
                 print("[ReadingTimer] 🔄 Recalculating time at resume:")
-                print("[ReadingTimer]   - initial: \(totalElapsed)s")
-                print("[ReadingTimer]   - recalculated: \(recalculatedElapsed)s")
-                print("[ReadingTimer]   - clamped: \(currentElapsed)s")
-                print("[ReadingTimer]   - difference: \(currentElapsed - totalElapsed)s")
+                print("[ReadingTimer]   - actualElapsed: \(actualElapsed)s")
+                print("[ReadingTimer]   - currentElapsed (floor): \(currentElapsed)s")
+                print("[ReadingTimer]   - initial difference: \(currentElapsed - totalElapsed)s")
 
                 self.action.onNext(.setElapsedSeconds(currentElapsed))
                 self.action.onNext(.setRemainingSeconds(remainingSecs))
@@ -207,16 +200,15 @@ final class ReadingTimerReactor: Reactor {
         }
     }
 
-    private func calculateCurrentElapsedTime(savedElapsed: Int, lastUpdateTime: Date, sessionState: String) -> Int {
-        if sessionState == "running" {
-            let timeSinceLastUpdate = Int(Date().timeIntervalSince(lastUpdateTime))
-            return savedElapsed + timeSinceLastUpdate
-        } else {
-            return savedElapsed
-        }
+    // MARK: - Time Calculation Utility
+
+    /// 절대 기준 시간으로 현재 경과 시간 계산 (floor 적용)
+    private func calculateElapsedSeconds(pausedDuration: Int, targetSeconds: Int) -> Int {
+        let actualElapsed = Date().timeIntervalSince(sessionStartTime) - TimeInterval(pausedDuration)
+        return min(Int(floor(actualElapsed)), targetSeconds)
     }
 
-    private func syncLiveActivityOnRestore(elapsedSeconds: Int, isPaused: Bool, targetSeconds: Int) {
+    private func syncLiveActivityOnRestore(elapsedSeconds: Int, isPaused: Bool, targetSeconds: Int, pausedDuration: Int) {
         guard #available(iOS 16.2, *) else { return }
 
         let activeActivities = LiveActivityManager.shared.getActiveActivities()
@@ -226,14 +218,18 @@ final class ReadingTimerReactor: Reactor {
         }
 
         print("[ReadingTimer] 🔄 Syncing Live Activity with restored session")
+        print("[ReadingTimer]   - sessionStartTime: \(sessionStartTime)")
         print("[ReadingTimer]   - elapsedSeconds: \(elapsedSeconds)")
+        print("[ReadingTimer]   - pausedDuration: \(pausedDuration)")
         print("[ReadingTimer]   - isPaused: \(isPaused)")
 
-        // 라이브 액티비티를 복원된 시간으로 업데이트
+        // 라이브 액티비티를 절대 기준 시간으로 업데이트
         LiveActivityManager.shared.updateActivity(
             elapsedSeconds: elapsedSeconds,
             isPaused: isPaused,
-            targetSeconds: targetSeconds
+            targetSeconds: targetSeconds,
+            sessionStartTime: sessionStartTime,
+            pausedDuration: pausedDuration
         )
         .subscribe(
             onNext: {
@@ -813,12 +809,16 @@ final class ReadingTimerReactor: Reactor {
             return
         }
 
-        print("[ReadingTimer] Starting Live Activity - bookTitle: \(currentState.bookTitle), targetMinutes: \(currentState.targetMinutes)")
+        print("[ReadingTimer] Starting Live Activity")
+        print("[ReadingTimer]   - bookTitle: \(currentState.bookTitle)")
+        print("[ReadingTimer]   - targetMinutes: \(currentState.targetMinutes)")
+        print("[ReadingTimer]   - sessionStartTime: \(sessionStartTime)")
 
         // Live Activity 시작
         LiveActivityManager.shared.startActivity(
             bookTitle: currentState.bookTitle,
-            targetMinutes: currentState.targetMinutes
+            targetMinutes: currentState.targetMinutes,
+            sessionStartTime: sessionStartTime
         )
         .subscribe(
             onNext: { [weak self] in
@@ -867,11 +867,16 @@ final class ReadingTimerReactor: Reactor {
             return
         }
 
-        print("[ReadingTimer] Updating Live Activity to RESUMED - elapsed: \(currentState.elapsedSeconds)s")
+        print("[ReadingTimer] Updating Live Activity to RESUMED")
+        print("[ReadingTimer]   - elapsed: \(currentState.elapsedSeconds)s")
+        print("[ReadingTimer]   - pausedDuration: \(currentState.pausedDuration)s")
+
         LiveActivityManager.shared.updateActivity(
             elapsedSeconds: currentState.elapsedSeconds,
             isPaused: false,
-            targetSeconds: currentState.targetMinutes * 60
+            targetSeconds: currentState.targetMinutes * 60,
+            sessionStartTime: sessionStartTime,
+            pausedDuration: currentState.pausedDuration
         )
         .subscribe(
             onError: { error in
