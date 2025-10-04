@@ -99,7 +99,6 @@ final class ReadingTimerReactor: Reactor {
 
     // Timer management
     private var timerDisposable: Disposable?
-    private var backgroundTime: Date?
     private var notificationScheduled = false
     private var liveActivityStarted = false
     private var sessionId: String
@@ -370,13 +369,7 @@ final class ReadingTimerReactor: Reactor {
             return .concat(mutations)
 
         case .enterBackground:
-            // backgroundTime이 nil일 때만 설정 (첫 백그라운드 진입)
-            if backgroundTime == nil {
-                backgroundTime = Date()
-                print("[ReadingTimer] 📱 Entering background (first time) - saving session immediately")
-            } else {
-                print("[ReadingTimer] 📱 Re-entering background - updating session")
-            }
+            print("[ReadingTimer] 📱 Entering background - saving session")
 
             // 백그라운드 진입 시 즉시 저장하여 오차 최소화
             saveActiveSession(
@@ -530,58 +523,96 @@ final class ReadingTimerReactor: Reactor {
 
     private func handleForeground() -> Observable<Mutation> {
         print("[ReadingTimer] 🔄 Returning from background")
-        print("  - backgroundTime: \(backgroundTime?.description ?? "nil")")
+        print("  - sessionStartTime: \(sessionStartTime)")
         print("  - currentState.timerState: \(currentState.timerState)")
-        print("  - currentState.elapsedSeconds: \(currentState.elapsedSeconds)")
-
-        guard let backgroundTime = backgroundTime else {
-            print("[ReadingTimer] No background time recorded")
-            return .empty()
-        }
+        print("  - currentState.pausedDuration: \(currentState.pausedDuration)")
 
         // 타이머가 이미 완료되었으면 Live Activity만 종료
         if currentState.timerState == .completed {
-            self.backgroundTime = nil
-            print("[ReadingTimer] Timer already completed in background - ending Live Activity")
+            print("[ReadingTimer] Timer already completed - ending Live Activity")
             endLiveActivity()
             return .empty()
         }
 
-        let elapsed = Int(Date().timeIntervalSince(backgroundTime))
         let targetSeconds = currentState.targetMinutes * 60
-        let newElapsed = min(currentState.elapsedSeconds + elapsed, targetSeconds)
-        let newRemaining = max(0, targetSeconds - newElapsed)
+
+        // 절대 기준 시간으로 현재 경과 시간 계산
+        let actualElapsed: TimeInterval
+        if currentState.timerState == .running {
+            // 실행 중: (현재 - 시작) - 일시정지 시간
+            actualElapsed = Date().timeIntervalSince(sessionStartTime) - TimeInterval(currentState.pausedDuration)
+        } else {
+            // 일시정지: 저장된 경과 시간 사용
+            actualElapsed = TimeInterval(currentState.elapsedSeconds)
+        }
+
+        // floor로 버림하여 정각 기준
+        let currentElapsed = min(Int(floor(actualElapsed)), targetSeconds)
+        let currentRemaining = max(0, targetSeconds - currentElapsed)
 
         print("[ReadingTimer] Calculating foreground state:")
-        print("  - elapsed in background: \(elapsed)s")
-        print("  - newElapsed: \(newElapsed)s")
-        print("  - newRemaining: \(newRemaining)s")
-
-        self.backgroundTime = nil
-
-        var mutations: [Observable<Mutation>] = [
-            .just(.setElapsedSeconds(newElapsed)),
-            .just(.setRemainingSeconds(newRemaining))
-        ]
+        print("  - actualElapsed: \(actualElapsed)s")
+        print("  - currentElapsed (floor): \(currentElapsed)s")
+        print("  - currentRemaining: \(currentRemaining)s")
 
         // 백그라운드에서 타이머가 완료되었는지 확인
-        if newRemaining == 0 {
+        if currentRemaining == 0 {
             print("[ReadingTimer] 🏁 Timer completed in background!")
             stopTimerTick()
             cancelNotification()
             endLiveActivity()
             clearActiveSession()
-            mutations.append(completeSession())
-        } else if currentState.timerState == .running {
-            print("[ReadingTimer] ▶️ Resuming timer from background")
-            // 타이머가 실행 중이었다면 앱 내 타이머만 재시작
-            // 라이브 액티비티는 백그라운드에서도 계속 실행 중이므로 업데이트 불필요
-            startTimerTick()
-            scheduleNotification()
-            saveActiveSession(
-                elapsedSeconds: newElapsed,
-                startTime: currentState.timerStartDate ?? Date(),
-                pausedDuration: currentState.pausedDuration,
+            return completeSession()
+        }
+
+        // 일시정지 상태면 단순히 시간만 업데이트
+        if currentState.timerState == .paused {
+            print("[ReadingTimer] ⏸️ Paused - updating time only")
+            return .concat([
+                .just(.setElapsedSeconds(currentElapsed)),
+                .just(.setRemainingSeconds(currentRemaining))
+            ])
+        }
+
+        // 실행 중 상태: Smart Delay 적용
+        print("[ReadingTimer] ▶️ Running - applying smart delay")
+
+        // 현재 경과 시간의 소수점 계산
+        let fractionalPart = actualElapsed - floor(actualElapsed)  // 0.0 ~ 0.999...
+        let delayToNextSecond = 1.0 - fractionalPart
+
+        // 다음 정각에 표시할 경과 시간
+        let nextElapsed = min(Int(ceil(actualElapsed)), targetSeconds)
+        let nextRemaining = max(0, targetSeconds - nextElapsed)
+
+        print("[ReadingTimer] ⏰ Smart delay for foreground:")
+        print("  - fractionalPart: \(fractionalPart)s")
+        print("  - delayToNextSecond: \(delayToNextSecond)s")
+        print("  - nextElapsed: \(nextElapsed)s")
+
+        // 먼저 현재 정각 시간으로 업데이트 (일시정지처럼 보임)
+        var mutations: [Observable<Mutation>] = [
+            .just(.setElapsedSeconds(currentElapsed)),
+            .just(.setRemainingSeconds(currentRemaining))
+        ]
+
+        // 다음 정각에 재개
+        DispatchQueue.main.asyncAfter(deadline: .now() + delayToNextSecond) { [weak self] in
+            guard let self = self else { return }
+
+            print("[ReadingTimer] 🔄 Resuming at exact second: \(nextElapsed)s")
+
+            // 시간 업데이트
+            self.action.onNext(.setElapsedSeconds(nextElapsed))
+            self.action.onNext(.setRemainingSeconds(nextRemaining))
+
+            // 타이머 재시작
+            self.startTimerTick()
+            self.scheduleNotification()
+            self.saveActiveSession(
+                elapsedSeconds: nextElapsed,
+                startTime: self.currentState.timerStartDate ?? Date(),
+                pausedDuration: self.currentState.pausedDuration,
                 state: "running"
             )
         }
