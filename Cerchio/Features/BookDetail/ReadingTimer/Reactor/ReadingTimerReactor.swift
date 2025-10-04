@@ -127,18 +127,20 @@ final class ReadingTimerReactor: Reactor {
         // 경과 시간 동기화 계산
         let savedElapsed = session.elapsedSeconds
         let timeSinceLastUpdate = Int(Date().timeIntervalSince(session.lastUpdateTime))
+        let targetSeconds = session.targetMinutes * 60
 
         // 세션 상태에 따라 경과 시간 계산
-        let totalElapsed: Int
+        let calculatedElapsed: Int
         if session.state == "running" {
             // 실행 중이었으면 마지막 업데이트 이후 경과 시간 추가
-            totalElapsed = savedElapsed + timeSinceLastUpdate
+            calculatedElapsed = savedElapsed + timeSinceLastUpdate
         } else {
             // 일시정지였으면 저장된 시간만 사용
-            totalElapsed = savedElapsed
+            calculatedElapsed = savedElapsed
         }
 
-        let targetSeconds = session.targetMinutes * 60
+        // ⚠️ 목표 시간을 초과하지 않도록 즉시 제한
+        let totalElapsed = min(calculatedElapsed, targetSeconds)
         let remainingSeconds = max(0, targetSeconds - totalElapsed)
 
         print("[ReadingTimer] 🔄 Initializing with restored session:")
@@ -177,20 +179,22 @@ final class ReadingTimerReactor: Reactor {
                 guard let self = self else { return }
 
                 // 재개 시점에 시간 재계산 (오차 최소화)
-                let currentElapsed = self.calculateCurrentElapsedTime(
+                let recalculatedElapsed = self.calculateCurrentElapsedTime(
                     savedElapsed: savedElapsed,
                     lastUpdateTime: session.lastUpdateTime,
                     sessionState: session.state
                 )
 
+                // ⚠️ 목표 시간을 초과하지 않도록 제한
+                let targetSecs = session.targetMinutes * 60
+                let currentElapsed = min(recalculatedElapsed, targetSecs)
+                let remainingSecs = max(0, targetSecs - currentElapsed)
+
                 print("[ReadingTimer] 🔄 Recalculating time at resume:")
                 print("[ReadingTimer]   - initial: \(totalElapsed)s")
-                print("[ReadingTimer]   - recalculated: \(currentElapsed)s")
+                print("[ReadingTimer]   - recalculated: \(recalculatedElapsed)s")
+                print("[ReadingTimer]   - clamped: \(currentElapsed)s")
                 print("[ReadingTimer]   - difference: \(currentElapsed - totalElapsed)s")
-
-                // State 업데이트
-                let targetSecs = session.targetMinutes * 60
-                let remainingSecs = max(0, targetSecs - currentElapsed)
 
                 self.action.onNext(.setElapsedSeconds(currentElapsed))
                 self.action.onNext(.setRemainingSeconds(remainingSecs))
@@ -474,8 +478,8 @@ final class ReadingTimerReactor: Reactor {
             return .just(.setTimerState(.completed))
         }
 
-        // 최소 기록 시간 검증 (1분)
-        let minimumSeconds = 59
+        // 최소 기록 시간 검증 (1분 = 60초)
+        let minimumSeconds = 60
         if currentState.elapsedSeconds < minimumSeconds {
             print("[ReadingTimer] ⚠️ Session too short: \(currentState.elapsedSeconds)s (minimum: \(minimumSeconds)s)")
             return .just(.setValidationError(.sessionTooShort))
