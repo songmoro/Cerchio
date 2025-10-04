@@ -479,7 +479,8 @@ final class ReadingTimerReactor: Reactor {
         }
 
         // 최소 기록 시간 검증 (1분 = 60초)
-        let minimumSeconds = 60
+        let minimumSeconds = 58
+        
         if currentState.elapsedSeconds < minimumSeconds {
             print("[ReadingTimer] ⚠️ Session too short: \(currentState.elapsedSeconds)s (minimum: \(minimumSeconds)s)")
             return .just(.setValidationError(.sessionTooShort))

@@ -19,17 +19,30 @@ final class ReadingTimerViewController: BaseViewController<ReadingTimerReactor> 
     private let progressView = UIProgressView(progressViewStyle: .bar)
     private let startButton = UIButton(type: .system)
     private let pauseButton = UIButton(type: .system)
-    private let stopButton = UIButton(type: .system)
 
     // MARK: - Properties
     private let completionRelay = PublishRelay<Void>()
+    private let backButtonTapRelay = PublishRelay<Void>()
 
     // MARK: - Lifecycle
     override func setupUI() {
         super.setupUI()
         view.backgroundColor = .systemBackground
         navigationItem.title = "독서 타이머"
-        navigationItem.hidesBackButton = true
+
+        // 커스텀 뒤로가기 버튼
+        let backButton = UIBarButtonItem(
+            image: UIImage(systemName: "chevron.left"),
+            style: .plain,
+            target: nil,
+            action: nil
+        )
+        // BaseViewController에서 tintColor를 .bookBackground로 설정하므로 별도 설정 불필요
+        navigationItem.leftBarButtonItem = backButton
+
+        backButton.rx.tap
+            .bind(to: backButtonTapRelay)
+            .disposed(by: disposeBag)
 
         setupTimeLabels()
         setupProgressView()
@@ -76,16 +89,8 @@ final class ReadingTimerViewController: BaseViewController<ReadingTimerReactor> 
         pauseButton.configuration = pauseConfig
         pauseButton.isHidden = true
 
-        var stopConfig = UIButton.Configuration.filled()
-        stopConfig.title = "종료"
-        stopConfig.baseBackgroundColor = .systemRed
-        stopConfig.baseForegroundColor = .white
-        stopConfig.cornerStyle = .medium
-        stopButton.configuration = stopConfig
-
         view.addSubview(startButton)
         view.addSubview(pauseButton)
-        view.addSubview(stopButton)
     }
 
     private func setupLayout() {
@@ -118,13 +123,6 @@ final class ReadingTimerViewController: BaseViewController<ReadingTimerReactor> 
             $0.width.equalTo(200)
             $0.height.equalTo(50)
         }
-
-        stopButton.snp.makeConstraints {
-            $0.centerX.equalToSuperview()
-            $0.bottom.equalTo(startButton.snp.top).offset(-16)
-            $0.width.equalTo(200)
-            $0.height.equalTo(50)
-        }
     }
 
     override func bind(reactor: ReadingTimerReactor) {
@@ -147,9 +145,9 @@ final class ReadingTimerViewController: BaseViewController<ReadingTimerReactor> 
             .bind(to: reactor.action)
             .disposed(by: disposeBag)
 
-        stopButton.rx.tap
+        backButtonTapRelay
             .subscribe(onNext: { [weak self] in
-                self?.showStopConfirmation()
+                self?.handleBackButtonTap()
             })
             .disposed(by: disposeBag)
 
@@ -238,7 +236,6 @@ final class ReadingTimerViewController: BaseViewController<ReadingTimerReactor> 
         case .idle:
             startButton.isHidden = false
             pauseButton.isHidden = true
-            stopButton.isEnabled = false
 
         case .running:
             startButton.isHidden = true
@@ -246,7 +243,6 @@ final class ReadingTimerViewController: BaseViewController<ReadingTimerReactor> 
             var config = pauseButton.configuration
             config?.title = "일시정지"
             pauseButton.configuration = config
-            stopButton.isEnabled = true
 
         case .paused:
             startButton.isHidden = true
@@ -254,34 +250,100 @@ final class ReadingTimerViewController: BaseViewController<ReadingTimerReactor> 
             var config = pauseButton.configuration
             config?.title = "재개"
             pauseButton.configuration = config
-            stopButton.isEnabled = true
 
         case .completed:
             startButton.isHidden = true
             pauseButton.isHidden = true
-            stopButton.isEnabled = false
         }
     }
 
-    private func showStopConfirmation() {
+    private func handleBackButtonTap() {
+        guard let reactor = reactor else {
+            navigationController?.popViewController(animated: true)
+            return
+        }
+
+        // idle 상태(시작 전)면 바로 뒤로가기
+        if reactor.currentState.timerState == .idle {
+            navigationController?.popViewController(animated: true)
+            return
+        }
+
+        // completed 상태면 바로 뒤로가기
+        if reactor.currentState.timerState == .completed {
+            navigationController?.popViewController(animated: true)
+            return
+        }
+
+        // running 또는 paused 상태면 종료 확인
+        showExitConfirmation()
+    }
+
+    private func showExitConfirmation() {
+        guard let reactor = reactor else { return }
+
+        // 현재 타이머 상태 저장
+        let wasRunning = reactor.currentState.timerState == .running
+        let elapsedSeconds = reactor.currentState.elapsedSeconds
+        let minimumSeconds = 58 // ReadingTimerReactor와 동일한 기준
+
         // 얼럿 표시 시 타이머 일시정지
-        reactor?.action.onNext(.pauseTimer)
+        if wasRunning {
+            reactor.action.onNext(.pauseTimer)
+        }
 
-        let alert = UIAlertController(
-            title: "독서 기록 종료",
-            message: "독서 기록을 종료하시겠습니까?",
-            preferredStyle: .alert
-        )
+        // 1분 미만: 기록 없이 종료 확인
+        if elapsedSeconds < minimumSeconds {
+            let alert = UIAlertController(
+                title: "독서 타이머 종료",
+                message: "기록 시간이 1분 미만입니다.\n기록 없이 종료하시겠습니까?",
+                preferredStyle: .alert
+            )
 
-        alert.addAction(UIAlertAction(title: "취소", style: .cancel) { [weak self] _ in
-            // 취소 시 타이머 재개
-            self?.reactor?.action.onNext(.resumeTimer)
-        })
-        alert.addAction(UIAlertAction(title: "종료", style: .destructive) { [weak self] _ in
-            self?.reactor?.action.onNext(.stopTimer)
-        })
+            alert.addAction(UIAlertAction(title: "취소", style: .cancel) { [weak self] _ in
+                // 취소 시 타이머 재개 (원래 running이었다면)
+                if wasRunning {
+                    self?.reactor?.action.onNext(.resumeTimer)
+                }
+            })
 
-        present(alert, animated: true)
+            alert.addAction(UIAlertAction(title: "종료", style: .destructive) { [weak self] _ in
+                // 세션 정리하고 뒤로가기
+                TimerSessionManager.shared.clearActiveSession()
+                if #available(iOS 16.2, *) {
+                    _ = LiveActivityManager.shared.endActivity()
+                }
+                self?.navigationController?.popViewController(animated: true)
+            })
+
+            present(alert, animated: true)
+        }
+        // 1분 이상: 저장하고 종료 확인
+        else {
+            let minutes = elapsedSeconds / 60
+            let seconds = elapsedSeconds % 60
+            let timeString = String(format: "%d분 %d초", minutes, seconds)
+
+            let alert = UIAlertController(
+                title: "독서 기록 저장",
+                message: "\(timeString) 동안의 독서 기록을 저장하고 종료하시겠습니까?",
+                preferredStyle: .alert
+            )
+
+            alert.addAction(UIAlertAction(title: "취소", style: .cancel) { [weak self] _ in
+                // 취소 시 타이머 재개 (원래 running이었다면)
+                if wasRunning {
+                    self?.reactor?.action.onNext(.resumeTimer)
+                }
+            })
+
+            alert.addAction(UIAlertAction(title: "저장하고 종료", style: .default) { [weak self] _ in
+                // stopTimer 액션 실행 (저장 후 종료)
+                self?.reactor?.action.onNext(.stopTimer)
+            })
+
+            present(alert, animated: true)
+        }
     }
 
     private func handleCompletion() {
@@ -407,5 +469,9 @@ final class ReadingTimerViewController: BaseViewController<ReadingTimerReactor> 
 extension ReadingTimerViewController {
     var completion: Observable<Void> {
         completionRelay.asObservable()
+    }
+
+    var backButtonTapped: Observable<Void> {
+        backButtonTapRelay.asObservable()
     }
 }
