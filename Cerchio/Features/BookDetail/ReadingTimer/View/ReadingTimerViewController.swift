@@ -128,6 +128,10 @@ final class ReadingTimerViewController: BaseViewController<ReadingTimerReactor> 
     override func bind(reactor: ReadingTimerReactor) {
         // Action
         Observable.just(())
+            .do(onNext: { _ in
+                // 타이머 화면 진입 시 항상 배지 제거
+                NotificationManager.shared.clearBadge()
+            })
             .map { Reactor.Action.viewDidLoad }
             .bind(to: reactor.action)
             .disposed(by: disposeBag)

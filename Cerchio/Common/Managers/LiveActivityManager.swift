@@ -142,8 +142,17 @@ final class LiveActivityManager {
                 return Disposables.create()
             }
 
+            // timerStartTime을 경과 시간을 고려하여 계산
+            // 예: 35초 경과 → timerStartTime = 현재 - 35초
+            let timerStartTime: Date?
+            if isPaused {
+                timerStartTime = nil
+            } else {
+                timerStartTime = Date().addingTimeInterval(-TimeInterval(elapsedSeconds))
+            }
+
             let newState = ReadingTimerAttributes.ContentState(
-                timerStartTime: isPaused ? nil : Date(),
+                timerStartTime: timerStartTime,
                 pausedElapsedSeconds: elapsedSeconds,
                 targetSeconds: targetSeconds,
                 isPaused: isPaused,

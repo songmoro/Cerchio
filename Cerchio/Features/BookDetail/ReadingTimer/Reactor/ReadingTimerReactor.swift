@@ -363,8 +363,13 @@ final class ReadingTimerReactor: Reactor {
             return .concat(mutations)
 
         case .enterBackground:
-            backgroundTime = Date()
-            print("[ReadingTimer] 📱 Entering background - saving session immediately")
+            // backgroundTime이 nil일 때만 설정 (첫 백그라운드 진입)
+            if backgroundTime == nil {
+                backgroundTime = Date()
+                print("[ReadingTimer] 📱 Entering background (first time) - saving session immediately")
+            } else {
+                print("[ReadingTimer] 📱 Re-entering background - updating session")
+            }
 
             // 백그라운드 진입 시 즉시 저장하여 오차 최소화
             saveActiveSession(
