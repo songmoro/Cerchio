@@ -220,18 +220,51 @@ final class ReadingTimerReactor: Reactor {
         guard #available(iOS 16.2, *) else { return }
 
         let activeActivities = LiveActivityManager.shared.getActiveActivities()
-        guard !activeActivities.isEmpty else {
-            print("[ReadingTimer] No active Live Activity to sync")
+
+        if activeActivities.isEmpty {
+            print("[ReadingTimer] No active Live Activity - creating new one")
+
+            // 라이브 액티비티가 없으면 새로 생성
+            LiveActivityManager.shared.startActivity(
+                bookTitle: currentState.bookTitle,
+                targetMinutes: currentState.targetMinutes,
+                sessionStartTime: sessionStartTime
+            )
+            .flatMap { [weak self] _ -> Observable<Void> in
+                guard let self = self else { return .empty() }
+
+                print("[ReadingTimer] ✅ Live Activity created - updating state...")
+
+                // 현재 상태로 업데이트
+                return LiveActivityManager.shared.updateActivity(
+                    elapsedSeconds: elapsedSeconds,
+                    isPaused: isPaused,
+                    targetSeconds: targetSeconds,
+                    sessionStartTime: self.sessionStartTime,
+                    pausedDuration: pausedDuration
+                )
+            }
+            .subscribe(
+                onNext: { [weak self] in
+                    print("[ReadingTimer] ✅ Live Activity created and synced successfully")
+                    self?.liveActivityStarted = true
+                },
+                onError: { error in
+                    print("[ReadingTimer] ❌ Failed to create Live Activity: \(error)")
+                }
+            )
+            .disposed(by: disposeBag)
+
             return
         }
 
-        print("[ReadingTimer] 🔄 Syncing Live Activity with restored session")
+        print("[ReadingTimer] 🔄 Syncing existing Live Activity with restored session")
         print("[ReadingTimer]   - sessionStartTime: \(sessionStartTime)")
         print("[ReadingTimer]   - elapsedSeconds: \(elapsedSeconds)")
         print("[ReadingTimer]   - pausedDuration: \(pausedDuration)")
         print("[ReadingTimer]   - isPaused: \(isPaused)")
 
-        // 라이브 액티비티를 절대 기준 시간으로 업데이트
+        // 기존 라이브 액티비티를 절대 기준 시간으로 업데이트
         LiveActivityManager.shared.updateActivity(
             elapsedSeconds: elapsedSeconds,
             isPaused: isPaused,
@@ -563,6 +596,12 @@ final class ReadingTimerReactor: Reactor {
             endLiveActivity()
             clearActiveSession()
             return completeSession()
+        }
+
+        // 라이브 액티비티가 없으면 재시작 (사용자가 닫았을 경우)
+        if #available(iOS 16.2, *), !liveActivityStarted {
+            print("[ReadingTimer] 📱 Live Activity not running - restarting...")
+            restartLiveActivity(currentElapsed: currentElapsed, targetSeconds: targetSeconds)
         }
 
         // 일시정지 상태면 단순히 시간만 업데이트
@@ -902,8 +941,15 @@ final class ReadingTimerReactor: Reactor {
     }
 
     private func updateLiveActivityResumed() {
-        guard #available(iOS 16.2, *), liveActivityStarted else {
-            print("[ReadingTimer] Cannot update resumed - liveActivityStarted: \(liveActivityStarted)")
+        guard #available(iOS 16.2, *) else { return }
+
+        // 라이브 액티비티가 없으면 재시작
+        if !liveActivityStarted {
+            print("[ReadingTimer] Live Activity not started - restarting...")
+            restartLiveActivity(
+                currentElapsed: currentState.elapsedSeconds,
+                targetSeconds: currentState.targetMinutes * 60
+            )
             return
         }
 
@@ -945,6 +991,48 @@ final class ReadingTimerReactor: Reactor {
                 }
             )
             .disposed(by: disposeBag)
+    }
+
+    private func restartLiveActivity(currentElapsed: Int, targetSeconds: Int) {
+        guard #available(iOS 16.2, *) else { return }
+
+        print("[ReadingTimer] 🔄 Restarting Live Activity...")
+        print("[ReadingTimer]   - bookTitle: \(currentState.bookTitle)")
+        print("[ReadingTimer]   - targetMinutes: \(currentState.targetMinutes)")
+        print("[ReadingTimer]   - sessionStartTime: \(sessionStartTime)")
+        print("[ReadingTimer]   - currentElapsed: \(currentElapsed)s")
+        print("[ReadingTimer]   - pausedDuration: \(currentState.pausedDuration)s")
+
+        // 라이브 액티비티 시작
+        LiveActivityManager.shared.startActivity(
+            bookTitle: currentState.bookTitle,
+            targetMinutes: currentState.targetMinutes,
+            sessionStartTime: sessionStartTime
+        )
+        .flatMap { [weak self] _ -> Observable<Void> in
+            guard let self = self else { return .empty() }
+
+            print("[ReadingTimer] ✅ Live Activity restarted - updating state...")
+
+            // 현재 상태로 업데이트
+            return LiveActivityManager.shared.updateActivity(
+                elapsedSeconds: currentElapsed,
+                isPaused: self.currentState.timerState == .paused,
+                targetSeconds: targetSeconds,
+                sessionStartTime: self.sessionStartTime,
+                pausedDuration: self.currentState.pausedDuration
+            )
+        }
+        .subscribe(
+            onNext: { [weak self] in
+                print("[ReadingTimer] ✅ Live Activity restarted and synced successfully")
+                self?.liveActivityStarted = true
+            },
+            onError: { error in
+                print("[ReadingTimer] ❌ Failed to restart Live Activity: \(error)")
+            }
+        )
+        .disposed(by: disposeBag)
     }
 
     // MARK: - Session Management

@@ -114,9 +114,28 @@ final class AppCoordinator: BaseCoordinator {
     }
 
     private func showSessionRecoveryDialog(_ session: TimerSessionManager.ActiveSession) {
-        let minutes = session.elapsedSeconds / 60
-        let seconds = session.elapsedSeconds % 60
+        // 실제 경과 시간 계산 (상태에 따라 다름)
+        let displayedElapsedSeconds: Int
+
+        if session.state == "running" {
+            // 실행 중이었다면: 실시간 계산 (절대 기준 시간)
+            let actualElapsed = Date().timeIntervalSince(session.startTime) - TimeInterval(session.pausedDuration)
+            let targetSeconds = session.targetMinutes * 60
+            displayedElapsedSeconds = min(Int(floor(actualElapsed)), targetSeconds)
+            print("[AppCoordinator] Running session - calculating real-time: \(displayedElapsedSeconds)s")
+        } else {
+            // 일시정지였다면: 저장된 시간 사용
+            displayedElapsedSeconds = session.elapsedSeconds
+            print("[AppCoordinator] Paused session - using saved time: \(displayedElapsedSeconds)s")
+        }
+
+        let minutes = displayedElapsedSeconds / 60
+        let seconds = displayedElapsedSeconds % 60
         let timeString = String(format: "%02d:%02d", minutes, seconds)
+
+        // 최소 기록 시간 (58초 = 약 1분)
+        let minimumSeconds = 58
+        let canSave = displayedElapsedSeconds >= minimumSeconds
 
         let alert = UIAlertController(
             title: "진행 중이던 독서 기록이 있습니다",
@@ -128,9 +147,12 @@ final class AppCoordinator: BaseCoordinator {
             self?.restoreSession(session, reason: "사용자 선택 - 계속 읽기")
         })
 
-        alert.addAction(UIAlertAction(title: "기록하고 종료", style: .default) { [weak self] _ in
-            self?.saveAndTerminateSession(session)
-        })
+        // 1분 이상인 경우만 저장 옵션 제공
+        if canSave {
+            alert.addAction(UIAlertAction(title: "기록하고 종료", style: .default) { [weak self] _ in
+                self?.saveAndTerminateSession(session)
+            })
+        }
 
         alert.addAction(UIAlertAction(title: "취소", style: .cancel) { _ in
             TimerSessionManager.shared.clearActiveSession()
