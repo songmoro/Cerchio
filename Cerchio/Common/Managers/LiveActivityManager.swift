@@ -19,10 +19,37 @@ final class LiveActivityManager {
     private var currentActivity: Activity<ReadingTimerAttributes>?
     private var activityStateObserver: Task<Void, Never>?
 
-    // Activity가 사용자에 의해 닫혔을 때 알림
+    // Activity 상태 변화 알림
     private let activityDismissedSubject = PublishSubject<Void>()
     var activityDismissed: Observable<Void> {
         activityDismissedSubject.asObservable()
+    }
+
+    private let activityStaleSubject = PublishSubject<Void>()
+    var activityStale: Observable<Void> {
+        activityStaleSubject.asObservable()
+    }
+
+    private let activityEndedSubject = PublishSubject<Void>()
+    var activityEnded: Observable<Void> {
+        activityEndedSubject.asObservable()
+    }
+
+    // MARK: - Permission Check
+
+    func checkActivityAuthorizationStatus() -> Observable<Bool> {
+        return Observable.create { observer in
+            let authInfo = ActivityAuthorizationInfo()
+            let isEnabled = authInfo.areActivitiesEnabled
+            print("[LiveActivity] 🔐 Authorization check: \(isEnabled ? "Enabled" : "Disabled")")
+            observer.onNext(isEnabled)
+            observer.onCompleted()
+            return Disposables.create()
+        }
+    }
+
+    func getActiveActivities() -> [Activity<ReadingTimerAttributes>] {
+        return Activity<ReadingTimerAttributes>.activities
     }
 
     // MARK: - Start Activity
@@ -156,12 +183,20 @@ final class LiveActivityManager {
 
             Task {
                 do {
-                    let finalState = activity.content.state
-                    await activity.end(
-                        .init(state: finalState, staleDate: nil),
-                        dismissalPolicy: .immediate
+                    // 완료 상태로 업데이트
+                    let completedState = ReadingTimerAttributes.ContentState(
+                        timerStartTime: nil,
+                        pausedElapsedSeconds: activity.content.state.pausedElapsedSeconds,
+                        targetSeconds: activity.content.state.targetSeconds,
+                        isPaused: false,
+                        isCompleted: true  // 완료 상태로 설정
                     )
-                    print("[LiveActivity] Activity ended successfully")
+
+                    await activity.end(
+                        .init(state: completedState, staleDate: nil),
+                        dismissalPolicy: .after(.now.addingTimeInterval(60 * 60))  // 1시간 후 제거
+                    )
+                    print("[LiveActivity] Activity ended with completion state")
                     self?.cleanupActivity()
                     observer.onNext(())
                     observer.onCompleted()
@@ -196,9 +231,16 @@ final class LiveActivityManager {
 
                 case .ended:
                     print("[LiveActivity] ⏹️ Activity ended")
+                    self.activityEndedSubject.onNext(())
                     self.cleanupActivity()
 
-                case .active, .stale:
+                case .stale:
+                    print("[LiveActivity] ⏰ Activity became stale (8 hour limit reached)")
+                    self.activityStaleSubject.onNext(())
+                    // stale 상태에서는 정리하지 않고 계속 유지 (새로 생성할 수 있음)
+
+                case .active:
+                    print("[LiveActivity] ✅ Activity is active")
                     break
 
                 @unknown default:

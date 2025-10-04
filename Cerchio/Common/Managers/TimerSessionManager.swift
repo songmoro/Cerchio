@@ -11,8 +11,16 @@ final class TimerSessionManager {
 
     static let shared = TimerSessionManager()
 
-    private let userDefaults = UserDefaults.standard
-    private let sessionKey = "activeTimerSession"
+    // App Group identifier - 앱과 위젯 간 데이터 공유
+    private let appGroupIdentifier = "group.com.moro.cerchio"
+    private lazy var userDefaults: UserDefaults = {
+        guard let defaults = UserDefaults(suiteName: appGroupIdentifier) else {
+            print("[TimerSession] ⚠️ Failed to create App Group UserDefaults, falling back to standard")
+            return UserDefaults.standard
+        }
+        return defaults
+    }()
+    private let sessionKey = "current_reading_session"
 
     private init() {}
 
@@ -24,7 +32,12 @@ final class TimerSessionManager {
         let bookTitle: String
         let targetMinutes: Int
         let startTime: Date
-        let elapsedSeconds: Int  // 일시정지 시점의 경과 시간
+        let elapsedSeconds: Int
+        let pausedDuration: Int  // 총 일시정지 시간 (초)
+        let pauseStartTime: Date?  // 일시정지 시작 시간
+        let state: String  // "running", "paused"
+        let lastUpdateTime: Date
+        let activityId: String?  // 라이브 액티비티 ID
     }
 
     func saveActiveSession(
@@ -33,7 +46,11 @@ final class TimerSessionManager {
         bookTitle: String,
         targetMinutes: Int,
         startTime: Date,
-        elapsedSeconds: Int = 0
+        elapsedSeconds: Int = 0,
+        pausedDuration: Int = 0,
+        pauseStartTime: Date? = nil,
+        state: String = "running",
+        activityId: String? = nil
     ) {
         let session = ActiveSession(
             sessionId: sessionId,
@@ -41,17 +58,23 @@ final class TimerSessionManager {
             bookTitle: bookTitle,
             targetMinutes: targetMinutes,
             startTime: startTime,
-            elapsedSeconds: elapsedSeconds
+            elapsedSeconds: elapsedSeconds,
+            pausedDuration: pausedDuration,
+            pauseStartTime: pauseStartTime,
+            state: state,
+            lastUpdateTime: Date(),
+            activityId: activityId
         )
 
         if let encoded = try? JSONEncoder().encode(session) {
             userDefaults.set(encoded, forKey: sessionKey)
-            userDefaults.synchronize() // 즉시 저장
+            userDefaults.synchronize()
             print("[TimerSession] 💾 Saved active session:")
             print("[TimerSession]   - sessionId: \(sessionId)")
-            print("[TimerSession]   - bookId: \(bookId)")
             print("[TimerSession]   - bookTitle: \(bookTitle)")
+            print("[TimerSession]   - state: \(state)")
             print("[TimerSession]   - elapsedSeconds: \(elapsedSeconds)")
+            print("[TimerSession]   - pausedDuration: \(pausedDuration)")
         } else {
             print("[TimerSession] ❌ Failed to encode session")
         }
@@ -84,19 +107,29 @@ final class TimerSessionManager {
     }
 
     func updateElapsedTime(elapsedSeconds: Int) {
-        guard var session = getActiveSession() else { return }
+        guard let session = getActiveSession() else { return }
 
-        session = ActiveSession(
+        let updatedSession = ActiveSession(
             sessionId: session.sessionId,
             bookId: session.bookId,
             bookTitle: session.bookTitle,
             targetMinutes: session.targetMinutes,
             startTime: session.startTime,
-            elapsedSeconds: elapsedSeconds
+            elapsedSeconds: elapsedSeconds,
+            pausedDuration: session.pausedDuration,
+            pauseStartTime: session.pauseStartTime,
+            state: session.state,
+            lastUpdateTime: Date(),
+            activityId: session.activityId
         )
 
-        if let encoded = try? JSONEncoder().encode(session) {
+        if let encoded = try? JSONEncoder().encode(updatedSession) {
             userDefaults.set(encoded, forKey: sessionKey)
+            userDefaults.synchronize()
         }
+    }
+
+    func hasActiveSession() -> Bool {
+        return getActiveSession() != nil
     }
 }

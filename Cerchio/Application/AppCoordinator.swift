@@ -53,21 +53,50 @@ final class AppCoordinator: BaseCoordinator {
     private func checkAndRestoreActiveTimerSession() {
         print("[AppCoordinator] 🔍 Checking for active timer session...")
 
-        guard let activeSession = TimerSessionManager.shared.getActiveSession() else {
-            print("[AppCoordinator] ❌ No active timer session to restore")
+        let activeSession = TimerSessionManager.shared.getActiveSession()
+        var hasActiveActivity = false
+
+        // 라이브 액티비티 체크
+        if #available(iOS 16.2, *) {
+            hasActiveActivity = !LiveActivityManager.shared.getActiveActivities().isEmpty
+            print("[AppCoordinator] 📱 Active Live Activities: \(hasActiveActivity)")
+        }
+
+        // 케이스 1: 세션도 있고 액티비티도 있음 → 정상 복구
+        if let session = activeSession, hasActiveActivity {
+            print("[AppCoordinator] ✅ Found active session with Live Activity")
+            restoreSession(session, reason: "정상 복구")
             return
         }
 
-        print("[AppCoordinator] ✅ Found active timer session!")
-        print("[AppCoordinator]   - sessionId: \(activeSession.sessionId)")
-        print("[AppCoordinator]   - bookId: \(activeSession.bookId)")
-        print("[AppCoordinator]   - bookTitle: \(activeSession.bookTitle)")
-        print("[AppCoordinator]   - elapsedSeconds: \(activeSession.elapsedSeconds)")
-        print("[AppCoordinator] 🔄 Restoring timer session...")
+        // 케이스 2: 세션은 있는데 액티비티 없음 → 시스템 재부팅 또는 액티비티 종료
+        if let session = activeSession, !hasActiveActivity {
+            print("[AppCoordinator] ⚠️ Found session but no Live Activity (possible reboot)")
+            showSessionRecoveryDialog(session)
+            return
+        }
 
-        // 도서 정보 조회
+        // 케이스 3: 세션 없고 액티비티 있음 → 데이터 불일치 (액티비티만 정리)
+        if activeSession == nil, hasActiveActivity {
+            print("[AppCoordinator] ⚠️ Found Live Activity but no session (data mismatch)")
+            if #available(iOS 16.2, *) {
+                _ = LiveActivityManager.shared.endActivity()
+            }
+            return
+        }
+
+        // 케이스 4: 둘 다 없음 → 정상
+        print("[AppCoordinator] ✅ No active timer session to restore")
+    }
+
+    private func restoreSession(_ session: TimerSessionManager.ActiveSession, reason: String) {
+        print("[AppCoordinator] 🔄 Restoring session - \(reason)")
+        print("[AppCoordinator]   - sessionId: \(session.sessionId)")
+        print("[AppCoordinator]   - bookTitle: \(session.bookTitle)")
+        print("[AppCoordinator]   - elapsedSeconds: \(session.elapsedSeconds)")
+
         let bookRepository = dependencies.serviceFactory.createBookRepository()
-        _ = bookRepository.getBook(by: activeSession.bookId)
+        _ = bookRepository.getBook(by: session.bookId)
             .observe(on: MainScheduler.instance)
             .subscribe(onNext: { [weak self] realmBook in
                 guard let self = self, let realmBook = realmBook else {
@@ -76,15 +105,51 @@ final class AppCoordinator: BaseCoordinator {
                     return
                 }
 
-                // RealmBook을 Book으로 변환
                 let book = realmBook.toBook()
-
-                // 타이머 화면으로 네비게이션
-                self.navigateToTimerScreen(book: book, session: activeSession)
+                self.navigateToTimerScreen(book: book, session: session)
             }, onError: { error in
                 print("[AppCoordinator] ❌ Error loading book: \(error)")
                 TimerSessionManager.shared.clearActiveSession()
             })
+    }
+
+    private func showSessionRecoveryDialog(_ session: TimerSessionManager.ActiveSession) {
+        let minutes = session.elapsedSeconds / 60
+        let seconds = session.elapsedSeconds % 60
+        let timeString = String(format: "%02d:%02d", minutes, seconds)
+
+        let alert = UIAlertController(
+            title: "진행 중이던 독서 기록이 있습니다",
+            message: "\"\(session.bookTitle)\"\n마지막 기록 시간: \(timeString)\n\n계속하시겠습니까?",
+            preferredStyle: .alert
+        )
+
+        alert.addAction(UIAlertAction(title: "계속 읽기", style: .default) { [weak self] _ in
+            self?.restoreSession(session, reason: "사용자 선택 - 계속 읽기")
+        })
+
+        alert.addAction(UIAlertAction(title: "기록하고 종료", style: .default) { [weak self] _ in
+            self?.saveAndTerminateSession(session)
+        })
+
+        alert.addAction(UIAlertAction(title: "취소", style: .cancel) { _ in
+            TimerSessionManager.shared.clearActiveSession()
+        })
+
+        DispatchQueue.main.async { [weak self] in
+            self?.window.rootViewController?.present(alert, animated: true)
+        }
+    }
+
+    private func saveAndTerminateSession(_ session: TimerSessionManager.ActiveSession) {
+        print("[AppCoordinator] 💾 Saving and terminating session")
+
+        // TODO: ReadingRecord 생성 및 저장
+        let sessionRepository = dependencies.serviceFactory.createReadingSessionRepository()
+
+        // 임시로 세션만 정리
+        TimerSessionManager.shared.clearActiveSession()
+        print("[AppCoordinator] ✅ Session terminated")
     }
 
     private func navigateToTimerScreen(book: Book, session: TimerSessionManager.ActiveSession) {

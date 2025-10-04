@@ -91,7 +91,7 @@ struct DynamicIslandTimerView: View {
     }
     
     private var isCompleted: Bool {
-        context.state.currentElapsedSeconds >= context.state.targetSeconds
+        context.state.isCompleted || context.state.currentElapsedSeconds >= context.state.targetSeconds
     }
     
     private func timeString(_ seconds: Int) -> String {
@@ -137,7 +137,7 @@ struct DynamicIslandRemainingView: View {
     }
     
     private var isCompleted: Bool {
-        context.state.currentElapsedSeconds >= context.state.targetSeconds
+        context.state.isCompleted || context.state.currentElapsedSeconds >= context.state.targetSeconds
     }
     
     private func timeString(_ seconds: Int) -> String {
@@ -232,7 +232,7 @@ struct ReadingTimerLockScreenView: View {
     }
     
     private var isCompleted: Bool {
-        context.state.currentElapsedSeconds >= context.state.targetSeconds
+        context.state.isCompleted || context.state.currentElapsedSeconds >= context.state.targetSeconds
     }
     
     private func timeString(_ seconds: Int) -> String {

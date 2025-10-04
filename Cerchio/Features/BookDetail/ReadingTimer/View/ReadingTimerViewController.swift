@@ -213,6 +213,22 @@ final class ReadingTimerViewController: BaseViewController<ReadingTimerReactor> 
                 self?.handleValidationError(error)
             })
             .disposed(by: disposeBag)
+
+        // 중복 세션 처리
+        reactor.state
+            .map { $0.duplicateSessionInfo }
+            .distinctUntilChanged { lhs, rhs in
+                if let lhs = lhs, let rhs = rhs {
+                    return lhs.sessionId == rhs.sessionId
+                }
+                return lhs == nil && rhs == nil
+            }
+            .compactMap { $0 }
+            .asDriver(onErrorDriveWith: .empty())
+            .drive(onNext: { [weak self] sessionInfo in
+                self?.showDuplicateSessionAlert(sessionInfo)
+            })
+            .disposed(by: disposeBag)
     }
 
     // MARK: - Private Methods
@@ -269,9 +285,22 @@ final class ReadingTimerViewController: BaseViewController<ReadingTimerReactor> 
     }
 
     private func handleCompletion() {
+        guard let reactor = reactor else { return }
+
+        let elapsedMinutes = reactor.currentState.elapsedSeconds / 60
+        let elapsedSeconds = reactor.currentState.elapsedSeconds % 60
+        let timeString = String(format: "%d분 %d초", elapsedMinutes, elapsedSeconds)
+
+        let message = """
+        독서 기록이 저장되었습니다.
+
+        📚 \(reactor.currentState.bookTitle)
+        ⏱️ \(timeString) 동안 읽었습니다
+        """
+
         let alert = UIAlertController(
-            title: "완료",
-            message: "독서 기록이 저장되었습니다.",
+            title: "🎉 독서 완료",
+            message: message,
             preferredStyle: .alert
         )
 
@@ -288,6 +317,8 @@ final class ReadingTimerViewController: BaseViewController<ReadingTimerReactor> 
             showNotificationDeniedAlert()
         case .liveActivityNotEnabled:
             showLiveActivityDisabledAlert()
+        case .sessionTooShort:
+            showSessionTooShortAlert()
         }
     }
 
@@ -320,6 +351,52 @@ final class ReadingTimerViewController: BaseViewController<ReadingTimerReactor> 
 
         alert.addAction(UIAlertAction(title: "확인", style: .default) { [weak self] _ in
             self?.reactor?.action.onNext(.startTimerConfirmed)
+        })
+
+        present(alert, animated: true)
+    }
+
+    private func showDuplicateSessionAlert(_ sessionInfo: TimerSessionManager.ActiveSession) {
+        let minutes = sessionInfo.elapsedSeconds / 60
+        let seconds = sessionInfo.elapsedSeconds % 60
+        let timeString = String(format: "%02d:%02d", minutes, seconds)
+
+        let alert = UIAlertController(
+            title: "진행 중인 타이머가 있습니다",
+            message: "\"\(sessionInfo.bookTitle)\" 독서 타이머가 진행 중입니다.\n경과 시간: \(timeString)",
+            preferredStyle: .alert
+        )
+
+        alert.addAction(UIAlertAction(title: "현재 타이머 계속", style: .default) { [weak self] _ in
+            // TODO: 기존 타이머 화면으로 이동
+            self?.navigationController?.popViewController(animated: true)
+        })
+
+        alert.addAction(UIAlertAction(title: "기존 종료하고 새로 시작", style: .destructive) { [weak self] _ in
+            self?.reactor?.action.onNext(.terminateExistingSessionAndStart)
+        })
+
+        alert.addAction(UIAlertAction(title: "취소", style: .cancel))
+
+        present(alert, animated: true)
+    }
+
+    private func showSessionTooShortAlert() {
+        let alert = UIAlertController(
+            title: "기록 시간이 너무 짧습니다",
+            message: "최소 1분 이상 읽어야 기록할 수 있습니다.\n계속 읽거나 기록 없이 종료하세요.",
+            preferredStyle: .alert
+        )
+
+        alert.addAction(UIAlertAction(title: "계속 읽기", style: .default) { [weak self] _ in
+            // 타이머 재개
+            self?.reactor?.action.onNext(.resumeTimer)
+        })
+
+        alert.addAction(UIAlertAction(title: "기록 없이 종료", style: .destructive) { [weak self] _ in
+            // 세션 정리하고 종료
+            TimerSessionManager.shared.clearActiveSession()
+            self?.navigationController?.popViewController(animated: true)
         })
 
         present(alert, animated: true)
