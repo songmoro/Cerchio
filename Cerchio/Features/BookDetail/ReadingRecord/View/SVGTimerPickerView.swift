@@ -136,6 +136,8 @@ final class SVGTimerPickerView: UIView {
         // Normalize boundary path to current bounds
         if let originalPath = boundaryPath {
             normalizedBoundaryPath = normalizePath(originalPath, to: radius)
+            dump(originalPath)
+            dump(normalizedBoundaryPath)
         }
 
         drawTickMarks()
@@ -149,7 +151,7 @@ final class SVGTimerPickerView: UIView {
         let center = CGPoint(x: bounds.midX, y: bounds.midY)
 
         // Scale factor to fit path to radius
-        let scaleFactor = (radius * 2) / max(pathBounds.width, pathBounds.height)
+        let scaleFactor = (radius * 1.5) / max(pathBounds.width, pathBounds.height)
 
         let transform = CGAffineTransform.identity
             .translatedBy(x: center.x, y: center.y)
@@ -235,9 +237,17 @@ final class SVGTimerPickerView: UIView {
     private func updateHandle() {
         let handleCenter: CGPoint
         if let path = normalizedBoundaryPath {
-            // 1-60분을 0-59 범위로 변환 (0-based)
-            // 1분 → progress 0, 60분 → progress 59/60 = 0.9833
-            let progress = CGFloat(selectedMinutes - 1) / 60.0
+            // 라디안 기반 계산으로 정확한 각도 매핑
+            // angleForMinute와 동일한 방식 사용
+            let angle = angleForMinute(selectedMinutes)
+
+            // 라디안을 0-1 범위의 progress로 변환
+            // -π/2 (12시) ~ 3π/2 (12시로 복귀) → 0 ~ 1
+            let normalizedAngle = angle + .pi / 2  // 0부터 시작하도록 조정
+            let progress = normalizedAngle / (2 * .pi)
+
+            print("Minutes: \(selectedMinutes), Angle: \(angle * 180 / .pi)°, Progress: \(progress * 100)%")
+
             handleCenter = path.point(at: progress)
         } else {
             // Fallback: 원형
@@ -246,9 +256,30 @@ final class SVGTimerPickerView: UIView {
             handleCenter = pointOnCircle(center: center, radius: radius, angle: angle)
         }
 
+        // 15분 단위일 때 축 정렬 보정
+        var adjustedCenter = handleCenter
+        let center = CGPoint(x: bounds.midX, y: bounds.midY)
+
+        switch selectedMinutes {
+        case 15:
+            // 3시 방향 (오른쪽) - y축을 중심에 고정
+            adjustedCenter.y = center.y
+        case 30:
+            // 6시 방향 (아래) - x축을 중심에 고정
+            adjustedCenter.x = center.x
+        case 45:
+            // 9시 방향 (왼쪽) - y축을 중심에 고정
+            adjustedCenter.y = center.y
+        case 60:
+            // 12시 방향 (위) - x축을 중심에 고정
+            adjustedCenter.x = center.x
+        default:
+            break
+        }
+
         handleView.frame = CGRect(
-            x: handleCenter.x - handleSize / 2,
-            y: handleCenter.y - handleSize / 2,
+            x: adjustedCenter.x - handleSize / 2,
+            y: adjustedCenter.y - handleSize / 2,
             width: handleSize,
             height: handleSize
         )
