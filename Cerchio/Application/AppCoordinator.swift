@@ -153,26 +153,42 @@ final class AppCoordinator: BaseCoordinator {
     }
 
     private func navigateToTimerScreen(book: Book, session: TimerSessionManager.ActiveSession) {
-        // BookDetail 화면을 먼저 push (애니메이션 없이)
+        // UI 작업이므로 메인 스레드 보장
+        assert(Thread.isMainThread, "navigateToTimerScreen must be called on main thread")
+
+        // BookDetail 화면 생성
         let bookDetailDependencies = BookDetailDependencies(
             serviceFactory: dependencies.serviceFactory,
             book: book
         )
         let bookDetailCoordinator = BookDetailCoordinator(navigationController: navigationController)
         addChildCoordinator(bookDetailCoordinator)
-        bookDetailCoordinator.start(with: bookDetailDependencies)
 
-        // 타이머 화면 즉시 push
+        // BookDetail ViewController 생성 (push 안 함)
+        let bookDetailViewController = BookDetailViewController()
+        let bookRepository = dependencies.serviceFactory.createBookRepository()
+        let bookDetailReactor = BookDetailReactor(book: book, bookRepository: bookRepository)
+        bookDetailViewController.coordinator = bookDetailCoordinator
+        bookDetailViewController.reactor = bookDetailReactor
+        bookDetailViewController.setServiceFactory(dependencies.serviceFactory)
+        bookDetailViewController.hidesBottomBarWhenPushed = true
+
+        // 타이머 화면 생성
         let readingTimerViewController = ReadingTimerViewController()
         let sessionRepository = dependencies.serviceFactory.createReadingSessionRepository()
         let readingTimerReactor = ReadingTimerReactor(
             session: session,
             sessionRepository: sessionRepository
         )
-
         readingTimerViewController.reactor = readingTimerReactor
 
-        navigationController.pushViewController(readingTimerViewController, animated: false)
-        print("[AppCoordinator] ✅ Navigated to timer screen")
+        // 스택에 한 번에 설정 (화면 전환 없음)
+        navigationController.setViewControllers([
+            navigationController.viewControllers.first!, // TabBar
+            bookDetailViewController,
+            readingTimerViewController
+        ], animated: false)
+
+        print("[AppCoordinator] ✅ Navigated to timer screen without transition")
     }
 }

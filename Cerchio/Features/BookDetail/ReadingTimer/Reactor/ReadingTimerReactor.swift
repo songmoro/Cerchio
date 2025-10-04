@@ -104,6 +104,7 @@ final class ReadingTimerReactor: Reactor {
     private var liveActivityStarted = false
     private var sessionId: String
     private var scheduledNotificationId: String?
+    private var isRestoredSession = false
 
     init(bookId: String, bookTitle: String, targetMinutes: Int, sessionRepository: ReadingSessionRepositoryProtocol) {
         self.sessionRepository = sessionRepository
@@ -123,6 +124,7 @@ final class ReadingTimerReactor: Reactor {
     init(session: TimerSessionManager.ActiveSession, sessionRepository: ReadingSessionRepositoryProtocol) {
         self.sessionRepository = sessionRepository
         self.sessionId = session.sessionId
+        self.isRestoredSession = true
 
         // 경과 시간 동기화 계산
         let savedElapsed = session.elapsedSeconds
@@ -263,7 +265,7 @@ final class ReadingTimerReactor: Reactor {
         switch action {
         case .viewDidLoad:
             // 복원된 세션인 경우 새로 생성하지 않음
-            if currentState.session != nil {
+            if isRestoredSession {
                 print("[ReadingTimer] 🔄 Restored session detected - skipping session creation")
                 return .empty()
             }
