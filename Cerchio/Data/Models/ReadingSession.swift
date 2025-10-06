@@ -15,7 +15,7 @@ nonisolated struct ReadingSession: Hashable, Sendable {
     let bookId: String
     let startTime: Date
     let endTime: Date?
-    let durationMinutes: Int
+    let durationSeconds: Int
     let targetMinutes: Int
     let status: SessionStatus
     let drawingData: DrawingData?
@@ -101,7 +101,7 @@ final class RealmReadingSession: Object {
     @Persisted var bookId: String
     @Persisted var startTime: Date
     @Persisted var endTime: Date?
-    @Persisted var durationMinutes: Int
+    @Persisted var durationSeconds: Int
     @Persisted var targetMinutes: Int
     @Persisted var status: String
     @Persisted var drawingGeneratorType: String?
@@ -122,7 +122,7 @@ final class RealmReadingSession: Object {
         self.startTime = startTime
         self.targetMinutes = targetMinutes
         self.status = status.rawValue
-        self.durationMinutes = 0
+        self.durationSeconds = 0
         self.createdAt = Date()
         self.drawingSeed = 0
     }
@@ -145,7 +145,7 @@ final class RealmReadingSession: Object {
             bookId: bookId,
             startTime: startTime,
             endTime: endTime,
-            durationMinutes: durationMinutes,
+            durationSeconds: durationSeconds,
             targetMinutes: targetMinutes,
             status: ReadingSession.SessionStatus(rawValue: status) ?? .inProgress,
             drawingData: drawingData,
@@ -163,7 +163,7 @@ extension ReadingSession {
         realm.bookId = bookId
         realm.startTime = startTime
         realm.endTime = endTime
-        realm.durationMinutes = durationMinutes
+        realm.durationSeconds = durationSeconds
         realm.targetMinutes = targetMinutes
         realm.status = status.rawValue
         realm.createdAt = createdAt

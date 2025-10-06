@@ -72,8 +72,8 @@ final class ReadingSessionRepository: BaseRepository<RealmReadingSession>, Readi
             session.endTime = endTime
             session.status = ReadingSession.SessionStatus.completed.rawValue
 
-            let duration = Int(endTime.timeIntervalSince(session.startTime) / 60)
-            session.durationMinutes = duration
+            let durationSeconds = Int(endTime.timeIntervalSince(session.startTime))
+            session.durationSeconds = durationSeconds
 
             if let drawing = drawingData {
                 session.drawingGeneratorType = drawing.generatorType

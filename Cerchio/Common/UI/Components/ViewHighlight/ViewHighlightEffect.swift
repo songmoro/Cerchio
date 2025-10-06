@@ -80,10 +80,14 @@ struct ViewHighlightConfiguration {
             animationDuration: CircularMenuConstants.Animation.duration,
             cornerRadius: CircularMenuConstants.Layout.cornerRadius,
             cornerRadiusMultiplier: CircularMenuConstants.Layout.scaleMultiplier,
-            shadowColor: .black,
-            shadowOpacity: CircularMenuConstants.Colors.shadowOpacity,
-            shadowOffset: CircularMenuConstants.Layout.shadowOffset,
-            shadowRadius: CircularMenuConstants.Layout.shadowRadius,
+//            shadowColor: .black,
+//            shadowOpacity: CircularMenuConstants.Colors.shadowOpacity,
+//            shadowOffset: CircularMenuConstants.Layout.shadowOffset,
+//            shadowRadius: CircularMenuConstants.Layout.shadowRadius,
+            shadowColor: .clear,
+            shadowOpacity: .zero,
+            shadowOffset: .zero,
+            shadowRadius: .zero,
             hideOriginalView: true
         )
     }
