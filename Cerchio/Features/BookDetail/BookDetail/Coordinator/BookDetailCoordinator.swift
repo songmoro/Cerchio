@@ -54,7 +54,8 @@ final class BookDetailCoordinator: BaseCoordinator, Coordinatable {
     private func showBookDetailViewController() {
         let bookDetailViewController = BookDetailViewController()
         let bookRepository = dependencies.serviceFactory.createBookRepository()
-        let bookDetailReactor = BookDetailReactor(book: book, bookRepository: bookRepository)
+        let service = BookDetailService(serviceFactory: dependencies.serviceFactory)
+        let bookDetailReactor = BookDetailReactor(book: book, bookRepository: bookRepository, service: service)
 
         // Reactor 참조 저장
         self.currentReactor = bookDetailReactor
@@ -162,5 +163,52 @@ final class BookDetailCoordinator: BaseCoordinator, Coordinatable {
     func showReadingProgress() {
         // TODO: ReadingProgressCoordinator 구현 시 추가
         print("Show reading progress for book: \(book.cleanTitle)")
+    }
+
+    func showReadingSessionList() {
+        let viewController = ReadingSessionListViewController()
+        let service = BookDetailService(serviceFactory: dependencies.serviceFactory)
+        let reactor = ReadingSessionListReactor(
+            bookId: book.id,
+            bookTitle: book.cleanTitle,
+            service: service
+        )
+        viewController.reactor = reactor
+
+        // 독서 기록 추가 콜백 설정
+        viewController.onAddRecordRequested = { [weak self, weak viewController] in
+            self?.showReadingRecordEntry(reloadHandler: {
+                viewController?.reloadSessions()
+            })
+        }
+
+        navigationController.pushViewController(viewController, animated: true)
+    }
+
+    private func showReadingRecordEntry(reloadHandler: (() -> Void)? = nil) {
+        let readingRecordCoordinator = ReadingRecordCoordinator(
+            navigationController: navigationController,
+            dependencies: ReadingRecordCoordinator.Dependencies(
+                bookId: book.id,
+                serviceFactory: dependencies.serviceFactory
+            )
+        )
+
+        addChildCoordinator(readingRecordCoordinator)
+
+        readingRecordCoordinator.result
+            .subscribe(onNext: { [weak self] result in
+                switch result {
+                case .recordSaved(let content):
+                    print("✅ Reading record saved: \(content)")
+                    reloadHandler?()
+                case .cancelled:
+                    print("📝 Reading record cancelled")
+                }
+                self?.removeChildCoordinator(readingRecordCoordinator)
+            })
+            .disposed(by: disposeBag)
+
+        readingRecordCoordinator.start()
     }
 }

@@ -34,6 +34,9 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
     // MARK: - Image Storage
     private var photoImages: [String: UIImage] = [:]  // photoId -> UIImage
     private let imageQueue = DispatchQueue(label: "com.cerchio.bookDetail.imageQueue", attributes: .concurrent)
+
+    // MARK: - Reading Statistics
+    private var currentStatisticsPeriod: ReadingStatisticsPeriod = .total
     
     // MARK: - Section & Item Types
     nonisolated enum Section: CaseIterable {
@@ -45,6 +48,7 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
     
     nonisolated enum Item: Hashable, Sendable {
         case bookInfo(BookDetail)
+        case readingStatistics(ReadingStatistics)
         case readingRecord(String, Date) // 독서 기록 내용, 생성 날짜
         case addReadingRecordButton // 독서 기록 추가 버튼
         case savedQuote(String, Int?, Date) // 문장 텍스트, 페이지, 저장 날짜
@@ -58,6 +62,9 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
             case .bookInfo(let detail):
                 hasher.combine("bookInfo")
                 hasher.combine(detail)
+            case .readingStatistics(let stats):
+                hasher.combine("readingStatistics")
+                hasher.combine(stats)
             case .readingRecord(let content, let date):
                 hasher.combine("readingRecord")
                 hasher.combine(content)
@@ -84,6 +91,8 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
         static func == (lhs: Item, rhs: Item) -> Bool {
             switch (lhs, rhs) {
             case (.bookInfo(let l), .bookInfo(let r)):
+                return l == r
+            case (.readingStatistics(let l), .readingStatistics(let r)):
                 return l == r
             case (.readingRecord(let lc, let ld), .readingRecord(let rc, let rd)):
                 return lc == rc && ld == rd
@@ -211,6 +220,19 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
                 self?.loadPhotosAndUpdateUI()
                 self?.loadQuotesAndUpdateUI()
                 self?.loadTagsAndUpdateUI()
+
+                // 독서 통계 로드
+                self?.reactor?.action.onNext(.loadReadingStatistics)
+            })
+            .disposed(by: disposeBag)
+
+        // State - Reading Statistics
+        reactor.state
+            .map { $0.readingStatistics }
+            .distinctUntilChanged()
+            .asDriver(onErrorJustReturn: nil)
+            .drive(onNext: { [weak self] statistics in
+                self?.updateReadingStatisticsUI(statistics)
             })
             .disposed(by: disposeBag)
 
@@ -261,6 +283,7 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
 
         // 셀 등록
         collectionView.register(BookInfoCollectionViewCell.self)
+        collectionView.register(ReadingStatisticsCell.self)
         collectionView.register(AddReadingRecordButtonCell.self)
         collectionView.register(SavedQuoteCell.self)
         collectionView.register(AddQuoteButtonCell.self)
@@ -454,6 +477,11 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
                 }
                 return cell
 
+            case .readingStatistics(let statistics):
+                let cell: ReadingStatisticsCell = collectionView.dequeueReusableCell(ReadingStatisticsCell.self, for: indexPath)
+                cell.configure(with: statistics, period: self?.currentStatisticsPeriod ?? .total)
+                return cell
+
             case .readingRecord(let content, let date):
                 let cell: SavedQuoteCell = collectionView.dequeueReusableCell(SavedQuoteCell.self, for: indexPath)
                 cell.configure(with: content, pageNumber: nil, date: date)
@@ -529,6 +557,18 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
                     for: indexPath
                 ) as! ReadingRecordsSectionHeader
 
+                header.onViewAllTapped = { [weak self] in
+                    self?.showReadingSessionList()
+                }
+
+                header.onPeriodChanged = { [weak self] period in
+                    self?.handlePeriodChange(period)
+                }
+
+                // 통계 데이터가 있는지 확인
+                let hasRecords = self?.reactor?.currentState.readingStatistics?.totalSessions ?? 0 > 0
+                header.configure(hasRecords: hasRecords)
+
                 return header
 
             case .savedQuotes:
@@ -568,8 +608,8 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
         // 책 정보
         snapshot.appendItems([.bookInfo(bookDetail)], toSection: .bookInfo)
 
-        // 독서 기록 (기본 추가 버튼만 표시, 실제 데이터는 별도 로드)
-        snapshot.appendItems([.addReadingRecordButton], toSection: .readingRecords)
+        // 독서 기록 (별도 로드 후 업데이트, 초기에는 비워둠)
+        // updateReadingStatisticsUI에서 처리
 
         // 저장한 문장 (기본 빈 데이터, 실제 데이터는 별도 로드)
         snapshot.appendItems([.savedQuote("", nil, Date())], toSection: .savedQuotes)
@@ -1373,6 +1413,49 @@ extension BookDetailViewController: UICollectionViewDelegate {
         }
 
         present(navController, animated: true)
+    }
+
+    // MARK: - Reading Statistics UI Update
+    private func updateReadingStatisticsUI(_ statistics: ReadingStatistics?) {
+        guard let dataSource = dataSource else { return }
+        var snapshot = dataSource.snapshot()
+
+        // readingRecords 섹션이 존재하는지 확인
+        guard snapshot.sectionIdentifiers.contains(.readingRecords) else { return }
+
+        // readingRecords 섹션의 기존 아이템 제거
+        let existingItems = snapshot.itemIdentifiers(inSection: .readingRecords)
+        if !existingItems.isEmpty {
+            snapshot.deleteItems(existingItems)
+        }
+
+        if let statistics = statistics, !statistics.isEmpty {
+            // 통계 데이터가 있으면 표시
+            snapshot.appendItems([.readingStatistics(statistics)], toSection: .readingRecords)
+        } else {
+            // 통계 데이터가 없으면 추가 버튼 표시
+            snapshot.appendItems([.addReadingRecordButton], toSection: .readingRecords)
+        }
+
+        dataSource.apply(snapshot, animatingDifferences: true)
+    }
+
+    private func showReadingSessionList() {
+        guard let coordinator = coordinator as? BookDetailCoordinator else { return }
+        coordinator.showReadingSessionList()
+    }
+
+    private func handlePeriodChange(_ period: ReadingStatisticsPeriod) {
+        currentStatisticsPeriod = period
+
+        // readingRecords 섹션의 셀 찾기
+        let sectionIndex = Section.allCases.firstIndex(of: .readingRecords) ?? 0
+        let indexPath = IndexPath(item: 0, section: sectionIndex)
+
+        // 셀 업데이트
+        if let cell = collectionView.cellForItem(at: indexPath) as? ReadingStatisticsCell {
+            cell.updatePeriod(period)
+        }
     }
 }
 

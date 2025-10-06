@@ -60,8 +60,14 @@ final class ReadingRecordCoordinator: BaseCoordinator {
 
         bookRepository.getBook(by: dependencies.bookId)
             .take(1)
-            .subscribe(onNext: { [weak self] book in
-                guard let self = self, let book = book else { return }
+            .observe(on: MainScheduler.instance)
+            .subscribe(onNext: { [weak self] realmBook in
+                guard let self = self, let realmBook = realmBook else {
+                    print("❌ Failed to load book for timer")
+                    return
+                }
+
+                let book = realmBook.toBook()
 
                 let timerCoordinator = ReadingTimerCoordinator(
                     navigationController: self.navigationController,

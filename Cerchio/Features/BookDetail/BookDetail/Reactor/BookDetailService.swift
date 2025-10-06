@@ -145,4 +145,93 @@ final class BookDetailService {
             return Disposables.create()
         }
     }
+
+    // MARK: - Reading Statistics
+
+    func calculateReadingStatistics(for bookId: String) -> Observable<ReadingStatistics> {
+        return Observable.create { observer in
+            do {
+                let realm = try Realm()
+                let sessions = realm.objects(RealmReadingSession.self)
+                    .filter("bookId == %@ AND status == %@", bookId, ReadingSession.SessionStatus.completed.rawValue)
+                    .sorted(byKeyPath: "createdAt", ascending: false)
+
+                let now = Date()
+                let calendar = Calendar.current
+
+                // 오늘 시작 시간 (00:00:00)
+                let todayStart = calendar.startOfDay(for: now)
+
+                // 이번 주 시작 시간 (월요일 00:00:00)
+                let weekStart = calendar.dateComponents([.calendar, .yearForWeekOfYear, .weekOfYear], from: now).date!
+
+                // 이번 달 시작 시간 (1일 00:00:00)
+                let monthStart = calendar.date(from: calendar.dateComponents([.year, .month], from: now))!
+
+                var totalTime = 0
+                var todayTime = 0
+                var weekTime = 0
+                var monthTime = 0
+
+                var todayCount = 0
+                var weekCount = 0
+                var monthCount = 0
+
+                for session in sessions {
+                    totalTime += session.durationSeconds
+
+                    if session.createdAt >= todayStart {
+                        todayTime += session.durationSeconds
+                        todayCount += 1
+                    }
+
+                    if session.createdAt >= weekStart {
+                        weekTime += session.durationSeconds
+                        weekCount += 1
+                    }
+
+                    if session.createdAt >= monthStart {
+                        monthTime += session.durationSeconds
+                        monthCount += 1
+                    }
+                }
+
+                let statistics = ReadingStatistics(
+                    totalTime: totalTime,
+                    totalSessions: sessions.count,
+                    todayTime: todayTime,
+                    todaySessions: todayCount,
+                    weekTime: weekTime,
+                    weekSessions: weekCount,
+                    monthTime: monthTime,
+                    monthSessions: monthCount
+                )
+
+                observer.onNext(statistics)
+                observer.onCompleted()
+            } catch {
+                observer.onError(error)
+            }
+
+            return Disposables.create()
+        }
+    }
+
+    func loadReadingSessions(for bookId: String) -> Observable<[RealmReadingSession]> {
+        return Observable.create { observer in
+            do {
+                let realm = try Realm()
+                let sessions = realm.objects(RealmReadingSession.self)
+                    .filter("bookId == %@ AND status == %@", bookId, ReadingSession.SessionStatus.completed.rawValue)
+                    .sorted(byKeyPath: "createdAt", ascending: false)
+
+                observer.onNext(Array(sessions))
+                observer.onCompleted()
+            } catch {
+                observer.onError(error)
+            }
+
+            return Disposables.create()
+        }
+    }
 }

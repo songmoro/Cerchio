@@ -189,7 +189,8 @@ final class AppCoordinator: BaseCoordinator {
         // BookDetail ViewController 생성 (push 안 함)
         let bookDetailViewController = BookDetailViewController()
         let bookRepository = dependencies.serviceFactory.createBookRepository()
-        let bookDetailReactor = BookDetailReactor(book: book, bookRepository: bookRepository)
+        let service = BookDetailService(serviceFactory: dependencies.serviceFactory)
+        let bookDetailReactor = BookDetailReactor(book: book, bookRepository: bookRepository, service: service)
         bookDetailViewController.coordinator = bookDetailCoordinator
         bookDetailViewController.reactor = bookDetailReactor
         bookDetailViewController.setServiceFactory(dependencies.serviceFactory)

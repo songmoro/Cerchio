@@ -18,6 +18,7 @@ final class BookDetailReactor: Reactor {
         case addQuote(String)
         case deleteBook
         case updateBookAndReload(Book)
+        case loadReadingStatistics
     }
 
     enum Mutation {
@@ -28,6 +29,7 @@ final class BookDetailReactor: Reactor {
         case setReadingProgress(ReadingProgress)
         case updateBook(Book)
         case bookDeleted
+        case setReadingStatistics(ReadingStatistics)
     }
 
     struct State {
@@ -38,15 +40,18 @@ final class BookDetailReactor: Reactor {
         var isFavorite: Bool = false
         var readingProgress: ReadingProgress?
         var isDeleted: Bool = false
+        var readingStatistics: ReadingStatistics?
     }
 
     let initialState: State
     private let bookRepository: BookRepositoryProtocol
+    private let service: BookDetailService
 
     // MARK: - Initialization
-    init(book: Book, bookRepository: BookRepositoryProtocol) {
+    init(book: Book, bookRepository: BookRepositoryProtocol, service: BookDetailService) {
         self.initialState = State(book: book, isFavorite: book.isFavorite)
         self.bookRepository = bookRepository
+        self.service = service
     }
 
     // MARK: - Reactor Methods
@@ -202,6 +207,14 @@ final class BookDetailReactor: Reactor {
                 loadBookDetailDataWithBook(updatedBook),
                 Observable.just(.setLoading(false))
             ])
+
+        case .loadReadingStatistics:
+            return service.calculateReadingStatistics(for: currentState.book.id)
+                .map { Mutation.setReadingStatistics($0) }
+                .catch { error in
+                    print("❌ Failed to load reading statistics: \(error)")
+                    return Observable.empty()
+                }
         }
     }
 
@@ -231,6 +244,9 @@ final class BookDetailReactor: Reactor {
 
         case .bookDeleted:
             newState.isDeleted = true
+
+        case .setReadingStatistics(let statistics):
+            newState.readingStatistics = statistics
         }
 
         return newState
