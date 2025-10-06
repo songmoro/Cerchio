@@ -71,7 +71,8 @@ final class TimerRestoreUseCase {
         }
 
         // 3. 상태 복원
-        stateManager.setState(.paused)
+        let wasRunning = session.state == "running"
+        stateManager.setState(wasRunning ? .running : .paused)
         stateManager.setTargetEndTime(session.targetEndTime)
         stateManager.setPausedAt(session.pausedAt)
 

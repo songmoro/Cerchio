@@ -390,10 +390,10 @@ final class ReadingTimerReactor: Reactor {
                     self.action.onNext(.setElapsedSeconds(elapsed))
                     self.action.onNext(.setRemainingSeconds(result.remaining))
 
-                    // 자동 재개
+                    // 타이머 자동 재개
                     if result.shouldAutoResume {
                         print("[Reactor] ⏰ Auto-resuming timer")
-                        self.action.onNext(.resumeTimer)
+                        self.startTimerTick()
                     }
                 },
                 onError: { error in

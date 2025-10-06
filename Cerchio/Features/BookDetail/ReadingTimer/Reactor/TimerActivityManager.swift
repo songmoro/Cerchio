@@ -105,10 +105,29 @@ final class TimerActivityManager {
         print("  - targetEndTime: \(targetEndTime)")
         print("  - pausedAt: \(pausedAt?.description ?? "nil")")
 
+        // targetEndTime 기반에서 timerStartTime 기반으로 변환
+        let timerStartTime: Date?
+        let pausedElapsedSeconds: Int
+
+        if let pausedTime = pausedAt {
+            // 일시정지 상태
+            timerStartTime = nil
+            let remaining = max(0, Int(targetEndTime.timeIntervalSince(pausedTime)))
+            pausedElapsedSeconds = targetSeconds - remaining
+        } else {
+            // 실행 중
+            let remaining = max(0, Int(targetEndTime.timeIntervalSince(Date())))
+            pausedElapsedSeconds = targetSeconds - remaining
+
+            // timerStartTime = 현재 - 이미 경과한 시간
+            timerStartTime = Date().addingTimeInterval(-TimeInterval(pausedElapsedSeconds))
+        }
+
         return liveActivityManager.updateActivity(
-            targetEndTime: targetEndTime,
-            pausedAt: pausedAt,
-            targetSeconds: targetSeconds
+            timerStartTime: timerStartTime,
+            pausedElapsedSeconds: pausedElapsedSeconds,
+            targetSeconds: targetSeconds,
+            isPaused: isPaused
         )
         .catch { error -> Observable<Void> in
             print("[TimerActivity] ❌ Update failed: \(error)")
@@ -138,10 +157,28 @@ final class TimerActivityManager {
 
             print("[TimerActivity] ✅ Restarted - updating state...")
 
+            // targetEndTime 기반에서 timerStartTime 기반으로 변환
+            let timerStartTime: Date?
+            let pausedElapsedSeconds: Int
+            let isPaused = pausedAt != nil
+
+            if let pausedTime = pausedAt {
+                // 일시정지 상태
+                timerStartTime = nil
+                let remaining = max(0, Int(targetEndTime.timeIntervalSince(pausedTime)))
+                pausedElapsedSeconds = targetSeconds - remaining
+            } else {
+                // 실행 중
+                let remaining = max(0, Int(targetEndTime.timeIntervalSince(Date())))
+                pausedElapsedSeconds = targetSeconds - remaining
+                timerStartTime = Date().addingTimeInterval(-TimeInterval(pausedElapsedSeconds))
+            }
+
             return self.liveActivityManager.updateActivity(
-                targetEndTime: targetEndTime,
-                pausedAt: pausedAt,
-                targetSeconds: targetSeconds
+                timerStartTime: timerStartTime,
+                pausedElapsedSeconds: pausedElapsedSeconds,
+                targetSeconds: targetSeconds,
+                isPaused: isPaused
             )
         }
         .do(onNext: {
@@ -174,19 +211,52 @@ final class TimerActivityManager {
             .flatMap { [weak self] _ -> Observable<Void> in
                 guard let self = self else { return .empty() }
 
+                // targetEndTime 기반에서 timerStartTime 기반으로 변환
+                let timerStartTime: Date?
+                let pausedElapsedSeconds: Int
+                let isPaused = pausedAt != nil
+
+                if let pausedTime = pausedAt {
+                    timerStartTime = nil
+                    let remaining = max(0, Int(targetEndTime.timeIntervalSince(pausedTime)))
+                    pausedElapsedSeconds = targetSeconds - remaining
+                } else {
+                    let remaining = max(0, Int(targetEndTime.timeIntervalSince(Date())))
+                    pausedElapsedSeconds = targetSeconds - remaining
+                    timerStartTime = Date().addingTimeInterval(-TimeInterval(pausedElapsedSeconds))
+                }
+
                 return self.liveActivityManager.updateActivity(
-                    targetEndTime: targetEndTime,
-                    pausedAt: pausedAt,
-                    targetSeconds: targetSeconds
+                    timerStartTime: timerStartTime,
+                    pausedElapsedSeconds: pausedElapsedSeconds,
+                    targetSeconds: targetSeconds,
+                    isPaused: isPaused
                 )
             }
         }
 
         print("[TimerActivity] 🔄 Syncing existing activity")
+
+        // targetEndTime 기반에서 timerStartTime 기반으로 변환
+        let timerStartTime: Date?
+        let pausedElapsedSeconds: Int
+        let isPaused = pausedAt != nil
+
+        if let pausedTime = pausedAt {
+            timerStartTime = nil
+            let remaining = max(0, Int(targetEndTime.timeIntervalSince(pausedTime)))
+            pausedElapsedSeconds = targetSeconds - remaining
+        } else {
+            let remaining = max(0, Int(targetEndTime.timeIntervalSince(Date())))
+            pausedElapsedSeconds = targetSeconds - remaining
+            timerStartTime = Date().addingTimeInterval(-TimeInterval(pausedElapsedSeconds))
+        }
+
         return liveActivityManager.updateActivity(
-            targetEndTime: targetEndTime,
-            pausedAt: pausedAt,
-            targetSeconds: targetSeconds
+            timerStartTime: timerStartTime,
+            pausedElapsedSeconds: pausedElapsedSeconds,
+            targetSeconds: targetSeconds,
+            isPaused: isPaused
         )
         .do(onNext: { [weak self] in
             self?.isStarted = true

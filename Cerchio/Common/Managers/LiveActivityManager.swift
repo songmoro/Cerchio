@@ -78,9 +78,10 @@ final class LiveActivityManager {
 
                 let targetSeconds = targetMinutes * 60
                 let initialState = ReadingTimerAttributes.ContentState(
-                    targetEndTime: targetEndTime,
-                    pausedAt: nil,
+                    timerStartTime: Date(),
+                    pausedElapsedSeconds: 0,
                     targetSeconds: targetSeconds,
+                    isPaused: false,
                     isCompleted: false
                 )
 
@@ -127,9 +128,10 @@ final class LiveActivityManager {
     // MARK: - Update Activity
 
     func updateActivity(
-        targetEndTime: Date,
-        pausedAt: Date?,
-        targetSeconds: Int
+        timerStartTime: Date?,
+        pausedElapsedSeconds: Int,
+        targetSeconds: Int,
+        isPaused: Bool
     ) -> Observable<Void> {
         return Observable.create { [weak self] observer in
             guard let activity = self?.currentActivity else {
@@ -139,16 +141,19 @@ final class LiveActivityManager {
             }
 
             let newState = ReadingTimerAttributes.ContentState(
-                targetEndTime: targetEndTime,
-                pausedAt: pausedAt,
+                timerStartTime: timerStartTime,
+                pausedElapsedSeconds: pausedElapsedSeconds,
                 targetSeconds: targetSeconds,
+                isPaused: isPaused,
                 isCompleted: false
             )
 
+            let staleDate = timerStartTime?.addingTimeInterval(TimeInterval(targetSeconds - pausedElapsedSeconds))
+
             Task {
                 do {
-                    await activity.update(.init(state: newState, staleDate: targetEndTime))
-                    print("[LiveActivity] Updated: targetEndTime: \(targetEndTime), paused: \(pausedAt != nil)")
+                    await activity.update(.init(state: newState, staleDate: staleDate))
+                    print("[LiveActivity] Updated: timerStartTime: \(String(describing: timerStartTime)), paused: \(isPaused)")
                     observer.onNext(())
                     observer.onCompleted()
                 } catch {
@@ -176,9 +181,10 @@ final class LiveActivityManager {
                 do {
                     // 완료 상태로 업데이트
                     let completedState = ReadingTimerAttributes.ContentState(
-                        targetEndTime: activity.content.state.targetEndTime,
-                        pausedAt: nil,
+                        timerStartTime: nil,
+                        pausedElapsedSeconds: activity.content.state.targetSeconds,
                         targetSeconds: activity.content.state.targetSeconds,
+                        isPaused: false,
                         isCompleted: true
                     )
 
