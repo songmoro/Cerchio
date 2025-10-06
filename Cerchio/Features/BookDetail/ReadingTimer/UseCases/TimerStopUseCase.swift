@@ -90,16 +90,17 @@ final class TimerStopUseCase {
         sessionManager.clearActiveSession()
 
         // 5. 세션 완료 처리
-        let drawingData = generateDrawingData()
+        let elapsedSeconds = stateManager.currentElapsedSeconds
 
         return sessionRepository.completeSession(
             sessionId: session.id,
             endTime: Date(),
-            drawingData: drawingData
+            elapsedSeconds: elapsedSeconds,
+            drawingData: nil  // Drawing 기능 비활성화
         )
         .do(onNext: { [weak self] _ in
             self?.stateManager.setState(.completed)
-            print("[TimerStopUseCase] ✅ Session completed and saved")
+            print("[TimerStopUseCase] ✅ Session completed and saved (duration: \(elapsedSeconds)s)")
         }, onError: { error in
             print("[TimerStopUseCase] ❌ Failed to complete session: \(error)")
         })

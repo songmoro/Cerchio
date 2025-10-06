@@ -39,7 +39,7 @@ final class ReadingTimerService {
     private let bookId: String
     private let bookTitle: String
     private let targetMinutes: Int
-    private let sessionStartTime: Date
+    private var sessionStartTime: Date
 
     // MARK: - Initialization
 
@@ -136,6 +136,10 @@ final class ReadingTimerService {
             bookTitle: bookTitle,
             targetMinutes: targetMinutes
         )
+        .do(onNext: { [weak self] result in
+            // 실제로 타이머가 시작된 시점의 시간으로 업데이트
+            self?.sessionStartTime = result.startTime
+        })
     }
 
     /// 일시정지

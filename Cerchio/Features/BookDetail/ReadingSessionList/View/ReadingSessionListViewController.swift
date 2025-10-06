@@ -259,12 +259,17 @@ final class ReadingSessionCell: UITableViewCell {
         dateLabel.text = dateFormatter.string(from: session.createdAt)
 
         // Duration formatting
-        let minutes = session.durationSeconds / 60
-        let seconds = session.durationSeconds % 60
-        if minutes > 0 {
-            durationLabel.text = String(format: "%d분 %d초", minutes, seconds)
+        
+        if session.durationSeconds >= session.targetMinutes {
+            durationLabel.text = String(format: "%d분", session.targetMinutes)
         } else {
-            durationLabel.text = String(format: "%d초", seconds)
+            let minutes = session.durationSeconds / 60
+            let seconds = session.durationSeconds % 60
+            if minutes > 0 {
+                durationLabel.text = String(format: "%d분 %d초", minutes, seconds)
+            } else {
+                durationLabel.text = String(format: "%d초", seconds)
+            }
         }
 
         // Target formatting

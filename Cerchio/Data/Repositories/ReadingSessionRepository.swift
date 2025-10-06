@@ -17,7 +17,7 @@ protocol ReadingSessionRepositoryProtocol {
     func saveSession(_ session: RealmReadingSession) -> Observable<RealmReadingSession>
     func updateSession(_ session: RealmReadingSession) -> Observable<RealmReadingSession>
     func deleteSession(_ session: RealmReadingSession) -> Observable<Void>
-    func completeSession(sessionId: String, endTime: Date, drawingData: DrawingData?) -> Observable<RealmReadingSession>
+    func completeSession(sessionId: String, endTime: Date, elapsedSeconds: Int, drawingData: DrawingData?) -> Observable<RealmReadingSession>
 }
 
 final class ReadingSessionRepository: BaseRepository<RealmReadingSession>, ReadingSessionRepositoryProtocol {
@@ -63,7 +63,7 @@ final class ReadingSessionRepository: BaseRepository<RealmReadingSession>, Readi
         return delete(session)
     }
 
-    func completeSession(sessionId: String, endTime: Date, drawingData: DrawingData?) -> Observable<RealmReadingSession> {
+    func completeSession(sessionId: String, endTime: Date, elapsedSeconds: Int, drawingData: DrawingData?) -> Observable<RealmReadingSession> {
         return performWriteTransaction {
             guard let session = self.realm.object(ofType: RealmReadingSession.self, forPrimaryKey: sessionId) else {
                 throw RepositoryError.objectNotFound
@@ -71,9 +71,7 @@ final class ReadingSessionRepository: BaseRepository<RealmReadingSession>, Readi
 
             session.endTime = endTime
             session.status = ReadingSession.SessionStatus.completed.rawValue
-
-            let durationSeconds = Int(endTime.timeIntervalSince(session.startTime))
-            session.durationSeconds = durationSeconds
+            session.durationSeconds = elapsedSeconds
 
             if let drawing = drawingData {
                 session.drawingGeneratorType = drawing.generatorType
