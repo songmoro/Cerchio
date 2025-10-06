@@ -392,7 +392,9 @@ final class ReadingTimerReactor: Reactor {
 
                     // 타이머 자동 재개
                     if result.shouldAutoResume {
-                        print("[Reactor] ⏰ Auto-resuming timer")
+                        print("[Reactor] ⏰ Auto-resuming timer after restore")
+                        // 복원 시에는 이미 상태가 running으로 설정되어 있으므로
+                        // 타이머 틱만 시작하면 됨
                         self.startTimerTick()
                     }
                 },

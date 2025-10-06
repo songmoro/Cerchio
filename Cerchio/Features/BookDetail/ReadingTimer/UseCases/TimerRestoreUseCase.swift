@@ -53,6 +53,7 @@ final class TimerRestoreUseCase {
         print("  - sessionId: \(session.sessionId)")
         print("  - targetEndTime: \(session.targetEndTime)")
         print("  - pausedAt: \(String(describing: session.pausedAt))")
+        print("  - session.state: \(session.state)")
 
         // 1. 시간 계산
         let calc = lifecycleManager.calculateForegroundTime(
@@ -72,6 +73,7 @@ final class TimerRestoreUseCase {
 
         // 3. 상태 복원
         let wasRunning = session.state == "running"
+        print("[TimerRestoreUseCase] Was running? \(wasRunning)")
         stateManager.setState(wasRunning ? .running : .paused)
         stateManager.setTargetEndTime(session.targetEndTime)
         stateManager.setPausedAt(session.pausedAt)

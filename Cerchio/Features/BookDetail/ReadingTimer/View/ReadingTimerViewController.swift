@@ -366,9 +366,15 @@ final class ReadingTimerViewController: BaseViewController<ReadingTimerReactor> 
             alert.addAction(UIAlertAction(title: "종료", style: .destructive) { [weak self] _ in
                 // 세션 정리하고 뒤로가기
                 TimerSessionManager.shared.clearActiveSession()
+
+                // 알림 취소
+                UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: ["timer_complete"])
+
+                // 라이브 액티비티 종료
                 if #available(iOS 16.2, *) {
-                    _ = LiveActivityManager.shared.endActivity()
+                    _ = LiveActivityManager.shared.endActivity().subscribe()
                 }
+
                 self?.navigationController?.popViewController(animated: true)
             })
 
@@ -525,6 +531,15 @@ final class ReadingTimerViewController: BaseViewController<ReadingTimerReactor> 
         alert.addAction(UIAlertAction(title: "기록 없이 종료", style: .destructive) { [weak self] _ in
             // 세션 정리하고 종료
             TimerSessionManager.shared.clearActiveSession()
+
+            // 알림 취소
+            UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: ["timer_complete"])
+
+            // 라이브 액티비티 종료
+            if #available(iOS 16.2, *) {
+                _ = LiveActivityManager.shared.endActivity().subscribe()
+            }
+
             self?.navigationController?.popViewController(animated: true)
         })
 

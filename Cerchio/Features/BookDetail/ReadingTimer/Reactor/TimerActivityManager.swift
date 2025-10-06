@@ -237,6 +237,9 @@ final class TimerActivityManager {
 
         print("[TimerActivity] 🔄 Syncing existing activity")
 
+        // 기존 액티비티가 있으므로 시작 상태로 설정
+        isStarted = true
+
         // targetEndTime 기반에서 timerStartTime 기반으로 변환
         let timerStartTime: Date?
         let pausedElapsedSeconds: Int
