@@ -93,7 +93,7 @@ final class AppCoordinator: BaseCoordinator {
         print("[AppCoordinator] 🔄 Restoring session - \(reason)")
         print("[AppCoordinator]   - sessionId: \(session.sessionId)")
         print("[AppCoordinator]   - bookTitle: \(session.bookTitle)")
-        print("[AppCoordinator]   - elapsedSeconds: \(session.elapsedSeconds)")
+        print("[AppCoordinator]   - targetEndTime: \(session.targetEndTime)")
 
         let bookRepository = dependencies.serviceFactory.createBookRepository()
         _ = bookRepository.getBook(by: session.bookId)
@@ -114,20 +114,20 @@ final class AppCoordinator: BaseCoordinator {
     }
 
     private func showSessionRecoveryDialog(_ session: TimerSessionManager.ActiveSession) {
-        // 실제 경과 시간 계산 (상태에 따라 다름)
-        let displayedElapsedSeconds: Int
+        // 경과 시간 계산 (종료 시간 기준)
+        let targetSeconds = session.targetMinutes * 60
+        let remaining: Int
 
-        if session.state == "running" {
-            // 실행 중이었다면: 실시간 계산 (절대 기준 시간)
-            let actualElapsed = Date().timeIntervalSince(session.startTime) - TimeInterval(session.pausedDuration)
-            let targetSeconds = session.targetMinutes * 60
-            displayedElapsedSeconds = min(Int(floor(actualElapsed)), targetSeconds)
-            print("[AppCoordinator] Running session - calculating real-time: \(displayedElapsedSeconds)s")
+        if let pausedAt = session.pausedAt {
+            // 일시정지 상태: 일시정지 시점의 남은 시간
+            remaining = max(0, Int(session.targetEndTime.timeIntervalSince(pausedAt)))
         } else {
-            // 일시정지였다면: 저장된 시간 사용
-            displayedElapsedSeconds = session.elapsedSeconds
-            print("[AppCoordinator] Paused session - using saved time: \(displayedElapsedSeconds)s")
+            // 실행 중: 현재 남은 시간
+            remaining = max(0, Int(session.targetEndTime.timeIntervalSince(Date())))
         }
+
+        let displayedElapsedSeconds = targetSeconds - remaining
+        print("[AppCoordinator] Session elapsed: \(displayedElapsedSeconds)s")
 
         let minutes = displayedElapsedSeconds / 60
         let seconds = displayedElapsedSeconds % 60

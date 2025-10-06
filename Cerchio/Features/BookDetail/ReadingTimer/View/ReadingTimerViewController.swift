@@ -19,10 +19,15 @@ final class ReadingTimerViewController: BaseViewController<ReadingTimerReactor> 
     private let progressView = UIProgressView(progressViewStyle: .bar)
     private let startButton = UIButton(type: .system)
     private let pauseButton = UIButton(type: .system)
+    private let actionStackView = UIStackView()
+    private let photoButton = UIButton(type: .system)
+    private let quoteButton = UIButton(type: .system)
 
     // MARK: - Properties
     private let completionRelay = PublishRelay<Void>()
     private let backButtonTapRelay = PublishRelay<Void>()
+    var onPhotoTapped: (() -> Void)?
+    var onQuoteTapped: (() -> Void)?
 
     // MARK: - Lifecycle
     override func setupUI() {
@@ -47,6 +52,7 @@ final class ReadingTimerViewController: BaseViewController<ReadingTimerReactor> 
         setupTimeLabels()
         setupProgressView()
         setupButtons()
+        setupActionButtons()
         setupLayout()
     }
 
@@ -93,6 +99,45 @@ final class ReadingTimerViewController: BaseViewController<ReadingTimerReactor> 
         view.addSubview(pauseButton)
     }
 
+    private func setupActionButtons() {
+        actionStackView.axis = .horizontal
+        actionStackView.spacing = 16
+        actionStackView.distribution = .fillEqually
+
+        // 사진 버튼
+        var photoConfig = UIButton.Configuration.plain()
+        photoConfig.image = UIImage(systemName: "camera.fill")
+        photoConfig.imagePlacement = .top
+        photoConfig.imagePadding = 8
+        photoConfig.title = "사진 찍기"
+        photoConfig.baseForegroundColor = .forestGreen
+        photoButton.configuration = photoConfig
+        photoButton.addTarget(self, action: #selector(photoButtonTapped), for: .touchUpInside)
+
+        // 문장 버튼
+        var quoteConfig = UIButton.Configuration.plain()
+        quoteConfig.image = UIImage(systemName: "quote.bubble.fill")
+        quoteConfig.imagePlacement = .top
+        quoteConfig.imagePadding = 8
+        quoteConfig.title = "문장 저장"
+        quoteConfig.baseForegroundColor = .forestGreen
+        quoteButton.configuration = quoteConfig
+        quoteButton.addTarget(self, action: #selector(quoteButtonTapped), for: .touchUpInside)
+
+        actionStackView.addArrangedSubview(photoButton)
+        actionStackView.addArrangedSubview(quoteButton)
+
+        view.addSubview(actionStackView)
+    }
+
+    @objc private func photoButtonTapped() {
+        onPhotoTapped?()
+    }
+
+    @objc private func quoteButtonTapped() {
+        onQuoteTapped?()
+    }
+
     private func setupLayout() {
         elapsedTimeLabel.snp.makeConstraints {
             $0.centerX.equalToSuperview()
@@ -108,6 +153,13 @@ final class ReadingTimerViewController: BaseViewController<ReadingTimerReactor> 
             $0.top.equalTo(remainingTimeLabel.snp.bottom).offset(32)
             $0.leading.trailing.equalToSuperview().inset(40)
             $0.height.equalTo(8)
+        }
+
+        actionStackView.snp.makeConstraints {
+            $0.centerX.equalToSuperview()
+            $0.bottom.equalTo(startButton.snp.top).offset(-20)
+            $0.width.equalTo(280)
+            $0.height.equalTo(80)
         }
 
         startButton.snp.makeConstraints {
@@ -235,7 +287,7 @@ final class ReadingTimerViewController: BaseViewController<ReadingTimerReactor> 
 
     // MARK: - Private Methods
 
-    private func updateButtonStates(for state: ReadingTimerReactor.TimerState) {
+    private func updateButtonStates(for state: TimerStateManager.TimerState) {
         switch state {
         case .idle:
             startButton.isHidden = false
@@ -423,8 +475,19 @@ final class ReadingTimerViewController: BaseViewController<ReadingTimerReactor> 
     }
 
     private func showDuplicateSessionAlert(_ sessionInfo: TimerSessionManager.ActiveSession) {
-        let minutes = sessionInfo.elapsedSeconds / 60
-        let seconds = sessionInfo.elapsedSeconds % 60
+        // 경과 시간 계산
+        let targetSeconds = sessionInfo.targetMinutes * 60
+        let remaining: Int
+
+        if let pausedAt = sessionInfo.pausedAt {
+            remaining = max(0, Int(sessionInfo.targetEndTime.timeIntervalSince(pausedAt)))
+        } else {
+            remaining = max(0, Int(sessionInfo.targetEndTime.timeIntervalSince(Date())))
+        }
+
+        let elapsedSeconds = targetSeconds - remaining
+        let minutes = elapsedSeconds / 60
+        let seconds = elapsedSeconds % 60
         let timeString = String(format: "%02d:%02d", minutes, seconds)
 
         let alert = UIAlertController(

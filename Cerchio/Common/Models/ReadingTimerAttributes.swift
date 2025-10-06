@@ -10,10 +10,9 @@ import ActivityKit
 
 struct ReadingTimerAttributes: ActivityAttributes {
     public struct ContentState: Codable, Hashable {
-        var timerStartTime: Date?  // 타이머가 실행 중일 때의 기준 시간
-        var pausedElapsedSeconds: Int  // 일시정지 시 경과 시간
+        var targetEndTime: Date  // 타이머 종료 시간
+        var pausedAt: Date?  // 일시정지 시간 (nil이면 실행 중)
         var targetSeconds: Int
-        var isPaused: Bool
         var isCompleted: Bool
 
         // 현재 경과 시간 계산 (위젯에서 실시간으로 계산)
@@ -22,21 +21,33 @@ struct ReadingTimerAttributes: ActivityAttributes {
                 return targetSeconds
             }
 
-            if isPaused {
-                return pausedElapsedSeconds
+            if let pausedTime = pausedAt {
+                // 일시정지 상태: 일시정지 시점의 경과 시간
+                let remaining = max(0, targetEndTime.timeIntervalSince(pausedTime))
+                return targetSeconds - Int(remaining)
             }
 
-            guard let startTime = timerStartTime else {
-                return pausedElapsedSeconds
-            }
-
-            let elapsed = Int(Date().timeIntervalSince(startTime))
-            let total = pausedElapsedSeconds + elapsed
-            return min(total, targetSeconds)
+            // 실행 중: 현재 경과 시간
+            let remaining = max(0, targetEndTime.timeIntervalSince(Date()))
+            return min(targetSeconds - Int(remaining), targetSeconds)
         }
 
         var currentRemainingSeconds: Int {
-            return max(0, targetSeconds - currentElapsedSeconds)
+            if isCompleted {
+                return 0
+            }
+
+            if let pausedTime = pausedAt {
+                // 일시정지 상태: 일시정지 시점의 남은 시간
+                return max(0, Int(targetEndTime.timeIntervalSince(pausedTime)))
+            }
+
+            // 실행 중: 현재 남은 시간
+            return max(0, Int(targetEndTime.timeIntervalSince(Date())))
+        }
+
+        var isPaused: Bool {
+            pausedAt != nil && !isCompleted
         }
 
         var elapsedTimeString: String {

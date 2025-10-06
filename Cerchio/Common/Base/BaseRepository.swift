@@ -68,7 +68,7 @@ class BaseRepository<T: Object>: BaseRepositoryType {
 
     func save(_ model: T) -> Observable<T> {
         return performWriteTransaction {
-            self.realm.add(model)
+            self.realm.add(model, update: .modified)
             return model
         }
     }

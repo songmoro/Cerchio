@@ -57,7 +57,8 @@ final class LiveActivityManager {
     func startActivity(
         bookTitle: String,
         targetMinutes: Int,
-        sessionStartTime: Date
+        sessionStartTime: Date,
+        targetEndTime: Date
     ) -> Observable<Void> {
         return Observable.create { [weak self] observer in
             let authInfo = ActivityAuthorizationInfo()
@@ -77,26 +78,21 @@ final class LiveActivityManager {
 
                 let targetSeconds = targetMinutes * 60
                 let initialState = ReadingTimerAttributes.ContentState(
-                    timerStartTime: sessionStartTime,
-                    pausedElapsedSeconds: 0,
+                    targetEndTime: targetEndTime,
+                    pausedAt: nil,
                     targetSeconds: targetSeconds,
-                    isPaused: false,
                     isCompleted: false
                 )
 
                 print("[LiveActivity] 🚀 Requesting activity:")
                 print("  - bookTitle: \(bookTitle)")
                 print("  - targetMinutes: \(targetMinutes) (\(targetSeconds)s)")
-                print("  - sessionStartTime: \(sessionStartTime)")
-
-                // staleDate를 설정하여 시스템이 더 자주 업데이트하도록 힌트 제공
-                let staleDate = Calendar.current.date(byAdding: .second, value: targetSeconds, to: sessionStartTime)
-                print("  - staleDate: \(staleDate?.description ?? "nil")")
+                print("  - targetEndTime: \(targetEndTime)")
 
                 // 타이머 종료 시간에 자동으로 닫히도록 설정
                 let content = ActivityContent(
                     state: initialState,
-                    staleDate: staleDate,
+                    staleDate: targetEndTime,
                     relevanceScore: 1.0
                 )
 
@@ -131,11 +127,9 @@ final class LiveActivityManager {
     // MARK: - Update Activity
 
     func updateActivity(
-        elapsedSeconds: Int,
-        isPaused: Bool,
-        targetSeconds: Int,
-        sessionStartTime: Date? = nil,
-        pausedDuration: Int = 0
+        targetEndTime: Date,
+        pausedAt: Date?,
+        targetSeconds: Int
     ) -> Observable<Void> {
         return Observable.create { [weak self] observer in
             guard let activity = self?.currentActivity else {
@@ -144,34 +138,17 @@ final class LiveActivityManager {
                 return Disposables.create()
             }
 
-            // timerStartTime 계산
-            let timerStartTime: Date?
-            if isPaused {
-                timerStartTime = nil
-            } else if let sessionStart = sessionStartTime {
-                // 절대 기준 시간 사용: sessionStartTime + pausedDuration
-                timerStartTime = sessionStart.addingTimeInterval(TimeInterval(pausedDuration))
-            } else {
-                // fallback: 이전 방식 (하위 호환성)
-                timerStartTime = Date().addingTimeInterval(-TimeInterval(elapsedSeconds))
-            }
-
             let newState = ReadingTimerAttributes.ContentState(
-                timerStartTime: timerStartTime,
-                pausedElapsedSeconds: elapsedSeconds,
+                targetEndTime: targetEndTime,
+                pausedAt: pausedAt,
                 targetSeconds: targetSeconds,
-                isPaused: isPaused,
                 isCompleted: false
             )
 
             Task {
                 do {
-                    // staleDate 설정 - 타이머 종료 시간
-                    let remainingSeconds = targetSeconds - elapsedSeconds
-                    let staleDate = Calendar.current.date(byAdding: .second, value: remainingSeconds, to: Date())
-
-                    await activity.update(.init(state: newState, staleDate: staleDate))
-                    print("[LiveActivity] Updated: \(elapsedSeconds)s elapsed, paused: \(isPaused)")
+                    await activity.update(.init(state: newState, staleDate: targetEndTime))
+                    print("[LiveActivity] Updated: targetEndTime: \(targetEndTime), paused: \(pausedAt != nil)")
                     observer.onNext(())
                     observer.onCompleted()
                 } catch {
@@ -199,11 +176,10 @@ final class LiveActivityManager {
                 do {
                     // 완료 상태로 업데이트
                     let completedState = ReadingTimerAttributes.ContentState(
-                        timerStartTime: nil,
-                        pausedElapsedSeconds: activity.content.state.pausedElapsedSeconds,
+                        targetEndTime: activity.content.state.targetEndTime,
+                        pausedAt: nil,
                         targetSeconds: activity.content.state.targetSeconds,
-                        isPaused: false,
-                        isCompleted: true  // 완료 상태로 설정
+                        isCompleted: true
                     )
 
                     await activity.end(

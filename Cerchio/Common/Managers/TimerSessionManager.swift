@@ -32,12 +32,14 @@ final class TimerSessionManager {
         let bookTitle: String
         let targetMinutes: Int
         let startTime: Date
-        let elapsedSeconds: Int
-        let pausedDuration: Int  // 총 일시정지 시간 (초)
-        let pauseStartTime: Date?  // 일시정지 시작 시간
-        let state: String  // "running", "paused"
+        let targetEndTime: Date  // 타이머 종료 시간
+        let pausedAt: Date?  // 일시정지 시간 (nil이면 실행 중)
         let lastUpdateTime: Date
         let activityId: String?  // 라이브 액티비티 ID
+
+        var state: String {
+            pausedAt != nil ? "paused" : "running"
+        }
     }
 
     func saveActiveSession(
@@ -46,10 +48,8 @@ final class TimerSessionManager {
         bookTitle: String,
         targetMinutes: Int,
         startTime: Date,
-        elapsedSeconds: Int = 0,
-        pausedDuration: Int = 0,
-        pauseStartTime: Date? = nil,
-        state: String = "running",
+        targetEndTime: Date,
+        pausedAt: Date? = nil,
         activityId: String? = nil
     ) {
         let session = ActiveSession(
@@ -58,10 +58,8 @@ final class TimerSessionManager {
             bookTitle: bookTitle,
             targetMinutes: targetMinutes,
             startTime: startTime,
-            elapsedSeconds: elapsedSeconds,
-            pausedDuration: pausedDuration,
-            pauseStartTime: pauseStartTime,
-            state: state,
+            targetEndTime: targetEndTime,
+            pausedAt: pausedAt,
             lastUpdateTime: Date(),
             activityId: activityId
         )
@@ -72,9 +70,9 @@ final class TimerSessionManager {
             print("[TimerSession] 💾 Saved active session:")
             print("[TimerSession]   - sessionId: \(sessionId)")
             print("[TimerSession]   - bookTitle: \(bookTitle)")
-            print("[TimerSession]   - state: \(state)")
-            print("[TimerSession]   - elapsedSeconds: \(elapsedSeconds)")
-            print("[TimerSession]   - pausedDuration: \(pausedDuration)")
+            print("[TimerSession]   - state: \(session.state)")
+            print("[TimerSession]   - targetEndTime: \(targetEndTime)")
+            print("[TimerSession]   - pausedAt: \(pausedAt?.description ?? "nil")")
         } else {
             print("[TimerSession] ❌ Failed to encode session")
         }
@@ -97,36 +95,14 @@ final class TimerSessionManager {
         print("[TimerSession]   - sessionId: \(session.sessionId)")
         print("[TimerSession]   - bookId: \(session.bookId)")
         print("[TimerSession]   - bookTitle: \(session.bookTitle)")
-        print("[TimerSession]   - elapsedSeconds: \(session.elapsedSeconds)")
+        print("[TimerSession]   - targetEndTime: \(session.targetEndTime)")
+        print("[TimerSession]   - pausedAt: \(session.pausedAt?.description ?? "nil")")
         return session
     }
 
     func clearActiveSession() {
         userDefaults.removeObject(forKey: sessionKey)
         print("[TimerSession] 🗑️ Cleared active session")
-    }
-
-    func updateElapsedTime(elapsedSeconds: Int) {
-        guard let session = getActiveSession() else { return }
-
-        let updatedSession = ActiveSession(
-            sessionId: session.sessionId,
-            bookId: session.bookId,
-            bookTitle: session.bookTitle,
-            targetMinutes: session.targetMinutes,
-            startTime: session.startTime,
-            elapsedSeconds: elapsedSeconds,
-            pausedDuration: session.pausedDuration,
-            pauseStartTime: session.pauseStartTime,
-            state: session.state,
-            lastUpdateTime: Date(),
-            activityId: session.activityId
-        )
-
-        if let encoded = try? JSONEncoder().encode(updatedSession) {
-            userDefaults.set(encoded, forKey: sessionKey)
-            userDefaults.synchronize()
-        }
     }
 
     func hasActiveSession() -> Bool {

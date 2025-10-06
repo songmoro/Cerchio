@@ -316,55 +316,91 @@ reactor.state
       .disposed(by: disposeBag)
   ```
 
-### Reactor Service Layer Pattern
+### UseCase-Driven Architecture
 
-**Separate business logic from Reactor**:
-- Create dedicated Service classes in the Feature/Reactor folder
-- Keep Reactors focused on state management only
-- Services handle complex Observable operations
+**Business logic organized by use cases**:
+- Each user scenario becomes a dedicated UseCase class
+- UseCases encapsulate a single business flow from start to finish
+- Services coordinate multiple UseCases
+- Reactors only manage UI state
+
+**Architecture Layers**:
+```
+Reactor (UI State Management)
+    ↓
+Service (UseCase Coordination)
+    ↓
+UseCases (Business Flows)
+    ↓
+Managers (Feature Components)
+```
 
 **File Structure**:
 ```
 Features/
-  BookDetail/
+  ReadingTimer/
     Reactor/
-      BookDetailReactor.swift       // State management only
-      BookDetailService.swift        // Business logic & data operations
+      ReadingTimerReactor.swift      // UI state only
+      ReadingTimerService.swift      // Coordinates UseCases
+      TimerStateManager.swift        // State management
+      TimerNotificationManager.swift // Notification logic
+    UseCases/
+      TimerStartUseCase.swift        // Start timer flow
+      TimerPauseUseCase.swift        // Pause flow
+      TimerResumeUseCase.swift       // Resume flow
+      TimerStopUseCase.swift         // Stop & save flow
 ```
 
-**Service Implementation**:
+**UseCase Implementation**:
 ```swift
-// BookDetailService.swift
-final class BookDetailService {
-    private let serviceFactory: ServiceFactory
+/// UseCase: Timer start flow
+/// 1. Check duplicate session
+/// 2. Validate permissions
+/// 3. Start timer
+/// 4. Schedule notification
+/// 5. Start Live Activity
+/// 6. Save session
+final class TimerStartUseCase {
+    private let validationService: TimerValidationService
+    private let notificationManager: TimerNotificationManager
+    private let activityManager: TimerActivityManager
 
-    init(serviceFactory: ServiceFactory) {
-        self.serviceFactory = serviceFactory
-    }
-
-    func loadPhotos(bookId: String) -> Observable<[Photo]> {
-        return Observable.create { observer in
-            // Realm operations here
-            observer.onNext(photos)
-            observer.onCompleted()
-            return Disposables.create()
-        }
+    func execute(sessionId: String, bookId: String) -> Observable<StartResult> {
+        // Complete flow implementation
+        return validationService.validatePermissions()
+            .flatMap { /* ... */ }
     }
 }
 
-// BookDetailReactor.swift
-final class BookDetailReactor: Reactor {
-    private let service: BookDetailService
+// Service coordinates UseCases
+final class ReadingTimerService {
+    private let startUseCase: TimerStartUseCase
+    private let pauseUseCase: TimerPauseUseCase
+
+    func start() -> Observable<StartResult> {
+        return startUseCase.execute(sessionId: sessionId, bookId: bookId)
+    }
+}
+
+// Reactor uses Service
+final class ReadingTimerReactor: Reactor {
+    private let service: ReadingTimerService
 
     func mutate(action: Action) -> Observable<Mutation> {
         switch action {
-        case .loadPhotos:
-            return service.loadPhotos(bookId: currentState.bookId)
-                .map { .setPhotos($0) }
+        case .requestTimerStart:
+            return service.start()
+                .map { result in .setTimerState(.running) }
         }
     }
 }
 ```
+
+**UseCase Benefits**:
+- **Clear Flow**: Each scenario has its own class with documented steps
+- **Easy Testing**: Mock dependencies and test flow independently
+- **Maintainability**: Modify specific scenario without affecting others
+- **Readability**: Code reads like business requirements
 
 ### Repository Implementation
 - Inherit from `BaseRepository<RealmObjectType>`
@@ -430,13 +466,28 @@ Task {
 }
 ```
 
-**Realm Operations**:
-- **Always on main thread**: Realm objects are thread-confined
+**Realm Operations - CRITICAL RULES**:
+- **⚠️ ALWAYS on main thread**: Realm objects are thread-confined and will CRASH if accessed from background threads
+- **⚠️ Use `.observe(on: MainScheduler.instance)`**: All Realm Observable operations MUST observe on main thread
 - Extract data (like image paths) before async operations
 - Never access Realm objects inside Task/DispatchQueue closures
 
 ```swift
-// Correct pattern
+// ✅ CORRECT: Main thread guarantee
+sessionRepository.getSessionById(id)
+    .observe(on: MainScheduler.instance)  // REQUIRED for Realm
+    .subscribe(onNext: { realmSession in
+        // Safe to access Realm object here
+    })
+    .disposed(by: disposeBag)
+
+// ❌ WRONG: Will crash on background thread
+sessionRepository.getSessionById(id)
+    .subscribe(onNext: { realmSession in
+        // CRASH: Realm accessed from wrong thread
+    })
+
+// ✅ CORRECT: Extract data first for async operations
 let realm = try Realm()
 let photos = realm.objects(RealmPhoto.self)
 let imagePaths = photos.map { $0.localImagePath } // Extract on main thread
@@ -536,3 +587,49 @@ xcodebuild -scheme Cerchio -sdk iphonesimulator -destination 'generic/platform=i
 - Repository tests use in-memory Realm instances
 - Coordinator tests verify navigation flows
 - Reactor tests validate state transformations
+
+## AI Development Guidelines
+
+### Code Implementation Policy
+
+**IMPORTANT: Only implement what is explicitly requested**
+- ❌ **DO NOT** add features, utilities, or "nice-to-have" code that wasn't requested
+- ❌ **DO NOT** create helper functions or abstractions proactively
+- ❌ **DO NOT** add error handling, logging, or validation beyond what's asked
+- ✅ **DO** implement exactly what the user requested, nothing more
+- ✅ **DO** ask the user if you think additional functionality is needed
+- ✅ **DO** suggest improvements, but wait for approval before implementing
+
+**Example**:
+```
+❌ User asks: "Add a save button"
+   You implement: Save button + validation + error handling + success toast + analytics
+
+✅ User asks: "Add a save button"
+   You implement: Just the save button
+   You ask: "Should I add validation and error handling for the save action?"
+```
+
+### When to Ask Before Coding
+
+**Always ask the user first if you want to**:
+- Add error handling not explicitly requested
+- Create utility functions or helpers
+- Add logging or debugging code
+- Implement validation logic
+- Add animations or UI polish
+- Create abstractions or protocols
+- Add tests or documentation
+- Refactor existing code
+
+**Example Conversation**:
+```
+User: "The timer needs to save the session"
+You: "I can implement the session save. Should I also add:
+- Error handling for save failures?
+- Validation to check minimum session duration?
+- User notification on save success?"
+
+User: "Yes, add error handling and validation"
+You: [Now implements those specific items]
+```
