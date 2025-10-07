@@ -32,8 +32,8 @@ struct ReadingTimerLiveActivity: Widget {
                             .font(.body)
                             .foregroundColor(Color("BookBackground"))
                             .lineLimit(1)
-//                        ProgressView(value: context.state.progress)
-//                            .tint(Color("BookBackground"))
+                        //                        ProgressView(value: context.state.progress)
+                        //                            .tint(Color("BookBackground"))
                     }
                 }
             } compactLeading: {
@@ -58,7 +58,7 @@ struct DynamicIslandTimerView: View {
     let showLabel: Bool
     let alignment: HorizontalAlignment
     var useBookBackground: Bool = false
-
+    
     var body: some View {
         VStack(alignment: alignment, spacing: 4) {
             if showLabel && !isCompleted {
@@ -66,7 +66,7 @@ struct DynamicIslandTimerView: View {
                     .font(.caption2)
                     .foregroundColor(useBookBackground ? Color("BookBackground") : Color("ForestGreen"))
             }
-
+            
             if isCompleted {
                 // 완료
                 Text("완료")
@@ -106,7 +106,7 @@ struct DynamicIslandTimerView: View {
 struct DynamicIslandRemainingView: View {
     let context: ActivityViewContext<ReadingTimerAttributes>
     var useBookBackground: Bool = false
-
+    
     var body: some View {
         VStack(alignment: .trailing, spacing: 4) {
             if !isCompleted {
@@ -114,7 +114,7 @@ struct DynamicIslandRemainingView: View {
                     .font(.caption2)
                     .foregroundColor(useBookBackground ? Color("BookBackground") : Color("ForestGreen"))
             }
-
+            
             if isCompleted {
                 // 완료
                 Text("🎉")
@@ -164,7 +164,7 @@ struct ReadingTimerLockScreenView: View {
                     .lineLimit(1)
                 Spacer()
             }
-
+            
             if isCompleted {
                 // 완료 상태
                 HStack {
@@ -186,7 +186,7 @@ struct ReadingTimerLockScreenView: View {
                         Text("경과 시간")
                             .font(.caption)
                             .foregroundColor(Color("ForestGreen"))
-
+                        
                         if let timerStart = context.state.timerStartTime, !context.state.isPaused {
                             Text(timerStart, style: .timer)
                                 .font(.title2)
@@ -201,14 +201,14 @@ struct ReadingTimerLockScreenView: View {
                                 .monospacedDigit()
                         }
                     }
-
+                    
                     Spacer()
-
+                    
                     VStack(alignment: .trailing, spacing: 4) {
                         Text("남은 시간")
                             .font(.caption)
                             .foregroundColor(Color("ForestGreen"))
-
+                        
                         if let timerStart = context.state.timerStartTime, !context.state.isPaused {
                             let endDate = timerStart.addingTimeInterval(TimeInterval(context.state.targetSeconds - context.state.pausedElapsedSeconds))
                             Text(endDate, style: .timer)
@@ -226,7 +226,7 @@ struct ReadingTimerLockScreenView: View {
                     }
                 }
             }
-
+            
             ProgressView(value: context.state.progress)
                 .tint(Color("ForestGreen"))
         }
@@ -265,7 +265,7 @@ extension ReadingTimerAttributes.ContentState {
     
     fileprivate static var almostComplete: ReadingTimerAttributes.ContentState {
         ReadingTimerAttributes.ContentState(
-            timerStartTime: Date().addingTimeInterval(-1440),
+            timerStartTime: Date(), //.addingTimeInterval(-1440),
             pausedElapsedSeconds: 0,
             targetSeconds: 1500,
             isPaused: false,

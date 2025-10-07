@@ -52,6 +52,18 @@ final class LiveActivityManager {
         return Activity<ReadingTimerAttributes>.activities
     }
 
+    /// 앱 재시작 후 기존 액티비티 복원
+    func restoreActivity(_ activity: Activity<ReadingTimerAttributes>) {
+        print("[LiveActivity] 🔄 Restoring existing activity")
+        print("  - activity.id: \(activity.id)")
+        print("  - activity.activityState: \(activity.activityState)")
+
+        currentActivity = activity
+        observeActivityState(activity)
+
+        print("[LiveActivity] ✅ Activity restored successfully")
+    }
+
     // MARK: - Start Activity
 
     func startActivity(

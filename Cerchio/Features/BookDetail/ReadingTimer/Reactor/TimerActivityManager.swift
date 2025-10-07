@@ -237,6 +237,9 @@ final class TimerActivityManager {
 
         print("[TimerActivity] 🔄 Syncing existing activity")
 
+        // 기존 액티비티를 LiveActivityManager에 복원
+        liveActivityManager.restoreActivity(activeActivities.first!)
+
         // 기존 액티비티가 있으므로 시작 상태로 설정
         isStarted = true
 

@@ -134,6 +134,15 @@ final class ServiceFactory: BaseServiceFactory<ServiceDependencies> {
         }
     }
 
+    /// Creates a DebugLogRepository instance
+    func createDebugLogRepository() -> DebugLogRepositoryProtocol {
+        do {
+            return try DebugLogRepository()
+        } catch {
+            fatalError("Failed to create DebugLogRepository: \(error)")
+        }
+    }
+
     // MARK: - Cache Management
     func clearServiceCache() {
         cacheQueue.async(flags: .barrier) {

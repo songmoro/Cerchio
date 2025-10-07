@@ -188,6 +188,12 @@ final class NotificationManager {
         print("✅ All delivered notifications removed")
     }
 
+    /// 특정 전달된 알림 제거
+    func removeDeliveredNotification(withIdentifier identifier: String) {
+        notificationCenter.removeDeliveredNotifications(withIdentifiers: [identifier])
+        print("✅ Delivered notification removed: \(identifier)")
+    }
+
     /// 앱 배지 제거
     func clearBadge() {
         UNUserNotificationCenter.current().setBadgeCount(0)

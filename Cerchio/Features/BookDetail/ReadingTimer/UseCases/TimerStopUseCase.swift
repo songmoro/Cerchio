@@ -78,7 +78,7 @@ final class TimerStopUseCase {
             return .error(StopError.noSession)
         }
 
-        // 2. 알림 취소
+        // 2. 알림 취소 (전달된 알림 포함)
         _ = notificationManager.cancel().subscribe()
 
         // 3. Live Activity 종료

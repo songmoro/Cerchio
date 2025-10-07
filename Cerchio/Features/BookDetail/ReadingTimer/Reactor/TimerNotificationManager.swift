@@ -55,6 +55,8 @@ final class TimerNotificationManager {
         guard let notificationId = scheduledNotificationId else {
             // 레거시 호환
             notificationManager.cancelTimerCompletionNotification()
+            // 전달된 알림도 제거
+            notificationManager.removeDeliveredNotification(withIdentifier: "timer_completion")
             isScheduled = false
             print("[TimerNotification] 🔕 Cancelled (legacy)")
             return .just(())
@@ -62,6 +64,8 @@ final class TimerNotificationManager {
 
         return notificationManager.cancelNotification(withIdentifier: notificationId)
             .do(onNext: { [weak self] in
+                // 전달된 알림도 제거
+                self?.notificationManager.removeDeliveredNotification(withIdentifier: notificationId)
                 self?.scheduledNotificationId = nil
                 self?.isScheduled = false
                 print("[TimerNotification] 🔕 Cancelled with ID: \(notificationId)")

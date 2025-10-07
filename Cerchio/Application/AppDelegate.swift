@@ -24,7 +24,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     }
 
     private func configureRealm() {
-
+        #if DEBUG
+        print(try! Realm().configuration.fileURL)
+        #endif
     }
 
     private func setupNotifications() {

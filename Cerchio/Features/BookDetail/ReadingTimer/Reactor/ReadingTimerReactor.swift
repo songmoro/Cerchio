@@ -29,6 +29,9 @@ final class ReadingTimerReactor: Reactor {
         case terminateExistingSessionAndStart
         case setElapsedSeconds(Int)
         case setRemainingSeconds(Int)
+        case setTimerState(TimerStateManager.TimerState)
+        case setDebugText(String)
+        case appendDebugText(String)
     }
 
     // MARK: - Mutation
@@ -42,6 +45,8 @@ final class ReadingTimerReactor: Reactor {
         case clearValidationError
         case setDuplicateSessionInfo(TimerSessionManager.ActiveSession?)
         case setError(Error)
+        case setDebugText(String)
+        case appendDebugText(String)
     }
 
     // MARK: - State
@@ -62,6 +67,7 @@ final class ReadingTimerReactor: Reactor {
         var bookTitle: String
         var validationError: ValidationError?
         var duplicateSessionInfo: TimerSessionManager.ActiveSession?
+        var debugText: String = "DEBUG"
 
         var elapsedTimeString: String {
             formatTime(elapsedSeconds)
@@ -148,9 +154,27 @@ final class ReadingTimerReactor: Reactor {
             bookTitle: session.bookTitle
         )
 
-        // 세션 복원 실행
-        restoreSession(session)
         setupActivityMonitoring()
+
+        // 세션 복원 로직 실행
+        service.restore(session: session)
+            .observe(on: MainScheduler.instance)
+            .subscribe(onNext: { [weak self] result in
+                guard let self = self else { return }
+
+                let elapsed = self.service.stateManager.currentElapsedSeconds
+                self.action.onNext(.setElapsedSeconds(elapsed))
+                self.action.onNext(.setRemainingSeconds(result.remaining))
+
+                if result.shouldAutoResume {
+                    self.action.onNext(.setTimerState(.running))
+                    self.startTimerTick()
+                }
+            }, onError: { error in
+                DebugLogger.shared.debug("세션 복구 에러, \(error)", category: "ReadingTimer")
+                print("[Reactor] ❌ Session restore failed: \(error)")
+            })
+            .disposed(by: disposeBag)
     }
 
     // MARK: - Mutation
@@ -219,6 +243,7 @@ final class ReadingTimerReactor: Reactor {
             return service.resume()
                 .map { .setTimerState(.running) }
                 .catch { error in
+                    DebugLogger.shared.debug("세션 resume error, \(error)")
                     print("[Reactor] ❌ Resume failed: \(error)")
                     return .just(.setError(error))
                 }
@@ -319,6 +344,15 @@ final class ReadingTimerReactor: Reactor {
 
         case .setRemainingSeconds(let seconds):
             return .just(.setRemainingSeconds(seconds))
+
+        case .setDebugText(let text):
+            return .just(.setDebugText(text))
+
+        case .setTimerState(let state):
+            return .just(.setTimerState(state))
+
+        case .appendDebugText(let text):
+            return .just(.appendDebugText(text))
         }
     }
 
@@ -351,6 +385,12 @@ final class ReadingTimerReactor: Reactor {
 
         case .setError:
             break
+
+        case .setDebugText(let text):
+            newState.debugText = text
+
+        case .appendDebugText(let text):
+            newState.debugText += "\n" + text
         }
 
         return newState
@@ -370,39 +410,6 @@ final class ReadingTimerReactor: Reactor {
     private func stopTimerTick() {
         timerDisposable?.dispose()
         timerDisposable = nil
-    }
-
-    // MARK: - Session Restore
-
-    private func restoreSession(_ session: TimerSessionManager.ActiveSession) {
-        service.restore(session: session)
-            .observe(on: MainScheduler.instance)
-            .subscribe(
-                onNext: { [weak self] result in
-                    guard let self = self else { return }
-
-                    print("[Reactor] 🔄 Session restore completed")
-                    print("  - remaining: \(result.remaining)")
-                    print("  - shouldAutoResume: \(result.shouldAutoResume)")
-
-                    // 상태 업데이트
-                    let elapsed = self.service.stateManager.currentElapsedSeconds
-                    self.action.onNext(.setElapsedSeconds(elapsed))
-                    self.action.onNext(.setRemainingSeconds(result.remaining))
-
-                    // 타이머 자동 재개
-                    if result.shouldAutoResume {
-                        print("[Reactor] ⏰ Auto-resuming timer after restore")
-                        // 복원 시에는 이미 상태가 running으로 설정되어 있으므로
-                        // 타이머 틱만 시작하면 됨
-                        self.startTimerTick()
-                    }
-                },
-                onError: { error in
-                    print("[Reactor] ❌ Session restore failed: \(error)")
-                }
-            )
-            .disposed(by: disposeBag)
     }
 
     // MARK: - Activity Monitoring
