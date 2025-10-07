@@ -22,6 +22,8 @@
 		F81383C02E86AD7F0090F8FB /* ReactorKit in Frameworks */ = {isa = PBXBuildFile; productRef = F81383BF2E86AD7F0090F8FA /* ReactorKit */; };
 		F81384312E86E5E10090F8FA /* RealmSwift in Embed Frameworks */ = {isa = PBXBuildFile; productRef = F81383BC2E86ACD50090F8FA /* RealmSwift */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		F84E0FE92E829A00006B98C0 /* .gitignore in Resources */ = {isa = PBXBuildFile; fileRef = F84E0FE82E829A00006B98C0 /* .gitignore */; };
+		F85409F52E94E8DD00BD079B /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = F85409F42E94E8DD00BD079B /* FirebaseAnalytics */; };
+		F85409F72E94E8DD00BD079B /* FirebaseCrashlytics in Frameworks */ = {isa = PBXBuildFile; productRef = F85409F62E94E8DD00BD079B /* FirebaseCrashlytics */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -144,10 +146,12 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				F85409F52E94E8DD00BD079B /* FirebaseAnalytics in Frameworks */,
 				F8137DAE2E82AA420090F8FA /* Kingfisher in Frameworks */,
 				F8137DAB2E82AA330090F8FA /* RxSwift in Frameworks */,
 				F8137DA92E82AA330090F8FA /* RxCocoa in Frameworks */,
 				F81383BD2E86ACD50090F8FA /* RealmSwift in Frameworks */,
+				F85409F72E94E8DD00BD079B /* FirebaseCrashlytics in Frameworks */,
 				F81383C02E86AD7F0090F8FA /* ReactorKit in Frameworks */,
 				F8137DA62E82AA210090F8FA /* SnapKit in Frameworks */,
 			);
@@ -240,6 +244,7 @@
 				F84E0EDE2E829796006B98C0 /* Sources */,
 				F84E0EDF2E829796006B98C0 /* Frameworks */,
 				F84E0EE02E829796006B98C0 /* Resources */,
+				F8540A202E94E95F00BD079B /* ShellScript */,
 				F81384322E86E5E10090F8FA /* Embed Frameworks */,
 				F800228A2E9015F30046D443 /* Embed Foundation Extensions */,
 			);
@@ -259,6 +264,8 @@
 				F8137DAD2E82AA420090F8FA /* Kingfisher */,
 				F81383BC2E86ACD50090F8FA /* RealmSwift */,
 				F81383BF2E86AD7F0090F8FA /* ReactorKit */,
+				F85409F42E94E8DD00BD079B /* FirebaseAnalytics */,
+				F85409F62E94E8DD00BD079B /* FirebaseCrashlytics */,
 			);
 			productName = Cerchio;
 			productReference = F84E0EE22E829796006B98C0 /* Cerchio.app */;
@@ -355,6 +362,7 @@
 				F8137DAC2E82AA420090F8FA /* XCRemoteSwiftPackageReference "Kingfisher" */,
 				F81383BB2E86ACD50090F8FA /* XCRemoteSwiftPackageReference "realm-swift" */,
 				F81383BE2E86AD7F0090F8FA /* XCRemoteSwiftPackageReference "ReactorKit" */,
+				F85409F32E94E8DD00BD079B /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = F84E0EE32E829796006B98C0 /* Products */;
@@ -393,6 +401,31 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		F8540A202E94E95F00BD079B /* ShellScript */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"${DWARF_DSYM_FOLDER_PATH}/${DWARF_DSYM_FILE_NAME}",
+				"${DWARF_DSYM_FOLDER_PATH}/${DWARF_DSYM_FILE_NAME}/Contents/Resources/DWARF/${PRODUCT_NAME}",
+				"${DWARF_DSYM_FOLDER_PATH}/${DWARF_DSYM_FILE_NAME}/Contents/Info.plist",
+				"$(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/GoogleService-Info.plist",
+				"$(TARGET_BUILD_DIR)/$(EXECUTABLE_PATH)",
+			);
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${BUILD_DIR%/Build/*}/SourcePackages/checkouts/firebase-ios-sdk/Crashlytics/run\"\n";
+		};
+/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		F800226D2E9015F10046D443 /* Sources */ = {
@@ -891,6 +924,14 @@
 				minimumVersion = 3.2.0;
 			};
 		};
+		F85409F32E94E8DD00BD079B /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/firebase/firebase-ios-sdk.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 12.3.0;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -923,6 +964,16 @@
 			isa = XCSwiftPackageProductDependency;
 			package = F81383BE2E86AD7F0090F8FA /* XCRemoteSwiftPackageReference "ReactorKit" */;
 			productName = ReactorKit;
+		};
+		F85409F42E94E8DD00BD079B /* FirebaseAnalytics */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = F85409F32E94E8DD00BD079B /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAnalytics;
+		};
+		F85409F62E94E8DD00BD079B /* FirebaseCrashlytics */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = F85409F32E94E8DD00BD079B /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseCrashlytics;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
