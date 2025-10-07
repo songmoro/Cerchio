@@ -14,7 +14,6 @@ import SnapKit
 final class ReadingTimerViewController: BaseViewController<ReadingTimerReactor> {
 
     // MARK: - UI Components
-    private let debugLabel = UILabel()
     private let elapsedTimeLabel = UILabel()
     private let remainingTimeLabel = UILabel()
     private let progressView = UIProgressView(progressViewStyle: .bar)
@@ -50,22 +49,11 @@ final class ReadingTimerViewController: BaseViewController<ReadingTimerReactor> 
             .bind(to: backButtonTapRelay)
             .disposed(by: disposeBag)
 
-        setupDebugLabel()
         setupTimeLabels()
         setupProgressView()
         setupButtons()
         setupActionButtons()
         setupLayout()
-    }
-
-    private func setupDebugLabel() {
-        debugLabel.font = .custom(weight: .regular, size: 12)
-        debugLabel.textColor = .systemRed
-        debugLabel.textAlignment = .center
-        debugLabel.numberOfLines = 0
-        debugLabel.text = "DEBUG"
-
-        view.addSubview(debugLabel)
     }
 
     private func setupTimeLabels() {
@@ -151,10 +139,6 @@ final class ReadingTimerViewController: BaseViewController<ReadingTimerReactor> 
     }
 
     private func setupLayout() {
-        debugLabel.snp.makeConstraints {
-            $0.top.equalTo(view.safeAreaLayoutGuide).offset(8)
-            $0.leading.trailing.equalToSuperview().inset(16)
-        }
 
         elapsedTimeLabel.snp.makeConstraints {
             $0.centerX.equalToSuperview()
@@ -240,11 +224,6 @@ final class ReadingTimerViewController: BaseViewController<ReadingTimerReactor> 
             .disposed(by: disposeBag)
 
         // State
-        reactor.state.map { $0.debugText }
-            .distinctUntilChanged()
-            .asDriver(onErrorJustReturn: "DEBUG")
-            .drive(debugLabel.rx.text)
-            .disposed(by: disposeBag)
 
         reactor.state.map { $0.elapsedTimeString }
             .distinctUntilChanged()
@@ -578,21 +557,5 @@ extension ReadingTimerViewController {
 
     var backButtonTapped: Observable<Void> {
         backButtonTapRelay.asObservable()
-    }
-}
-
-// MARK: - Debug
-extension ReadingTimerViewController {
-    func setDebugText(_ text: String) {
-        debugLabel.text = text
-    }
-
-    func appendDebugText(_ text: String) {
-        let currentText = debugLabel.text ?? ""
-        debugLabel.text = currentText + "\n" + text
-    }
-
-    func clearDebugText() {
-        debugLabel.text = "DEBUG"
     }
 }

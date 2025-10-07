@@ -241,4 +241,71 @@ final class NotificationManager {
                 print("[NotificationManager] 🧹 Expired notifications cleaned up")
             })
     }
+
+    /// 진행 중이 아닌 타이머 알림 제거
+    /// - activeSessionId가 있으면 해당 세션 외 모든 타이머 알림 제거
+    /// - activeSessionId가 없으면 모든 타이머 알림 제거
+    func removeInactiveTimerNotifications(activeSessionId: String? = nil) -> Observable<Void> {
+        return Observable.create { [weak self] observer in
+            guard let self = self else {
+                observer.onCompleted()
+                return Disposables.create()
+            }
+
+            // 1. 시스템의 예약된 알림 확인
+            self.notificationCenter.getPendingNotificationRequests { requests in
+                let timerNotifications = requests.filter { request in
+                    request.content.userInfo["type"] as? String == "timerCompletion"
+                }
+
+                // 2. 제거할 알림 식별자 수집
+                let notificationsToRemove: [String]
+                if let activeId = activeSessionId {
+                    // 활성 세션이 있으면 해당 세션 외 모든 타이머 알림 제거
+                    notificationsToRemove = timerNotifications
+                        .filter { request in
+                            let sessionId = request.content.userInfo["sessionId"] as? String
+                            return sessionId != activeId
+                        }
+                        .map { $0.identifier }
+                } else {
+                    // 활성 세션이 없으면 모든 타이머 알림 제거
+                    notificationsToRemove = timerNotifications.map { $0.identifier }
+                }
+
+                guard !notificationsToRemove.isEmpty else {
+                    print("[NotificationManager] ✅ No inactive timer notifications to remove")
+                    observer.onNext(())
+                    observer.onCompleted()
+                    return
+                }
+
+                print("[NotificationManager] 🧹 Removing \(notificationsToRemove.count) inactive timer notification(s)")
+
+                // 3. 시스템 알림 제거
+                self.notificationCenter.removePendingNotificationRequests(withIdentifiers: notificationsToRemove)
+
+                // 4. Realm에서 상태 업데이트
+                let cancelObservables = notificationsToRemove.map { identifier in
+                    self.notificationRepository.cancelNotification(identifier)
+                }
+
+                Observable.zip(cancelObservables)
+                    .observe(on: MainScheduler.instance)
+                    .subscribe(onNext: { _ in
+                        print("[NotificationManager] ✅ Inactive timer notifications removed")
+                        observer.onNext(())
+                        observer.onCompleted()
+                    }, onError: { error in
+                        print("[NotificationManager] ⚠️ Failed to update notification status: \(error)")
+                        // 시스템 알림은 이미 제거되었으므로 성공으로 처리
+                        observer.onNext(())
+                        observer.onCompleted()
+                    })
+                    .disposed(by: self.disposeBag)
+            }
+
+            return Disposables.create()
+        }
+    }
 }

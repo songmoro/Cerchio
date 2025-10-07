@@ -11,9 +11,9 @@ import RxSwift
 import RxCocoa
 
 final class ReadingTimerReactor: Reactor {
-
+    
     // MARK: - Action
-
+    
     enum Action {
         case viewDidLoad
         case requestTimerStart
@@ -30,12 +30,10 @@ final class ReadingTimerReactor: Reactor {
         case setElapsedSeconds(Int)
         case setRemainingSeconds(Int)
         case setTimerState(TimerStateManager.TimerState)
-        case setDebugText(String)
-        case appendDebugText(String)
     }
-
+    
     // MARK: - Mutation
-
+    
     enum Mutation {
         case setSession(RealmReadingSession)
         case setTimerState(TimerStateManager.TimerState)
@@ -45,18 +43,16 @@ final class ReadingTimerReactor: Reactor {
         case clearValidationError
         case setDuplicateSessionInfo(TimerSessionManager.ActiveSession?)
         case setError(Error)
-        case setDebugText(String)
-        case appendDebugText(String)
     }
-
+    
     // MARK: - State
-
+    
     enum ValidationError: Error, Equatable {
         case notificationPermissionDenied
         case liveActivityNotEnabled
         case sessionTooShort
     }
-
+    
     struct State {
         var session: RealmReadingSession?
         var timerState: TimerStateManager.TimerState = .idle
@@ -67,39 +63,38 @@ final class ReadingTimerReactor: Reactor {
         var bookTitle: String
         var validationError: ValidationError?
         var duplicateSessionInfo: TimerSessionManager.ActiveSession?
-        var debugText: String = "DEBUG"
-
+        
         var elapsedTimeString: String {
             formatTime(elapsedSeconds)
         }
-
+        
         var remainingTimeString: String {
             formatTime(remainingSeconds)
         }
-
+        
         var progress: Double {
             let totalSeconds = targetMinutes * 60
             return totalSeconds > 0 ? Double(elapsedSeconds) / Double(totalSeconds) : 0
         }
-
+        
         private func formatTime(_ seconds: Int) -> String {
             let minutes = seconds / 60
             let secs = seconds % 60
             return String(format: "%02d:%02d", minutes, secs)
         }
     }
-
+    
     // MARK: - Properties
-
+    
     let initialState: State
     private let service: ReadingTimerService
     private let disposeBag = DisposeBag()
-
+    
     // Timer tick
     private var timerDisposable: Disposable?
-
+    
     // MARK: - Initialization
-
+    
     /// 새로운 타이머 생성
     init(
         bookId: String,
@@ -109,7 +104,7 @@ final class ReadingTimerReactor: Reactor {
     ) {
         let sessionId = UUID().uuidString
         let sessionStartTime = Date()
-
+        
         self.service = ReadingTimerService(
             sessionId: sessionId,
             bookId: bookId,
@@ -118,14 +113,14 @@ final class ReadingTimerReactor: Reactor {
             sessionStartTime: sessionStartTime,
             sessionRepository: sessionRepository
         )
-
+        
         self.initialState = State(
             remainingSeconds: targetMinutes * 60,
             targetMinutes: targetMinutes,
             bookId: bookId,
             bookTitle: bookTitle
         )
-
+        
         setupActivityMonitoring()
     }
 
@@ -344,15 +339,9 @@ final class ReadingTimerReactor: Reactor {
 
         case .setRemainingSeconds(let seconds):
             return .just(.setRemainingSeconds(seconds))
-
-        case .setDebugText(let text):
-            return .just(.setDebugText(text))
-
+            
         case .setTimerState(let state):
             return .just(.setTimerState(state))
-
-        case .appendDebugText(let text):
-            return .just(.appendDebugText(text))
         }
     }
 
@@ -364,35 +353,28 @@ final class ReadingTimerReactor: Reactor {
         switch mutation {
         case .setSession(let session):
             newState.session = session
-
+            
         case .setTimerState(let timerState):
             newState.timerState = timerState
-
+            
         case .setElapsedSeconds(let seconds):
             newState.elapsedSeconds = seconds
-
+            
         case .setRemainingSeconds(let seconds):
             newState.remainingSeconds = seconds
-
+            
         case .setValidationError(let error):
             newState.validationError = error
-
+            
         case .clearValidationError:
             newState.validationError = nil
-
+            
         case .setDuplicateSessionInfo(let info):
             newState.duplicateSessionInfo = info
-
+            
         case .setError:
             break
-
-        case .setDebugText(let text):
-            newState.debugText = text
-
-        case .appendDebugText(let text):
-            newState.debugText += "\n" + text
         }
-
         return newState
     }
 

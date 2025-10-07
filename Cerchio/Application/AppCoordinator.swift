@@ -65,6 +65,7 @@ final class AppCoordinator: BaseCoordinator {
         // 케이스 1: 세션도 있고 액티비티도 있음 → 정상 복구
         if let session = activeSession, hasActiveActivity {
             print("[AppCoordinator] ✅ Found active session with Live Activity")
+            cleanupInactiveNotifications(activeSessionId: session.sessionId)
             restoreSession(session, reason: "정상 복구")
             return
         }
@@ -72,6 +73,7 @@ final class AppCoordinator: BaseCoordinator {
         // 케이스 2: 세션은 있는데 액티비티 없음 → 시스템 재부팅 또는 액티비티 종료
         if let session = activeSession, !hasActiveActivity {
             print("[AppCoordinator] ⚠️ Found session but no Live Activity (possible reboot)")
+            cleanupInactiveNotifications(activeSessionId: session.sessionId)
             showSessionRecoveryDialog(session)
             return
         }
@@ -82,11 +84,23 @@ final class AppCoordinator: BaseCoordinator {
             if #available(iOS 16.2, *) {
                 _ = LiveActivityManager.shared.endActivity()
             }
+            cleanupInactiveNotifications(activeSessionId: nil)
             return
         }
 
         // 케이스 4: 둘 다 없음 → 정상
         print("[AppCoordinator] ✅ No active timer session to restore")
+        cleanupInactiveNotifications(activeSessionId: nil)
+    }
+
+    private func cleanupInactiveNotifications(activeSessionId: String?) {
+        NotificationManager.shared.removeInactiveTimerNotifications(activeSessionId: activeSessionId)
+            .subscribe(onNext: {
+                print("[AppCoordinator] 🧹 Inactive timer notifications cleaned up")
+            }, onError: { error in
+                print("[AppCoordinator] ⚠️ Failed to cleanup notifications: \(error)")
+            })
+            .disposed(by: disposeBag)
     }
 
     private func restoreSession(_ session: TimerSessionManager.ActiveSession, reason: String) {
