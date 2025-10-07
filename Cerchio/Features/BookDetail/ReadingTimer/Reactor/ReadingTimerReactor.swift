@@ -13,7 +13,6 @@ import RxCocoa
 final class ReadingTimerReactor: Reactor {
     
     // MARK: - Action
-    
     enum Action {
         case viewDidLoad
         case requestTimerStart
@@ -33,7 +32,6 @@ final class ReadingTimerReactor: Reactor {
     }
     
     // MARK: - Mutation
-    
     enum Mutation {
         case setSession(RealmReadingSession)
         case setTimerState(TimerStateManager.TimerState)
@@ -46,7 +44,6 @@ final class ReadingTimerReactor: Reactor {
     }
     
     // MARK: - State
-    
     enum ValidationError: Error, Equatable {
         case notificationPermissionDenied
         case liveActivityNotEnabled
@@ -85,7 +82,6 @@ final class ReadingTimerReactor: Reactor {
     }
     
     // MARK: - Properties
-    
     let initialState: State
     private let service: ReadingTimerService
     private let disposeBag = DisposeBag()
@@ -120,8 +116,6 @@ final class ReadingTimerReactor: Reactor {
             bookId: bookId,
             bookTitle: bookTitle
         )
-        
-        setupActivityMonitoring()
     }
 
     /// 세션 복원
@@ -149,8 +143,6 @@ final class ReadingTimerReactor: Reactor {
             bookTitle: session.bookTitle
         )
 
-        setupActivityMonitoring()
-
         // 세션 복원 로직 실행
         service.restore(session: session)
             .observe(on: MainScheduler.instance)
@@ -167,7 +159,6 @@ final class ReadingTimerReactor: Reactor {
                 }
             }, onError: { error in
                 DebugLogger.shared.debug("세션 복구 에러, \(error)", category: "ReadingTimer")
-                print("[Reactor] ❌ Session restore failed: \(error)")
             })
             .disposed(by: disposeBag)
     }
@@ -180,7 +171,7 @@ final class ReadingTimerReactor: Reactor {
             return service.createRealmSession()
                 .map { .setSession($0) }
                 .catch { error in
-                    print("[Reactor] ❌ Failed to create session: \(error)")
+                    DebugLogger.shared.debug("세션 생성 에러, \(error)", category: "ReadingTimer")
                     return .just(.setError(error))
                 }
 
@@ -208,7 +199,7 @@ final class ReadingTimerReactor: Reactor {
                     return .just(.setTimerState(.running))
                 }
                 .catch { error in
-                    print("[Reactor] ❌ Start failed: \(error)")
+                    DebugLogger.shared.debug("세션 시작 에러, \(error)", category: "ReadingTimer")
                     return .just(.setError(error))
                 }
 
@@ -220,7 +211,7 @@ final class ReadingTimerReactor: Reactor {
                 })
                 .map { _ in .setTimerState(.running) }
                 .catch { error in
-                    print("[Reactor] ❌ Confirmed start failed: \(error)")
+                    DebugLogger.shared.debug("세션 시작 에러, \(error)", category: "ReadingTimer")
                     return .just(.setError(error))
                 }
 
@@ -229,7 +220,7 @@ final class ReadingTimerReactor: Reactor {
             return service.pause()
                 .map { .setTimerState(.paused) }
                 .catch { error in
-                    print("[Reactor] ❌ Pause failed: \(error)")
+                    DebugLogger.shared.debug("세션 일시정지 에러, \(error)", category: "ReadingTimer")
                     return .just(.setError(error))
                 }
 
@@ -238,8 +229,7 @@ final class ReadingTimerReactor: Reactor {
             return service.resume()
                 .map { .setTimerState(.running) }
                 .catch { error in
-                    DebugLogger.shared.debug("세션 resume error, \(error)")
-                    print("[Reactor] ❌ Resume failed: \(error)")
+                    DebugLogger.shared.debug("세션 재개 에러, \(error)")
                     return .just(.setError(error))
                 }
 
@@ -248,11 +238,13 @@ final class ReadingTimerReactor: Reactor {
             return service.stop(realmSession: currentState.session)
                 .map { .setTimerState(.completed) }
                 .catch { error in
+                    DebugLogger.shared.debug("세션 정지 에러, \(error)", category: "ReadingTimer")
+                    
                     if let stopError = error as? TimerStopUseCase.StopError,
                        case .sessionTooShort = stopError {
                         return .just(.setValidationError(.sessionTooShort))
                     }
-                    print("[Reactor] ❌ Stop failed: \(error)")
+                    
                     return .concat([
                         .just(.setError(error)),
                         .just(.setTimerState(.completed))
@@ -395,35 +387,7 @@ final class ReadingTimerReactor: Reactor {
         timerDisposable = nil
     }
 
-    // MARK: - Activity Monitoring
-
-    private func setupActivityMonitoring() {
-        guard #available(iOS 16.2, *) else { return }
-
-        // Stale 이벤트
-        service.activityStale
-            .subscribe(onNext: { [weak self] in
-                print("[Reactor] ⏰ Live Activity became stale - will recreate on next action")
-            })
-            .disposed(by: disposeBag)
-
-        // Dismissed 이벤트
-        service.activityDismissed
-            .subscribe(onNext: { [weak self] in
-                print("[Reactor] 🗑️ User dismissed Live Activity")
-            })
-            .disposed(by: disposeBag)
-
-        // Ended 이벤트
-        service.activityEnded
-            .subscribe(onNext: { [weak self] in
-                print("[Reactor] ⏹️ Live Activity ended")
-            })
-            .disposed(by: disposeBag)
-    }
-
     // MARK: - Deinit
-
     deinit {
         stopTimerTick()
     }
