@@ -38,6 +38,9 @@ final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     }
 
     func sceneDidBecomeActive(_ scene: UIScene) {
+        // 앱 실행 시 배지 카운트 초기화
+        UIApplication.shared.applicationIconBadgeNumber = 0
+
         // 앱이 활성화될 때 활성 타이머 세션 확인 및 복원
         checkAndRestoreActiveTimerSession()
     }

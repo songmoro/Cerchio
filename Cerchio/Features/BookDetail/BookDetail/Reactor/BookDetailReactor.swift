@@ -8,6 +8,7 @@
 import Foundation
 import ReactorKit
 import RxSwift
+import FirebaseAnalytics
 
 final class BookDetailReactor: Reactor {
     enum Action {
@@ -169,6 +170,11 @@ final class BookDetailReactor: Reactor {
                 .flatMap { [weak self] isFavorite -> Observable<Mutation> in
                     guard let self = self else { return Observable.empty() }
 
+                    Analytics.logEvent("book_favorite_toggled", parameters: [
+                        "book_title": self.currentState.book.cleanTitle,
+                        "is_favorite": isFavorite
+                    ])
+
                     // 업데이트된 Book을 다시 가져오기
                     return self.bookRepository.getBookByISBN(self.currentState.book.isbn)
                         .flatMap { updatedBook -> Observable<Mutation> in
@@ -192,6 +198,10 @@ final class BookDetailReactor: Reactor {
             return Observable.empty()
 
         case .deleteBook:
+            Analytics.logEvent("book_deleted", parameters: [
+                "book_title": currentState.book.cleanTitle
+            ])
+
             return bookRepository.deleteBookByISBN(currentState.book.isbn)
                 .map { _ in .bookDeleted }
                 .catch { error in

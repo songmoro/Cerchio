@@ -9,6 +9,7 @@ import Foundation
 import ReactorKit
 import RxSwift
 import RealmSwift
+import FirebaseAnalytics
 
 final class PhotoListReactor: Reactor {
     enum Action {
@@ -51,6 +52,10 @@ final class PhotoListReactor: Reactor {
             ])
 
         case .deletePhoto(let photoId):
+            Analytics.logEvent("photo_deleted", parameters: [
+                "book_id": currentState.bookId
+            ])
+
             return Observable.concat([
                 Observable.just(.setLoading(true)),
                 service.deletePhoto(photoId)

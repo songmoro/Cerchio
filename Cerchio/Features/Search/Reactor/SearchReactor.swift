@@ -9,6 +9,7 @@ import Foundation
 import ReactorKit
 import RxSwift
 import RealmSwift
+import FirebaseAnalytics
 
 final class SearchReactor: Reactor {
     enum Action {
@@ -67,6 +68,10 @@ final class SearchReactor: Reactor {
                 return Observable.just(.setSearchState(.initial))
             }
 
+            Analytics.logEvent("search_performed", parameters: [
+                "search_query": searchText
+            ])
+
             // 검색 이력 저장 및 첫 페이지 검색
             return Observable.concat([
                 Observable.just(.setLoading(true)),
@@ -109,6 +114,11 @@ final class SearchReactor: Reactor {
                     if let matchingItem = originalItems.first(where: { $0.isbn == book.isbn }) {
                         // 원본 데이터를 RealmBook으로 변환
                         let realmBook = matchingItem.toRealmBook()
+
+                        Analytics.logEvent("book_added_to_library", parameters: [
+                            "book_title": realmBook.cleanTitle,
+                            "book_isbn": realmBook.isbn
+                        ])
 
                         // Realm에 저장 후 업데이트된 Book 가져오기
                         return self.saveBookWithRepository(realmBook)

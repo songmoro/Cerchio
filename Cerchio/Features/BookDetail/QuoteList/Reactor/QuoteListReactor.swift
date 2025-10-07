@@ -9,6 +9,7 @@ import Foundation
 import ReactorKit
 import RxSwift
 import RealmSwift
+import FirebaseAnalytics
 
 final class QuoteListReactor: Reactor {
     enum Action {
@@ -45,6 +46,10 @@ final class QuoteListReactor: Reactor {
             ])
 
         case .deleteQuote(let quoteId):
+            Analytics.logEvent("quote_deleted", parameters: [
+                "book_id": currentState.bookId
+            ])
+
             return Observable.concat([
                 Observable.just(.setLoading(true)),
                 deleteQuoteFromRealm(quoteId),

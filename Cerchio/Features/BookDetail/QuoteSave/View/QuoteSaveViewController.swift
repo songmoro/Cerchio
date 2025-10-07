@@ -10,6 +10,7 @@ import SnapKit
 import RealmSwift
 import RxSwift
 import RxCocoa
+import FirebaseAnalytics
 
 final class QuoteSaveViewController: UIViewController {
     // MARK: - Events
@@ -233,9 +234,19 @@ final class QuoteSaveViewController: UIViewController {
 
         if isEditMode, let quoteId = editingQuoteId {
             // 수정 모드: 기존 문장 업데이트
+            Analytics.logEvent("quote_updated", parameters: [
+                "book_id": bookId,
+                "has_page_number": pageNumber != nil
+            ])
+
             updateExistingQuote(quoteId: quoteId, newQuote: quote, newPageNumber: pageNumber)
         } else {
             // 새로 저장
+            Analytics.logEvent("quote_saved", parameters: [
+                "book_id": bookId,
+                "has_page_number": pageNumber != nil
+            ])
+
             let realmQuote = RealmQuote(
                 bookId: bookId,
                 quote: quote,

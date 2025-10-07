@@ -9,6 +9,7 @@ import Foundation
 import ReactorKit
 import RxSwift
 import RxCocoa
+import FirebaseAnalytics
 
 final class ReadingTimerReactor: Reactor {
     
@@ -85,9 +86,17 @@ final class ReadingTimerReactor: Reactor {
     let initialState: State
     private let service: ReadingTimerService
     private let disposeBag = DisposeBag()
-    
+
     // Timer tick
     private var timerDisposable: Disposable?
+
+    // Analytics tracking
+    private var sessionStartDate: Date?
+    private var pauseCount: Int = 0
+    private var totalPauseDuration: TimeInterval = 0
+    private var lastPauseStartTime: Date?
+    private var backgroundEnterTime: Date?
+    private var totalBackgroundDuration: TimeInterval = 0
     
     // MARK: - Initialization
     
@@ -181,6 +190,11 @@ final class ReadingTimerReactor: Reactor {
                 return .just(.setDuplicateSessionInfo(duplicate))
             }
 
+            Analytics.logEvent("timer_start_requested", parameters: [
+                "book_title": currentState.bookTitle,
+                "target_minutes": currentState.targetMinutes
+            ])
+
             // 타이머 시작
             return service.start()
                 .flatMap { [weak self] result -> Observable<Mutation> in
@@ -191,15 +205,38 @@ final class ReadingTimerReactor: Reactor {
                         let validationError: ValidationError = error == .notificationPermissionDenied
                             ? .notificationPermissionDenied
                             : .liveActivityNotEnabled
+
+                        Analytics.logEvent("timer_start_failed", parameters: [
+                            "error_type": error == .notificationPermissionDenied ? "notification_denied" : "live_activity_disabled"
+                        ])
+
                         return .just(.setValidationError(validationError))
                     }
 
                     // 타이머 시작 성공
+                    self.sessionStartDate = Date()
+                    self.pauseCount = 0
+                    self.totalPauseDuration = 0
+                    self.totalBackgroundDuration = 0
+
+                    Analytics.logEvent("timer_started", parameters: [
+                        "book_id": self.currentState.bookId,
+                        "book_title": self.currentState.bookTitle,
+                        "target_minutes": self.currentState.targetMinutes,
+                        "target_seconds": self.currentState.targetMinutes * 60,
+                        "session_start_time": ISO8601DateFormatter().string(from: Date())
+                    ])
+
                     self.startTimerTick()
                     return .just(.setTimerState(.running))
                 }
                 .catch { error in
                     DebugLogger.shared.debug("세션 시작 에러, \(error)", category: "ReadingTimer")
+
+                    Analytics.logEvent("timer_start_error", parameters: [
+                        "error_description": error.localizedDescription
+                    ])
+
                     return .just(.setError(error))
                 }
 
@@ -217,6 +254,24 @@ final class ReadingTimerReactor: Reactor {
 
         case .pauseTimer:
             stopTimerTick()
+
+            pauseCount += 1
+            lastPauseStartTime = Date()
+
+            let totalSessionTime = sessionStartDate.map { Date().timeIntervalSince($0) } ?? 0
+
+            Analytics.logEvent("timer_paused", parameters: [
+                "book_id": currentState.bookId,
+                "book_title": currentState.bookTitle,
+                "elapsed_seconds": currentState.elapsedSeconds,
+                "remaining_seconds": currentState.remainingSeconds,
+                "target_minutes": currentState.targetMinutes,
+                "pause_count": pauseCount,
+                "total_session_time": Int(totalSessionTime),
+                "completion_percentage": Int(currentState.progress * 100),
+                "pause_timestamp": ISO8601DateFormatter().string(from: Date())
+            ])
+
             return service.pause()
                 .map { .setTimerState(.paused) }
                 .catch { error in
@@ -226,6 +281,28 @@ final class ReadingTimerReactor: Reactor {
 
         case .resumeTimer:
             startTimerTick()
+
+            if let pauseStart = lastPauseStartTime {
+                let pauseDuration = Date().timeIntervalSince(pauseStart)
+                totalPauseDuration += pauseDuration
+                lastPauseStartTime = nil
+            }
+
+            let totalSessionTime = sessionStartDate.map { Date().timeIntervalSince($0) } ?? 0
+
+            Analytics.logEvent("timer_resumed", parameters: [
+                "book_id": currentState.bookId,
+                "book_title": currentState.bookTitle,
+                "elapsed_seconds": currentState.elapsedSeconds,
+                "remaining_seconds": currentState.remainingSeconds,
+                "target_minutes": currentState.targetMinutes,
+                "pause_count": pauseCount,
+                "total_pause_duration": Int(totalPauseDuration),
+                "total_session_time": Int(totalSessionTime),
+                "completion_percentage": Int(currentState.progress * 100),
+                "resume_timestamp": ISO8601DateFormatter().string(from: Date())
+            ])
+
             return service.resume()
                 .map { .setTimerState(.running) }
                 .catch { error in
@@ -235,16 +312,44 @@ final class ReadingTimerReactor: Reactor {
 
         case .stopTimer:
             stopTimerTick()
+
+            let totalSessionTime = sessionStartDate.map { Date().timeIntervalSince($0) } ?? 0
+            let actualReadingTime = totalSessionTime - totalPauseDuration - totalBackgroundDuration
+
+            Analytics.logEvent("timer_stopped", parameters: [
+                "book_id": currentState.bookId,
+                "book_title": currentState.bookTitle,
+                "elapsed_seconds": currentState.elapsedSeconds,
+                "remaining_seconds": currentState.remainingSeconds,
+                "target_minutes": currentState.targetMinutes,
+                "target_seconds": currentState.targetMinutes * 60,
+                "completion_percentage": Int(currentState.progress * 100),
+                "pause_count": pauseCount,
+                "total_pause_duration": Int(totalPauseDuration),
+                "total_background_duration": Int(totalBackgroundDuration),
+                "total_session_time": Int(totalSessionTime),
+                "actual_reading_time": Int(actualReadingTime),
+                "stop_timestamp": ISO8601DateFormatter().string(from: Date()),
+                "is_manual_stop": true
+            ])
+
             return service.stop(realmSession: currentState.session)
                 .map { .setTimerState(.completed) }
-                .catch { error in
+                .catch { [weak self] error in
                     DebugLogger.shared.debug("세션 정지 에러, \(error)", category: "ReadingTimer")
-                    
+
                     if let stopError = error as? TimerStopUseCase.StopError,
                        case .sessionTooShort = stopError {
+                        Analytics.logEvent("timer_stop_failed", parameters: [
+                            "error_type": "session_too_short",
+                            "elapsed_seconds": self?.currentState.elapsedSeconds ?? 0,
+                            "minimum_required": 58,
+                            "pause_count": self?.pauseCount ?? 0,
+                            "total_pause_duration": Int(self?.totalPauseDuration ?? 0)
+                        ])
                         return .just(.setValidationError(.sessionTooShort))
                     }
-                    
+
                     return .concat([
                         .just(.setError(error)),
                         .just(.setTimerState(.completed))
@@ -260,6 +365,24 @@ final class ReadingTimerReactor: Reactor {
                     let remaining = self.service.stateManager.currentRemainingSeconds
 
                     if isCompleted {
+                        let totalSessionTime = self.sessionStartDate.map { Date().timeIntervalSince($0) } ?? 0
+                        let actualReadingTime = totalSessionTime - self.totalPauseDuration - self.totalBackgroundDuration
+
+                        Analytics.logEvent("timer_completed", parameters: [
+                            "book_id": self.currentState.bookId,
+                            "book_title": self.currentState.bookTitle,
+                            "elapsed_seconds": elapsed,
+                            "target_minutes": self.currentState.targetMinutes,
+                            "target_seconds": self.currentState.targetMinutes * 60,
+                            "pause_count": self.pauseCount,
+                            "total_pause_duration": Int(self.totalPauseDuration),
+                            "total_background_duration": Int(self.totalBackgroundDuration),
+                            "total_session_time": Int(totalSessionTime),
+                            "actual_reading_time": Int(actualReadingTime),
+                            "completion_timestamp": ISO8601DateFormatter().string(from: Date()),
+                            "is_auto_complete": true
+                        ])
+
                         self.stopTimerTick()
                         return self.service.stop(realmSession: self.currentState.session)
                             .flatMap { _ -> Observable<Mutation> in
@@ -278,10 +401,26 @@ final class ReadingTimerReactor: Reactor {
                 }
 
         case .enterBackground:
+            backgroundEnterTime = Date()
+
+            Analytics.logEvent("timer_background_entered", parameters: [
+                "book_id": currentState.bookId,
+                "elapsed_seconds": currentState.elapsedSeconds,
+                "remaining_seconds": currentState.remainingSeconds,
+                "timer_state": currentState.timerState == .running ? "running" : "paused",
+                "background_enter_timestamp": ISO8601DateFormatter().string(from: Date())
+            ])
+
             return service.enterBackground()
                 .flatMap { _ in Observable<Mutation>.empty() }
 
         case .enterForeground:
+            if let bgEnterTime = backgroundEnterTime {
+                let bgDuration = Date().timeIntervalSince(bgEnterTime)
+                totalBackgroundDuration += bgDuration
+                backgroundEnterTime = nil
+            }
+
             return service.enterForeground()
                 .flatMap { [weak self] result -> Observable<Mutation> in
                     guard let self = self else { return .empty() }
@@ -289,20 +428,54 @@ final class ReadingTimerReactor: Reactor {
                     let elapsed = self.service.stateManager.currentElapsedSeconds
                     let remaining = self.service.stateManager.currentRemainingSeconds
 
+                    let resultType: String
                     switch result {
                     case .completed:
+                        resultType = "completed"
                         self.stopTimerTick()
+
+                        Analytics.logEvent("timer_foreground_entered", parameters: [
+                            "book_id": self.currentState.bookId,
+                            "elapsed_seconds": elapsed,
+                            "remaining_seconds": remaining,
+                            "result_type": resultType,
+                            "total_background_duration": Int(self.totalBackgroundDuration),
+                            "foreground_enter_timestamp": ISO8601DateFormatter().string(from: Date())
+                        ])
+
                         return self.service.stop(realmSession: self.currentState.session)
                             .map { _ in .setTimerState(.completed) }
 
                     case .paused:
+                        resultType = "paused"
+
+                        Analytics.logEvent("timer_foreground_entered", parameters: [
+                            "book_id": self.currentState.bookId,
+                            "elapsed_seconds": elapsed,
+                            "remaining_seconds": remaining,
+                            "result_type": resultType,
+                            "total_background_duration": Int(self.totalBackgroundDuration),
+                            "foreground_enter_timestamp": ISO8601DateFormatter().string(from: Date())
+                        ])
+
                         return .concat([
                             .just(.setElapsedSeconds(elapsed)),
                             .just(.setRemainingSeconds(remaining))
                         ])
 
                     case .updated:
+                        resultType = "updated"
                         self.startTimerTick()
+
+                        Analytics.logEvent("timer_foreground_entered", parameters: [
+                            "book_id": self.currentState.bookId,
+                            "elapsed_seconds": elapsed,
+                            "remaining_seconds": remaining,
+                            "result_type": resultType,
+                            "total_background_duration": Int(self.totalBackgroundDuration),
+                            "foreground_enter_timestamp": ISO8601DateFormatter().string(from: Date())
+                        ])
+
                         return .concat([
                             .just(.setElapsedSeconds(elapsed)),
                             .just(.setRemainingSeconds(remaining))

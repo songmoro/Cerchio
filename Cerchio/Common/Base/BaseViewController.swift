@@ -9,6 +9,7 @@ import UIKit
 import ReactorKit
 import RxSwift
 import RxCocoa
+import FirebaseAnalytics
 
 // MARK: - Navigation Event Emittable Protocol
 protocol NavigationEventEmittable {
@@ -63,6 +64,11 @@ class BaseViewController<T: Reactor>: UIViewController, BaseViewControllerType, 
             self.bind(reactor: reactor)
             shouldBindAfterViewDidLoad = false
         }
+    }
+
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        logScreenView()
     }
 
     override func viewWillDisappear(_ animated: Bool) {
@@ -127,6 +133,17 @@ class BaseViewController<T: Reactor>: UIViewController, BaseViewControllerType, 
 
     func emitNavigationEvent(_ event: NavigationEvent) {
         navigationEvents.accept(event)
+    }
+
+    // MARK: - Analytics
+    private func logScreenView() {
+        let screenName = String(describing: type(of: self))
+            .replacingOccurrences(of: "ViewController", with: "")
+
+        Analytics.logEvent(AnalyticsEventScreenView, parameters: [
+            AnalyticsParameterScreenName: screenName,
+            AnalyticsParameterScreenClass: String(describing: type(of: self))
+        ])
     }
 
     deinit {
