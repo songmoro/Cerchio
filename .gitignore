@@ -90,5 +90,6 @@ iOSInjectionProject/
 # Secret
 # API Key, URL 등의 추적을 제외
 **/Secret/*.swift
+**/Secret/*.plist
 
 # End of https://www.toptal.com/developers/gitignore/api/swift
