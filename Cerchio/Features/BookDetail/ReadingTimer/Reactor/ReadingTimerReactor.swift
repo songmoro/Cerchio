@@ -385,6 +385,7 @@ final class ReadingTimerReactor: Reactor {
 
         timerDisposable = Observable<Int>
             .interval(.seconds(1), scheduler: MainScheduler.instance)
+            .startWith(0)  // 즉시 첫 틱 발생
             .map { _ in Action.timerTick }
             .bind(to: action)
     }
