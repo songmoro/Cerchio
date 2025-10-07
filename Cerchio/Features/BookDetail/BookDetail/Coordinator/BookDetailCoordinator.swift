@@ -50,6 +50,11 @@ final class BookDetailCoordinator: BaseCoordinator, Coordinatable {
         bindNavigationEvents()
     }
 
+    // MARK: - Setup (for session restoration)
+    func setupDependencies(serviceFactory: ServiceFactory, book: Book) {
+        self.dependencies = BookDetailDependencies(serviceFactory: serviceFactory, book: book)
+    }
+
     // MARK: - Private Methods
     private func showBookDetailViewController() {
         let bookDetailViewController = BookDetailViewController()
@@ -65,9 +70,6 @@ final class BookDetailCoordinator: BaseCoordinator, Coordinatable {
 
         // ServiceFactory 주입
         bookDetailViewController.setServiceFactory(dependencies.serviceFactory)
-
-        // 탭바 숨김 설정
-        bookDetailViewController.hidesBottomBarWhenPushed = true
 
         // 네비게이션 아이템 설정
         setupNavigationItems(for: bookDetailViewController, reactor: bookDetailReactor)

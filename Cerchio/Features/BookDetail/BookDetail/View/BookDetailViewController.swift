@@ -1441,7 +1441,10 @@ extension BookDetailViewController: UICollectionViewDelegate {
     }
 
     private func showReadingSessionList() {
-        guard let coordinator = coordinator as? BookDetailCoordinator else { return }
+        guard let coordinator = coordinator as? BookDetailCoordinator else {
+            print("[BookDetailVC] ⚠️ Coordinator is nil, cannot show reading session list")
+            return
+        }
         coordinator.showReadingSessionList()
     }
 

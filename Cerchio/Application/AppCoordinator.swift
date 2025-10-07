@@ -192,15 +192,12 @@ final class AppCoordinator: BaseCoordinator {
         // UI 작업이므로 메인 스레드 보장
         assert(Thread.isMainThread, "navigateToTimerScreen must be called on main thread")
 
-        // BookDetail 화면 생성
-        let bookDetailDependencies = BookDetailDependencies(
-            serviceFactory: dependencies.serviceFactory,
-            book: book
-        )
+        // BookDetail Coordinator 생성
         let bookDetailCoordinator = BookDetailCoordinator(navigationController: navigationController)
+        bookDetailCoordinator.setupDependencies(serviceFactory: dependencies.serviceFactory, book: book)
         addChildCoordinator(bookDetailCoordinator)
 
-        // BookDetail ViewController 생성 (push 안 함)
+        // BookDetail ViewController 생성
         let bookDetailViewController = BookDetailViewController()
         let bookRepository = dependencies.serviceFactory.createBookRepository()
         let service = BookDetailService(serviceFactory: dependencies.serviceFactory)
@@ -208,16 +205,29 @@ final class AppCoordinator: BaseCoordinator {
         bookDetailViewController.coordinator = bookDetailCoordinator
         bookDetailViewController.reactor = bookDetailReactor
         bookDetailViewController.setServiceFactory(dependencies.serviceFactory)
-        bookDetailViewController.hidesBottomBarWhenPushed = true
 
-        // 타이머 화면 생성
-        let readingTimerViewController = ReadingTimerViewController()
-        let sessionRepository = dependencies.serviceFactory.createReadingSessionRepository()
-        let readingTimerReactor = ReadingTimerReactor(
-            session: session,
-            sessionRepository: sessionRepository
+        // ReadingTimer Coordinator 생성 (세션 복원용)
+        let timerCoordinator = ReadingTimerCoordinator(
+            navigationController: navigationController,
+            serviceFactory: dependencies.serviceFactory,
+            bookId: book.id,
+            bookTitle: book.title,
+            session: session
         )
-        readingTimerViewController.reactor = readingTimerReactor
+        bookDetailCoordinator.addChildCoordinator(timerCoordinator)
+
+        // 타이머 완료 시 처리
+        timerCoordinator.completion
+            .take(1)
+            .subscribe(onNext: { [weak bookDetailCoordinator] in
+                if let coordinator = bookDetailCoordinator?.childCoordinators.first(where: { $0 is ReadingTimerCoordinator }) {
+                    bookDetailCoordinator?.removeChildCoordinator(coordinator)
+                }
+            })
+            .disposed(by: disposeBag)
+
+        // 타이머 ViewController 생성
+        let readingTimerViewController = timerCoordinator.createViewController()
 
         // 스택에 한 번에 설정 (화면 전환 없음)
         navigationController.setViewControllers([

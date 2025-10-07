@@ -15,12 +15,14 @@ final class ReadingTimerCoordinator: BaseCoordinator {
     private let bookId: String
     private let bookTitle: String
     private let targetMinutes: Int
+    private let restoredSession: TimerSessionManager.ActiveSession?
 
     private let completionRelay = PublishRelay<Void>()
     var completion: Observable<Void> {
         completionRelay.asObservable()
     }
 
+    /// 새로운 타이머 시작
     init(
         navigationController: UINavigationController,
         serviceFactory: ServiceFactory,
@@ -32,17 +34,50 @@ final class ReadingTimerCoordinator: BaseCoordinator {
         self.bookId = bookId
         self.bookTitle = bookTitle
         self.targetMinutes = targetMinutes
+        self.restoredSession = nil
+        super.init(navigationController: navigationController)
+    }
+
+    /// 세션 복원
+    init(
+        navigationController: UINavigationController,
+        serviceFactory: ServiceFactory,
+        bookId: String,
+        bookTitle: String,
+        session: TimerSessionManager.ActiveSession
+    ) {
+        self.serviceFactory = serviceFactory
+        self.bookId = bookId
+        self.bookTitle = bookTitle
+        self.targetMinutes = session.targetMinutes
+        self.restoredSession = session
         super.init(navigationController: navigationController)
     }
 
     override func start() {
+        let viewController = createViewController()
+        navigationController.pushViewController(viewController, animated: true)
+    }
+
+    /// ViewController 생성 (세션 복원 시 스택에 직접 추가하기 위해 분리)
+    func createViewController() -> ReadingTimerViewController {
         let repository = serviceFactory.createReadingSessionRepository()
-        let reactor = ReadingTimerReactor(
-            bookId: bookId,
-            bookTitle: bookTitle,
-            targetMinutes: targetMinutes,
-            sessionRepository: repository
-        )
+        let reactor: ReadingTimerReactor
+
+        // 세션 복원 여부에 따라 다른 init 사용
+        if let session = restoredSession {
+            reactor = ReadingTimerReactor(
+                session: session,
+                sessionRepository: repository
+            )
+        } else {
+            reactor = ReadingTimerReactor(
+                bookId: bookId,
+                bookTitle: bookTitle,
+                targetMinutes: targetMinutes,
+                sessionRepository: repository
+            )
+        }
 
         let viewController = ReadingTimerViewController()
         viewController.reactor = reactor
@@ -65,7 +100,7 @@ final class ReadingTimerCoordinator: BaseCoordinator {
             self?.showQuoteSave()
         }
 
-        navigationController.pushViewController(viewController, animated: true)
+        return viewController
     }
 
     private func showPhotoCapture() {
