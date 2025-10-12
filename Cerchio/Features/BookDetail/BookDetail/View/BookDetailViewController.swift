@@ -1510,8 +1510,45 @@ extension BookDetailViewController {
 
     // MARK: - Quote Actions
     private func shareQuote(_ quote: String, pageNumber: Int?) {
-        print("📤 [Share] Quote: \(quote), Page: \(pageNumber ?? 0)")
-        // TODO: Implement share functionality
+        guard let reactor = reactor else { return }
+
+        let bookDetail = reactor.currentState.bookDetail
+        let book = bookDetail?.book ?? reactor.currentState.book
+
+        // Prepare quote share data
+        let quoteData = QuoteShareData(
+            bookCoverImageURL: book.image,
+            bookCoverImage: nil, // Will be loaded in QuoteShareViewController
+            bookTitle: book.title,
+            bookAuthor: book.author,
+            quote: quote,
+            pageNumber: pageNumber,
+            date: Date(),
+            backgroundConfig: .default
+        )
+
+        // Show quote share screen
+        let quoteShareCoordinator = QuoteShareCoordinator(
+            navigationController: navigationController ?? UINavigationController(),
+            dependencies: QuoteShareCoordinator.Dependencies(quoteData: quoteData)
+        )
+
+        addChildCoordinator(quoteShareCoordinator)
+
+        quoteShareCoordinator.result
+            .subscribe(onNext: { [weak self] (result: QuoteShareCoordinator.Result) in
+                switch result {
+                case .imageExported(let image):
+                    print("✅ Quote image exported")
+                    self?.saveImageToPhotoLibrary(image)
+                case .cancelled:
+                    print("📝 Quote share cancelled")
+                }
+                self?.removeChildCoordinator(quoteShareCoordinator)
+            })
+            .disposed(by: disposeBag)
+
+        quoteShareCoordinator.start()
     }
 
     private func editQuote(_ quote: String, pageNumber: Int?, date: Date) {
