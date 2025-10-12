@@ -13,13 +13,18 @@ enum Localized: String {
     case `action.delete`
     case `action.done`
     case `action.edit`
+    case `action.reset`
     case `action.save`
     case `action.name`
     case `action.view_all`
     case `book_detail.add_quote`
+    case `book_detail.edit_book_info`
+    case `book_detail.edit_reading_info`
     case `book_detail.no_quotes`
     case `book_detail.photos`
     case `book_detail.saved_quotes`
+    case `book_detail.reset_and_delete`
+    case `book_detail.settings`
     case `camera.capture_button`
     case `camera.permission.go_to_settings`
     case `camera.permission.message`
@@ -48,4 +53,19 @@ enum Localized: String {
     case `tab.library`
     case `tab.search`
     case `tab.settings`
+    case `edit_book.title`
+    case `edit_book.book_title`
+    case `edit_book.author`
+    case `edit_book.cover_image`
+    case `edit_book.change_cover`
+    case `reset_delete.title`
+    case `reset_delete.reset_book_info`
+    case `reset_delete.reset_reading_records`
+    case `reset_delete.delete_book`
+    case `reset_delete.reset_book_info_confirm_title`
+    case `reset_delete.reset_book_info_confirm_message`
+    case `reset_delete.reset_records_confirm_title`
+    case `reset_delete.reset_records_confirm_message`
+    case `reset_delete.delete_book_confirm_title`
+    case `reset_delete.delete_book_confirm_message`
 }

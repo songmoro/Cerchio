@@ -17,6 +17,7 @@ protocol ReadingSessionRepositoryProtocol {
     func saveSession(_ session: RealmReadingSession) -> Observable<RealmReadingSession>
     func updateSession(_ session: RealmReadingSession) -> Observable<RealmReadingSession>
     func deleteSession(_ session: RealmReadingSession) -> Observable<Void>
+    func deleteAllSessionsForBook(bookId: String) -> Observable<Void>
     func completeSession(sessionId: String, endTime: Date, elapsedSeconds: Int, drawingData: DrawingData?) -> Observable<RealmReadingSession>
 }
 
@@ -61,6 +62,15 @@ final class ReadingSessionRepository: BaseRepository<RealmReadingSession>, Readi
 
     func deleteSession(_ session: RealmReadingSession) -> Observable<Void> {
         return delete(session)
+    }
+
+    func deleteAllSessionsForBook(bookId: String) -> Observable<Void> {
+        return performWriteTransaction {
+            let sessions = self.realm.objects(RealmReadingSession.self)
+                .filter("bookId == %@", bookId)
+            self.realm.delete(sessions)
+            return ()
+        }
     }
 
     func completeSession(sessionId: String, endTime: Date, elapsedSeconds: Int, drawingData: DrawingData?) -> Observable<RealmReadingSession> {

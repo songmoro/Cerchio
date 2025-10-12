@@ -26,8 +26,37 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     }
 
     private func configureRealm() {
+        // Schema version: (major * 1000) + (minor * 100) + build
+        // v1.2 build 2 = 1000 + 200 + 2 = 1202
+        let schemaVersion: UInt64 = 1201
+
+        let config = Realm.Configuration(
+            schemaVersion: schemaVersion,
+            migrationBlock: { migration, oldSchemaVersion in
+                // Migration from version < 1202 (v1.2 build 1)
+                if oldSchemaVersion < 1201 {
+                    // Added custom book info properties
+                    migration.enumerateObjects(ofType: "RealmBook") { oldObject, newObject in
+                        // Set default nil for new optional properties
+                        newObject!["customTitle"] = nil
+                        newObject!["customAuthor"] = nil
+                        newObject!["customCoverImagePath"] = nil
+                    }
+                }
+            }
+        )
+
+        Realm.Configuration.defaultConfiguration = config
+
         #if DEBUG
-        print(try! Realm().configuration.fileURL)
+        do {
+            let realm = try Realm()
+            print("📦 Realm configured successfully")
+            print("📍 Realm file URL: \(realm.configuration.fileURL?.absoluteString ?? "N/A")")
+            print("📊 Schema version: \(schemaVersion)")
+        } catch {
+            print("❌ Realm configuration failed: \(error)")
+        }
         #endif
     }
 

@@ -30,7 +30,12 @@ class RealmBook: Object {
     @Persisted var startDate: Date?
     @Persisted var endDate: Date?
 
-    convenience init(title: String, link: String, image: String, author: String, discount: String? = nil, publisher: String, isbn: String, description: String, pubdate: String, cleanTitle: String, cleanDescription: String, formattedPubDate: Date? = nil, formattedPrice: String? = nil, priceAsInt: Int? = nil, createAt: Date = Date(), isFavorite: Bool = false, totalPages: Int = 0, startDate: Date? = nil, endDate: Date? = nil) {
+    // Custom book info (overrides original data when set)
+    @Persisted var customTitle: String?
+    @Persisted var customAuthor: String?
+    @Persisted var customCoverImagePath: String?
+
+    convenience init(title: String, link: String, image: String, author: String, discount: String? = nil, publisher: String, isbn: String, description: String, pubdate: String, cleanTitle: String, cleanDescription: String, formattedPubDate: Date? = nil, formattedPrice: String? = nil, priceAsInt: Int? = nil, createAt: Date = Date(), isFavorite: Bool = false, totalPages: Int = 0, startDate: Date? = nil, endDate: Date? = nil, customTitle: String? = nil, customAuthor: String? = nil, customCoverImagePath: String? = nil) {
         self.init()
         self.title = title
         self.link = link
@@ -51,6 +56,9 @@ class RealmBook: Object {
         self.totalPages = totalPages
         self.startDate = startDate
         self.endDate = endDate
+        self.customTitle = customTitle
+        self.customAuthor = customAuthor
+        self.customCoverImagePath = customCoverImagePath
     }
 }
 
@@ -84,6 +92,11 @@ nonisolated struct Book: Hashable, Codable {
     let category: BookCategory?
     let rating: Int?
 
+    // Custom book info
+    let customTitle: String?
+    let customAuthor: String?
+    let customCoverImagePath: String?
+
     init(
         id: String = UUID().uuidString,
         title: String,
@@ -110,7 +123,10 @@ nonisolated struct Book: Hashable, Codable {
         dateRead: Date? = nil,
         readingStatus: ReadingStatus? = nil,
         category: BookCategory? = nil,
-        rating: Int? = nil
+        rating: Int? = nil,
+        customTitle: String? = nil,
+        customAuthor: String? = nil,
+        customCoverImagePath: String? = nil
     ) {
         self.id = id
         self.title = title
@@ -138,6 +154,22 @@ nonisolated struct Book: Hashable, Codable {
         self.readingStatus = readingStatus
         self.category = category
         self.rating = rating
+        self.customTitle = customTitle
+        self.customAuthor = customAuthor
+        self.customCoverImagePath = customCoverImagePath
+    }
+
+    // Computed properties for display (uses custom data if available)
+    var displayTitle: String {
+        return customTitle ?? title
+    }
+
+    var displayAuthor: String {
+        return customAuthor ?? author
+    }
+
+    var displayImage: String {
+        return customCoverImagePath ?? image
     }
 }
 
@@ -172,7 +204,10 @@ extension RealmBook {
             dateRead: nil,
             readingStatus: .toRead,
             category: nil,
-            rating: nil
+            rating: nil,
+            customTitle: customTitle,
+            customAuthor: customAuthor,
+            customCoverImagePath: customCoverImagePath
         )
     }
 }
@@ -201,7 +236,10 @@ extension Book {
             isFavorite: isFavorite,
             totalPages: totalPages ?? 0,
             startDate: startDate,
-            endDate: endDate
+            endDate: endDate,
+            customTitle: customTitle,
+            customAuthor: customAuthor,
+            customCoverImagePath: customCoverImagePath
         )
     }
 }

@@ -345,6 +345,31 @@ final class BookDetailCoordinator: BaseCoordinator, Coordinatable {
         readingRecordCoordinator.start()
     }
 
+    func showEditBookInfo() {
+        let viewController = EditBookInfoViewController()
+        let bookRepository = dependencies.serviceFactory.createBookRepository()
+        let reactor = EditBookInfoReactor(book: book, bookRepository: bookRepository)
+        viewController.reactor = reactor
+
+        let navController = UINavigationController(rootViewController: viewController)
+        navController.modalPresentationStyle = .formSheet
+
+        navigationController.present(navController, animated: true)
+    }
+
+    func showResetAndDelete() {
+        let viewController = ResetAndDeleteViewController()
+        let bookRepository = dependencies.serviceFactory.createBookRepository()
+        let reactor = ResetAndDeleteReactor(
+            book: book,
+            bookRepository: bookRepository,
+            serviceFactory: dependencies.serviceFactory
+        )
+        viewController.reactor = reactor
+
+        navigationController.pushViewController(viewController, animated: true)
+    }
+
     func showQuoteEdit(quote: String, pageNumber: Int?, date: Date) {
         let bookId = String(describing: dependencies.book.id)
 

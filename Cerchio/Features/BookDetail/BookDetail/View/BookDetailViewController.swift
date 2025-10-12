@@ -32,6 +32,7 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
         case readingRecords
         case savedQuotes
         case photoPages
+        case settings
     }
 
     nonisolated enum Item: Hashable, Sendable {
@@ -42,6 +43,7 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
         case addQuoteButton
         case photoItem(String, UIImage)
         case addPhotoButton
+        case settingsItem(SettingsItemType)
 
         func hash(into hasher: inout Hasher) {
             switch self {
@@ -65,6 +67,9 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
                 hasher.combine(id)
             case .addPhotoButton:
                 hasher.combine("addPhotoButton")
+            case .settingsItem(let type):
+                hasher.combine("settingsItem")
+                hasher.combine(type)
             }
         }
 
@@ -84,10 +89,18 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
                 return l == r
             case (.addPhotoButton, .addPhotoButton):
                 return true
+            case (.settingsItem(let l), .settingsItem(let r)):
+                return l == r
             default:
                 return false
             }
         }
+    }
+
+    nonisolated enum SettingsItemType: Hashable, Sendable {
+        case editBookInfo
+        case editReadingInfo
+        case resetAndDelete
     }
 
     // MARK: - Lifecycle
@@ -287,6 +300,7 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
         collectionView.register(AddQuoteButtonCell.self)
         collectionView.register(PhotoItemCell.self)
         collectionView.register(AddPhotoCell.self)
+        collectionView.register(SettingsItemCell.self)
 
         collectionView.register(
             ReadingRecordsSectionHeader.self,
@@ -302,6 +316,11 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
             PhotosSectionHeader.self,
             forSupplementaryViewOfKind: UICollectionView.elementKindSectionHeader,
             withReuseIdentifier: PhotosSectionHeader.identifier
+        )
+        collectionView.register(
+            SettingsSectionHeader.self,
+            forSupplementaryViewOfKind: UICollectionView.elementKindSectionHeader,
+            withReuseIdentifier: SettingsSectionHeader.identifier
         )
 
         view.addSubview(collectionView)
@@ -329,6 +348,8 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
                 return self.createSavedQuotesSection()
             case .photoPages:
                 return self.createPhotoPagesSection()
+            case .settings:
+                return self.createSettingsSection()
             }
         }
     }
@@ -446,6 +467,36 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
         return section
     }
 
+    private func createSettingsSection() -> NSCollectionLayoutSection {
+        let itemSize = NSCollectionLayoutSize(
+            widthDimension: .fractionalWidth(1.0),
+            heightDimension: .absolute(56)
+        )
+        let item = NSCollectionLayoutItem(layoutSize: itemSize)
+
+        let groupSize = NSCollectionLayoutSize(
+            widthDimension: .fractionalWidth(1.0),
+            heightDimension: .absolute(56)
+        )
+        let group = NSCollectionLayoutGroup.vertical(layoutSize: groupSize, subitems: [item])
+
+        let section = NSCollectionLayoutSection(group: group)
+        section.contentInsets = NSDirectionalEdgeInsets(top: 8, leading: 0, bottom: 8, trailing: 0)
+
+        let headerSize = NSCollectionLayoutSize(
+            widthDimension: .fractionalWidth(1.0),
+            heightDimension: .estimated(44)
+        )
+        let header = NSCollectionLayoutBoundarySupplementaryItem(
+            layoutSize: headerSize,
+            elementKind: UICollectionView.elementKindSectionHeader,
+            alignment: .top
+        )
+        section.boundarySupplementaryItems = [header]
+
+        return section
+    }
+
     // MARK: - DataSource Configuration
     private func configureDataSource() {
         dataSource = DataSource(collectionView: collectionView) { [weak self] collectionView, indexPath, item in
@@ -501,6 +552,29 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
                     self?.showPhotoCapture()
                 }
                 return cell
+
+            case .settingsItem(let type):
+                let cell: SettingsItemCell = collectionView.dequeueReusableCell(SettingsItemCell.self, for: indexPath)
+
+                switch type {
+                case .editBookInfo:
+                    cell.configure(
+                        icon: UIImage(systemName: "pencil"),
+                        title: String(localized: .bookDetailEditBookInfo)
+                    )
+                case .editReadingInfo:
+                    cell.configure(
+                        icon: UIImage(systemName: "book"),
+                        title: String(localized: .bookDetailEditReadingInfo)
+                    )
+                case .resetAndDelete:
+                    cell.configure(
+                        icon: UIImage(systemName: "trash"),
+                        title: String(localized: .bookDetailResetAndDelete)
+                    )
+                }
+
+                return cell
             }
         }
 
@@ -554,6 +628,16 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
                 }
                 return header
 
+            case .settings:
+                let header = collectionView.dequeueReusableSupplementaryView(
+                    ofKind: kind,
+                    withReuseIdentifier: SettingsSectionHeader.identifier,
+                    for: indexPath
+                ) as! SettingsSectionHeader
+
+                header.configure(title: String(localized: .bookDetailSettings))
+                return header
+
             default:
                 return nil
             }
@@ -564,10 +648,19 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
 
     private func updateSnapshot(with bookDetail: BookDetail) {
         var snapshot = Snapshot()
-        snapshot.appendSections([.bookInfo, .readingRecords, .savedQuotes, .photoPages])
+        snapshot.appendSections([.bookInfo, .readingRecords, .savedQuotes, .photoPages, .settings])
         snapshot.appendItems([.bookInfo(bookDetail)], toSection: .bookInfo)
         snapshot.appendItems([.addQuoteButton], toSection: .savedQuotes)
         snapshot.appendItems([.addPhotoButton], toSection: .photoPages)
+
+        // Settings items
+        let settingsItems: [Item] = [
+            .settingsItem(.editBookInfo),
+            .settingsItem(.editReadingInfo),
+            .settingsItem(.resetAndDelete)
+        ]
+        snapshot.appendItems(settingsItems, toSection: .settings)
+
         dataSource.apply(snapshot, animatingDifferences: true)
     }
 
@@ -912,8 +1005,42 @@ extension BookDetailViewController: UICollectionViewDelegate {
         switch item {
         case .savedQuote(let quote, let pageNumber, let date):
             editQuote(quote, pageNumber: pageNumber, date: date)
+
+        case .settingsItem(let type):
+            handleSettingsItemTap(type)
+
         default:
             break
         }
+
+        // Deselect cell
+        collectionView.deselectItem(at: indexPath, animated: true)
+    }
+
+    private func handleSettingsItemTap(_ type: SettingsItemType) {
+        switch type {
+        case .editBookInfo:
+            showEditBookInfo()
+        case .editReadingInfo:
+            showReadingInfoEditFromSettings()
+        case .resetAndDelete:
+            showResetAndDelete()
+        }
+    }
+
+    // MARK: - Settings Actions
+    private func showEditBookInfo() {
+        guard let coordinator = coordinator as? BookDetailCoordinator else { return }
+        coordinator.showEditBookInfo()
+    }
+
+    private func showReadingInfoEditFromSettings() {
+        guard let bookDetail = reactor?.currentState.bookDetail else { return }
+        showReadingInfoEdit(bookDetail: bookDetail)
+    }
+
+    private func showResetAndDelete() {
+        guard let coordinator = coordinator as? BookDetailCoordinator else { return }
+        coordinator.showResetAndDelete()
     }
 }
