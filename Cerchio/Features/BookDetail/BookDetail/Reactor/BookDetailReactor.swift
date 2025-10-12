@@ -6,8 +6,10 @@
 //
 
 import Foundation
+import UIKit
 import ReactorKit
 import RxSwift
+import RealmSwift
 import FirebaseAnalytics
 
 final class BookDetailReactor: Reactor {
@@ -20,6 +22,19 @@ final class BookDetailReactor: Reactor {
         case deleteBook
         case updateBookAndReload(Book)
         case loadReadingStatistics
+
+        // Photo actions
+        case loadPhotos
+        case savePhoto(UIImage)
+        case deletePhoto(String)
+
+        // Tag actions
+        case loadTags
+        case saveTags([String])
+
+        // Quote actions
+        case loadQuotes
+        case deleteQuote(String, Date)
     }
 
     enum Mutation {
@@ -31,6 +46,30 @@ final class BookDetailReactor: Reactor {
         case updateBook(Book)
         case bookDeleted
         case setReadingStatistics(ReadingStatistics)
+
+        // Data loading
+        case setPhotos([PhotoItem])
+        case setQuotes([RealmQuote])
+        case setTags([RealmTag])
+
+        // Data change notifications
+        case photoSaved
+        case photoDeleted
+        case tagsSaved
+        case quoteDeleted
+    }
+
+    struct PhotoItem: Hashable, Sendable {
+        let id: String
+        let image: UIImage
+
+        func hash(into hasher: inout Hasher) {
+            hasher.combine(id)
+        }
+
+        static func == (lhs: PhotoItem, rhs: PhotoItem) -> Bool {
+            return lhs.id == rhs.id
+        }
     }
 
     struct State {
@@ -42,6 +81,16 @@ final class BookDetailReactor: Reactor {
         var readingProgress: ReadingProgress?
         var isDeleted: Bool = false
         var readingStatistics: ReadingStatistics?
+
+        // Data
+        var photos: [PhotoItem] = []
+        var quotes: [RealmQuote] = []
+        var tags: [RealmTag] = []
+
+        // Data change flags for UI refresh
+        var shouldRefreshPhotos: Bool = false
+        var shouldRefreshTags: Bool = false
+        var shouldRefreshQuotes: Bool = false
     }
 
     let initialState: State
@@ -225,11 +274,135 @@ final class BookDetailReactor: Reactor {
                     print("❌ Failed to load reading statistics: \(error)")
                     return Observable.empty()
                 }
+
+        case .loadPhotos:
+            let bookId = String(describing: currentState.book.id)
+            return service.loadPhotos(bookId: bookId)
+                .observe(on: MainScheduler.instance)
+                .flatMap { photos -> Observable<Mutation> in
+                    let photoData = photos.sorted { $0.createdAt > $1.createdAt }
+                        .map { (id: String(describing: $0.id), path: $0.localImagePath) }
+
+                    return Observable.create { observer in
+                        Task {
+                            var photoItems: [PhotoItem] = []
+                            for data in photoData {
+                                if let image = await ImageStorageManager.shared.loadImage(fromPath: data.path) {
+                                    photoItems.append(PhotoItem(id: data.id, image: image))
+                                }
+                            }
+                            await MainActor.run {
+                                observer.onNext(.setPhotos(photoItems))
+                                observer.onCompleted()
+                            }
+                        }
+                        return Disposables.create()
+                    }
+                }
+                .catch { error in
+                    print("❌ Failed to load photos: \(error)")
+                    return Observable.empty()
+                }
+
+        case .loadQuotes:
+            let bookId = String(describing: currentState.book.id)
+            return service.loadQuotes(bookId: bookId)
+                .observe(on: MainScheduler.instance)
+                .map { Mutation.setQuotes($0) }
+                .catch { error in
+                    print("❌ Failed to load quotes: \(error)")
+                    return Observable.empty()
+                }
+
+        case .loadTags:
+            let bookId = String(describing: currentState.book.id)
+            return service.loadTags(bookId: bookId)
+                .observe(on: MainScheduler.instance)
+                .map { Mutation.setTags($0) }
+                .catch { error in
+                    print("❌ Failed to load tags: \(error)")
+                    return Observable.empty()
+                }
+
+        case .savePhoto(let image):
+            let bookId = String(describing: currentState.book.id)
+            return service.savePhoto(image, bookId: bookId)
+                .map { _ in Mutation.photoSaved }
+                .catch { error in
+                    print("❌ Failed to save photo: \(error)")
+                    return Observable.just(Mutation.setError(error))
+                }
+
+        case .deletePhoto(let photoId):
+            guard let objectId = try? ObjectId(string: photoId),
+                  let realm = try? Realm(),
+                  let photo = realm.object(ofType: RealmPhoto.self, forPrimaryKey: objectId) else {
+                print("❌ Photo not found")
+                return Observable.empty()
+            }
+
+            // Delete local file
+            _ = ImageStorageManager.shared.deleteImage(atPath: photo.localImagePath)
+
+            // Delete from repository
+            let photoRepository = service.serviceFactory.createPhotoRepository()
+            return photoRepository.deletePhoto(photo)
+                .map { _ in Mutation.photoDeleted }
+                .catch { error in
+                    print("❌ Failed to delete photo: \(error)")
+                    return Observable.just(Mutation.setError(error))
+                }
+
+        case .saveTags(let tags):
+            let bookId = String(describing: currentState.book.id)
+            let tagRepository = service.serviceFactory.createTagRepository()
+
+            // Delete existing tags, then save new ones
+            return tagRepository.deleteTags(for: bookId)
+                .flatMap { _ -> Observable<Mutation> in
+                    guard !tags.isEmpty else {
+                        return Observable.just(Mutation.tagsSaved)
+                    }
+
+                    let realmTags = tags.map { RealmTag(bookId: bookId, tagName: $0) }
+                    return tagRepository.saveTags(realmTags)
+                        .map { _ in Mutation.tagsSaved }
+                }
+                .catch { error in
+                    print("❌ Failed to save tags: \(error)")
+                    return Observable.just(Mutation.setError(error))
+                }
+
+        case .deleteQuote(let quote, let date):
+            let bookId = String(describing: currentState.book.id)
+            let quoteRepository = service.serviceFactory.createQuoteRepository()
+
+            return quoteRepository.getQuotes(for: bookId)
+                .take(1)
+                .flatMap { quotes -> Observable<Mutation> in
+                    let quotesArray = Array(quotes)
+                    guard let quoteToDelete = quotesArray.first(where: { $0.quote == quote && $0.createdAt == date }) else {
+                        print("❌ Quote not found")
+                        return Observable.empty()
+                    }
+
+                    return quoteRepository.deleteQuote(quoteToDelete)
+                        .map { _ in Mutation.quoteDeleted }
+                }
+                .catch { error in
+                    print("❌ Failed to delete quote: \(error)")
+                    return Observable.just(Mutation.setError(error))
+                }
         }
     }
 
     func reduce(state: State, mutation: Mutation) -> State {
         var newState = state
+
+        // Reset refresh flags
+        newState.shouldRefreshPhotos = false
+        newState.shouldRefreshTags = false
+        newState.shouldRefreshQuotes = false
 
         switch mutation {
         case .setBookDetail(let bookDetail):
@@ -257,6 +430,24 @@ final class BookDetailReactor: Reactor {
 
         case .setReadingStatistics(let statistics):
             newState.readingStatistics = statistics
+
+        case .setPhotos(let photos):
+            newState.photos = photos
+
+        case .setQuotes(let quotes):
+            newState.quotes = quotes
+
+        case .setTags(let tags):
+            newState.tags = tags
+
+        case .photoSaved, .photoDeleted:
+            newState.shouldRefreshPhotos = true
+
+        case .tagsSaved:
+            newState.shouldRefreshTags = true
+
+        case .quoteDeleted:
+            newState.shouldRefreshQuotes = true
         }
 
         return newState

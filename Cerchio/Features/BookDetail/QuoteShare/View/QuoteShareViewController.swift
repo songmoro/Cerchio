@@ -18,6 +18,21 @@ final class QuoteShareViewController: BaseViewController<QuoteShareReactor> {
 
     private var settingsViewController: QuoteShareSettingsViewController?
 
+    // Navigation buttons
+    private let dismissButton = UIBarButtonItem(
+        image: UIImage(systemName: "chevron.left"),
+        style: .plain,
+        target: nil,
+        action: nil
+    )
+
+    private let saveButton = UIBarButtonItem(
+        title: "저장",
+        style: .done,
+        target: nil,
+        action: nil
+    )
+
     // MARK: - UI Components
     private let scrollView: UIScrollView = {
         let scrollView = UIScrollView()
@@ -117,6 +132,7 @@ final class QuoteShareViewController: BaseViewController<QuoteShareReactor> {
     // MARK: - Lifecycle
     override func viewDidLoad() {
         super.viewDidLoad()
+        title = "문장 공유"
         setupNavigationBar()
     }
 
@@ -210,22 +226,7 @@ final class QuoteShareViewController: BaseViewController<QuoteShareReactor> {
     }
 
     private func setupNavigationBar() {
-        title = "문장 공유"
-
-        let dismissButton = UIBarButtonItem(
-            image: UIImage(systemName: "chevron.left"),
-            style: .plain,
-            target: nil,
-            action: nil
-        )
         navigationItem.leftBarButtonItem = dismissButton
-
-        let saveButton = UIBarButtonItem(
-            title: "저장",
-            style: .done,
-            target: nil,
-            action: nil
-        )
         navigationItem.rightBarButtonItem = saveButton
     }
 
@@ -296,12 +297,12 @@ final class QuoteShareViewController: BaseViewController<QuoteShareReactor> {
     // MARK: - Binding
     override func bind(reactor: QuoteShareReactor) {
         // Action
-        navigationItem.leftBarButtonItem?.rx.tap
+        dismissButton.rx.tap
             .map { Reactor.Action.dismissTapped }
             .bind(to: reactor.action)
             .disposed(by: disposeBag)
 
-        navigationItem.rightBarButtonItem?.rx.tap
+        saveButton.rx.tap
             .map { Reactor.Action.saveTapped }
             .bind(to: reactor.action)
             .disposed(by: disposeBag)

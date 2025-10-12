@@ -204,7 +204,6 @@ final class AppCoordinator: BaseCoordinator {
         let bookDetailReactor = BookDetailReactor(book: book, bookRepository: bookRepository, service: service)
         bookDetailViewController.coordinator = bookDetailCoordinator
         bookDetailViewController.reactor = bookDetailReactor
-        bookDetailViewController.setServiceFactory(dependencies.serviceFactory)
 
         // ReadingTimer Coordinator 생성 (세션 복원용)
         let timerCoordinator = ReadingTimerCoordinator(

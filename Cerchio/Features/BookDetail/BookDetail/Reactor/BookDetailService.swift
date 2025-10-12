@@ -10,7 +10,7 @@ import RxSwift
 import RealmSwift
 
 final class BookDetailService {
-    private let serviceFactory: ServiceFactory
+    let serviceFactory: ServiceFactory
 
     init(serviceFactory: ServiceFactory) {
         self.serviceFactory = serviceFactory

@@ -29,6 +29,7 @@ final class BookDetailCoordinator: BaseCoordinator, Coordinatable {
     // MARK: - Properties
     private var dependencies: BookDetailDependencies!
     private weak var currentReactor: BookDetailReactor?
+    private var photoCompletionHandler: ((UIImage) -> Void)?
 
     private var book: Book {
         return dependencies.book
@@ -67,9 +68,6 @@ final class BookDetailCoordinator: BaseCoordinator, Coordinatable {
 
         bookDetailViewController.coordinator = self
         bookDetailViewController.reactor = bookDetailReactor
-
-        // ServiceFactory 주입
-        bookDetailViewController.setServiceFactory(dependencies.serviceFactory)
 
         // 네비게이션 아이템 설정
         setupNavigationItems(for: bookDetailViewController, reactor: bookDetailReactor)
@@ -158,13 +156,144 @@ final class BookDetailCoordinator: BaseCoordinator, Coordinatable {
     }
 
     func showQuoteEntry() {
-        // TODO: QuoteEntryCoordinator 구현 시 추가
-        print("Show quote entry for book: \(book.cleanTitle)")
+        let bookId = String(describing: dependencies.book.id)
+
+        let quoteSaveCoordinator = QuoteSaveCoordinator(
+            navigationController: navigationController,
+            dependencies: QuoteSaveCoordinator.Dependencies(
+                bookId: bookId,
+                serviceFactory: dependencies.serviceFactory
+            )
+        )
+
+        addChildCoordinator(quoteSaveCoordinator)
+
+        quoteSaveCoordinator.result
+            .subscribe(onNext: { [weak self] result in
+                switch result {
+                case .quoteSaved(let quote):
+                    print("✅ Quote saved: \(quote)")
+                    self?.currentReactor?.action.onNext(.loadQuotes)
+                case .cancelled:
+                    print("📝 Quote save cancelled")
+                }
+                self?.removeChildCoordinator(quoteSaveCoordinator)
+            })
+            .disposed(by: disposeBag)
+
+        quoteSaveCoordinator.start()
     }
 
     func showReadingProgress() {
         // TODO: ReadingProgressCoordinator 구현 시 추가
         print("Show reading progress for book: \(book.cleanTitle)")
+    }
+
+    func showQuoteShare(quoteData: QuoteShareData) {
+        let quoteShareCoordinator = QuoteShareCoordinator(
+            navigationController: navigationController,
+            dependencies: QuoteShareCoordinator.Dependencies(quoteData: quoteData)
+        )
+
+        addChildCoordinator(quoteShareCoordinator)
+
+        quoteShareCoordinator.result
+            .subscribe(onNext: { [weak self] result in
+                switch result {
+                case .imageExported(let image):
+                    print("✅ Quote image exported")
+                    self?.saveImageToPhotoLibrary(image)
+                case .cancelled:
+                    print("📝 Quote share cancelled")
+                }
+                self?.removeChildCoordinator(quoteShareCoordinator)
+            })
+            .disposed(by: disposeBag)
+
+        quoteShareCoordinator.start()
+    }
+
+    func showPhotoCapture(completion: @escaping (UIImage) -> Void) {
+        guard let topViewController = navigationController.topViewController else { return }
+
+        CameraPermissionManager.shared.handleCameraPermission(from: topViewController) { [weak self] granted in
+            guard granted else {
+                print("❌ Camera permission denied")
+                return
+            }
+
+            let cameraVC = CameraViewController()
+            cameraVC.delegate = self
+            cameraVC.modalPresentationStyle = .fullScreen
+
+            // Store completion for later use
+            self?.photoCompletionHandler = completion
+
+            self?.navigationController.present(cameraVC, animated: true)
+        }
+    }
+
+    func showAllQuotes() {
+        let bookId = String(describing: dependencies.book.id)
+
+        let quoteListCoordinator = QuoteListCoordinator(
+            navigationController: navigationController,
+            dependencies: QuoteListCoordinator.Dependencies(
+                bookId: bookId,
+                serviceFactory: dependencies.serviceFactory
+            )
+        )
+
+        addChildCoordinator(quoteListCoordinator)
+
+        quoteListCoordinator.result
+            .subscribe(onNext: { [weak self] result in
+                switch result {
+                case .quotesUpdated:
+                    print("✅ Quotes updated, refreshing...")
+                    self?.currentReactor?.action.onNext(.loadQuotes)
+                case .dismissed:
+                    print("📝 Quote list dismissed")
+                }
+                self?.removeChildCoordinator(quoteListCoordinator)
+            })
+            .disposed(by: disposeBag)
+
+        quoteListCoordinator.start()
+    }
+
+    func showAllPhotos() {
+        let bookId = String(describing: dependencies.book.id)
+
+        let photoListCoordinator = PhotoListCoordinator(
+            navigationController: navigationController,
+            dependencies: PhotoListCoordinator.Dependencies(
+                bookId: bookId,
+                serviceFactory: dependencies.serviceFactory,
+                onAddPhotoTapped: { [weak self] in
+                    self?.showPhotoCapture { image in
+                        self?.currentReactor?.action.onNext(.savePhoto(image))
+                    }
+                }
+            )
+        )
+
+        addChildCoordinator(photoListCoordinator)
+
+        photoListCoordinator.result
+            .subscribe(onNext: { [weak self] result in
+                switch result {
+                case .photosUpdated:
+                    print("✅ Photos updated, refreshing...")
+                    self?.currentReactor?.action.onNext(.loadPhotos)
+                case .dismissed:
+                    print("📷 Photo list dismissed")
+                }
+                self?.removeChildCoordinator(photoListCoordinator)
+            })
+            .disposed(by: disposeBag)
+
+        photoListCoordinator.start()
     }
 
     func showReadingSessionList() {
@@ -187,7 +316,7 @@ final class BookDetailCoordinator: BaseCoordinator, Coordinatable {
         navigationController.pushViewController(viewController, animated: true)
     }
 
-    private func showReadingRecordEntry(reloadHandler: (() -> Void)? = nil) {
+    func showReadingRecordEntry(reloadHandler: (() -> Void)? = nil) {
         let readingRecordCoordinator = ReadingRecordCoordinator(
             navigationController: navigationController,
             dependencies: ReadingRecordCoordinator.Dependencies(
@@ -203,6 +332,8 @@ final class BookDetailCoordinator: BaseCoordinator, Coordinatable {
                 switch result {
                 case .recordSaved(let content):
                     print("✅ Reading record saved: \(content)")
+                    // Trigger statistics reload
+                    self?.currentReactor?.action.onNext(.loadReadingStatistics)
                     reloadHandler?()
                 case .cancelled:
                     print("📝 Reading record cancelled")
@@ -212,5 +343,78 @@ final class BookDetailCoordinator: BaseCoordinator, Coordinatable {
             .disposed(by: disposeBag)
 
         readingRecordCoordinator.start()
+    }
+
+    func showQuoteEdit(quote: String, pageNumber: Int?, date: Date) {
+        let bookId = String(describing: dependencies.book.id)
+
+        let quoteSaveCoordinator = QuoteSaveCoordinator(
+            navigationController: navigationController,
+            dependencies: QuoteSaveCoordinator.Dependencies(
+                bookId: bookId,
+                serviceFactory: dependencies.serviceFactory,
+                existingQuote: quote,
+                existingPageNumber: pageNumber
+            )
+        )
+
+        addChildCoordinator(quoteSaveCoordinator)
+
+        quoteSaveCoordinator.result
+            .subscribe(onNext: { [weak self] result in
+                switch result {
+                case .quoteSaved(let updatedQuote):
+                    print("✅ Quote updated: \(updatedQuote)")
+                    self?.currentReactor?.action.onNext(.loadQuotes)
+                case .cancelled:
+                    print("📝 Quote edit cancelled")
+                }
+                self?.removeChildCoordinator(quoteSaveCoordinator)
+            })
+            .disposed(by: disposeBag)
+
+        quoteSaveCoordinator.start()
+    }
+
+    // MARK: - Helper Methods
+    private func saveImageToPhotoLibrary(_ image: UIImage) {
+        guard let topViewController = navigationController.topViewController else { return }
+
+        PhotoLibraryPermissionManager.shared.handlePhotoLibraryPermission(from: topViewController) { [weak self] granted in
+            guard granted else {
+                print("❌ Photo library permission denied")
+                return
+            }
+
+            UIImageWriteToSavedPhotosAlbum(image, self, #selector(self?.imageSaveCompleted(_:didFinishSavingWithError:contextInfo:)), nil)
+        }
+    }
+
+    @objc private func imageSaveCompleted(_ image: UIImage, didFinishSavingWithError error: Error?, contextInfo: UnsafeRawPointer) {
+        guard let topViewController = navigationController.topViewController else { return }
+
+        let alert = UIAlertController(
+            title: error == nil ? String(localized: .photoSaveSuccessTitle) : String(localized: .photoSaveFailureTitle),
+            message: error == nil ? String(localized: .photoSaveSuccessMessage) : String(localized: .photoSaveFailureMessage),
+            preferredStyle: .alert
+        )
+        alert.addAction(UIAlertAction(title: String(localized: .actionConfirm), style: .default))
+        topViewController.present(alert, animated: true)
+    }
+}
+
+// MARK: - CameraViewControllerDelegate
+extension BookDetailCoordinator: CameraViewControllerDelegate {
+    func cameraViewController(_ controller: CameraViewController, didCapturePhoto image: UIImage) {
+        controller.dismiss(animated: true) { [weak self] in
+            self?.photoCompletionHandler?(image)
+            self?.photoCompletionHandler = nil
+        }
+    }
+
+    func cameraViewControllerDidCancel(_ controller: CameraViewController) {
+        controller.dismiss(animated: true) { [weak self] in
+            self?.photoCompletionHandler = nil
+        }
     }
 }
