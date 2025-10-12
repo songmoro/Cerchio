@@ -183,6 +183,19 @@ enum Environment {
     case staging
     case production
     case testing
+
+    /// Returns the current environment based on build configuration
+    static var current: Environment {
+        #if DEBUG
+        // Check bundle identifier to distinguish Development from Debug
+        if let bundleId = Bundle.main.bundleIdentifier, bundleId.contains(".dev") {
+            return .development
+        }
+        return .testing
+        #else
+        return .production
+        #endif
+    }
 }
 
 extension ServiceFactory {
@@ -201,6 +214,11 @@ extension ServiceFactory {
         }
 
         return ServiceFactory(dependencies: dependencies)
+    }
+
+    /// Builds ServiceFactory for current environment
+    static func buildForCurrentEnvironment() -> ServiceFactory {
+        return build(for: .current)
     }
 }
 
