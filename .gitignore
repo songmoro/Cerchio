@@ -92,4 +92,7 @@ iOSInjectionProject/
 **/Secret/*.swift
 **/Secret/*.plist
 
+# Markdown files
+*.md
+
 # End of https://www.toptal.com/developers/gitignore/api/swift
