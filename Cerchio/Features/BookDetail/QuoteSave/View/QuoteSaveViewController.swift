@@ -65,10 +65,23 @@ final class QuoteSaveViewController: UIViewController {
     }()
 
     // MARK: - Initialization
-    init(bookId: String) {
+    init(bookId: String, existingQuote: String? = nil, existingPageNumber: Int? = nil) {
         self.bookId = bookId
         super.init(nibName: nil, bundle: nil)
+
+        // 기존 문장이 있으면 편집 모드로 설정
+        if let existingQuote = existingQuote {
+            self.isEditMode = true
+            // Note: editingQuoteId는 나중에 repository에서 조회하여 설정
+            // 여기서는 UI만 미리 설정
+            self.preloadedQuote = existingQuote
+            self.preloadedPageNumber = existingPageNumber
+        }
     }
+
+    // Preloaded data for edit mode
+    private var preloadedQuote: String?
+    private var preloadedPageNumber: Int?
 
     func setQuoteRepository(_ repository: QuoteRepositoryProtocol) {
         quoteRepository = repository
@@ -96,6 +109,18 @@ final class QuoteSaveViewController: UIViewController {
         setupNavigationBar()
         setupKeyboardHandling()
         setupModalBehavior()
+
+        // Preloaded 데이터가 있으면 설정
+        if let preloadedQuote = preloadedQuote {
+            textView.text = preloadedQuote
+            if let pageNumber = preloadedPageNumber {
+                pageNumberTextField.text = String(pageNumber)
+            }
+            updateSaveButtonState()
+
+            // 편집 모드에서는 quoteId 찾기
+            loadEditingQuoteId(quote: preloadedQuote)
+        }
 
         // 자동으로 텍스트뷰에 포커스
         textView.becomeFirstResponder()
@@ -365,6 +390,24 @@ final class QuoteSaveViewController: UIViewController {
         alert.addAction(UIAlertAction(title: String(localized: .actionConfirm), style: .default))
 
         present(alert, animated: true)
+    }
+
+    // MARK: - Edit Mode
+    private func loadEditingQuoteId(quote: String) {
+        guard let quoteRepository = quoteRepository else { return }
+
+        quoteRepository.getQuotes(for: bookId)
+            .take(1)
+            .subscribe(onNext: { [weak self] quotes in
+                // Realm Results를 Array로 변환하여 검색
+                let quotesArray = Array(quotes)
+                if let matchingQuote = quotesArray.first(where: { $0.quote == quote }) {
+                    self?.editingQuoteId = String(describing: matchingQuote.id)
+                }
+            }, onError: { error in
+                print("❌ Failed to load quote ID for editing: \(error)")
+            })
+            .disposed(by: disposeBag)
     }
 
     // MARK: - Deinit

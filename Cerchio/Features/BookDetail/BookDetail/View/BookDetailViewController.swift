@@ -497,6 +497,10 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
             case .savedQuote(let quote, let pageNumber, let date):
                 let cell: SavedQuoteCell = collectionView.dequeueReusableCell(SavedQuoteCell.self, for: indexPath)
                 cell.configure(with: quote, pageNumber: pageNumber, date: date)
+
+                // 롱프레스 컨텍스트 메뉴 설정
+                self?.setupQuoteContextMenu(for: cell, quote: quote, pageNumber: pageNumber, date: date)
+
                 return cell
 
             case .addQuoteButton:
@@ -1012,6 +1016,38 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
             }
         ]
     }
+
+    // MARK: - Quote Context Menu
+    private func setupQuoteContextMenu(for cell: SavedQuoteCell, quote: String, pageNumber: Int?, date: Date) {
+        let menuItems = createQuoteMenuItems(for: quote, pageNumber: pageNumber, date: date)
+        let highlightConfig = ViewHighlightConfiguration.withContextualRotation()
+
+        CircularMenuManager.shared.addLongPressMenu(
+            to: cell,
+            targetView: cell,
+            items: menuItems,
+            presentingViewController: self,
+            minimumPressDuration: 0.5,
+            highlightConfiguration: highlightConfig
+        )
+    }
+
+    private func createQuoteMenuItems(for quote: String, pageNumber: Int?, date: Date) -> [CircularMenuItem] {
+        return [
+            // 1. 공유
+            CircularMenuItem(name: "공유", image: UIImage(systemName: "square.and.arrow.up")) { [weak self] in
+                self?.shareQuote(quote, pageNumber: pageNumber)
+            },
+            // 2. 수정
+            CircularMenuItem(name: "수정", image: UIImage(systemName: "pencil")) { [weak self] in
+                self?.editQuote(quote, pageNumber: pageNumber, date: date)
+            },
+            // 3. 삭제
+            CircularMenuItem(name: "삭제", image: UIImage(systemName: "trash")) { [weak self] in
+                self?.showDeleteQuoteConfirmation(for: quote, date: date)
+            }
+        ]
+    }
     
     private func showImagePreview(_ image: UIImage) {
         let previewVC = UIViewController()
@@ -1470,5 +1506,89 @@ extension BookDetailViewController {
 
     private func removeChildCoordinator(_ coordinator: Coordinator) {
         childCoordinators.removeAll { $0 === coordinator }
+    }
+
+    // MARK: - Quote Actions
+    private func shareQuote(_ quote: String, pageNumber: Int?) {
+        print("📤 [Share] Quote: \(quote), Page: \(pageNumber ?? 0)")
+        // TODO: Implement share functionality
+    }
+
+    private func editQuote(_ quote: String, pageNumber: Int?, date: Date) {
+        guard let reactor = reactor, let serviceFactory = serviceFactory else { return }
+        let bookId = String(describing: reactor.currentState.book.id)
+
+        // 기존 문장을 수정하기 위해 QuoteSaveCoordinator 재사용
+        let quoteSaveCoordinator = QuoteSaveCoordinator(
+            navigationController: navigationController ?? UINavigationController(),
+            dependencies: QuoteSaveCoordinator.Dependencies(
+                bookId: bookId,
+                serviceFactory: serviceFactory,
+                existingQuote: quote,
+                existingPageNumber: pageNumber
+            )
+        )
+
+        addChildCoordinator(quoteSaveCoordinator)
+
+        quoteSaveCoordinator.result
+            .subscribe(onNext: { [weak self] result in
+                switch result {
+                case .quoteSaved(let updatedQuote):
+                    print("✅ Quote updated: \(updatedQuote)")
+                    self?.loadQuotesAndUpdateUI()
+                case .cancelled:
+                    print("📝 Quote edit cancelled")
+                }
+                self?.removeChildCoordinator(quoteSaveCoordinator)
+            })
+            .disposed(by: disposeBag)
+
+        quoteSaveCoordinator.start()
+    }
+
+    private func showDeleteQuoteConfirmation(for quote: String, date: Date) {
+        let alert = UIAlertController(
+            title: "문장 삭제",
+            message: "이 문장을 삭제하시겠습니까?",
+            preferredStyle: .alert
+        )
+
+        alert.addAction(UIAlertAction(title: "취소", style: .cancel))
+        alert.addAction(UIAlertAction(title: "삭제", style: .destructive) { [weak self] _ in
+            self?.deleteQuote(quote, date: date)
+        })
+
+        present(alert, animated: true)
+    }
+
+    private func deleteQuote(_ quote: String, date: Date) {
+        guard let reactor = reactor, let serviceFactory = serviceFactory else { return }
+        let bookId = String(describing: reactor.currentState.book.id)
+
+        let quoteRepository = serviceFactory.createQuoteRepository()
+
+        // 문장 텍스트와 날짜로 해당 문장 찾아서 삭제
+        quoteRepository.getQuotes(for: bookId)
+            .observe(on: MainScheduler.instance)
+            .take(1)
+            .subscribe(onNext: { [weak self] quotes in
+                // Realm Results를 Array로 변환하여 검색
+                let quotesArray = Array(quotes)
+                if let quoteToDelete = quotesArray.first(where: { $0.quote == quote && $0.createdAt == date }) {
+                    quoteRepository.deleteQuote(quoteToDelete)
+                        .observe(on: MainScheduler.instance)
+                        .subscribe(onNext: { [weak self] _ in
+                            print("✅ Quote deleted successfully")
+                            self?.loadQuotesAndUpdateUI()
+                        }, onError: { error in
+                            print("❌ Failed to delete quote: \(error)")
+                        })
+                        .disposed(by: self?.disposeBag ?? DisposeBag())
+                }
+            }, onError: { error in
+                print("❌ Failed to fetch quotes for deletion: \(error)")
+            })
+            .disposed(by: disposeBag)
     }
 }

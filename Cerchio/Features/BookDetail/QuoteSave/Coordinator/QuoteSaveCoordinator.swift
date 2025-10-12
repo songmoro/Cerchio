@@ -13,6 +13,15 @@ final class QuoteSaveCoordinator: BaseCoordinator {
     struct Dependencies {
         let bookId: String
         let serviceFactory: ServiceFactory
+        let existingQuote: String?
+        let existingPageNumber: Int?
+
+        init(bookId: String, serviceFactory: ServiceFactory, existingQuote: String? = nil, existingPageNumber: Int? = nil) {
+            self.bookId = bookId
+            self.serviceFactory = serviceFactory
+            self.existingQuote = existingQuote
+            self.existingPageNumber = existingPageNumber
+        }
     }
 
     enum Result {
@@ -41,7 +50,11 @@ final class QuoteSaveCoordinator: BaseCoordinator {
 
     // MARK: - Navigation
     private func showQuoteSave() {
-        let quoteSaveVC = QuoteSaveViewController(bookId: dependencies.bookId)
+        let quoteSaveVC = QuoteSaveViewController(
+            bookId: dependencies.bookId,
+            existingQuote: dependencies.existingQuote,
+            existingPageNumber: dependencies.existingPageNumber
+        )
 
         // Repository 주입
         let quoteRepository = dependencies.serviceFactory.createQuoteRepository()
