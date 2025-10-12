@@ -1020,7 +1020,7 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
     // MARK: - Quote Context Menu
     private func setupQuoteContextMenu(for cell: SavedQuoteCell, quote: String, pageNumber: Int?, date: Date) {
         let menuItems = createQuoteMenuItems(for: quote, pageNumber: pageNumber, date: date)
-        let highlightConfig = ViewHighlightConfiguration.withContextualRotation()
+        let highlightConfig = ViewHighlightConfiguration.withCustomRotation(angle: -5.0)
 
         CircularMenuManager.shared.addLongPressMenu(
             to: cell,

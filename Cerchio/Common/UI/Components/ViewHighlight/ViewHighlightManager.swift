@@ -111,22 +111,8 @@ class ViewHighlightManager {
     // MARK: - Private Methods
 
     private func calculateScaledFrame(originalFrame: CGRect) -> CGRect {
-        // Extract scale from effect
-        var scaleMultiplier: CGFloat = 1.0
-
-        switch configuration.effect {
-        case .scale(let multiplier):
-            scaleMultiplier = multiplier
-        case .combined(let effects):
-            for effect in effects {
-                if case .scale(let multiplier) = effect {
-                    scaleMultiplier = multiplier
-                    break
-                }
-            }
-        default:
-            break
-        }
+        // Get scale multiplier from effect
+        let scaleMultiplier = configuration.effect.scaleMultiplier
 
         let scaledWidth = originalFrame.width * scaleMultiplier
         let scaledHeight = originalFrame.height * scaleMultiplier
@@ -140,35 +126,11 @@ class ViewHighlightManager {
     }
 
     private func calculateTransform(viewCenter: CGPoint, screenCenter: CGPoint) -> CGAffineTransform {
-        var transform = configuration.effect.asTransform(
+        return configuration.effect.asTransform(
             viewCenter: viewCenter,
-            screenCenter: screenCenter
+            screenCenter: screenCenter,
+            customAngle: configuration.customRotationAngle
         )
-
-        // Apply contextual rotation if effect contains rotation with 0 degrees
-        if case .combined(let effects) = configuration.effect {
-            for (index, effect) in effects.enumerated() {
-                if case .rotation(let degrees) = effect, degrees == 0 {
-                    // Calculate contextual rotation
-                    let tiltAngle = calculateContextualTiltAngle(
-                        viewCenter: viewCenter,
-                        screenCenter: screenCenter
-                    )
-
-                    // Rebuild transform with contextual rotation
-                    var newEffects = effects
-                    newEffects[index] = .rotation(degrees: tiltAngle)
-
-                    transform = ViewHighlightEffect.combined(newEffects).asTransform(
-                        viewCenter: viewCenter,
-                        screenCenter: screenCenter
-                    )
-                    break
-                }
-            }
-        }
-
-        return transform
     }
 
     private func calculateContextualTiltAngle(viewCenter: CGPoint, screenCenter: CGPoint) -> CGFloat {
