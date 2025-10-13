@@ -113,8 +113,11 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
 
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        // Realm에서 최신 데이터를 다시 로드하여 화면 갱신
         reactor?.action.onNext(.loadBookDetail)
+        reactor?.action.onNext(.loadReadingStatistics)
+        reactor?.action.onNext(.loadPhotos)
+        reactor?.action.onNext(.loadQuotes)
+        reactor?.action.onNext(.loadTags)
     }
 
     // MARK: - Public Methods
@@ -648,19 +651,32 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
     // MARK: - UI Update Methods
 
     private func updateSnapshot(with bookDetail: BookDetail) {
-        var snapshot = Snapshot()
-        snapshot.appendSections([.bookInfo, .readingRecords, .savedQuotes, .photoPages, .settings])
-        snapshot.appendItems([.bookInfo(bookDetail)], toSection: .bookInfo)
-        snapshot.appendItems([.addQuoteButton], toSection: .savedQuotes)
-        snapshot.appendItems([.addPhotoButton], toSection: .photoPages)
+        print(#function)
+        guard let dataSource = dataSource else { return }
 
-        // Settings items
-        let settingsItems: [Item] = [
-            .settingsItem(.editBookInfo),
-            .settingsItem(.editReadingInfo),
-            .settingsItem(.resetAndDelete)
-        ]
-        snapshot.appendItems(settingsItems, toSection: .settings)
+        var snapshot = dataSource.snapshot()
+
+        // 섹션이 없으면 초기화
+        if snapshot.sectionIdentifiers.isEmpty {
+            snapshot.appendSections([.bookInfo, .readingRecords, .savedQuotes, .photoPages, .settings])
+            snapshot.appendItems([.addQuoteButton], toSection: .savedQuotes)
+            snapshot.appendItems([.addPhotoButton], toSection: .photoPages)
+
+            // Settings items
+            let settingsItems: [Item] = [
+                .settingsItem(.editBookInfo),
+                .settingsItem(.editReadingInfo),
+                .settingsItem(.resetAndDelete)
+            ]
+            snapshot.appendItems(settingsItems, toSection: .settings)
+        }
+
+        // bookInfo 섹션만 업데이트 (기존 데이터 유지)
+        let existingBookInfoItems = snapshot.itemIdentifiers(inSection: .bookInfo)
+        if !existingBookInfoItems.isEmpty {
+            snapshot.deleteItems(existingBookInfoItems)
+        }
+        snapshot.appendItems([.bookInfo(bookDetail)], toSection: .bookInfo)
 
         dataSource.apply(snapshot, animatingDifferences: true)
     }
@@ -711,6 +727,7 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
     }
 
     private func updateQuotesUI(_ quotes: [RealmQuote]) {
+        print(#function)
         guard let dataSource = dataSource, let _ = reactor?.currentState.bookDetail else { return }
         var snapshot = dataSource.snapshot()
 

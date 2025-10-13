@@ -356,15 +356,31 @@ final class BookDetailCoordinator: BaseCoordinator, Coordinatable {
     }
 
     func showEditBookInfo() {
-        let viewController = EditBookInfoViewController()
-        let bookRepository = dependencies.serviceFactory.createBookRepository()
-        let reactor = EditBookInfoReactor(book: book, bookRepository: bookRepository)
-        viewController.reactor = reactor
+        let editBookInfoCoordinator = EditBookInfoCoordinator(
+            navigationController: navigationController,
+            dependencies: EditBookInfoCoordinator.Dependencies(
+                book: book,
+                serviceFactory: dependencies.serviceFactory
+            )
+        )
 
-        let navController = UINavigationController(rootViewController: viewController)
-        navController.modalPresentationStyle = .fullScreen
+        addChildCoordinator(editBookInfoCoordinator)
 
-        navigationController.present(navController, animated: true)
+        editBookInfoCoordinator.result
+            .subscribe(onNext: { [weak self] result in
+                switch result {
+                case .bookInfoUpdated(let updatedBook):
+                    print("✅ Book info updated - customTitle: \(updatedBook.customTitle ?? "nil"), refreshing...")
+                    // 업데이트된 Book으로 BookDetail 다시 로드
+                    self?.currentReactor?.action.onNext(.updateBookAndReload(updatedBook))
+                case .cancelled:
+                    print("📝 Book info edit cancelled")
+                }
+                self?.removeChildCoordinator(editBookInfoCoordinator)
+            })
+            .disposed(by: disposeBag)
+
+        editBookInfoCoordinator.start()
     }
 
     func showResetAndDelete() {

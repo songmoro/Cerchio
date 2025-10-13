@@ -13,6 +13,9 @@ import Kingfisher
 
 final class EditBookInfoViewController: BaseViewController<EditBookInfoReactor> {
 
+    // MARK: - Callbacks
+    var onDismiss: ((Bool) -> Void)? // Bool: isSaved
+
     // MARK: - UI Components
 
     private let scrollView = UIScrollView()
@@ -167,6 +170,7 @@ final class EditBookInfoViewController: BaseViewController<EditBookInfoReactor> 
         // Action
         navigationItem.leftBarButtonItem?.rx.tap
             .subscribe(onNext: { [weak self] in
+                self?.onDismiss?(false)
                 self?.dismiss(animated: true)
             })
             .disposed(by: disposeBag)
@@ -226,6 +230,7 @@ final class EditBookInfoViewController: BaseViewController<EditBookInfoReactor> 
             .filter { $0 }
             .asDriver(onErrorJustReturn: false)
             .drive(onNext: { [weak self] _ in
+                self?.onDismiss?(true)
                 self?.dismiss(animated: true)
             })
             .disposed(by: disposeBag)

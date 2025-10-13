@@ -46,7 +46,6 @@ final class QuoteShareViewController: BaseViewController<QuoteShareReactor> {
     private let previewContainer: UIView = {
         let view = UIView()
         view.backgroundColor = .white
-        view.layer.cornerRadius = 16
         view.clipsToBounds = true
         return view
     }()
@@ -68,7 +67,6 @@ final class QuoteShareViewController: BaseViewController<QuoteShareReactor> {
     private let bookCoverImageView: UIImageView = {
         let imageView = UIImageView()
         imageView.contentMode = .scaleAspectFit
-        imageView.layer.cornerRadius = 8
         imageView.clipsToBounds = true
         imageView.layer.shadowColor = UIColor.black.cgColor
         imageView.layer.shadowOpacity = 0.1

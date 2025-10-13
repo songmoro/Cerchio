@@ -24,6 +24,7 @@ final class EditBookInfoReactor: Reactor {
         case setCoverImage(String)
         case setSaveInProgress(Bool)
         case setSaveSuccess(Bool)
+        case setUpdatedBook(Book)
         case resetToOriginal
     }
 
@@ -34,6 +35,7 @@ final class EditBookInfoReactor: Reactor {
         var customCoverImagePath: String?
         var isSaveInProgress: Bool = false
         var isSaveSuccess: Bool = false
+        var updatedBook: Book? // 저장 후 업데이트된 Book
     }
 
     let initialState: State
@@ -87,6 +89,9 @@ final class EditBookInfoReactor: Reactor {
         case .setSaveSuccess(let success):
             newState.isSaveSuccess = success
 
+        case .setUpdatedBook(let book):
+            newState.updatedBook = book
+
         case .resetToOriginal:
             newState.customTitle = ""
             newState.customAuthor = ""
@@ -101,6 +106,7 @@ final class EditBookInfoReactor: Reactor {
         let customTitle = currentState.customTitle
         let customAuthor = currentState.customAuthor
         let customCoverImagePath = currentState.customCoverImagePath
+        let isbn = currentState.book.isbn
 
         return .concat([
             .just(.setSaveInProgress(true)),
@@ -110,11 +116,24 @@ final class EditBookInfoReactor: Reactor {
                 customAuthor: customAuthor,
                 customCoverImagePath: customCoverImagePath
             )
-            .flatMap { _ -> Observable<Mutation> in
-                return .concat([
-                    .just(.setSaveInProgress(false)),
-                    .just(.setSaveSuccess(true))
-                ])
+            .flatMap { [weak self] _ -> Observable<Mutation> in
+                guard let self = self else { return .empty() }
+                // 저장 후 Realm에서 최신 Book 로드
+                return self.bookRepository.getBookByISBN(isbn)
+                    .flatMap { updatedBook -> Observable<Mutation> in
+                        if let updatedBook = updatedBook {
+                            return .concat([
+                                .just(.setUpdatedBook(updatedBook)),
+                                .just(.setSaveInProgress(false)),
+                                .just(.setSaveSuccess(true))
+                            ])
+                        } else {
+                            return .concat([
+                                .just(.setSaveInProgress(false)),
+                                .just(.setSaveSuccess(true))
+                            ])
+                        }
+                    }
             }
             .catch { error in
                 print("❌ Failed to save book info: \(error)")
