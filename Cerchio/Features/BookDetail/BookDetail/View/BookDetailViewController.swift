@@ -651,7 +651,6 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
     // MARK: - UI Update Methods
     
     private func updateSnapshot(with bookDetail: BookDetail) {
-        print(#function)
         guard let dataSource = dataSource else { return }
         
         var snapshot = dataSource.snapshot()
@@ -911,16 +910,12 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
     // MARK: - Quote Actions
     
     private func showQuoteActionBottomSheet(for indexPath: IndexPath, quote: String, pageNumber: Int?, date: Date) {
-        guard let cell = collectionView.cellForItem(at: indexPath) as? SavedQuoteCell else { return }
-        
-        // Create cell snapshot
-        let snapshotView = cell.snapshotView(afterScreenUpdates: true) ?? UIView()
-        snapshotView.backgroundColor = .systemBackground
-        snapshotView.frame.size = cell.bounds.size
-        
-        // Create and show bottom sheet
-        let bottomSheet = QuoteActionBottomSheet(cellSnapshot: snapshotView, in: view)
-        
+        guard let cell = collectionView.cellForItem(at: indexPath) as? SavedQuoteCell,
+              let window = view.window else { return }
+
+        let sheetHeight = view.bounds.height / 3
+        let bottomSheet = QuoteActionBottomSheet(sourceView: cell, sheetHeight: sheetHeight)
+
         bottomSheet.onActionSelected = { [weak self] action in
             switch action {
             case .share:
@@ -931,8 +926,8 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
                 self?.showDeleteQuoteConfirmation(for: quote, date: date)
             }
         }
-        
-        bottomSheet.show(in: view.window!)
+
+        bottomSheet.show(in: window)
     }
     
     private func shareQuote(_ quote: String, pageNumber: Int?) {
