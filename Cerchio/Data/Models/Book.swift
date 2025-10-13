@@ -65,7 +65,7 @@ class RealmBook: Object {
 nonisolated struct Book: Hashable, Codable {
     let id: String
     let title: String
-    let cleanTitle: String
+    private let _cleanTitle: String
     let link: String
     let image: String
     let author: String
@@ -96,6 +96,26 @@ nonisolated struct Book: Hashable, Codable {
     let customTitle: String?
     let customAuthor: String?
     let customCoverImagePath: String?
+
+    // Computed property: customTitle이 nil이 아니면 customTitle, 그렇지 않으면 원본 cleanTitle
+    var cleanTitle: String {
+        return customTitle ?? _cleanTitle
+    }
+
+    // 원본 cleanTitle (placeholder용)
+    var originalCleanTitle: String {
+        return _cleanTitle
+    }
+
+    // CodingKeys for Codable
+    enum CodingKeys: String, CodingKey {
+        case id, title, link, image, author, isbn, publisher, bookDescription, cleanDescription
+        case pubdate, discount, formattedPubDate, formattedPrice, priceAsInt, createAt
+        case genre, totalPages, startDate, endDate, isFavorite, dateAdded, dateRead
+        case readingStatus, category, rating
+        case customTitle, customAuthor, customCoverImagePath
+        case _cleanTitle = "cleanTitle"
+    }
 
     init(
         id: String = UUID().uuidString,
@@ -130,7 +150,7 @@ nonisolated struct Book: Hashable, Codable {
     ) {
         self.id = id
         self.title = title
-        self.cleanTitle = cleanTitle ?? title
+        self._cleanTitle = cleanTitle ?? title
         self.link = link
         self.image = image
         self.author = author

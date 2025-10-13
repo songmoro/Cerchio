@@ -47,7 +47,6 @@ final class EditBookInfoViewController: BaseViewController<EditBookInfoReactor> 
         let textField = UITextField()
         textField.borderStyle = .roundedRect
         textField.font = UIFont.custom(weight: .regular, size: 16)
-        textField.placeholder = String(localized: .`edit_book.book_title`)
         return textField
     }()
 
@@ -63,8 +62,15 @@ final class EditBookInfoViewController: BaseViewController<EditBookInfoReactor> 
         let textField = UITextField()
         textField.borderStyle = .roundedRect
         textField.font = UIFont.custom(weight: .regular, size: 16)
-        textField.placeholder = String(localized: .`edit_book.author`)
         return textField
+    }()
+
+    private let resetButton: UIButton = {
+        var config = UIButton.Configuration.plain()
+        config.title = String(localized: .`edit_book.reset_custom_info`)
+        config.baseForegroundColor = .systemRed
+        let button = UIButton(configuration: config)
+        return button
     }()
 
     // MARK: - Setup
@@ -77,7 +83,7 @@ final class EditBookInfoViewController: BaseViewController<EditBookInfoReactor> 
         view.addSubview(scrollView)
         scrollView.addSubview(contentView)
 
-        [coverImageView, changeCoverButton, titleLabel, titleTextField, authorLabel, authorTextField].forEach {
+        [coverImageView, changeCoverButton, titleLabel, titleTextField, authorLabel, authorTextField, resetButton].forEach {
             contentView.addSubview($0)
         }
 
@@ -126,9 +132,14 @@ final class EditBookInfoViewController: BaseViewController<EditBookInfoReactor> 
             $0.leading.equalToSuperview().offset(20)
             $0.trailing.equalToSuperview().offset(-20)
             $0.height.equalTo(44)
+        }
+
+        resetButton.snp.makeConstraints {
+            $0.top.equalTo(authorTextField.snp.bottom).offset(32)
+            $0.centerX.equalToSuperview()
             $0.bottom.equalToSuperview().offset(-24)
         }
-        
+
         setupNavigationBar()
     }
 
@@ -177,6 +188,12 @@ final class EditBookInfoViewController: BaseViewController<EditBookInfoReactor> 
             .bind(to: reactor.action)
             .disposed(by: disposeBag)
 
+        resetButton.rx.tap
+            .subscribe(onNext: { [weak self] in
+                self?.showResetConfirmation()
+            })
+            .disposed(by: disposeBag)
+
         // State
         reactor.state
             .map { $0.book }
@@ -184,6 +201,8 @@ final class EditBookInfoViewController: BaseViewController<EditBookInfoReactor> 
             .asDriver(onErrorJustReturn: reactor.currentState.book)
             .drive(onNext: { [weak self] book in
                 self?.loadCoverImage(url: book.displayImage)
+                self?.titleTextField.placeholder = book.originalCleanTitle
+                self?.authorTextField.placeholder = book.author
             })
             .disposed(by: disposeBag)
 
@@ -215,5 +234,20 @@ final class EditBookInfoViewController: BaseViewController<EditBookInfoReactor> 
     private func loadCoverImage(url: String) {
         guard let imageURL = URL(string: url) else { return }
         coverImageView.kf.setImage(with: imageURL, placeholder: UIImage(systemName: "book.closed"))
+    }
+
+    private func showResetConfirmation() {
+        let alert = UIAlertController(
+            title: String(localized: .`edit_book.reset_confirmation_title`),
+            message: String(localized: .`edit_book.reset_confirmation_message`),
+            preferredStyle: .alert
+        )
+
+        alert.addAction(UIAlertAction(title: String(localized: .`action.cancel`), style: .cancel))
+        alert.addAction(UIAlertAction(title: String(localized: .`edit_book.reset`), style: .destructive) { [weak self] _ in
+            self?.reactor?.action.onNext(.reset)
+        })
+
+        present(alert, animated: true)
     }
 }

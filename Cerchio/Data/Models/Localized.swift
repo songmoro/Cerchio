@@ -58,6 +58,10 @@ enum Localized: String {
     case `edit_book.author`
     case `edit_book.cover_image`
     case `edit_book.change_cover`
+    case `edit_book.reset_custom_info`
+    case `edit_book.reset`
+    case `edit_book.reset_confirmation_title`
+    case `edit_book.reset_confirmation_message`
     case `reset_delete.title`
     case `reset_delete.reset_book_info`
     case `reset_delete.reset_reading_records`

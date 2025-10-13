@@ -397,6 +397,78 @@
         }
       }
     },
+    "edit_book.reset_custom_info" : {
+      "comment" : "Reset custom info button",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reset to Original"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "원본으로 초기화"
+          }
+        }
+      }
+    },
+    "edit_book.reset" : {
+      "comment" : "Reset action in edit book",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reset"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "초기화"
+          }
+        }
+      }
+    },
+    "edit_book.reset_confirmation_title" : {
+      "comment" : "Reset confirmation title",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reset to Original?"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "원본으로 초기화하시겠습니까?"
+          }
+        }
+      }
+    },
+    "edit_book.reset_confirmation_message" : {
+      "comment" : "Reset confirmation message",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Custom title, author, and cover image will be reset to original data."
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "커스텀 도서명, 저자, 커버 이미지가 원본 데이터로 초기화됩니다."
+          }
+        }
+      }
+    },
     "reset_delete.title" : {
       "comment" : "Reset and delete screen title",
       "extractionState" : "manual",

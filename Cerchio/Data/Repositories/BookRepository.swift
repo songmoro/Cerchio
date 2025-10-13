@@ -32,6 +32,7 @@ protocol BookRepositoryProtocol {
 
     // Custom book info methods
     func updateBookCustomInfo(bookId: String, customTitle: String, customAuthor: String, customCoverImagePath: String?) -> Observable<Void>
+    func resetBookCustomInfo(bookId: String) -> Observable<Void>
 
     // Data management
     func deleteAllData() -> Observable<Void>
@@ -285,6 +286,22 @@ final class BookRepository: BaseRepository<RealmBook>, BookRepositoryProtocol {
             book.customTitle = customTitle.isEmpty ? nil : customTitle
             book.customAuthor = customAuthor.isEmpty ? nil : customAuthor
             book.customCoverImagePath = customCoverImagePath
+
+            return ()
+        }
+    }
+
+    func resetBookCustomInfo(bookId: String) -> Observable<Void> {
+        return performWriteTransaction {
+            guard let objectId = try? ObjectId(string: bookId),
+                  let book = self.realm.object(ofType: RealmBook.self, forPrimaryKey: objectId),
+                  !book.isInvalidated else {
+                throw NSError(domain: "BookRepository", code: -1, userInfo: [NSLocalizedDescriptionKey: "Book not found"])
+            }
+
+            book.customTitle = nil
+            book.customAuthor = nil
+            book.customCoverImagePath = nil
 
             return ()
         }

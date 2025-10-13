@@ -15,6 +15,7 @@ final class EditBookInfoReactor: Reactor {
         case updateAuthor(String)
         case updateCoverImage(String)
         case save
+        case reset
     }
 
     enum Mutation {
@@ -23,6 +24,7 @@ final class EditBookInfoReactor: Reactor {
         case setCoverImage(String)
         case setSaveInProgress(Bool)
         case setSaveSuccess(Bool)
+        case resetToOriginal
     }
 
     struct State {
@@ -60,6 +62,9 @@ final class EditBookInfoReactor: Reactor {
 
         case .save:
             return saveBookInfo()
+
+        case .reset:
+            return resetBookInfo()
         }
     }
 
@@ -81,6 +86,11 @@ final class EditBookInfoReactor: Reactor {
 
         case .setSaveSuccess(let success):
             newState.isSaveSuccess = success
+
+        case .resetToOriginal:
+            newState.customTitle = ""
+            newState.customAuthor = ""
+            newState.customCoverImagePath = nil
         }
 
         return newState
@@ -110,6 +120,26 @@ final class EditBookInfoReactor: Reactor {
                 print("❌ Failed to save book info: \(error)")
                 return .just(.setSaveInProgress(false))
             }
+        ])
+    }
+
+    private func resetBookInfo() -> Observable<Mutation> {
+        let bookId = currentState.book.id
+
+        return .concat([
+            .just(.setSaveInProgress(true)),
+            bookRepository.resetBookCustomInfo(bookId: bookId)
+                .flatMap { _ -> Observable<Mutation> in
+                    return .concat([
+                        .just(.resetToOriginal),
+                        .just(.setSaveInProgress(false)),
+                        .just(.setSaveSuccess(true))
+                    ])
+                }
+                .catch { error in
+                    print("❌ Failed to reset book info: \(error)")
+                    return .just(.setSaveInProgress(false))
+                }
         ])
     }
 }
