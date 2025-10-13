@@ -57,7 +57,6 @@ final class BookDetailReactor: Reactor {
         case photoSaved
         case photoDeleted
         case tagsSaved
-        case quoteDeleted
     }
 
     struct PhotoItem: Hashable, Sendable {
@@ -91,7 +90,6 @@ final class BookDetailReactor: Reactor {
         // Data change flags for UI refresh
         var shouldRefreshPhotos: Bool = false
         var shouldRefreshTags: Bool = false
-        var shouldRefreshQuotes: Bool = false
     }
 
     let initialState: State
@@ -383,7 +381,12 @@ final class BookDetailReactor: Reactor {
                     }
 
                     return quoteRepository.deleteQuote(quoteToDelete)
-                        .map { _ in Mutation.quoteDeleted }
+                        .flatMap { _ -> Observable<Mutation> in
+                            // 삭제 후 즉시 최신 데이터 로드
+                            return self.service.loadQuotes(bookId: bookId)
+                                .observe(on: MainScheduler.instance)
+                                .map { Mutation.setQuotes($0) }
+                        }
                 }
                 .catch { error in
                     print("❌ Failed to delete quote: \(error)")
@@ -398,7 +401,6 @@ final class BookDetailReactor: Reactor {
         // Reset refresh flags
         newState.shouldRefreshPhotos = false
         newState.shouldRefreshTags = false
-        newState.shouldRefreshQuotes = false
 
         switch mutation {
         case .setBookDetail(let bookDetail):
@@ -445,9 +447,6 @@ final class BookDetailReactor: Reactor {
 
         case .tagsSaved:
             newState.shouldRefreshTags = true
-
-        case .quoteDeleted:
-            newState.shouldRefreshQuotes = true
         }
 
         return newState

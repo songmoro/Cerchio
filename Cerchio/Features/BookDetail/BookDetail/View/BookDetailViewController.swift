@@ -277,16 +277,6 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
                 self?.reactor?.action.onNext(.loadTags)
             })
             .disposed(by: disposeBag)
-        
-        reactor.state
-            .map { $0.shouldRefreshQuotes }
-            .distinctUntilChanged()
-            .filter { $0 }
-            .observe(on: MainScheduler.asyncInstance)
-            .subscribe(onNext: { [weak self] _ in
-                self?.reactor?.action.onNext(.loadQuotes)
-            })
-            .disposed(by: disposeBag)
     }
     
     // MARK: - Setup Methods
@@ -729,12 +719,12 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
         print(#function)
         guard let dataSource = dataSource, let _ = reactor?.currentState.bookDetail else { return }
         var snapshot = dataSource.snapshot()
-        
+
         guard snapshot.sectionIdentifiers.contains(.savedQuotes) else { return }
-        
+
         let existingItems = snapshot.itemIdentifiers(inSection: .savedQuotes)
         snapshot.deleteItems(existingItems)
-        
+
         var quoteItems: [Item] = []
         if quotes.isEmpty {
             quoteItems.append(.addQuoteButton)
@@ -746,7 +736,7 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
             }
         }
         snapshot.appendItems(quoteItems, toSection: .savedQuotes)
-        
+
         dataSource.apply(snapshot, animatingDifferences: true)
     }
     
