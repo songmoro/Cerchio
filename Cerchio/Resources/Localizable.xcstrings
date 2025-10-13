@@ -145,6 +145,24 @@
         }
       }
     },
+    "action.share" : {
+      "comment" : "Share button",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Share"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "공유"
+          }
+        }
+      }
+    },
     "action.view_all" : {
       "comment" : "View all action",
       "extractionState" : "manual",
