@@ -155,7 +155,7 @@ extension ResetAndDeleteViewController: UITableViewDelegate {
         return ResetOption.allCases.count
     }
 
-    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+    private func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "Cell", for: indexPath)
         let option = ResetOption.allCases[indexPath.row]
 

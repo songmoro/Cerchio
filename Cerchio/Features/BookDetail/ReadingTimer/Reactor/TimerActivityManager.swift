@@ -274,8 +274,6 @@ final class TimerActivityManager {
 
     @available(iOS 16.2, *)
     private func setupMonitoring() {
-        guard #available(iOS 16.2, *) else { return }
-
         // Dismissed
         liveActivityManager.activityDismissed
             .subscribe(onNext: { [weak self] in

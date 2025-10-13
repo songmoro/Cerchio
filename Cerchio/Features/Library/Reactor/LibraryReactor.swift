@@ -22,6 +22,7 @@ final class LibraryReactor: Reactor {
         case setBooks([Book])
         case setFilteredBooks([Book])
         case clearFilteredBooks
+        case clearBooks
         case setActiveFilters([String])
         case setFavoriteFilter(Bool)
         case setLoading(Bool)
@@ -55,6 +56,7 @@ final class LibraryReactor: Reactor {
         case .loadBooks:
             return Observable.concat([
                 Observable.just(.setLoading(true)),
+                Observable.just(.clearBooks),
                 loadBooks(),
                 Observable.just(.setLoading(false))
             ])
@@ -98,6 +100,11 @@ final class LibraryReactor: Reactor {
 
         case .clearFilteredBooks:
             // 필터를 완전히 제거하여 모든 책 표시
+            newState.filteredBooks = nil
+
+        case .clearBooks:
+            // 데이터를 초기화하여 UI가 변경을 감지하도록 함
+            newState.books = nil
             newState.filteredBooks = nil
 
         case .setActiveFilters(let filters):

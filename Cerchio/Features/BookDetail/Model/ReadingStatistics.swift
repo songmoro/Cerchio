@@ -9,7 +9,7 @@ import Foundation
 
 // MARK: - Reading Statistics
 
-struct ReadingStatistics: Hashable {
+nonisolated struct ReadingStatistics: Hashable {
     let totalTime: Int // 초 단위
     let totalSessions: Int
     let todayTime: Int

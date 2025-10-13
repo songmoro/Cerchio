@@ -113,7 +113,8 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
 
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        reactor?.action.onNext(.updateBookAndReload(reactor!.currentState.book))
+        // Realm에서 최신 데이터를 다시 로드하여 화면 갱신
+        reactor?.action.onNext(.loadBookDetail)
     }
 
     // MARK: - Public Methods
@@ -710,7 +711,7 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
     }
 
     private func updateQuotesUI(_ quotes: [RealmQuote]) {
-        guard let dataSource = dataSource, let bookDetail = reactor?.currentState.bookDetail else { return }
+        guard let dataSource = dataSource, let _ = reactor?.currentState.bookDetail else { return }
         var snapshot = dataSource.snapshot()
 
         guard snapshot.sectionIdentifiers.contains(.savedQuotes) else { return }

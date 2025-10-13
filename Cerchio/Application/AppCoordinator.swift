@@ -181,7 +181,7 @@ final class AppCoordinator: BaseCoordinator {
         print("[AppCoordinator] 💾 Saving and terminating session")
 
         // TODO: ReadingRecord 생성 및 저장
-        let sessionRepository = dependencies.serviceFactory.createReadingSessionRepository()
+        _ = dependencies.serviceFactory.createReadingSessionRepository()
 
         // 임시로 세션만 정리
         TimerSessionManager.shared.clearActiveSession()

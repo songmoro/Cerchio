@@ -39,6 +39,7 @@ final class BookDetailReactor: Reactor {
 
     enum Mutation {
         case setBookDetail(BookDetail)
+        case clearBookDetail
         case setLoading(Bool)
         case setError(Error?)
         case setFavorite(Bool)
@@ -111,6 +112,7 @@ final class BookDetailReactor: Reactor {
             // 최신 Book 데이터를 먼저 로드하여 isFavorite 등의 상태를 동기화
             return Observable.concat([
                 Observable.just(.setLoading(true)),
+                Observable.just(.clearBookDetail),
                 bookRepository.getBookByISBN(currentState.book.isbn)
                     .flatMap { [weak self] updatedBook -> Observable<Mutation> in
                         guard let self = self else { return Observable.empty() }
@@ -287,7 +289,7 @@ final class BookDetailReactor: Reactor {
                         Task {
                             var photoItems: [PhotoItem] = []
                             for data in photoData {
-                                if let image = await ImageStorageManager.shared.loadImage(fromPath: data.path) {
+                                if let image = ImageStorageManager.shared.loadImage(fromPath: data.path) {
                                     photoItems.append(PhotoItem(id: data.id, image: image))
                                 }
                             }
@@ -407,6 +409,10 @@ final class BookDetailReactor: Reactor {
         switch mutation {
         case .setBookDetail(let bookDetail):
             newState.bookDetail = bookDetail
+
+        case .clearBookDetail:
+            // BookDetail을 초기화하여 UI가 변경을 감지하도록 함
+            newState.bookDetail = nil
 
         case .setLoading(let isLoading):
             newState.isLoading = isLoading

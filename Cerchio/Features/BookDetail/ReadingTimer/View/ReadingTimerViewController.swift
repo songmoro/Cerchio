@@ -459,7 +459,7 @@ final class ReadingTimerViewController: BaseViewController<ReadingTimerReactor> 
             self?.reactor?.action.onNext(.startTimerConfirmed)
         })
 
-        alert.addAction(UIAlertAction(title: "설정으로 이동", style: .default) { [weak self] _ in
+        alert.addAction(UIAlertAction(title: "설정으로 이동", style: .default) { _ in
             if let settingsURL = URL(string: UIApplication.openSettingsURLString) {
                 UIApplication.shared.open(settingsURL)
             }

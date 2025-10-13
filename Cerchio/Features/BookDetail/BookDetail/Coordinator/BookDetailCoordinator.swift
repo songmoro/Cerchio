@@ -103,6 +103,16 @@ final class BookDetailCoordinator: BaseCoordinator, Coordinatable {
         bookDetailVC.setFavoriteButton(favoriteButton)
         bookDetailVC.setDeleteButton(deleteButton)
 
+        // Book 상태 변경 감지하여 네비게이션 타이틀 업데이트
+        reactor.state
+            .map { $0.book.cleanTitle }
+            .distinctUntilChanged()
+            .observe(on: MainScheduler.instance)
+            .subscribe(onNext: { [weak viewController] title in
+                viewController?.navigationItem.title = title
+            })
+            .disposed(by: disposeBag)
+
         // 즐겨찾기 상태 변경 감지
         reactor.state
             .map { $0.isFavorite }
@@ -352,7 +362,7 @@ final class BookDetailCoordinator: BaseCoordinator, Coordinatable {
         viewController.reactor = reactor
 
         let navController = UINavigationController(rootViewController: viewController)
-        navController.modalPresentationStyle = .formSheet
+        navController.modalPresentationStyle = .fullScreen
 
         navigationController.present(navController, animated: true)
     }

@@ -219,8 +219,6 @@ extension UIBezierPath {
     func point(at percentage: CGFloat) -> CGPoint {
         let percentage = max(0, min(1, percentage))
 
-        // Path를 일정 간격으로 샘플링
-        let samples = 360 // 1도마다
         var points: [CGPoint] = []
 
         var pathLength: CGFloat = 0
