@@ -11,7 +11,7 @@ import ReactorKit
 import RxCocoa
 import Kingfisher
 
-final class EditBookInfoViewController: BaseViewController<EditBookInfoReactor> {
+final class EditBookInfoViewController: BaseViewController<EditBookInfoReactor>, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
 
     // MARK: - Callbacks
     var onDismiss: ((Bool) -> Void)? // Bool: isSaved
@@ -198,15 +198,31 @@ final class EditBookInfoViewController: BaseViewController<EditBookInfoReactor> 
             })
             .disposed(by: disposeBag)
 
+        changeCoverButton.rx.tap
+            .subscribe(onNext: { [weak self] in
+                self?.showImagePicker()
+            })
+            .disposed(by: disposeBag)
+
         // State
         reactor.state
             .map { $0.book }
             .take(1)
             .asDriver(onErrorJustReturn: reactor.currentState.book)
             .drive(onNext: { [weak self] book in
-                self?.loadCoverImage(url: book.displayImage)
+                self?.loadInitialCoverImage(book: book)
                 self?.titleTextField.placeholder = book.originalCleanTitle
                 self?.authorTextField.placeholder = book.author
+            })
+            .disposed(by: disposeBag)
+
+        reactor.state
+            .map { $0.customCoverImagePath }
+            .distinctUntilChanged()
+            .compactMap { $0 }
+            .asDriver(onErrorJustReturn: "")
+            .drive(onNext: { [weak self] imagePath in
+                self?.loadLocalCoverImage(path: imagePath)
             })
             .disposed(by: disposeBag)
 
@@ -236,9 +252,22 @@ final class EditBookInfoViewController: BaseViewController<EditBookInfoReactor> 
             .disposed(by: disposeBag)
     }
 
-    private func loadCoverImage(url: String) {
-        guard let imageURL = URL(string: url) else { return }
-        coverImageView.kf.setImage(with: imageURL, placeholder: UIImage(systemName: "book.closed"))
+    private func loadInitialCoverImage(book: Book) {
+        // 커스텀 커버가 있으면 로컬 이미지 로드, 없으면 원본 URL 로드
+        if let customCoverPath = book.customCoverImagePath {
+            loadLocalCoverImage(path: customCoverPath)
+        } else {
+            guard let imageURL = URL(string: book.displayImage) else { return }
+            coverImageView.kf.setImage(with: imageURL, placeholder: UIImage(systemName: "book.closed"))
+        }
+    }
+
+    private func loadLocalCoverImage(path: String) {
+        if let image = ImageStorageManager.shared.loadImage(fromPath: path) {
+            coverImageView.image = image
+        } else {
+            print("❌ Failed to load local cover image: \(path)")
+        }
     }
 
     private func showResetConfirmation() {
@@ -254,5 +283,65 @@ final class EditBookInfoViewController: BaseViewController<EditBookInfoReactor> 
         })
 
         present(alert, animated: true)
+    }
+
+    // MARK: - Image Picker
+
+    private func showImagePicker() {
+        let alert = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
+
+        alert.addAction(UIAlertAction(title: "사진 촬영", style: .default) { [weak self] _ in
+            self?.presentImagePicker(sourceType: .camera)
+        })
+
+        alert.addAction(UIAlertAction(title: "앨범에서 선택", style: .default) { [weak self] _ in
+            self?.presentImagePicker(sourceType: .photoLibrary)
+        })
+
+        alert.addAction(UIAlertAction(title: String(localized: .`action.cancel`), style: .cancel))
+
+        present(alert, animated: true)
+    }
+
+    private func presentImagePicker(sourceType: UIImagePickerController.SourceType) {
+        guard UIImagePickerController.isSourceTypeAvailable(sourceType) else {
+            print("❌ Source type not available: \(sourceType)")
+            return
+        }
+
+        let picker = UIImagePickerController()
+        picker.delegate = self
+        picker.sourceType = sourceType
+        picker.allowsEditing = true
+
+        present(picker, animated: true)
+    }
+
+    // MARK: - UIImagePickerControllerDelegate
+
+    func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
+        picker.dismiss(animated: true)
+
+        guard let selectedImage = info[.editedImage] as? UIImage ?? info[.originalImage] as? UIImage else {
+            print("❌ Failed to get image from picker")
+            return
+        }
+
+        // 이미지 저장
+        let imageName = UUID().uuidString
+        if let imagePath = ImageStorageManager.shared.saveImage(selectedImage, withName: imageName) {
+            // 커버 이미지뷰 즉시 업데이트
+            coverImageView.image = selectedImage
+
+            // Reactor에 경로 전달
+            reactor?.action.onNext(.updateCoverImage(imagePath))
+            print("✅ Cover image saved: \(imagePath)")
+        } else {
+            print("❌ Failed to save cover image")
+        }
+    }
+
+    func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
+        picker.dismiss(animated: true)
     }
 }

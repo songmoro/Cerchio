@@ -199,8 +199,13 @@ final class BookInfoCollectionViewCell: UICollectionViewCell, IsIdentifiable {
         // 태그 설정
         setupTags(bookDetail.tags)
 
-        // 이미지 로드
-        if let url = URL(string: bookDetail.book.image) {
+        // 이미지 로드 (커스텀 커버 우선)
+        if let customCoverPath = bookDetail.book.customCoverImagePath,
+           let image = ImageStorageManager.shared.loadImage(fromPath: customCoverPath) {
+            // 커스텀 커버 이미지 로드
+            coverImageView.image = image
+        } else if let url = URL(string: bookDetail.book.image) {
+            // 원본 커버 이미지 로드
             coverImageView.kf.setImage(
                 with: url,
                 placeholder: nil,

@@ -90,6 +90,19 @@ final class LibraryCollectionViewCell: UICollectionViewCell, IsIdentifiable {
         // 컬럼에 따라 코너 반경 설정
         updateCornerRadius()
 
+        // 커스텀 커버가 있으면 로컬 이미지 로드
+        if let customCoverPath = item.customCoverImagePath,
+           let image = ImageStorageManager.shared.loadImage(fromPath: customCoverPath) {
+            coverImageView.image = image
+            updateImageHeight(with: image)
+
+            DispatchQueue.main.async {
+                self.validateLayout()
+            }
+            return
+        }
+
+        // 원본 커버 이미지 로드
         guard let url = URL(string: item.image) else { return }
 
         // Kingfisher 로딩 인디케이터 설정

@@ -651,8 +651,8 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
             // Settings items
             let settingsItems: [Item] = [
                 .settingsItem(.editBookInfo),
-                .settingsItem(.editReadingInfo),
-                .settingsItem(.resetAndDelete)
+                .settingsItem(.editReadingInfo)
+                // .settingsItem(.resetAndDelete) // 주석 처리
             ]
             snapshot.appendItems(settingsItems, toSection: .settings)
         }
