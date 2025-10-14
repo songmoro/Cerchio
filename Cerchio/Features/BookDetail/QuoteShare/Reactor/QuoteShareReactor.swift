@@ -19,6 +19,7 @@ final class QuoteShareReactor: Reactor {
         case blurColorChanged(isEnabled: Bool, color: UIColor, opacity: CGFloat)
         case opacityChanged(isEnabled: Bool, opacity: CGFloat)
         case scaleChanged(isEnabled: Bool, scale: CGFloat)
+        case metadataVisibilityChanged(showBookInfo: Bool, showPageNumber: Bool, showDate: Bool)
     }
 
     enum Mutation {
@@ -27,6 +28,7 @@ final class QuoteShareReactor: Reactor {
         case setBlurColor(isEnabled: Bool, color: UIColor, opacity: CGFloat)
         case setOpacity(isEnabled: Bool, opacity: CGFloat)
         case setScale(isEnabled: Bool, scale: CGFloat)
+        case setMetadataVisibility(showBookInfo: Bool, showPageNumber: Bool, showDate: Bool)
         case exportImage
         case dismiss
     }
@@ -69,6 +71,9 @@ final class QuoteShareReactor: Reactor {
 
         case .scaleChanged(let isEnabled, let scale):
             return .just(.setScale(isEnabled: isEnabled, scale: scale))
+
+        case .metadataVisibilityChanged(let showBookInfo, let showPageNumber, let showDate):
+            return .just(.setMetadataVisibility(showBookInfo: showBookInfo, showPageNumber: showPageNumber, showDate: showDate))
         }
     }
 
@@ -97,6 +102,11 @@ final class QuoteShareReactor: Reactor {
         case .setScale(let isEnabled, let scale):
             newState.backgroundConfig.isScaleEnabled = isEnabled
             newState.backgroundConfig.imageScale = scale
+
+        case .setMetadataVisibility(let showBookInfo, let showPageNumber, let showDate):
+            newState.backgroundConfig.showBookInfo = showBookInfo
+            newState.backgroundConfig.showPageNumber = showPageNumber
+            newState.backgroundConfig.showDate = showDate
 
         case .exportImage:
             newState.shouldExportImage = true

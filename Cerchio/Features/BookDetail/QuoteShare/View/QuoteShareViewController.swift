@@ -89,18 +89,12 @@ final class QuoteShareViewController: BaseViewController<QuoteShareReactor> {
         return imageView
     }()
 
-    private let bookTitleLabel: UILabel = {
+    private let bookInfoLabel: UILabel = {
         let label = UILabel()
-        label.font = .custom(weight: .bold, size: 20)
+        label.font = .custom(weight: .medium, size: 14)
         label.textColor = .label
-        label.numberOfLines = 2
-        return label
-    }()
-
-    private let bookAuthorLabel: UILabel = {
-        let label = UILabel()
-        label.font = .custom(weight: .regular, size: 16)
-        label.textColor = .secondaryLabel
+        label.numberOfLines = 0
+        label.textAlignment = .left
         return label
     }()
 
@@ -112,6 +106,8 @@ final class QuoteShareViewController: BaseViewController<QuoteShareReactor> {
         label.textAlignment = .left
         return label
     }()
+
+    private let metadataContainerView = UIView()
 
     private let metadataStackView: UIStackView = {
         let stackView = UIStackView()
@@ -154,14 +150,14 @@ final class QuoteShareViewController: BaseViewController<QuoteShareReactor> {
         // Preview container subviews
         previewContainer.addSubview(backgroundImageView)
         backgroundImageView.addSubview(blurEffectView)
-//        previewContainer.addSubview(blurEffectView)
         previewContainer.addSubview(blurColorView)
         previewContainer.addSubview(overlayView)
         previewContainer.addSubview(bookCoverImageView)
         previewContainer.addSubview(quoteLabel)
-        previewContainer.addSubview(bookTitleLabel)
-        previewContainer.addSubview(bookAuthorLabel)
-        previewContainer.addSubview(metadataStackView)
+        previewContainer.addSubview(metadataContainerView)
+
+        metadataContainerView.addSubview(bookInfoLabel)
+        metadataContainerView.addSubview(metadataStackView)
 
         metadataStackView.addArrangedSubview(pageLabel)
         metadataStackView.addArrangedSubview(dateLabel)
@@ -211,24 +207,23 @@ final class QuoteShareViewController: BaseViewController<QuoteShareReactor> {
         quoteLabel.snp.makeConstraints {
             $0.top.equalTo(bookCoverImageView.snp.bottom).offset(16)
             $0.leading.trailing.equalToSuperview().inset(32)
-
         }
 
-        bookTitleLabel.snp.makeConstraints {
+        metadataContainerView.snp.makeConstraints {
             $0.top.equalTo(quoteLabel.snp.bottom).offset(20)
             $0.horizontalEdges.equalToSuperview().inset(32)
+            $0.bottom.lessThanOrEqualToSuperview().inset(32)
         }
 
-        bookAuthorLabel.snp.makeConstraints {
-            $0.top.equalTo(bookTitleLabel.snp.bottom).offset(4)
-            $0.horizontalEdges.equalToSuperview().inset(32)
+        bookInfoLabel.snp.makeConstraints {
+            $0.top.leading.equalToSuperview()
+            $0.trailing.lessThanOrEqualTo(metadataStackView.snp.leading).offset(-8)
+            $0.bottom.lessThanOrEqualToSuperview()
         }
 
         metadataStackView.snp.makeConstraints {
-            $0.top.equalTo(bookTitleLabel.snp.bottom).offset(16)
-            $0.leading.greaterThanOrEqualToSuperview().inset(32)
-            $0.trailing.equalToSuperview().inset(32)
-            $0.bottom.lessThanOrEqualToSuperview().inset(32)
+            $0.trailing.equalToSuperview()
+            $0.bottom.equalToSuperview()
         }
 
         previewContainer.snp.makeConstraints {
@@ -259,23 +254,33 @@ final class QuoteShareViewController: BaseViewController<QuoteShareReactor> {
     private func configureContent(with quoteData: QuoteShareData) {
         // Configure book info
         loadBookCoverImage(from: quoteData)
-        bookTitleLabel.text = quoteData.bookTitle
-        bookAuthorLabel.text = quoteData.bookAuthor
+        updateBookInfo(title: quoteData.bookTitle, author: quoteData.bookAuthor)
 
         // Configure quote
         quoteLabel.text = "\"\(quoteData.quote)\""
 
         // Configure metadata
-        if let pageNumber = quoteData.pageNumber {
+        updateMetadata(pageNumber: quoteData.pageNumber, date: quoteData.date)
+    }
+
+    private func updateBookInfo(title: String, author: String) {
+        bookInfoLabel.text = "\(title)\n\(author)"
+    }
+
+    private func updateMetadata(pageNumber: Int?, date: Date) {
+        // Page number
+        if let pageNumber = pageNumber {
             pageLabel.text = "p.\(pageNumber)"
+            pageLabel.isHidden = false
         } else {
             pageLabel.isHidden = true
         }
 
+        // Date
         let dateFormatter = DateFormatter()
         dateFormatter.dateStyle = .medium
         dateFormatter.timeStyle = .none
-        dateLabel.text = dateFormatter.string(from: quoteData.date)
+        dateLabel.text = dateFormatter.string(from: date)
     }
 
     private func loadBookCoverImage(from quoteData: QuoteShareData) {
@@ -386,6 +391,17 @@ final class QuoteShareViewController: BaseViewController<QuoteShareReactor> {
             })
             .disposed(by: disposeBag)
 
+        // Metadata Visibility
+        let metadataConfig = reactor.state.map { ($0.backgroundConfig.showBookInfo, $0.backgroundConfig.showPageNumber, $0.backgroundConfig.showDate) }
+        metadataConfig
+            .distinctUntilChanged { prev, next in prev.0 == next.0 && prev.1 == next.1 && prev.2 == next.2 }
+            .skip(1)
+            .asDriver(onErrorJustReturn: (true, true, true))
+            .drive(onNext: { [weak self] tuple in
+                self?.updateMetadataVisibility(showBookInfo: tuple.0, showPageNumber: tuple.1, showDate: tuple.2)
+            })
+            .disposed(by: disposeBag)
+
         // State - Export image
         reactor.state.map { $0.shouldExportImage }
             .distinctUntilChanged()
@@ -474,6 +490,14 @@ final class QuoteShareViewController: BaseViewController<QuoteShareReactor> {
         }
     }
 
+    private func updateMetadataVisibility(showBookInfo: Bool, showPageNumber: Bool, showDate: Bool) {
+        UIView.animate(withDuration: 0.3) {
+            self.bookInfoLabel.isHidden = !showBookInfo
+            self.pageLabel.isHidden = !showPageNumber
+            self.dateLabel.isHidden = !showDate
+        }
+    }
+
 //    // MARK: - Old blur implementation (commented out)
 //    private func applyBlurEffect() {
 //        guard let reactor = reactor,
@@ -517,9 +541,8 @@ final class QuoteShareViewController: BaseViewController<QuoteShareReactor> {
                 self.previewContainer.drawHierarchy(in: self.previewContainer.bounds, afterScreenUpdates: true)
             }
 
-            // Save to photo library
+            // Save to photo library only
             UIImageWriteToSavedPhotosAlbum(capturedImage, self, #selector(self.image(_:didFinishSavingWithError:contextInfo:)), nil)
-            self.imageExportedRelay.accept(capturedImage)
         }
     }
 
@@ -574,5 +597,9 @@ extension QuoteShareViewController: QuoteShareSettingsDelegate {
 
     func settingsDidChangeScale(isEnabled: Bool, scale: CGFloat) {
         reactor?.action.onNext(.scaleChanged(isEnabled: isEnabled, scale: scale))
+    }
+
+    func settingsDidChangeMetadataVisibility(showBookInfo: Bool, showPageNumber: Bool, showDate: Bool) {
+        reactor?.action.onNext(.metadataVisibilityChanged(showBookInfo: showBookInfo, showPageNumber: showPageNumber, showDate: showDate))
     }
 }

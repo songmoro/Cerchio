@@ -66,6 +66,11 @@ struct QuoteBackgroundConfig: Equatable {
     /// Image scale (0.0 - 1.6, representing 0% - 160%)
     var imageScale: CGFloat
 
+    /// Metadata visibility options
+    var showBookInfo: Bool
+    var showPageNumber: Bool
+    var showDate: Bool
+
     /// Default configuration
     static var `default`: QuoteBackgroundConfig {
         QuoteBackgroundConfig(
@@ -78,7 +83,10 @@ struct QuoteBackgroundConfig: Equatable {
             isOpacityEnabled: true,
             imageOpacity: 1.0,
             isScaleEnabled: true,
-            imageScale: 1.0
+            imageScale: 1.0,
+            showBookInfo: true,
+            showPageNumber: true,
+            showDate: true
         )
     }
 }

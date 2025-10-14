@@ -16,6 +16,7 @@ protocol QuoteShareSettingsDelegate: AnyObject {
     func settingsDidChangeBlurColor(isEnabled: Bool, color: UIColor, opacity: CGFloat)
     func settingsDidChangeOpacity(isEnabled: Bool, opacity: CGFloat)
     func settingsDidChangeScale(isEnabled: Bool, scale: CGFloat)
+    func settingsDidChangeMetadataVisibility(showBookInfo: Bool, showPageNumber: Bool, showDate: Bool)
 }
 
 final class QuoteShareSettingsViewController: UIViewController {
@@ -33,6 +34,7 @@ final class QuoteShareSettingsViewController: UIViewController {
     enum Section: Int, CaseIterable {
         case background
         case effects
+        case metadata
     }
 
     enum EffectRow: Int, CaseIterable {
@@ -82,6 +84,20 @@ final class QuoteShareSettingsViewController: UIViewController {
         }
     }
 
+    enum MetadataRow: Int, CaseIterable {
+        case bookInfo
+        case pageNumber
+        case date
+
+        var title: String {
+            switch self {
+            case .bookInfo: return "도서 정보"
+            case .pageNumber: return "페이지 번호"
+            case .date: return "날짜"
+            }
+        }
+    }
+
     // MARK: - UI Components
     private let containerView: UIView = {
         let view = UIView()
@@ -119,6 +135,7 @@ final class QuoteShareSettingsViewController: UIViewController {
         tableView.dataSource = self
         tableView.register(SwitchCell.self, forCellReuseIdentifier: SwitchCell.identifier)
         tableView.register(SliderCell.self, forCellReuseIdentifier: SliderCell.identifier)
+        tableView.register(ColorPickerCell.self, forCellReuseIdentifier: ColorPickerCell.identifier)
         return tableView
     }()
 
@@ -264,15 +281,19 @@ extension QuoteShareSettingsViewController: UITableViewDataSource {
             return 1
         case .effects:
             if !config.isEnabled { return 0 }
-            // Each effect has toggle + slider, blurColor also has color picker
+            // Each effect has toggle + slider, blur color has toggle + color picker + slider
             var count = 0
             for effect in EffectRow.allCases {
-                count += 2 // toggle + slider
+                count += 1 // toggle
                 if effect == .blurColor {
-                    count += 1 // + color picker
+                    count += 2 // color picker + slider
+                } else {
+                    count += 1 // slider
                 }
             }
             return count
+        case .metadata:
+            return MetadataRow.allCases.count
         }
     }
 
@@ -291,37 +312,19 @@ extension QuoteShareSettingsViewController: UITableViewDataSource {
             return cell
 
         case .effects:
-            let effectIndex = indexPath.row / 2
-            let isToggleRow = indexPath.row % 2 == 0
+            return configureEffectCell(for: indexPath, in: tableView)
 
-            guard let effectRow = EffectRow(rawValue: effectIndex) else {
+        case .metadata:
+            let cell = tableView.dequeueReusableCell(withIdentifier: SwitchCell.identifier, for: indexPath) as! SwitchCell
+            guard let metadataRow = MetadataRow(rawValue: indexPath.row) else {
                 return UITableViewCell()
             }
-
-            if isToggleRow {
-                let cell = tableView.dequeueReusableCell(withIdentifier: SwitchCell.identifier, for: indexPath) as! SwitchCell
-                let isOn = getEffectEnabled(effectRow)
-                cell.configure(title: effectRow.title, isOn: isOn)
-                cell.onSwitchChanged = { [weak self] isOn in
-                    self?.handleEffectToggle(effectRow, isOn: isOn)
-                }
-                return cell
-            } else {
-                let cell = tableView.dequeueReusableCell(withIdentifier: SliderCell.identifier, for: indexPath) as! SliderCell
-                let value = getEffectValue(effectRow)
-                let isEnabled = getEffectEnabled(effectRow)
-                cell.configure(
-                    minValue: effectRow.minValue,
-                    maxValue: effectRow.maxValue,
-                    value: value,
-                    formatValue: effectRow.formatValue,
-                    isEnabled: isEnabled
-                )
-                cell.onValueChanged = { [weak self] newValue in
-                    self?.handleEffectValueChange(effectRow, value: newValue)
-                }
-                return cell
+            let isOn = getMetadataEnabled(metadataRow)
+            cell.configure(title: metadataRow.title, isOn: isOn)
+            cell.onSwitchChanged = { [weak self] isOn in
+                self?.handleMetadataToggle(metadataRow, isOn: isOn)
             }
+            return cell
         }
     }
 
@@ -333,6 +336,8 @@ extension QuoteShareSettingsViewController: UITableViewDataSource {
             return nil
         case .effects:
             return config.isEnabled ? "효과" : nil
+        case .metadata:
+            return "표시 정보"
         }
     }
 }
@@ -346,14 +351,90 @@ extension QuoteShareSettingsViewController: UITableViewDelegate {
         case .background:
             return 44
         case .effects:
-            let isSliderRow = indexPath.row % 2 == 1
-            return isSliderRow ? 60 : 44
+            // Calculate which row type this is
+            var currentRow = 0
+            for effect in EffectRow.allCases {
+                // Toggle row
+                if currentRow == indexPath.row {
+                    return 44
+                }
+                currentRow += 1
+
+                // Color picker for blurColor
+                if effect == .blurColor {
+                    if currentRow == indexPath.row {
+                        return 44
+                    }
+                    currentRow += 1
+                }
+
+                // Slider row
+                if currentRow == indexPath.row {
+                    return 60
+                }
+                currentRow += 1
+            }
+            return 44
+        case .metadata:
+            return 44
         }
     }
 }
 
 // MARK: - Helper Methods
 extension QuoteShareSettingsViewController {
+    private func configureEffectCell(for indexPath: IndexPath, in tableView: UITableView) -> UITableViewCell {
+        // Calculate which effect and row type based on row index
+        var currentRow = 0
+        for effect in EffectRow.allCases {
+            // Toggle row
+            if currentRow == indexPath.row {
+                let cell = tableView.dequeueReusableCell(withIdentifier: SwitchCell.identifier, for: indexPath) as! SwitchCell
+                let isOn = getEffectEnabled(effect)
+                cell.configure(title: effect.title, isOn: isOn)
+                cell.onSwitchChanged = { [weak self] isOn in
+                    self?.handleEffectToggle(effect, isOn: isOn)
+                }
+                return cell
+            }
+            currentRow += 1
+
+            // For blurColor, add color picker before slider
+            if effect == .blurColor {
+                if currentRow == indexPath.row {
+                    let cell = tableView.dequeueReusableCell(withIdentifier: ColorPickerCell.identifier, for: indexPath) as! ColorPickerCell
+                    cell.configure(color: config.blurColor, isEnabled: config.isBlurColorEnabled)
+                    cell.onColorChanged = { [weak self] color in
+                        self?.handleColorChange(color)
+                    }
+                    return cell
+                }
+                currentRow += 1
+            }
+
+            // Slider row
+            if currentRow == indexPath.row {
+                let cell = tableView.dequeueReusableCell(withIdentifier: SliderCell.identifier, for: indexPath) as! SliderCell
+                let value = getEffectValue(effect)
+                let isEnabled = getEffectEnabled(effect)
+                cell.configure(
+                    minValue: effect.minValue,
+                    maxValue: effect.maxValue,
+                    value: value,
+                    formatValue: effect.formatValue,
+                    isEnabled: isEnabled
+                )
+                cell.onValueChanged = { [weak self] newValue in
+                    self?.handleEffectValueChange(effect, value: newValue)
+                }
+                return cell
+            }
+            currentRow += 1
+        }
+
+        return UITableViewCell()
+    }
+
     private func getEffectEnabled(_ effect: EffectRow) -> Bool {
         switch effect {
         case .blur: return config.isBlurEnabled
@@ -411,6 +492,35 @@ extension QuoteShareSettingsViewController {
             config.imageScale = CGFloat(value)
             delegate?.settingsDidChangeScale(isEnabled: config.isScaleEnabled, scale: config.imageScale)
         }
+    }
+
+    private func handleColorChange(_ color: UIColor) {
+        config.blurColor = color
+        delegate?.settingsDidChangeBlurColor(isEnabled: config.isBlurColorEnabled, color: config.blurColor, opacity: config.blurColorOpacity)
+    }
+
+    private func getMetadataEnabled(_ metadata: MetadataRow) -> Bool {
+        switch metadata {
+        case .bookInfo: return config.showBookInfo
+        case .pageNumber: return config.showPageNumber
+        case .date: return config.showDate
+        }
+    }
+
+    private func handleMetadataToggle(_ metadata: MetadataRow, isOn: Bool) {
+        switch metadata {
+        case .bookInfo:
+            config.showBookInfo = isOn
+        case .pageNumber:
+            config.showPageNumber = isOn
+        case .date:
+            config.showDate = isOn
+        }
+        delegate?.settingsDidChangeMetadataVisibility(
+            showBookInfo: config.showBookInfo,
+            showPageNumber: config.showPageNumber,
+            showDate: config.showDate
+        )
     }
 }
 
@@ -547,5 +657,105 @@ class SliderCell: UITableViewCell {
 
     private func updateValueLabel(_ value: Float) {
         valueLabel.text = formatValue?(value) ?? "\(value)"
+    }
+}
+
+// MARK: - ColorPickerCell
+class ColorPickerCell: UITableViewCell {
+    static let identifier = "ColorPickerCell"
+
+    var onColorChanged: ((UIColor) -> Void)?
+
+    private var selectedColor: UIColor = .white
+
+    private let colorButton: UIButton = {
+        let button = UIButton(type: .system)
+        var config = UIButton.Configuration.filled()
+        config.title = "색상 선택"
+        config.cornerStyle = .medium
+        button.configuration = config
+        return button
+    }()
+
+    private let colorPreview: UIView = {
+        let view = UIView()
+        view.layer.cornerRadius = 12
+        view.layer.borderWidth = 1
+        view.layer.borderColor = UIColor.separator.cgColor
+        return view
+    }()
+
+    override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
+        super.init(style: style, reuseIdentifier: reuseIdentifier)
+        setupUI()
+    }
+
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+
+    private func setupUI() {
+        selectionStyle = .none
+
+        contentView.addSubview(colorButton)
+        contentView.addSubview(colorPreview)
+
+        colorButton.snp.makeConstraints {
+            $0.leading.equalToSuperview().inset(16)
+            $0.centerY.equalToSuperview()
+            $0.height.equalTo(36)
+        }
+
+        colorPreview.snp.makeConstraints {
+            $0.trailing.equalToSuperview().inset(16)
+            $0.centerY.equalToSuperview()
+            $0.width.height.equalTo(32)
+        }
+
+        colorButton.addTarget(self, action: #selector(colorButtonTapped), for: .touchUpInside)
+    }
+
+    func configure(color: UIColor, isEnabled: Bool) {
+        selectedColor = color
+        colorPreview.backgroundColor = color
+        colorButton.isEnabled = isEnabled
+        colorPreview.alpha = isEnabled ? 1.0 : 0.5
+    }
+
+    @objc private func colorButtonTapped() {
+        guard let viewController = findViewController() else { return }
+
+        if #available(iOS 14.0, *) {
+            let colorPicker = UIColorPickerViewController()
+            colorPicker.selectedColor = selectedColor
+            colorPicker.delegate = self
+            viewController.present(colorPicker, animated: true)
+        }
+    }
+
+    private func findViewController() -> UIViewController? {
+        var responder: UIResponder? = self
+        while let nextResponder = responder?.next {
+            if let viewController = nextResponder as? UIViewController {
+                return viewController
+            }
+            responder = nextResponder
+        }
+        return nil
+    }
+}
+
+// MARK: - UIColorPickerViewControllerDelegate
+extension ColorPickerCell: UIColorPickerViewControllerDelegate {
+    func colorPickerViewControllerDidFinish(_ viewController: UIColorPickerViewController) {
+        selectedColor = viewController.selectedColor
+        colorPreview.backgroundColor = selectedColor
+        onColorChanged?(selectedColor)
+    }
+
+    func colorPickerViewControllerDidSelectColor(_ viewController: UIColorPickerViewController) {
+        selectedColor = viewController.selectedColor
+        colorPreview.backgroundColor = selectedColor
+        onColorChanged?(selectedColor)
     }
 }
