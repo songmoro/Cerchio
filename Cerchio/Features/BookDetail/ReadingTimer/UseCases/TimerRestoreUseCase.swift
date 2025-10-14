@@ -20,6 +20,7 @@ final class TimerRestoreUseCase {
     struct RestoreResult {
         let remaining: Int
         let shouldAutoResume: Bool
+        let isCompleted: Bool
     }
 
     // MARK: - Properties
@@ -65,16 +66,19 @@ final class TimerRestoreUseCase {
         print("  - remaining: \(calc.remaining)s")
         print("  - isCompleted: \(calc.isCompleted)")
 
-        // 2. 완료 체크
+        // 2. 상태 복원
+        let wasRunning = session.state == "running"
+        let finalState: TimerStateManager.TimerState
+
         if calc.isCompleted {
-            print("[TimerRestoreUseCase] ❌ Session already completed")
-            return .error(NSError(domain: "TimerRestoreUseCase", code: -2))
+            print("[TimerRestoreUseCase] ⏱️ Session already completed, restoring with final state")
+            finalState = .completed
+        } else {
+            print("[TimerRestoreUseCase] Was running? \(wasRunning)")
+            finalState = wasRunning ? .running : .paused
         }
 
-        // 3. 상태 복원
-        let wasRunning = session.state == "running"
-        print("[TimerRestoreUseCase] Was running? \(wasRunning)")
-        stateManager.setState(wasRunning ? .running : .paused)
+        stateManager.setState(finalState)
         stateManager.setTargetEndTime(session.targetEndTime)
         stateManager.setPausedAt(session.pausedAt)
 
@@ -102,16 +106,19 @@ final class TimerRestoreUseCase {
         .map { _, realmSession -> RestoreResult in
             print("[TimerRestoreUseCase] ✅ Realm session loaded: \(realmSession?.id ?? "nil")")
 
-            // 6. 원래 실행 중이었다면 자동 재개
-            let shouldAutoResume = session.state == "running"
+            // 6. 자동 재개 여부 결정
+            let shouldAutoResume = !calc.isCompleted && session.state == "running"
 
             if shouldAutoResume {
                 print("[TimerRestoreUseCase] ⏰ Will auto-resume (was running)")
+            } else if calc.isCompleted {
+                print("[TimerRestoreUseCase] ⏱️ Will not resume (already completed)")
             }
 
             return RestoreResult(
                 remaining: calc.remaining,
-                shouldAutoResume: shouldAutoResume
+                shouldAutoResume: shouldAutoResume,
+                isCompleted: calc.isCompleted
             )
         }
     }

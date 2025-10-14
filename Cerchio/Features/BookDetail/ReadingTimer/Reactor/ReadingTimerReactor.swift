@@ -162,9 +162,17 @@ final class ReadingTimerReactor: Reactor {
                 self.action.onNext(.setElapsedSeconds(elapsed))
                 self.action.onNext(.setRemainingSeconds(result.remaining))
 
-                if result.shouldAutoResume {
+                if result.isCompleted {
+                    // 타이머가 이미 완료된 경우
+                    self.action.onNext(.setTimerState(.completed))
+                    DebugLogger.shared.debug("세션 복구 완료 - 타이머 이미 완료됨", category: "ReadingTimer")
+                } else if result.shouldAutoResume {
+                    // 실행 중이었던 경우 자동 재개
                     self.action.onNext(.setTimerState(.running))
                     self.startTimerTick()
+                } else {
+                    // 일시정지 상태로 복원
+                    self.action.onNext(.setTimerState(.paused))
                 }
             }, onError: { error in
                 DebugLogger.shared.debug("세션 복구 에러, \(error)", category: "ReadingTimer")
