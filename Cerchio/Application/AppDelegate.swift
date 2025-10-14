@@ -105,7 +105,8 @@ extension AppDelegate: UNUserNotificationCenterDelegate {
         }
 
         // 알림 표시 (배너, 소리, 배지)
-        completionHandler([.banner, .sound, .badge])
+//        completionHandler([.banner, .sound, .badge])
+        completionHandler([.banner, .sound])
     }
 
     // 사용자가 알림을 탭했을 때

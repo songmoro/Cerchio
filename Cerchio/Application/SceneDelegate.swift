@@ -8,7 +8,7 @@
 import UIKit
 import RxSwift
 
-final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
+final class SceneDelegate: UIResponder, UIWindowSceneDelegate, UISceneDelegate {
     private var appCoordinator: AppCoordinator?
     private var windowScene: UIWindowScene?
 
@@ -43,6 +43,11 @@ final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 
         // 앱이 활성화될 때 활성 타이머 세션 확인 및 복원
         checkAndRestoreActiveTimerSession()
+    }
+    
+    func sceneWillEnterForeground(_ scene: UIScene) {
+        UNUserNotificationCenter.current().removeAllDeliveredNotifications()
+        UNUserNotificationCenter.current().setBadgeCount(0)
     }
 
     func scene(_ scene: UIScene, openURLContexts URLContexts: Set<UIOpenURLContext>) {

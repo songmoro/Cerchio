@@ -41,7 +41,7 @@ final class NotificationManager {
                 return Disposables.create()
             }
 
-            self.notificationCenter.requestAuthorization(options: [.alert, .sound, .badge]) { granted, error in
+            self.notificationCenter.requestAuthorization(options: [.alert, .sound]) { granted, error in
                 if let error = error {
                     print("❌ Notification authorization error: \(error)")
                     observer.onNext(false)
@@ -114,7 +114,6 @@ final class NotificationManager {
                     content.title = savedNotification.title
                     content.body = savedNotification.body
                     content.sound = .default
-                    content.badge = NSNumber(value: savedNotification.badge)
                     content.userInfo = ["notificationId": savedNotification.id]
 
                     let trigger = UNTimeIntervalNotificationTrigger(timeInterval: seconds, repeats: false)
