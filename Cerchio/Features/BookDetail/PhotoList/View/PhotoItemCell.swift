@@ -18,12 +18,8 @@ final class PhotoItemCell: UICollectionViewCell, IsIdentifiable {
         imageView.backgroundColor = .systemGray6
         imageView.layer.borderWidth = 0.5
         imageView.layer.borderColor = UIColor.systemGray5.cgColor
-        imageView.isUserInteractionEnabled = true
         return imageView
     }()
-
-    // MARK: - Properties
-    var onPhotoTapped: ((UIImage) -> Void)?
 
     // MARK: - Initialization
     override init(frame: CGRect) {
@@ -43,16 +39,6 @@ final class PhotoItemCell: UICollectionViewCell, IsIdentifiable {
         imageView.snp.makeConstraints {
             $0.edges.equalToSuperview()
         }
-
-        // 탭 제스처
-        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(photoTapped))
-        imageView.addGestureRecognizer(tapGesture)
-    }
-
-    // MARK: - Actions
-    @objc private func photoTapped() {
-        guard let image = imageView.image else { return }
-        onPhotoTapped?(image)
     }
 
     // MARK: - Configuration
@@ -63,6 +49,5 @@ final class PhotoItemCell: UICollectionViewCell, IsIdentifiable {
     override func prepareForReuse() {
         super.prepareForReuse()
         imageView.image = nil
-        onPhotoTapped = nil
     }
 }

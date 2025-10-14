@@ -534,9 +534,6 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
             case .photoItem(let photoId, let image):
                 let cell: PhotoItemCell = collectionView.dequeueReusableCell(PhotoItemCell.self, for: indexPath)
                 cell.configure(with: image)
-                cell.onPhotoTapped = { [weak self] image in
-                    self?.showImagePreview(image)
-                }
                 self?.setupPhotoContextMenu(for: cell, photoId: photoId, image: image)
                 return cell
                 
@@ -897,8 +894,31 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
         present(alert, animated: true)
     }
     
+    // MARK: - Photo Actions
+
+    private func showPhotoActionBottomSheet(for indexPath: IndexPath, photoId: String, image: UIImage) {
+        guard let cell = collectionView.cellForItem(at: indexPath) as? PhotoItemCell,
+              let window = view.window else { return }
+
+        let sheetHeight = view.bounds.height / 3
+        let bottomSheet = PhotoActionBottomSheet(sourceView: cell, sheetHeight: sheetHeight)
+
+        bottomSheet.onActionSelected = { [weak self] action in
+            switch action {
+            case .view:
+                self?.showImagePreview(image)
+            case .download:
+                self?.saveImageToPhotoLibrary(image)
+            case .delete:
+                self?.showDeletePhotoConfirmation(for: photoId)
+            }
+        }
+
+        bottomSheet.show(in: window)
+    }
+
     // MARK: - Quote Actions
-    
+
     private func showQuoteActionBottomSheet(for indexPath: IndexPath, quote: String, pageNumber: Int?, date: Date) {
         guard let cell = collectionView.cellForItem(at: indexPath) as? SavedQuoteCell,
               let window = view.window else { return }
@@ -1029,18 +1049,21 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
 extension BookDetailViewController: UICollectionViewDelegate {
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         guard let item = dataSource.itemIdentifier(for: indexPath) else { return }
-        
+
         switch item {
+        case .photoItem(let photoId, let image):
+            showPhotoActionBottomSheet(for: indexPath, photoId: photoId, image: image)
+
         case .savedQuote(let quote, let pageNumber, let date):
             showQuoteActionBottomSheet(for: indexPath, quote: quote, pageNumber: pageNumber, date: date)
-            
+
         case .settingsItem(let type):
             handleSettingsItemTap(type)
-            
+
         default:
             break
         }
-        
+
         // Deselect cell
         collectionView.deselectItem(at: indexPath, animated: true)
     }
