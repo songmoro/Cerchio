@@ -155,12 +155,12 @@ final class BookInfoCollectionViewCell: UICollectionViewCell, IsIdentifiable {
         }
 
         pagesLabel.snp.makeConstraints {
-            $0.top.leading.trailing.equalToSuperview()
+            $0.top.horizontalEdges.equalToSuperview()
         }
 
         dateRangeLabel.snp.makeConstraints {
             $0.top.equalTo(pagesLabel.snp.bottom).offset(4)
-            $0.leading.trailing.bottom.equalToSuperview()
+            $0.horizontalEdges.bottom.equalToSuperview()
         }
 
         // 태그 컨테이너

@@ -147,7 +147,7 @@ final class QuoteSaveViewController: UIViewController {
     private func setupConstraints() {
         textView.snp.makeConstraints {
             $0.top.equalTo(view.safeAreaLayoutGuide).offset(16)
-            $0.leading.trailing.equalToSuperview().inset(16)
+            $0.horizontalEdges.equalToSuperview().inset(16)
             $0.height.equalToSuperview().multipliedBy(0.5) // 화면 높이의 반절
         }
 
@@ -158,7 +158,7 @@ final class QuoteSaveViewController: UIViewController {
 
         pageNumberTextField.snp.makeConstraints {
             $0.top.equalTo(pageLabel.snp.bottom).offset(8)
-            $0.leading.trailing.equalToSuperview().inset(16)
+            $0.horizontalEdges.equalToSuperview().inset(16)
             $0.height.equalTo(44)
         }
     }
@@ -324,7 +324,7 @@ final class QuoteSaveViewController: UIViewController {
         // 텍스트뷰 높이 조정
         textView.snp.remakeConstraints {
             $0.top.equalTo(view.safeAreaLayoutGuide).offset(16)
-            $0.leading.trailing.equalToSuperview().inset(16)
+            $0.horizontalEdges.equalToSuperview().inset(16)
             $0.height.equalToSuperview().multipliedBy(0.4) // 키보드가 올라올 때 조금 작게
         }
 
@@ -337,7 +337,7 @@ final class QuoteSaveViewController: UIViewController {
         // 텍스트뷰 높이 복원
         textView.snp.remakeConstraints {
             $0.top.equalTo(view.safeAreaLayoutGuide).offset(16)
-            $0.leading.trailing.equalToSuperview().inset(16)
+            $0.horizontalEdges.equalToSuperview().inset(16)
             $0.height.equalToSuperview().multipliedBy(0.5)
         }
 

@@ -39,14 +39,46 @@ struct QuoteBackgroundConfig: Equatable {
     /// Whether to show background image
     var isEnabled: Bool
 
+    /// Whether blur effect is enabled
+    var isBlurEnabled: Bool
+
     /// Blur intensity (0.0 - 1.0)
     var blurIntensity: CGFloat
+
+    /// Whether blur color tint is enabled
+    var isBlurColorEnabled: Bool
+
+    /// Blur color tint
+    var blurColor: UIColor
+
+    /// Blur color opacity (0.0 - 1.0)
+    var blurColorOpacity: CGFloat
+
+    /// Whether opacity effect is enabled
+    var isOpacityEnabled: Bool
+
+    /// Image opacity (0.0 - 1.0)
+    var imageOpacity: CGFloat
+
+    /// Whether scale effect is enabled
+    var isScaleEnabled: Bool
+
+    /// Image scale (0.0 - 1.6, representing 0% - 160%)
+    var imageScale: CGFloat
 
     /// Default configuration
     static var `default`: QuoteBackgroundConfig {
         QuoteBackgroundConfig(
             isEnabled: false,
-            blurIntensity: 0.5
+            isBlurEnabled: true,
+            blurIntensity: 0.5,
+            isBlurColorEnabled: false,
+            blurColor: .white,
+            blurColorOpacity: 0.3,
+            isOpacityEnabled: true,
+            imageOpacity: 1.0,
+            isScaleEnabled: true,
+            imageScale: 1.0
         )
     }
 }

@@ -78,7 +78,7 @@ final class ReadingRecordViewController: BaseViewController<ReadingRecordReactor
 
         timerPickerView.snp.makeConstraints {
             $0.center.equalToSuperview()
-            $0.width.height.equalTo(320)
+            $0.size.equalTo(320)
         }
 
         startButton.snp.makeConstraints {

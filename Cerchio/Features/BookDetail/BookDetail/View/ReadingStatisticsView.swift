@@ -93,7 +93,7 @@ final class ReadingStatisticsView: UIView {
 
         emptyLabel.snp.makeConstraints {
             $0.top.equalToSuperview().inset(24)
-            $0.leading.trailing.equalToSuperview().inset(16)
+            $0.horizontalEdges.equalToSuperview().inset(16)
             $0.bottom.equalToSuperview().inset(24)
         }
     }

@@ -86,23 +86,23 @@ final class TagEditViewController: UIViewController {
 
         textField.snp.makeConstraints {
             $0.top.equalTo(view.safeAreaLayoutGuide).offset(20)
-            $0.leading.trailing.equalToSuperview().inset(20)
+            $0.horizontalEdges.equalToSuperview().inset(20)
             $0.height.equalTo(44)
         }
 
         instructionLabel.snp.makeConstraints {
             $0.top.equalTo(textField.snp.bottom).offset(8)
-            $0.leading.trailing.equalToSuperview().inset(20)
+            $0.horizontalEdges.equalToSuperview().inset(20)
         }
 
         suggestionsLabel.snp.makeConstraints {
             $0.top.equalTo(instructionLabel.snp.bottom).offset(24)
-            $0.leading.trailing.equalToSuperview().inset(20)
+            $0.horizontalEdges.equalToSuperview().inset(20)
         }
 
         tableView.snp.makeConstraints {
             $0.top.equalTo(suggestionsLabel.snp.bottom).offset(12)
-            $0.leading.trailing.bottom.equalToSuperview()
+            $0.horizontalEdges.bottom.equalToSuperview()
         }
 
         emptyLabel.snp.makeConstraints {
@@ -256,7 +256,7 @@ final class TagSuggestionCell: UITableViewCell {
         checkmarkImageView.snp.makeConstraints {
             $0.trailing.equalToSuperview().inset(16)
             $0.centerY.equalToSuperview()
-            $0.width.height.equalTo(24)
+            $0.size.equalTo(24)
         }
     }
 

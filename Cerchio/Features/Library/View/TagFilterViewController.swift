@@ -233,7 +233,7 @@ final class TagFilterCell: UITableViewCell {
         checkmarkImageView.snp.makeConstraints {
             $0.trailing.equalToSuperview().inset(16)
             $0.centerY.equalToSuperview()
-            $0.width.height.equalTo(24)
+            $0.size.equalTo(24)
         }
     }
 

@@ -63,7 +63,7 @@ final class SettingsItemCell: UICollectionViewCell, IsIdentifiable {
         iconImageView.snp.makeConstraints {
             $0.leading.equalToSuperview().inset(16)
             $0.centerY.equalToSuperview()
-            $0.width.height.equalTo(24)
+            $0.size.equalTo(24)
         }
 
         titleLabel.snp.makeConstraints {

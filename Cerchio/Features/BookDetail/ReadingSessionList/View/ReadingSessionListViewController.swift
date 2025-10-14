@@ -243,7 +243,7 @@ final class ReadingSessionCell: UITableViewCell {
         deleteButton.snp.makeConstraints {
             $0.centerY.equalToSuperview()
             $0.trailing.equalToSuperview().inset(16)
-            $0.width.height.equalTo(40)
+            $0.size.equalTo(40)
         }
 
         deleteButton.addTarget(self, action: #selector(deleteButtonTapped), for: .touchUpInside)

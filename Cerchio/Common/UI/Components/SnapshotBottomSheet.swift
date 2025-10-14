@@ -75,7 +75,7 @@ class SnapshotBottomSheet: UIView {
         }
         
         containerView.snp.makeConstraints {
-            $0.leading.trailing.bottom.equalToSuperview()
+            $0.horizontalEdges.bottom.equalToSuperview()
             $0.height.equalTo(sheetHeight)
         }
         

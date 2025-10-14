@@ -42,7 +42,7 @@ final class AddQuoteButtonCell: UICollectionViewCell, IsIdentifiable {
     private func setupConstraints() {
         iconImageView.snp.makeConstraints {
             $0.center.equalToSuperview()
-            $0.width.height.equalTo(40)
+            $0.size.equalTo(40)
         }
     }
 

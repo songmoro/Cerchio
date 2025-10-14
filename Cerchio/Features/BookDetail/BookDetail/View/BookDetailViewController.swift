@@ -929,7 +929,7 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
         let quoteData = QuoteShareData(
             bookCoverImageURL: book.image,
             bookCoverImage: nil,
-            bookTitle: book.title,
+            bookTitle: book.customTitle ?? book.cleanTitle,
             bookAuthor: book.author,
             quote: quote,
             pageNumber: pageNumber,

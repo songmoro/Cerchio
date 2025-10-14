@@ -152,7 +152,7 @@ final class ReadingTimerViewController: BaseViewController<ReadingTimerReactor> 
 
         progressView.snp.makeConstraints {
             $0.top.equalTo(remainingTimeLabel.snp.bottom).offset(32)
-            $0.leading.trailing.equalToSuperview().inset(40)
+            $0.horizontalEdges.equalToSuperview().inset(40)
             $0.height.equalTo(8)
         }
 

@@ -84,7 +84,7 @@ final class ReadingRecordsSectionHeader: UICollectionReusableView, IsIdentifiabl
 
         segmentedControl.snp.makeConstraints {
             $0.top.equalTo(titleLabel.snp.bottom).offset(12)
-            $0.leading.trailing.equalToSuperview().inset(16)
+            $0.horizontalEdges.equalToSuperview().inset(16)
             $0.bottom.equalToSuperview().inset(8)
         }
     }

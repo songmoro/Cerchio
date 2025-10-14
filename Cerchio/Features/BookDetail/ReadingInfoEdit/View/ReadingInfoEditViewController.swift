@@ -168,23 +168,23 @@ final class ReadingInfoEditViewController: UIViewController {
 
         pagesLabel.snp.makeConstraints {
             $0.top.equalToSuperview().offset(20)
-            $0.leading.trailing.equalToSuperview().inset(20)
+            $0.horizontalEdges.equalToSuperview().inset(20)
         }
 
         pagesTextField.snp.makeConstraints {
             $0.top.equalTo(pagesLabel.snp.bottom).offset(8)
-            $0.leading.trailing.equalToSuperview().inset(20)
+            $0.horizontalEdges.equalToSuperview().inset(20)
             $0.height.equalTo(44)
         }
 
         startDateLabel.snp.makeConstraints {
             $0.top.equalTo(pagesTextField.snp.bottom).offset(32)
-            $0.leading.trailing.equalToSuperview().inset(20)
+            $0.horizontalEdges.equalToSuperview().inset(20)
         }
 
         startDatePicker.snp.makeConstraints {
             $0.top.equalTo(startDateLabel.snp.bottom).offset(12)
-            $0.leading.trailing.equalToSuperview().inset(20)
+            $0.horizontalEdges.equalToSuperview().inset(20)
         }
 
         clearStartDateButton.snp.makeConstraints {
@@ -194,18 +194,18 @@ final class ReadingInfoEditViewController: UIViewController {
 
         endDateLabel.snp.makeConstraints {
             $0.top.equalTo(clearStartDateButton.snp.bottom).offset(32)
-            $0.leading.trailing.equalToSuperview().inset(20)
+            $0.horizontalEdges.equalToSuperview().inset(20)
         }
 
         readingStatusSegmentedControl.snp.makeConstraints {
             $0.top.equalTo(endDateLabel.snp.bottom).offset(12)
-            $0.leading.trailing.equalToSuperview().inset(20)
+            $0.horizontalEdges.equalToSuperview().inset(20)
             $0.height.equalTo(32)
         }
 
         endDatePicker.snp.makeConstraints {
             $0.top.equalTo(readingStatusSegmentedControl.snp.bottom).offset(12)
-            $0.leading.trailing.equalToSuperview().inset(20)
+            $0.horizontalEdges.equalToSuperview().inset(20)
         }
 
         clearEndDateButton.snp.makeConstraints {

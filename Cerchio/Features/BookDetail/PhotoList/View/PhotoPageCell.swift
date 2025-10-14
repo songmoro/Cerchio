@@ -152,7 +152,7 @@ final class PhotoPageCell: UICollectionViewCell, IsIdentifiable {
 
         iconImageView.snp.makeConstraints {
             $0.center.equalToSuperview()
-            $0.width.height.equalTo(24)
+            $0.size.equalTo(24)
         }
 
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(addButtonTapped))

@@ -141,7 +141,7 @@ final class SearchViewController: BaseViewController<SearchReactor> {
 
         searchBar.snp.makeConstraints {
             $0.top.equalTo(view.safeAreaLayoutGuide.snp.top)
-            $0.leading.trailing.equalToSuperview()
+            $0.horizontalEdges.equalToSuperview()
         }
     }
 
@@ -157,7 +157,7 @@ final class SearchViewController: BaseViewController<SearchReactor> {
         emptyStateView.addSubview(emptyStateLabel)
         emptyStateLabel.snp.makeConstraints {
             $0.center.equalToSuperview()
-            $0.leading.trailing.equalToSuperview().inset(SearchResultConstants.Layout.emptyStateInset)
+            $0.horizontalEdges.equalToSuperview().inset(SearchResultConstants.Layout.emptyStateInset)
         }
     }
 
@@ -168,12 +168,12 @@ final class SearchViewController: BaseViewController<SearchReactor> {
 
         tableView.snp.makeConstraints {
             $0.top.equalTo(searchBar.snp.bottom)
-            $0.leading.trailing.bottom.equalTo(view.safeAreaLayoutGuide)
+            $0.horizontalEdges.bottom.equalTo(view.safeAreaLayoutGuide)
         }
 
         emptyStateView.snp.makeConstraints {
             $0.top.equalTo(searchBar.snp.bottom)
-            $0.leading.trailing.bottom.equalTo(view.safeAreaLayoutGuide)
+            $0.horizontalEdges.bottom.equalTo(view.safeAreaLayoutGuide)
         }
 
         loadingIndicator.snp.makeConstraints {

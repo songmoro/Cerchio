@@ -58,6 +58,20 @@ final class QuoteShareViewController: BaseViewController<QuoteShareReactor> {
         return imageView
     }()
 
+    private lazy var blurEffectView: UIVisualEffectView = {
+        let blurEffect = UIBlurEffect(style: .light)
+        let effectView = UIVisualEffectView(effect: blurEffect)
+        effectView.alpha = 0
+        return effectView
+    }()
+
+    private let blurColorView: UIView = {
+        let view = UIView()
+        view.backgroundColor = .clear
+        view.alpha = 0
+        return view
+    }()
+
     private let overlayView: UIView = {
         let view = UIView()
         view.backgroundColor = UIColor.white.withAlphaComponent(0.85)
@@ -88,12 +102,6 @@ final class QuoteShareViewController: BaseViewController<QuoteShareReactor> {
         label.font = .custom(weight: .regular, size: 16)
         label.textColor = .secondaryLabel
         return label
-    }()
-
-    private let dividerView: UIView = {
-        let view = UIView()
-        view.backgroundColor = .separator
-        return view
     }()
 
     private let quoteLabel: UILabel = {
@@ -145,12 +153,14 @@ final class QuoteShareViewController: BaseViewController<QuoteShareReactor> {
 
         // Preview container subviews
         previewContainer.addSubview(backgroundImageView)
+        backgroundImageView.addSubview(blurEffectView)
+//        previewContainer.addSubview(blurEffectView)
+        previewContainer.addSubview(blurColorView)
         previewContainer.addSubview(overlayView)
         previewContainer.addSubview(bookCoverImageView)
+        previewContainer.addSubview(quoteLabel)
         previewContainer.addSubview(bookTitleLabel)
         previewContainer.addSubview(bookAuthorLabel)
-        previewContainer.addSubview(dividerView)
-        previewContainer.addSubview(quoteLabel)
         previewContainer.addSubview(metadataStackView)
 
         metadataStackView.addArrangedSubview(pageLabel)
@@ -171,11 +181,19 @@ final class QuoteShareViewController: BaseViewController<QuoteShareReactor> {
 
         previewContainer.snp.makeConstraints {
             $0.top.equalToSuperview().offset(20)
-            $0.leading.trailing.equalToSuperview().inset(20)
+            $0.horizontalEdges.equalToSuperview().inset(20)
             $0.height.equalTo(500)
         }
 
         backgroundImageView.snp.makeConstraints {
+            $0.edges.equalToSuperview()
+        }
+
+        blurEffectView.snp.makeConstraints {
+            $0.edges.equalToSuperview()
+        }
+
+        blurColorView.snp.makeConstraints {
             $0.edges.equalToSuperview()
         }
 
@@ -186,33 +204,28 @@ final class QuoteShareViewController: BaseViewController<QuoteShareReactor> {
         bookCoverImageView.snp.makeConstraints {
             $0.top.equalToSuperview().offset(32)
             $0.centerX.equalToSuperview()
-            $0.width.equalTo(80)
-            $0.height.equalTo(120)
+            $0.width.equalToSuperview().multipliedBy(0.7)
+            $0.height.equalToSuperview(\.snp.width).multipliedBy(0.7)
+        }
+        
+        quoteLabel.snp.makeConstraints {
+            $0.top.equalTo(bookCoverImageView.snp.bottom).offset(16)
+            $0.leading.trailing.equalToSuperview().inset(32)
+
         }
 
         bookTitleLabel.snp.makeConstraints {
-            $0.top.equalTo(bookCoverImageView.snp.bottom).offset(16)
-            $0.leading.trailing.equalToSuperview().inset(32)
+            $0.top.equalTo(quoteLabel.snp.bottom).offset(20)
+            $0.horizontalEdges.equalToSuperview().inset(32)
         }
 
         bookAuthorLabel.snp.makeConstraints {
             $0.top.equalTo(bookTitleLabel.snp.bottom).offset(4)
-            $0.leading.trailing.equalToSuperview().inset(32)
-        }
-
-        dividerView.snp.makeConstraints {
-            $0.top.equalTo(bookAuthorLabel.snp.bottom).offset(20)
-            $0.leading.trailing.equalToSuperview().inset(32)
-            $0.height.equalTo(1)
-        }
-
-        quoteLabel.snp.makeConstraints {
-            $0.top.equalTo(dividerView.snp.bottom).offset(20)
-            $0.leading.trailing.equalToSuperview().inset(32)
+            $0.horizontalEdges.equalToSuperview().inset(32)
         }
 
         metadataStackView.snp.makeConstraints {
-            $0.top.equalTo(quoteLabel.snp.bottom).offset(16)
+            $0.top.equalTo(bookTitleLabel.snp.bottom).offset(16)
             $0.leading.greaterThanOrEqualToSuperview().inset(32)
             $0.trailing.equalToSuperview().inset(32)
             $0.bottom.lessThanOrEqualToSuperview().inset(32)
@@ -229,10 +242,7 @@ final class QuoteShareViewController: BaseViewController<QuoteShareReactor> {
     }
 
     private func setupSettingsBottomSheet(config: QuoteBackgroundConfig) {
-        let settingsVC = QuoteShareSettingsViewController(
-            isBackgroundEnabled: config.isEnabled,
-            blurIntensity: config.blurIntensity
-        )
+        let settingsVC = QuoteShareSettingsViewController(config: config)
         settingsVC.delegate = self
         self.settingsViewController = settingsVC
 
@@ -241,8 +251,8 @@ final class QuoteShareViewController: BaseViewController<QuoteShareReactor> {
         settingsVC.didMove(toParent: self)
 
         settingsVC.view.snp.makeConstraints {
-            $0.leading.trailing.bottom.equalToSuperview()
-            $0.height.equalTo(220)
+            $0.horizontalEdges.bottom.equalToSuperview()
+            $0.height.equalTo(450)
         }
     }
 
@@ -332,12 +342,47 @@ final class QuoteShareViewController: BaseViewController<QuoteShareReactor> {
             })
             .disposed(by: disposeBag)
 
-        reactor.state.map { $0.backgroundConfig }
-            .distinctUntilChanged { $0.blurIntensity == $1.blurIntensity }
+        // Blur
+        let blurConfig = reactor.state.map { ($0.backgroundConfig.isBlurEnabled, $0.backgroundConfig.blurIntensity) }
+        blurConfig
+            .distinctUntilChanged { prev, next in prev.0 == next.0 && prev.1 == next.1 }
             .skip(1)
-            .asDriver(onErrorJustReturn: reactor.currentState.backgroundConfig)
-            .drive(onNext: { [weak self] config in
-                self?.updateBlurIntensity(config.blurIntensity)
+            .asDriver(onErrorJustReturn: (false, 0.5))
+            .drive(onNext: { [weak self] tuple in
+                self?.updateBlur(isEnabled: tuple.0, intensity: tuple.1)
+            })
+            .disposed(by: disposeBag)
+
+        // Opacity
+        let opacityConfig = reactor.state.map { ($0.backgroundConfig.isOpacityEnabled, $0.backgroundConfig.imageOpacity) }
+        opacityConfig
+            .distinctUntilChanged { prev, next in prev.0 == next.0 && prev.1 == next.1 }
+            .skip(1)
+            .asDriver(onErrorJustReturn: (false, 1.0))
+            .drive(onNext: { [weak self] tuple in
+                self?.updateOpacity(isEnabled: tuple.0, opacity: tuple.1)
+            })
+            .disposed(by: disposeBag)
+
+        // Scale
+        let scaleConfig = reactor.state.map { ($0.backgroundConfig.isScaleEnabled, $0.backgroundConfig.imageScale) }
+        scaleConfig
+            .distinctUntilChanged { prev, next in prev.0 == next.0 && prev.1 == next.1 }
+            .skip(1)
+            .asDriver(onErrorJustReturn: (false, 1.0))
+            .drive(onNext: { [weak self] tuple in
+                self?.updateScale(isEnabled: tuple.0, scale: tuple.1)
+            })
+            .disposed(by: disposeBag)
+
+        // Blur Color
+        let blurColorConfig = reactor.state.map { ($0.backgroundConfig.isBlurColorEnabled, $0.backgroundConfig.blurColor, $0.backgroundConfig.blurColorOpacity) }
+        blurColorConfig
+            .distinctUntilChanged { prev, next in prev.0 == next.0 && prev.1 == next.1 && prev.2 == next.2 }
+            .skip(1)
+            .asDriver(onErrorJustReturn: (false, .white, 0.3))
+            .drive(onNext: { [weak self] tuple in
+                self?.updateBlurColor(isEnabled: tuple.0, color: tuple.1, opacity: tuple.2)
             })
             .disposed(by: disposeBag)
 
@@ -366,52 +411,146 @@ final class QuoteShareViewController: BaseViewController<QuoteShareReactor> {
     private func updateBackgroundVisibility(_ isVisible: Bool) {
         UIView.animate(withDuration: 0.3) {
             self.backgroundImageView.alpha = isVisible ? 1.0 : 0.0
-        }
-
-        if isVisible {
-            applyBlurEffect()
+            self.blurEffectView.alpha = isVisible ? 1.0 : 0.0
         }
     }
 
-    private func updateBlurIntensity(_ intensity: CGFloat) {
-        applyBlurEffect()
-    }
+    private func updateBlur(isEnabled: Bool, intensity: CGFloat) {
+        guard let reactor = reactor, reactor.currentState.backgroundConfig.isEnabled else { return }
 
-    private func applyBlurEffect() {
-        guard let reactor = reactor,
-              reactor.currentState.backgroundConfig.isEnabled,
-              let originalImage = reactor.currentState.quoteData.bookCoverImage else { return }
-
-        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-            guard let self = self,
-                  let reactor = self.reactor else { return }
-
-            let blurEffect = BlurImageEffect(intensity: reactor.currentState.backgroundConfig.blurIntensity)
-            let blurredImage = blurEffect.apply(to: originalImage)
-
-            DispatchQueue.main.async {
-                self.backgroundImageView.image = blurredImage
+        UIView.animate(withDuration: 0.3) {
+            if isEnabled {
+                // Use UIBlurEffect for real-time preview
+                let blurStyle: UIBlurEffect.Style
+                if intensity < 0.33 {
+                    blurStyle = .extraLight
+                } else if intensity < 0.66 {
+                    blurStyle = .light
+                } else {
+                    blurStyle = .regular
+                }
+                self.blurEffectView.effect = UIBlurEffect(style: blurStyle)
+                self.blurEffectView.alpha = 1.0
+            } else {
+                self.blurEffectView.alpha = 0.0
             }
         }
     }
 
-    private func exportImage() {
-        // Capture preview container as image
-        let renderer = UIGraphicsImageRenderer(bounds: previewContainer.bounds)
-        let image = renderer.image { context in
-            previewContainer.layer.render(in: context.cgContext)
+    private func updateOpacity(isEnabled: Bool, opacity: CGFloat) {
+        guard let reactor = reactor, reactor.currentState.backgroundConfig.isEnabled else { return }
+
+        UIView.animate(withDuration: 0.3) {
+            if isEnabled {
+                self.backgroundImageView.alpha = opacity
+            } else {
+                self.backgroundImageView.alpha = 1.0
+            }
         }
+    }
 
-        imageExportedRelay.accept(image)
+    private func updateScale(isEnabled: Bool, scale: CGFloat) {
+        guard let reactor = reactor, reactor.currentState.backgroundConfig.isEnabled else { return }
 
-        // Show success message
-        let alert = UIAlertController(
-            title: "저장 완료",
-            message: "이미지가 생성되었습니다.",
-            preferredStyle: .alert
-        )
-        alert.addAction(UIAlertAction(title: "확인", style: .default))
-        present(alert, animated: true)
+        UIView.animate(withDuration: 0.3) {
+            if isEnabled {
+                self.backgroundImageView.transform = CGAffineTransform(scaleX: scale, y: scale)
+            } else {
+                self.backgroundImageView.transform = .identity
+            }
+        }
+    }
+
+    private func updateBlurColor(isEnabled: Bool, color: UIColor, opacity: CGFloat) {
+        guard let reactor = reactor, reactor.currentState.backgroundConfig.isEnabled else { return }
+
+        UIView.animate(withDuration: 0.3) {
+            if isEnabled {
+                self.blurColorView.backgroundColor = color
+                self.blurColorView.alpha = opacity
+            } else {
+                self.blurColorView.alpha = 0.0
+            }
+        }
+    }
+
+//    // MARK: - Old blur implementation (commented out)
+//    private func applyBlurEffect() {
+//        guard let reactor = reactor,
+//              reactor.currentState.backgroundConfig.isEnabled,
+//              let originalImage = reactor.currentState.quoteData.bookCoverImage else { return }
+//
+//        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+//            guard let self = self,
+//                  let reactor = self.reactor else { return }
+//
+//            let blurEffect = BlurImageEffect(intensity: reactor.currentState.backgroundConfig.blurIntensity)
+//            let blurredImage = blurEffect.apply(to: originalImage)
+//
+//            DispatchQueue.main.async {
+//                self.backgroundImageView.image = blurredImage
+//            }
+//        }
+//    }
+
+    private func exportImage() {
+        guard let reactor = reactor else { return }
+
+        // Show loading indicator
+        let loadingAlert = UIAlertController(title: nil, message: "이미지 생성 중...", preferredStyle: .alert)
+        let loadingIndicator = UIActivityIndicatorView(style: .medium)
+        loadingIndicator.translatesAutoresizingMaskIntoConstraints = false
+        loadingIndicator.startAnimating()
+        loadingAlert.view.addSubview(loadingIndicator)
+        loadingIndicator.centerXAnchor.constraint(equalTo: loadingAlert.view.centerXAnchor).isActive = true
+        loadingIndicator.bottomAnchor.constraint(equalTo: loadingAlert.view.bottomAnchor, constant: -20).isActive = true
+        present(loadingAlert, animated: true)
+
+        // Capture image on main thread (UI operations must be on main thread)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
+            guard let self = self else { return }
+
+            // Capture the current view hierarchy as-is
+            // UIVisualEffectView will be captured correctly with drawHierarchy
+            let renderer = UIGraphicsImageRenderer(bounds: self.previewContainer.bounds)
+            let capturedImage = renderer.image { context in
+                self.previewContainer.drawHierarchy(in: self.previewContainer.bounds, afterScreenUpdates: true)
+            }
+
+            // Save to photo library
+            UIImageWriteToSavedPhotosAlbum(capturedImage, self, #selector(self.image(_:didFinishSavingWithError:contextInfo:)), nil)
+            self.imageExportedRelay.accept(capturedImage)
+        }
+    }
+
+    @objc private func image(_ image: UIImage, didFinishSavingWithError error: Error?, contextInfo: UnsafeRawPointer) {
+        // Dismiss loading alert first
+        dismiss(animated: true) { [weak self] in
+            guard let self = self else { return }
+
+            if let error = error {
+                // Show error alert
+                let errorAlert = UIAlertController(
+                    title: "저장 실패",
+                    message: error.localizedDescription,
+                    preferredStyle: .alert
+                )
+                errorAlert.addAction(UIAlertAction(title: "확인", style: .default))
+                self.present(errorAlert, animated: true)
+            } else {
+                // Show success alert
+                let successAlert = UIAlertController(
+                    title: "저장 완료",
+                    message: "이미지가 사진 라이브러리에 저장되었습니다.",
+                    preferredStyle: .alert
+                )
+                successAlert.addAction(UIAlertAction(title: "확인", style: .default) { [weak self] _ in
+                    // Dismiss the quote share screen after successful save
+                    self?.navigationEvents.accept(.close)
+                })
+                self.present(successAlert, animated: true)
+            }
+        }
     }
 }
 
@@ -421,7 +560,19 @@ extension QuoteShareViewController: QuoteShareSettingsDelegate {
         reactor?.action.onNext(.backgroundToggled(isEnabled))
     }
 
-    func settingsDidChangeBlur(intensity: CGFloat) {
-        reactor?.action.onNext(.blurIntensityChanged(intensity))
+    func settingsDidChangeBlur(isEnabled: Bool, intensity: CGFloat) {
+        reactor?.action.onNext(.blurChanged(isEnabled: isEnabled, intensity: intensity))
+    }
+
+    func settingsDidChangeBlurColor(isEnabled: Bool, color: UIColor, opacity: CGFloat) {
+        reactor?.action.onNext(.blurColorChanged(isEnabled: isEnabled, color: color, opacity: opacity))
+    }
+
+    func settingsDidChangeOpacity(isEnabled: Bool, opacity: CGFloat) {
+        reactor?.action.onNext(.opacityChanged(isEnabled: isEnabled, opacity: opacity))
+    }
+
+    func settingsDidChangeScale(isEnabled: Bool, scale: CGFloat) {
+        reactor?.action.onNext(.scaleChanged(isEnabled: isEnabled, scale: scale))
     }
 }

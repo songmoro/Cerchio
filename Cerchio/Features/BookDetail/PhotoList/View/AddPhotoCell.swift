@@ -62,7 +62,7 @@ final class AddPhotoCell: UICollectionViewCell, IsIdentifiable {
         iconImageView.snp.makeConstraints {
             $0.centerX.equalToSuperview()
             $0.centerY.equalToSuperview().offset(-10)
-            $0.width.height.equalTo(28)
+            $0.size.equalTo(28)
         }
 
         label.snp.makeConstraints {

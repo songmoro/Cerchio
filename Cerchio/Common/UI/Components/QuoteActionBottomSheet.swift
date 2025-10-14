@@ -53,7 +53,7 @@ final class QuoteActionBottomSheet: SnapshotBottomSheet {
         let padding: CGFloat = 12
         let snapshotHeight = cellSnapshot.bounds.height
         tableView.snp.makeConstraints {
-            $0.leading.trailing.bottom.equalToSuperview()
+            $0.horizontalEdges.bottom.equalToSuperview()
             $0.top.equalToSuperview().offset((snapshotHeight / 2) + padding)
         }
     }
@@ -136,7 +136,7 @@ private final class ActionCell: UITableViewCell {
         iconImageView.snp.makeConstraints {
             $0.leading.equalToSuperview().offset(20)
             $0.centerY.equalToSuperview()
-            $0.width.height.equalTo(24)
+            $0.size.equalTo(24)
         }
 
         titleLabel.snp.makeConstraints {

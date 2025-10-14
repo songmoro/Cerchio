@@ -60,7 +60,7 @@ final class LibraryCollectionViewCell: UICollectionViewCell, IsIdentifiable {
     private func setupConstraints() {
         coverImageView.snp.makeConstraints {
             $0.top.equalToSuperview()
-            $0.leading.trailing.equalToSuperview().inset(LibraryConstants.Layout.cellInset)
+            $0.horizontalEdges.equalToSuperview().inset(LibraryConstants.Layout.cellInset)
             // 높이는 이미지 로드 후 동적으로 설정
             imageHeightConstraint = $0.height.equalTo(100).constraint
         }
@@ -71,12 +71,12 @@ final class LibraryCollectionViewCell: UICollectionViewCell, IsIdentifiable {
 
         titleLabel.snp.makeConstraints {
             $0.top.equalTo(coverImageView.snp.bottom).offset(LibraryConstants.Layout.stackOffset)
-            $0.leading.trailing.equalToSuperview().inset(LibraryConstants.Layout.cellInset)
+            $0.horizontalEdges.equalToSuperview().inset(LibraryConstants.Layout.cellInset)
         }
 
         authorLabel.snp.makeConstraints {
             $0.top.equalTo(titleLabel.snp.bottom).offset(LibraryConstants.Layout.stackOffset)
-            $0.leading.trailing.equalTo(titleLabel)
+            $0.horizontalEdges.equalTo(titleLabel)
             // bottom은 greaterThan으로 최소 여백 보장
             $0.bottom.lessThanOrEqualToSuperview().inset(LibraryConstants.Layout.stackOffset)
         }
