@@ -392,6 +392,12 @@ final class ReadingTimerReactor: Reactor {
                         ])
 
                         self.stopTimerTick()
+
+                        // 라이브 액티비티 즉시 완료 처리
+                        if #available(iOS 16.2, *) {
+                            _ = self.service.activityManager.end().subscribe()
+                        }
+
                         return self.service.stop(realmSession: self.currentState.session)
                             .flatMap { _ -> Observable<Mutation> in
                                 return .concat([

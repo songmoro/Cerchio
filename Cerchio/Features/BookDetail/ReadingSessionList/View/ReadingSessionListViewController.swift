@@ -258,18 +258,18 @@ final class ReadingSessionCell: UITableViewCell {
         dateFormatter.locale = Locale(identifier: "ko_KR")
         dateLabel.text = dateFormatter.string(from: session.createdAt)
 
-        // Duration formatting
-        
-        if session.durationSeconds >= session.targetMinutes {
-            durationLabel.text = String(format: "%d분", session.targetMinutes)
-        } else {
-            let minutes = session.durationSeconds / 60
-            let seconds = session.durationSeconds % 60
-            if minutes > 0 {
+        // Duration formatting (실제 읽은 시간 표시)
+        let minutes = session.durationSeconds / 60
+        let seconds = session.durationSeconds % 60
+
+        if minutes > 0 {
+            if seconds > 0 {
                 durationLabel.text = String(format: "%d분 %d초", minutes, seconds)
             } else {
-                durationLabel.text = String(format: "%d초", seconds)
+                durationLabel.text = String(format: "%d분", minutes)
             }
+        } else {
+            durationLabel.text = String(format: "%d초", seconds)
         }
 
         // Target formatting

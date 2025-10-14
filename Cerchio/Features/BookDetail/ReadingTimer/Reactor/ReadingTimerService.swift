@@ -17,10 +17,10 @@ final class ReadingTimerService {
 
     // Core managers
     let stateManager: TimerStateManager
+    let activityManager: TimerActivityManager
     private let lifecycleManager: TimerLifecycleManager
     private let validationService: TimerValidationService
     private let notificationManager: TimerNotificationManager
-    private let activityManager: TimerActivityManager
     private let sessionManager: TimerSessionManager
     private let sessionRepository: ReadingSessionRepositoryProtocol
 

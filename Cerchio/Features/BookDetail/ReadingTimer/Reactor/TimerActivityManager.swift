@@ -70,14 +70,14 @@ final class TimerActivityManager {
     }
 
     @available(iOS 16.2, *)
-    func end() -> Observable<Void> {
+    func end(immediate: Bool = false) -> Observable<Void> {
         guard isStarted else {
             print("[TimerActivity] ⚠️ Not started")
             return .just(())
         }
 
-        print("[TimerActivity] 🛑 Ending Live Activity")
-        return liveActivityManager.endActivity()
+        print("[TimerActivity] 🛑 Ending Live Activity (immediate: \(immediate))")
+        return liveActivityManager.endActivity(immediate: immediate)
             .do(onNext: { [weak self] in
                 self?.isStarted = false
                 print("[TimerActivity] ✅ Ended successfully")

@@ -62,33 +62,57 @@ final class AppCoordinator: BaseCoordinator {
             print("[AppCoordinator] 📱 Active Live Activities: \(hasActiveActivity)")
         }
 
-        // 케이스 1: 세션도 있고 액티비티도 있음 → 정상 복구
-        if let session = activeSession, hasActiveActivity {
-            print("[AppCoordinator] ✅ Found active session with Live Activity")
+        // 세션이 있으면 복원 (라이브 액티비티 유무와 관계없이)
+        if let session = activeSession {
+            print("[AppCoordinator] ✅ Found active session")
             cleanupInactiveNotifications(activeSessionId: session.sessionId)
-            restoreSession(session, reason: "정상 복구")
+
+            // 경과 시간 체크하여 복원 또는 다이얼로그 표시
+            let targetSeconds = session.targetMinutes * 60
+            let remaining: Int
+
+            if let pausedAt = session.pausedAt {
+                remaining = max(0, Int(session.targetEndTime.timeIntervalSince(pausedAt)))
+            } else {
+                remaining = max(0, Int(session.targetEndTime.timeIntervalSince(Date())))
+            }
+
+            let isCompleted = remaining <= 0
+
+            if isCompleted {
+                // 완료된 세션 - 모든 라이브 액티비티 정리 후 다이얼로그 표시
+                print("[AppCoordinator] ⏱️ Session completed, cleaning up activities")
+                if #available(iOS 16.2, *) {
+                    _ = LiveActivityManager.shared.endAllActivities()
+                        .subscribe(onNext: { [weak self] in
+                            self?.showSessionRecoveryDialog(session)
+                        })
+                } else {
+                    showSessionRecoveryDialog(session)
+                }
+            } else if hasActiveActivity {
+                // 진행 중 + 액티비티 있음 - 바로 복원
+                print("[AppCoordinator] ✅ Restoring active session with Live Activity")
+                restoreSession(session, reason: "정상 복구")
+            } else {
+                // 진행 중이지만 액티비티 없음 - 다이얼로그 표시
+                print("[AppCoordinator] ⚠️ Session active but no Live Activity, showing dialog")
+                showSessionRecoveryDialog(session)
+            }
             return
         }
 
-        // 케이스 2: 세션은 있는데 액티비티 없음 → 시스템 재부팅 또는 액티비티 종료
-        if let session = activeSession, !hasActiveActivity {
-            print("[AppCoordinator] ⚠️ Found session but no Live Activity (possible reboot)")
-            cleanupInactiveNotifications(activeSessionId: session.sessionId)
-            showSessionRecoveryDialog(session)
-            return
-        }
-
-        // 케이스 3: 세션 없고 액티비티 있음 → 데이터 불일치 (액티비티만 정리)
-        if activeSession == nil, hasActiveActivity {
+        // 세션 없고 액티비티 있음 → 데이터 불일치 (모든 액티비티 정리)
+        if hasActiveActivity {
             print("[AppCoordinator] ⚠️ Found Live Activity but no session (data mismatch)")
             if #available(iOS 16.2, *) {
-                _ = LiveActivityManager.shared.endActivity()
+                _ = LiveActivityManager.shared.endAllActivities().subscribe()
             }
             cleanupInactiveNotifications(activeSessionId: nil)
             return
         }
 
-        // 케이스 4: 둘 다 없음 → 정상
+        // 둘 다 없음 → 정상
         print("[AppCoordinator] ✅ No active timer session to restore")
         cleanupInactiveNotifications(activeSessionId: nil)
     }

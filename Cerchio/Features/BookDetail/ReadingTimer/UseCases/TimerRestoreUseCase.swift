@@ -82,17 +82,24 @@ final class TimerRestoreUseCase {
         stateManager.setTargetEndTime(session.targetEndTime)
         stateManager.setPausedAt(session.pausedAt)
 
-        // 4. Live Activity 동기화
+        // 4. Live Activity 동기화 또는 종료
         let activitySync: Observable<Void>
         if #available(iOS 16.2, *) {
-            activitySync = activityManager.syncOnRestore(
-                targetEndTime: session.targetEndTime,
-                pausedAt: session.pausedAt,
-                targetSeconds: stateManager.targetSeconds,
-                bookTitle: session.bookTitle,
-                targetMinutes: session.targetMinutes,
-                sessionStartTime: sessionStartTime
-            )
+            if calc.isCompleted {
+                // 완료된 세션은 모든 라이브 액티비티 종료
+                print("[TimerRestoreUseCase] 🛑 Ending all Live Activities (session completed)")
+                activitySync = LiveActivityManager.shared.endAllActivities()
+            } else {
+                // 진행 중인 세션은 동기화
+                activitySync = activityManager.syncOnRestore(
+                    targetEndTime: session.targetEndTime,
+                    pausedAt: session.pausedAt,
+                    targetSeconds: stateManager.targetSeconds,
+                    bookTitle: session.bookTitle,
+                    targetMinutes: session.targetMinutes,
+                    sessionStartTime: sessionStartTime
+                )
+            }
         } else {
             activitySync = .just(())
         }

@@ -81,9 +81,9 @@ final class TimerStopUseCase {
         // 2. 알림 취소 (전달된 알림 포함)
         _ = notificationManager.cancel().subscribe()
 
-        // 3. Live Activity 종료
+        // 3. Live Activity 즉시 종료 (완료 상태 표시 후 제거)
         if #available(iOS 16.2, *) {
-            _ = activityManager.end().subscribe()
+            _ = activityManager.end(immediate: false).subscribe()
         }
 
         // 4. 활성 세션 클리어

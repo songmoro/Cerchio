@@ -180,7 +180,39 @@ final class LiveActivityManager {
 
     // MARK: - End Activity
 
-    func endActivity() -> Observable<Void> {
+    /// 모든 활성 라이브 액티비티 강제 종료
+    func endAllActivities() -> Observable<Void> {
+        return Observable.create { observer in
+            let activities = Activity<ReadingTimerAttributes>.activities
+
+            guard !activities.isEmpty else {
+                print("[LiveActivity] No active activities to end")
+                observer.onNext(())
+                observer.onCompleted()
+                return Disposables.create()
+            }
+
+            print("[LiveActivity] 🧹 Ending \(activities.count) active activities")
+
+            Task {
+                for activity in activities {
+                    do {
+                        await activity.end(nil, dismissalPolicy: .immediate)
+                        print("[LiveActivity] ✅ Ended activity: \(activity.id)")
+                    } catch {
+                        print("[LiveActivity] ⚠️ Failed to end activity \(activity.id): \(error)")
+                    }
+                }
+
+                observer.onNext(())
+                observer.onCompleted()
+            }
+
+            return Disposables.create()
+        }
+    }
+
+    func endActivity(immediate: Bool = false) -> Observable<Void> {
         return Observable.create { [weak self] observer in
             guard let activity = self?.currentActivity else {
                 print("[LiveActivity] No active activity to end")
@@ -191,20 +223,27 @@ final class LiveActivityManager {
 
             Task {
                 do {
-                    // 완료 상태로 업데이트
-                    let completedState = ReadingTimerAttributes.ContentState(
-                        timerStartTime: nil,
-                        pausedElapsedSeconds: activity.content.state.targetSeconds,
-                        targetSeconds: activity.content.state.targetSeconds,
-                        isPaused: false,
-                        isCompleted: true
-                    )
+                    if immediate {
+                        // 즉시 제거 (완료 상태 표시 없이)
+                        await activity.end(nil, dismissalPolicy: .immediate)
+                        print("[LiveActivity] Activity dismissed immediately")
+                    } else {
+                        // 완료 상태로 업데이트 후 제거
+                        let completedState = ReadingTimerAttributes.ContentState(
+                            timerStartTime: nil,
+                            pausedElapsedSeconds: activity.content.state.targetSeconds,
+                            targetSeconds: activity.content.state.targetSeconds,
+                            isPaused: false,
+                            isCompleted: true
+                        )
 
-                    await activity.end(
-                        .init(state: completedState, staleDate: nil),
-                        dismissalPolicy: .after(.now.addingTimeInterval(60 * 60))  // 1시간 후 제거
-                    )
-                    print("[LiveActivity] Activity ended with completion state")
+                        await activity.end(
+                            .init(state: completedState, staleDate: nil),
+                            dismissalPolicy: .immediate  // 즉시 제거로 변경
+                        )
+                        print("[LiveActivity] Activity ended with completion state")
+                    }
+
                     self?.cleanupActivity()
                     observer.onNext(())
                     observer.onCompleted()
