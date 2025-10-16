@@ -9,6 +9,22 @@ import UIKit
 import SnapKit
 
 final class CommonSectionHeader: UICollectionReusableView, IsIdentifiable {
+    // MARK: - Layout
+    static func layoutSize() -> NSCollectionLayoutSize {
+        return NSCollectionLayoutSize(
+            widthDimension: .fractionalWidth(1.0),
+            heightDimension: .estimated(52)
+        )
+    }
+
+    static func createBoundarySupplementaryItem() -> NSCollectionLayoutBoundarySupplementaryItem {
+        return NSCollectionLayoutBoundarySupplementaryItem(
+            layoutSize: layoutSize(),
+            elementKind: UICollectionView.elementKindSectionHeader,
+            alignment: .top
+        )
+    }
+
     // MARK: - UI Components
     private let titleLabel = UILabel()
     private let actionButton: UIButton = {
