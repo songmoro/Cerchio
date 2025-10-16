@@ -170,13 +170,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "View All"
+            "value" : "View More"
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "전체 보기"
+            "value" : "더보기"
           }
         }
       }

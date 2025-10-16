@@ -475,7 +475,7 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
         let group = NSCollectionLayoutGroup.vertical(layoutSize: groupSize, subitems: [item])
         
         let section = NSCollectionLayoutSection(group: group)
-        section.contentInsets = NSDirectionalEdgeInsets(top: 8, leading: 0, bottom: 8, trailing: 0)
+        section.contentInsets = NSDirectionalEdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16)
         
         let headerSize = NSCollectionLayoutSize(
             widthDimension: .fractionalWidth(1.0),
@@ -581,18 +581,22 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
                     withReuseIdentifier: ReadingRecordsSectionHeader.identifier,
                     for: indexPath
                 ) as! ReadingRecordsSectionHeader
-                
+
+                let hasRecords = self?.reactor?.currentState.readingStatistics?.totalSessions ?? 0 > 0
+                header.configure(
+                    title: "독서 기록",
+                    actionTitle: hasRecords ? String(localized: .actionViewAll) : nil,
+                    hasRecords: hasRecords
+                )
+
                 header.onViewAllTapped = { [weak self] in
                     self?.showReadingSessionList()
                 }
-                
+
                 header.onPeriodChanged = { [weak self] period in
                     self?.handlePeriodChange(period)
                 }
-                
-                let hasRecords = self?.reactor?.currentState.readingStatistics?.totalSessions ?? 0 > 0
-                header.configure(hasRecords: hasRecords)
-                
+
                 return header
                 
             case .savedQuotes:
@@ -601,8 +605,12 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
                     withReuseIdentifier: SavedQuotesSectionHeader.identifier,
                     for: indexPath
                 ) as! SavedQuotesSectionHeader
-                
-                header.onViewAllTapped = { [weak self] in
+
+                header.configure(
+                    title: String(localized: .bookDetailSavedQuotes),
+                    actionTitle: String(localized: .actionViewAll)
+                )
+                header.onActionTapped = { [weak self] in
                     self?.showAllQuotes()
                 }
                 return header
@@ -613,8 +621,12 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
                     withReuseIdentifier: PhotosSectionHeader.identifier,
                     for: indexPath
                 ) as! PhotosSectionHeader
-                
-                header.onViewAllTapped = { [weak self] in
+
+                header.configure(
+                    title: String(localized: .bookDetailPhotos),
+                    actionTitle: String(localized: .actionViewAll)
+                )
+                header.onActionTapped = { [weak self] in
                     self?.showAllPhotos()
                 }
                 return header

@@ -14,8 +14,7 @@ final class ReadingRecordsSectionHeader: UICollectionReusableView, IsIdentifiabl
 
     private let viewAllButton: UIButton = {
         var config = UIButton.Configuration.plain()
-        config.title = "전체 보기"
-        config.baseForegroundColor = .systemBlue
+        config.baseForegroundColor = .forestGreen
         config.contentInsets = .zero
 
         let button = UIButton(configuration: config)
@@ -57,34 +56,30 @@ final class ReadingRecordsSectionHeader: UICollectionReusableView, IsIdentifiabl
     private func setupViews() {
         backgroundColor = .clear
 
-        // 타이틀 레이블
-        titleLabel.text = "독서 기록"
         titleLabel.font = .custom(weight: .bold, size: 20)
         titleLabel.textColor = .label
         addSubview(titleLabel)
 
-        // 전체 보기 버튼
         viewAllButton.addTarget(self, action: #selector(viewAllButtonTapped), for: .touchUpInside)
         addSubview(viewAllButton)
 
-        // 세그먼트 컨트롤
         segmentedControl.addTarget(self, action: #selector(segmentChanged), for: .valueChanged)
         addSubview(segmentedControl)
     }
 
     private func setupConstraints() {
         titleLabel.snp.makeConstraints {
-            $0.top.leading.equalToSuperview().inset(16)
+            $0.top.leading.equalToSuperview()
         }
 
         viewAllButton.snp.makeConstraints {
             $0.centerY.equalTo(titleLabel)
-            $0.trailing.equalToSuperview().inset(16)
+            $0.trailing.equalToSuperview()
         }
 
         segmentedControl.snp.makeConstraints {
             $0.top.equalTo(titleLabel.snp.bottom).offset(12)
-            $0.horizontalEdges.equalToSuperview().inset(16)
+            $0.horizontalEdges.equalToSuperview()
             $0.bottom.equalToSuperview().inset(8)
         }
     }
@@ -100,17 +95,26 @@ final class ReadingRecordsSectionHeader: UICollectionReusableView, IsIdentifiabl
     }
 
     // MARK: - Configuration
-    func configure(hasRecords: Bool) {
+    func configure(title: String, actionTitle: String? = nil, hasRecords: Bool) {
+        titleLabel.text = title
+
+        if let actionTitle = actionTitle {
+            viewAllButton.configuration?.title = actionTitle
+            viewAllButton.isHidden = false
+        } else {
+            viewAllButton.isHidden = true
+        }
+
         segmentedControl.isHidden = !hasRecords
 
         // 기록이 없을 때는 titleLabel이 bottom 제약을 가지도록 조정
         if !hasRecords {
             titleLabel.snp.remakeConstraints {
-                $0.top.bottom.leading.equalToSuperview().inset(16)
+                $0.top.bottom.leading.equalToSuperview()
             }
         } else {
             titleLabel.snp.remakeConstraints {
-                $0.top.leading.equalToSuperview().inset(16)
+                $0.top.leading.equalToSuperview()
             }
         }
     }
@@ -119,5 +123,6 @@ final class ReadingRecordsSectionHeader: UICollectionReusableView, IsIdentifiabl
         super.prepareForReuse()
         onViewAllTapped = nil
         onPeriodChanged = nil
+        viewAllButton.isHidden = true
     }
 }

@@ -13,7 +13,7 @@ final class CommonSectionHeader: UICollectionReusableView, IsIdentifiable {
     private let titleLabel = UILabel()
     private let actionButton: UIButton = {
         var config = UIButton.Configuration.plain()
-        config.baseForegroundColor = .systemBlue
+        config.baseForegroundColor = .forestGreen
         config.contentInsets = .zero
 
         let button = UIButton(configuration: config)
@@ -57,13 +57,13 @@ final class CommonSectionHeader: UICollectionReusableView, IsIdentifiable {
 
     private func setupConstraints() {
         titleLabel.snp.makeConstraints {
-            $0.leading.equalToSuperview().inset(16)
-            $0.centerY.equalToSuperview()
+            $0.leading.equalToSuperview()
+            $0.top.bottom.equalToSuperview().inset(16)
         }
 
         actionButton.snp.makeConstraints {
-            $0.trailing.equalToSuperview().inset(16)
-            $0.centerY.equalToSuperview()
+            $0.trailing.equalToSuperview()
+            $0.centerY.equalTo(titleLabel)
         }
     }
 
