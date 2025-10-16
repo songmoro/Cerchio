@@ -290,6 +290,7 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
         collectionView.alwaysBounceVertical = true
         collectionView.delegate = self
         collectionView.refreshControl = refreshControl
+        collectionView.contentInsetAdjustmentBehavior = .never
         
         collectionView.register(BookInfoCollectionViewCell.self)
         collectionView.register(ReadingStatisticsCell.self)
@@ -356,6 +357,15 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
         let screenHeight = UIScreen.main.bounds.height
         let cellHeight = screenHeight / 2
 
+        // Get navigation bar height to offset content
+//        let navBarHeight = navigationController?.navigationBar.frame.height ?? 0
+//        let statusBarHeight = view.window?.windowScene?.statusBarManager?.statusBarFrame.height ?? 0
+//        let topInset = -(navBarHeight + statusBarHeight)
+        
+        let navBarHeight = navigationController?.navigationBar.frame.height ?? 0
+//        let statusBarHeight = view.window?.windowScene?.statusBarManager?.statusBarFrame.height ?? 0
+//        let topInset = -navBarHeight
+
         let itemSize = NSCollectionLayoutSize(
             widthDimension: .fractionalWidth(1.0),
             heightDimension: .absolute(cellHeight)
@@ -369,6 +379,7 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
         let group = NSCollectionLayoutGroup.horizontal(layoutSize: groupSize, subitems: [item])
 
         let section = NSCollectionLayoutSection(group: group)
+        //        section.contentInsets = NSDirectionalEdgeInsets(top: topInset, leading: 0, bottom: 0, trailing: 0)
         section.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0)
 
         return section
