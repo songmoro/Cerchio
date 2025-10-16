@@ -71,6 +71,8 @@ final class LibraryViewController: BaseViewController<LibraryReactor> {
 
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
+        
+        navigationController?.navigationBar.tintColor = .forestGreen
 
         // 편집 모드였다면 기본 모드로 복귀
         if isEditMode {

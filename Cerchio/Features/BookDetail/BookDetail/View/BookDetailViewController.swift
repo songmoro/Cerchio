@@ -120,6 +120,8 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
 
         // Allow content to extend under navigation bar
         extendedLayoutIncludesOpaqueBars = true
+        
+        navigationController?.navigationBar.tintColor = .bookBackground
 
         setupCollectionView()
         setupLayout()
@@ -191,8 +193,11 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
             .map { $0.bookDetail }
             .compactMap { $0 }
             .distinctUntilChanged()
+            .take(1) // Only trigger once when bookDetail is first set
             .observe(on: MainScheduler.asyncInstance)
-            .subscribe(onNext: { [weak self] _ in
+            .subscribe(onNext: { [weak self] bookDetail in
+                print("📌 BookDetail first set, loading all data")
+                print("📌 Current tags in bookDetail: \(bookDetail.tags)")
                 self?.reactor?.action.onNext(.loadReadingStatistics)
                 self?.reactor?.action.onNext(.loadPhotos)
                 self?.reactor?.action.onNext(.loadQuotes)
@@ -779,9 +784,25 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
     }
     
     private func updateTagsUI(_ tags: [RealmTag]) {
-        // Tags are updated in the global header via bookDetail state change
-        // Simply invalidate layout to trigger header reload
-        collectionView.collectionViewLayout.invalidateLayout()
+        print("📌 updateTagsUI called with \(tags.count) tags")
+        // Force reload the bookInfo section header
+        guard let dataSource = dataSource else { return }
+
+        let indexPath = IndexPath(item: 0, section: 0) // bookInfo is first section
+        if let header = collectionView.supplementaryView(
+            forElementKind: UICollectionView.elementKindSectionHeader,
+            at: indexPath
+        ) as? BookInfoHeaderView {
+            print("📌 Found existing header, reconfiguring...")
+            if let bookDetail = reactor?.currentState.bookDetail {
+                header.configure(with: bookDetail)
+            }
+        } else {
+            print("📌 Header not visible, will update on next appearance")
+            // Header not visible - it will be configured when it becomes visible
+            // Just invalidate layout to ensure it's reconfigured
+            collectionView.collectionViewLayout.invalidateLayout()
+        }
     }
     
     // MARK: - Navigation Methods

@@ -39,7 +39,7 @@ final class BookInfoHeaderView: UICollectionReusableView, IsIdentifiable {
     // Cover image (centered)
     private let coverImageView: UIImageView = {
         let imageView = UIImageView()
-        imageView.contentMode = .scaleAspectFill
+        imageView.contentMode = .scaleAspectFit
         imageView.clipsToBounds = true
         imageView.layer.cornerRadius = BookDetailConstants.Layout.coverImageCornerRadius
         imageView.backgroundColor = .systemGray5
@@ -49,7 +49,7 @@ final class BookInfoHeaderView: UICollectionReusableView, IsIdentifiable {
         imageView.layer.shadowOffset = BookDetailConstants.Shadow.coverShadowOffset
         imageView.layer.shadowRadius = BookDetailConstants.Shadow.coverShadowRadius
         imageView.layer.shadowOpacity = BookDetailConstants.Shadow.coverShadowOpacity
-
+        
         return imageView
     }()
 
@@ -64,6 +64,8 @@ final class BookInfoHeaderView: UICollectionReusableView, IsIdentifiable {
         label.font = .custom(weight: .bold, size: BookDetailConstants.Typography.bookInfoTitleFontSize)
         label.textColor = .bookBackground
         label.numberOfLines = 2
+        label.setContentHuggingPriority(.required, for: .vertical)
+        label.setContentCompressionResistancePriority(.required, for: .vertical)
         return label
     }()
 
@@ -72,6 +74,8 @@ final class BookInfoHeaderView: UICollectionReusableView, IsIdentifiable {
         label.font = .custom(weight: .regular, size: BookDetailConstants.Typography.bookInfoSubtitleFontSize)
         label.textColor = .systemGray
         label.numberOfLines = 1
+        label.setContentHuggingPriority(.required, for: .vertical)
+        label.setContentCompressionResistancePriority(.required, for: .vertical)
         return label
     }()
 
@@ -148,8 +152,6 @@ final class BookInfoHeaderView: UICollectionReusableView, IsIdentifiable {
         let navBarHeight: CGFloat = 44
         let statusBarHeight: CGFloat = 44
 
-        let backgroundHeight = screenHeight * 0.4
-
         backgroundImageView.snp.makeConstraints {
             $0.edges.equalToSuperview()
         }
@@ -161,22 +163,24 @@ final class BookInfoHeaderView: UICollectionReusableView, IsIdentifiable {
         overlayView.snp.makeConstraints {
             $0.edges.equalTo(backgroundImageView)
         }
-
+        
         let coverImageWidth = BookDetailConstants.Layout.coverImageWidth * 1.2
-
+        
         coverImageView.snp.makeConstraints {
             $0.centerX.equalToSuperview()
-            $0.top.equalToSuperview().offset(navBarHeight + statusBarHeight + 16)
+            $0.top.equalToSuperview(\.safeAreaLayoutGuide)
+//            $0.top.equalToSuperview().offset(navBarHeight + statusBarHeight + 16)
             $0.width.equalTo(coverImageWidth)
             $0.height.equalTo(coverImageView.snp.width).dividedBy(BookDetailConstants.Layout.coverImageAspectRatio)
         }
 
         infoContainerView.snp.makeConstraints {
+            $0.top.lessThanOrEqualTo(coverImageView.snp.bottom).offset(16)
             $0.leading.equalToSuperview().inset(BookDetailConstants.Layout.infoLeadingInset)
             $0.trailing.equalToSuperview().inset(BookDetailConstants.Layout.infoLeadingInset)
             $0.bottom.equalToSuperview().inset(BookDetailConstants.Layout.infoBottomInset)
         }
-
+        
         infoStackView.snp.makeConstraints {
             $0.edges.equalToSuperview()
         }
@@ -198,8 +202,11 @@ final class BookInfoHeaderView: UICollectionReusableView, IsIdentifiable {
 
     // MARK: - Configuration
     func configure(with bookDetail: BookDetail) {
-        titleLabel.text = bookDetail.book.cleanTitle
+        titleLabel.text = bookDetail.book.customTitle ?? bookDetail.book.cleanTitle
         authorLabel.text = bookDetail.book.author
+
+        titleLabel.textColor = .bookBackground
+        authorLabel.textColor = .systemGray
 
         setupTags(bookDetail.tags)
 
@@ -226,6 +233,7 @@ final class BookInfoHeaderView: UICollectionReusableView, IsIdentifiable {
             coverImageView.image = nil
             coverImageView.backgroundColor = .systemGray4
 
+            // Override colors for dark background
             titleLabel.textColor = .white
             authorLabel.textColor = UIColor.white.withAlphaComponent(BookDetailConstants.Typography.bookInfoSubtitleAlpha)
         }
@@ -233,14 +241,14 @@ final class BookInfoHeaderView: UICollectionReusableView, IsIdentifiable {
 
     private func setupTags(_ tags: [String]) {
         tagsStackView.arrangedSubviews.forEach { $0.removeFromSuperview() }
-
-        let placeholderLabel = createPlaceholderLabel()
-        tagsStackView.addArrangedSubview(placeholderLabel)
         
         tags.forEach { tag in
             let tagLabel = createTagLabel(text: tag)
             tagsStackView.addArrangedSubview(tagLabel)
         }
+        
+        let placeholderLabel = createPlaceholderLabel()
+        tagsStackView.addArrangedSubview(placeholderLabel)
     }
 
     private func createTagLabel(text: String) -> UILabel {
