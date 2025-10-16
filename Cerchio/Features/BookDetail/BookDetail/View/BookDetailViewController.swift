@@ -380,7 +380,7 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
     
     private func createBookInfoSection() -> NSCollectionLayoutSection {
         let screenHeight = UIScreen.main.bounds.height
-        let headerHeight = screenHeight * 0.55
+        let headerHeight = screenHeight * 0.50
 
         // Create empty item (section with only header, no items)
         let itemSize = NSCollectionLayoutSize(

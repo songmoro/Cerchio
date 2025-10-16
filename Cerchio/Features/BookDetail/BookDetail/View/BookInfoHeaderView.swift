@@ -36,15 +36,11 @@ final class BookInfoHeaderView: UICollectionReusableView, IsIdentifiable {
         return view
     }()
 
-    // Cover image (centered)
     private let coverImageView: UIImageView = {
         let imageView = UIImageView()
-        imageView.contentMode = .scaleAspectFit
+        imageView.contentMode = .scaleAspectFill
         imageView.clipsToBounds = true
         imageView.layer.cornerRadius = BookDetailConstants.Layout.coverImageCornerRadius
-        imageView.backgroundColor = .systemGray5
-
-        // Add shadow
         imageView.layer.shadowColor = UIColor.black.cgColor
         imageView.layer.shadowOffset = BookDetailConstants.Shadow.coverShadowOffset
         imageView.layer.shadowRadius = BookDetailConstants.Shadow.coverShadowRadius
@@ -105,6 +101,7 @@ final class BookInfoHeaderView: UICollectionReusableView, IsIdentifiable {
         stackView.axis = .vertical
         stackView.spacing = BookDetailConstants.Layout.stackSpacing
         stackView.alignment = .leading
+        stackView.distribution = .fill // 내용에 맞춰 크기 결정
         return stackView
     }()
 
@@ -148,10 +145,6 @@ final class BookInfoHeaderView: UICollectionReusableView, IsIdentifiable {
     }
 
     private func setupConstraints() {
-        let screenHeight = UIScreen.main.bounds.height
-        let navBarHeight: CGFloat = 44
-        let statusBarHeight: CGFloat = 44
-
         backgroundImageView.snp.makeConstraints {
             $0.edges.equalToSuperview()
         }
@@ -165,20 +158,18 @@ final class BookInfoHeaderView: UICollectionReusableView, IsIdentifiable {
         }
         
         let coverImageWidth = BookDetailConstants.Layout.coverImageWidth * 1.2
-        
         coverImageView.snp.makeConstraints {
             $0.centerX.equalToSuperview()
             $0.top.equalToSuperview(\.safeAreaLayoutGuide)
-//            $0.top.equalToSuperview().offset(navBarHeight + statusBarHeight + 16)
             $0.width.equalTo(coverImageWidth)
             $0.height.equalTo(coverImageView.snp.width).dividedBy(BookDetailConstants.Layout.coverImageAspectRatio)
         }
 
         infoContainerView.snp.makeConstraints {
-            $0.top.lessThanOrEqualTo(coverImageView.snp.bottom).offset(16)
+            $0.top.equalTo(coverImageView.snp.bottom).offset(16)
             $0.leading.equalToSuperview().inset(BookDetailConstants.Layout.infoLeadingInset)
             $0.trailing.equalToSuperview().inset(BookDetailConstants.Layout.infoLeadingInset)
-            $0.bottom.equalToSuperview().inset(BookDetailConstants.Layout.infoBottomInset)
+            $0.bottom.lessThanOrEqualToSuperview().inset(BookDetailConstants.Layout.infoBottomInset)
         }
         
         infoStackView.snp.makeConstraints {
@@ -195,7 +186,7 @@ final class BookInfoHeaderView: UICollectionReusableView, IsIdentifiable {
         }
 
         tagsStackView.snp.makeConstraints {
-            $0.top.bottom.leading.equalToSuperview()
+            $0.edges.equalToSuperview()
             $0.height.equalToSuperview()
         }
     }
