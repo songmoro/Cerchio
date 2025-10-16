@@ -78,6 +78,16 @@ final class BookDetailCoordinator: BaseCoordinator, Coordinatable {
     private func setupNavigationItems(for viewController: UIViewController, reactor: BookDetailReactor) {
         guard let bookDetailVC = viewController as? BookDetailViewController else { return }
 
+        // Navigation bar appearance - transparent to show background
+        let appearance = UINavigationBarAppearance()
+        appearance.configureWithTransparentBackground()
+        appearance.shadowColor = nil
+        appearance.shadowImage = UIImage()
+
+        viewController.navigationItem.standardAppearance = appearance
+        viewController.navigationItem.scrollEdgeAppearance = appearance
+        viewController.navigationItem.compactAppearance = appearance
+
         // 뒤로가기 버튼 (기본 제공)
         viewController.navigationItem.title = book.cleanTitle
 

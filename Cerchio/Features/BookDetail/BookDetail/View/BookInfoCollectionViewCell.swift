@@ -15,51 +15,65 @@ final class BookInfoCollectionViewCell: UICollectionViewCell, IsIdentifiable {
     var onReadingInfoTapped: (() -> Void)?
 
     // MARK: - UI Components
+
+    // Background layers
+    private let backgroundImageView: UIImageView = {
+        let imageView = UIImageView()
+        imageView.contentMode = .scaleAspectFill
+        imageView.clipsToBounds = true
+        return imageView
+    }()
+
+    private let blurEffectView: UIVisualEffectView = {
+        let blurEffect = UIBlurEffect(style: .systemUltraThinMaterialDark)
+        let effectView = UIVisualEffectView(effect: blurEffect)
+        return effectView
+    }()
+
+    private let overlayView: UIView = {
+        let view = UIView()
+        view.backgroundColor = UIColor.black.withAlphaComponent(BookDetailConstants.Layout.overlayAlpha)
+        return view
+    }()
+
+    // Cover image (centered)
     private let coverImageView: UIImageView = {
         let imageView = UIImageView()
         imageView.contentMode = .scaleAspectFill
         imageView.clipsToBounds = true
-        imageView.layer.cornerRadius = BookDetailConstants.Layout.imageCornerRadius
+        imageView.layer.cornerRadius = BookDetailConstants.Layout.coverImageCornerRadius
         imageView.backgroundColor = .systemGray5
+
+        // Add shadow
+        imageView.layer.shadowColor = UIColor.black.cgColor
+        imageView.layer.shadowOffset = BookDetailConstants.Shadow.coverShadowOffset
+        imageView.layer.shadowRadius = BookDetailConstants.Shadow.coverShadowRadius
+        imageView.layer.shadowOpacity = BookDetailConstants.Shadow.coverShadowOpacity
+
         return imageView
+    }()
+
+    // Info container (bottom-left)
+    private let infoContainerView: UIView = {
+        let view = UIView()
+        view.isUserInteractionEnabled = true
+        return view
     }()
 
     private let titleLabel: UILabel = {
         let label = UILabel()
-        label.font = .custom(weight: .bold, size: BookDetailConstants.Typography.titleFontSize)
-        label.textColor = .label
+        label.font = .custom(weight: .bold, size: BookDetailConstants.Typography.bookInfoTitleFontSize)
+        label.textColor = .white
         label.numberOfLines = 2
         return label
     }()
 
     private let authorLabel: UILabel = {
         let label = UILabel()
-        label.font = .custom(weight: .regular, size: BookDetailConstants.Typography.authorFontSize)
-        label.textColor = .secondaryLabel
+        label.font = .custom(weight: .regular, size: BookDetailConstants.Typography.bookInfoSubtitleFontSize)
+        label.textColor = UIColor.white.withAlphaComponent(BookDetailConstants.Typography.bookInfoSubtitleAlpha)
         label.numberOfLines = 1
         return label
-    }()
-
-    private let pagesLabel: UILabel = {
-        let label = UILabel()
-        label.font = .custom(weight: .regular, size: BookDetailConstants.Typography.pagesFontSize)
-        label.textColor = .secondaryLabel
-        label.isUserInteractionEnabled = true
-        return label
-    }()
-
-    private let dateRangeLabel: UILabel = {
-        let label = UILabel()
-        label.font = .custom(weight: .regular, size: BookDetailConstants.Typography.dateRangeFontSize)
-        label.textColor = .secondaryLabel
-        label.isUserInteractionEnabled = true
-        return label
-    }()
-
-    private let readingInfoContainer: UIView = {
-        let view = UIView()
-        view.isUserInteractionEnabled = true
-        return view
     }()
 
     private let tagsStackView: UIStackView = {
@@ -96,31 +110,31 @@ final class BookInfoCollectionViewCell: UICollectionViewCell, IsIdentifiable {
 
     // MARK: - Setup
     private func setupUI() {
-        backgroundColor = .systemBackground
+        contentView.clipsToBounds = true
 
+        // Add background layers
+        contentView.addSubview(backgroundImageView)
+        contentView.addSubview(blurEffectView)
+        contentView.addSubview(overlayView)
+
+        // Add cover image (centered)
         contentView.addSubview(coverImageView)
-        contentView.addSubview(infoStackView)
 
-        // 태그 컨테이너 설정
+        // Add info container (bottom-left)
+        contentView.addSubview(infoContainerView)
+
+        // Setup info container
         tagsContainerView.addSubview(tagsStackView)
 
-        // 독서 정보 컨테이너 설정
-        readingInfoContainer.addSubview(pagesLabel)
-        readingInfoContainer.addSubview(dateRangeLabel)
-
-        // 정보 스택 뷰 구성
         infoStackView.addArrangedSubview(titleLabel)
         infoStackView.addArrangedSubview(authorLabel)
-        infoStackView.addArrangedSubview(readingInfoContainer)
         infoStackView.addArrangedSubview(tagsContainerView)
 
-        // 태그 컨테이너 탭 제스처 추가
+        infoContainerView.addSubview(infoStackView)
+
+        // Gesture recognizers
         let tagsTapGesture = UITapGestureRecognizer(target: self, action: #selector(handleTagsTapped))
         tagsContainerView.addGestureRecognizer(tagsTapGesture)
-
-        // 독서 정보 탭 제스처 추가
-        let readingInfoTapGesture = UITapGestureRecognizer(target: self, action: #selector(handleReadingInfoTapped))
-        readingInfoContainer.addGestureRecognizer(readingInfoTapGesture)
 
         setupConstraints()
     }
@@ -129,46 +143,48 @@ final class BookInfoCollectionViewCell: UICollectionViewCell, IsIdentifiable {
         onTagsTapped?()
     }
 
-    @objc private func handleReadingInfoTapped() {
-        onReadingInfoTapped?()
-    }
-
     private func setupConstraints() {
-        // 커버 이미지 (왼쪽 1/3)
+        let screenHeight = UIScreen.main.bounds.height
+        let backgroundHeight = screenHeight / 2
+
+        // Background layers - exactly half screen height
+        backgroundImageView.snp.makeConstraints {
+            $0.top.leading.trailing.equalToSuperview()
+            $0.height.equalTo(backgroundHeight)
+        }
+
+        blurEffectView.snp.makeConstraints {
+            $0.edges.equalTo(backgroundImageView)
+        }
+
+        overlayView.snp.makeConstraints {
+            $0.edges.equalTo(backgroundImageView)
+        }
+
+        // Cover image - centered in background image with 3:4 aspect ratio
         coverImageView.snp.makeConstraints {
-            $0.leading.top.bottom.equalToSuperview().inset(BookDetailConstants.Layout.cellInset)
-            $0.width.equalToSuperview().multipliedBy(BookDetailConstants.Layout.coverWidthMultiplier)
-            $0.height.equalTo(coverImageView.snp.width).multipliedBy(BookDetailConstants.Layout.aspectRatio)
+            $0.center.equalTo(backgroundImageView)
+            $0.width.equalTo(BookDetailConstants.Layout.coverImageWidth)
+            $0.height.equalTo(coverImageView.snp.width).dividedBy(BookDetailConstants.Layout.coverImageAspectRatio)
         }
 
-        // 정보 스택 뷰 (오른쪽 2/3)
+        // Info container - bottom-left of background image
+        infoContainerView.snp.makeConstraints {
+            $0.leading.equalTo(backgroundImageView).inset(BookDetailConstants.Layout.infoLeadingInset)
+            $0.trailing.equalTo(backgroundImageView).inset(BookDetailConstants.Layout.infoLeadingInset)
+            $0.bottom.equalTo(backgroundImageView).inset(BookDetailConstants.Layout.infoBottomInset)
+        }
+
+        // Info stack view
         infoStackView.snp.makeConstraints {
-            $0.leading.equalTo(coverImageView.snp.trailing).offset(BookDetailConstants.Layout.cellInset)
-            $0.trailing.equalToSuperview().inset(BookDetailConstants.Layout.cellInset)
-            $0.top.equalToSuperview().inset(BookDetailConstants.Layout.cellInset)
-            $0.bottom.lessThanOrEqualToSuperview().inset(BookDetailConstants.Layout.cellInset)
+            $0.edges.equalToSuperview()
         }
 
-        // 독서 정보 컨테이너
-        readingInfoContainer.snp.makeConstraints {
-            $0.height.greaterThanOrEqualTo(44)
-        }
-
-        pagesLabel.snp.makeConstraints {
-            $0.top.horizontalEdges.equalToSuperview()
-        }
-
-        dateRangeLabel.snp.makeConstraints {
-            $0.top.equalTo(pagesLabel.snp.bottom).offset(4)
-            $0.horizontalEdges.bottom.equalToSuperview()
-        }
-
-        // 태그 컨테이너
+        // Tags container
         tagsContainerView.snp.makeConstraints {
             $0.height.greaterThanOrEqualTo(BookDetailConstants.Layout.tagHeight)
         }
 
-        // 태그 스택 뷰
         tagsStackView.snp.makeConstraints {
             $0.edges.equalToSuperview()
         }
@@ -178,38 +194,34 @@ final class BookInfoCollectionViewCell: UICollectionViewCell, IsIdentifiable {
     func configure(with bookDetail: BookDetail) {
         titleLabel.text = bookDetail.book.cleanTitle
         authorLabel.text = bookDetail.book.author
-        pagesLabel.text = "\(bookDetail.totalPages)페이지"
 
-        // 독서 기간 설정
-        let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "yyyy.MM.dd"
-
-        if let startDate = bookDetail.startDate {
-            let startDateString = dateFormatter.string(from: startDate)
-            if let endDate = bookDetail.endDate {
-                let endDateString = dateFormatter.string(from: endDate)
-                dateRangeLabel.text = "\(startDateString) ~ \(endDateString)"
-            } else {
-                dateRangeLabel.text = "\(startDateString) ~ 읽는 중"
-            }
-        } else {
-            dateRangeLabel.text = "독서 시작 전"
-        }
-
-        // 태그 설정
+        // Tags
         setupTags(bookDetail.tags)
 
-        // 이미지 로드
+        // Load images
         if let url = URL(string: bookDetail.book.image) {
+            // Background image (blurred)
+            backgroundImageView.kf.setImage(
+                with: url,
+                placeholder: nil,
+                options: [
+                    .transition(.fade(0.3)),
+                    .cacheOriginalImage
+                ]
+            )
+
+            // Cover image (centered)
             coverImageView.kf.setImage(
                 with: url,
                 placeholder: nil,
                 options: [
-                    .transition(.fade(0.2)),
+                    .transition(.fade(0.3)),
                     .cacheOriginalImage
                 ]
             )
         } else {
+            backgroundImageView.image = nil
+            backgroundImageView.backgroundColor = .systemGray4
             coverImageView.image = nil
             coverImageView.backgroundColor = .systemGray4
         }
@@ -236,14 +248,13 @@ final class BookInfoCollectionViewCell: UICollectionViewCell, IsIdentifiable {
         let label = PaddingLabel()
         label.text = "#\(text)"
         label.font = .custom(weight: .medium, size: BookDetailConstants.Typography.tagFontSize)
-        label.textColor = .forestGreen
-        label.backgroundColor = UIColor.forestGreen.withAlphaComponent(BookDetailConstants.Colors.tagBackgroundAlpha)
+        label.textColor = .white
+        label.backgroundColor = UIColor.white.withAlphaComponent(0.2)
         label.layer.cornerRadius = BookDetailConstants.Layout.tagCornerRadius
         label.clipsToBounds = true
         label.textAlignment = .center
         label.padding = UIEdgeInsets(top: 4, left: 8, bottom: 4, right: 8)
 
-        // 높이 제약
         label.snp.makeConstraints {
             $0.height.equalTo(BookDetailConstants.Layout.tagHeight)
         }
@@ -255,14 +266,13 @@ final class BookInfoCollectionViewCell: UICollectionViewCell, IsIdentifiable {
         let label = PaddingLabel()
         label.text = "+ 태그"
         label.font = .custom(weight: .medium, size: BookDetailConstants.Typography.tagFontSize)
-        label.textColor = .secondaryLabel
-        label.backgroundColor = UIColor.systemGray6
+        label.textColor = UIColor.white.withAlphaComponent(0.6)
+        label.backgroundColor = UIColor.white.withAlphaComponent(0.2)
         label.layer.cornerRadius = BookDetailConstants.Layout.tagCornerRadius
         label.clipsToBounds = true
         label.textAlignment = .center
         label.padding = UIEdgeInsets(top: 4, left: 8, bottom: 4, right: 8)
 
-        // 높이 제약
         label.snp.makeConstraints {
             $0.height.equalTo(BookDetailConstants.Layout.tagHeight)
         }

@@ -11,7 +11,7 @@ enum BookDetailConstants {
 
     // MARK: - Layout
     enum Layout {
-        static let estimatedHeight: CGFloat = 200
+        static let estimatedHeight: CGFloat = 400
         static let sectionContentInsets = NSDirectionalEdgeInsets(
             top: 16,
             leading: 16,
@@ -26,6 +26,16 @@ enum BookDetailConstants {
         static let tagHeight: CGFloat = 24
         static let coverWidthMultiplier: CGFloat = 0.3
         static let aspectRatio: CGFloat = 4.0/3.0
+
+        // New BookInfo cell design
+        static let bookInfoCellHeight: CGFloat = 500
+        static let backgroundImageHeightMultiplier: CGFloat = 0.5 // Half screen
+        static let coverImageWidth: CGFloat = 120
+        static let coverImageAspectRatio: CGFloat = 3.0 / 4.0 // 3:4 ratio
+        static let coverImageCornerRadius: CGFloat = 8
+        static let overlayAlpha: CGFloat = 0.3
+        static let infoBottomInset: CGFloat = 32
+        static let infoLeadingInset: CGFloat = 24
     }
 
     // MARK: - Typography
@@ -35,6 +45,11 @@ enum BookDetailConstants {
         static let pagesFontSize: CGFloat = 14
         static let dateRangeFontSize: CGFloat = 14
         static let tagFontSize: CGFloat = 12
+
+        // New BookInfo cell typography
+        static let bookInfoTitleFontSize: CGFloat = 24
+        static let bookInfoSubtitleFontSize: CGFloat = 16
+        static let bookInfoSubtitleAlpha: CGFloat = 0.8
     }
 
     // MARK: - Shadow
@@ -42,6 +57,11 @@ enum BookDetailConstants {
         static let offset = CGSize(width: 0, height: 2)
         static let radius: CGFloat = 4
         static let opacity: Float = 0.1
+
+        // Cover image shadow
+        static let coverShadowOffset = CGSize(width: 0, height: 8)
+        static let coverShadowRadius: CGFloat = 16
+        static let coverShadowOpacity: Float = 0.3
     }
 
     // MARK: - Colors

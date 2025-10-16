@@ -106,6 +106,10 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
     // MARK: - Lifecycle
     override func setupUI() {
         super.setupUI()
+
+        // Allow content to extend under navigation bar
+        extendedLayoutIncludesOpaqueBars = true
+
         setupCollectionView()
         setupLayout()
         configureDataSource()
@@ -322,9 +326,9 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
     
     private func setupLayout() {
         collectionView.snp.makeConstraints {
-            $0.edges.equalToSuperview()
+            $0.edges.equalTo(view)
         }
-        
+
         collectionView.collectionViewLayout = createCompositionalLayout()
     }
     
@@ -349,21 +353,24 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
     }
     
     private func createBookInfoSection() -> NSCollectionLayoutSection {
+        let screenHeight = UIScreen.main.bounds.height
+        let cellHeight = screenHeight / 2
+
         let itemSize = NSCollectionLayoutSize(
             widthDimension: .fractionalWidth(1.0),
-            heightDimension: .estimated(BookDetailConstants.Layout.estimatedHeight)
+            heightDimension: .absolute(cellHeight)
         )
         let item = NSCollectionLayoutItem(layoutSize: itemSize)
-        
+
         let groupSize = NSCollectionLayoutSize(
             widthDimension: .fractionalWidth(1.0),
-            heightDimension: .estimated(BookDetailConstants.Layout.estimatedHeight)
+            heightDimension: .absolute(cellHeight)
         )
         let group = NSCollectionLayoutGroup.horizontal(layoutSize: groupSize, subitems: [item])
-        
+
         let section = NSCollectionLayoutSection(group: group)
-        section.contentInsets = BookDetailConstants.Layout.sectionContentInsets
-        
+        section.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0)
+
         return section
     }
     

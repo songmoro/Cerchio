@@ -97,18 +97,23 @@ class BaseViewController<T: Reactor>: UIViewController, BaseViewControllerType, 
 
         let appearance = UINavigationBarAppearance()
         appearance.configureWithOpaqueBackground()
-        appearance.backgroundColor = .forestGreen
-        appearance.titleTextAttributes = [.foregroundColor: UIColor.bookBackground]
-        appearance.largeTitleTextAttributes = [.foregroundColor: UIColor.bookBackground]
+        appearance.backgroundColor = .clear // .forestGreen
+        appearance.titleTextAttributes = [.foregroundColor: UIColor.forestGreen]
+        appearance.largeTitleTextAttributes = [.foregroundColor: UIColor.forestGreen]
 
         let navigationBar = navigationController.navigationBar
-        navigationBar.standardAppearance = appearance
-        navigationBar.scrollEdgeAppearance = appearance
         navigationBar.compactAppearance = appearance
+        
         if #available(iOS 15.0, *) {
+            let appearance = UINavigationBarAppearance()
+            appearance.backgroundColor = .white
+            appearance.titleTextAttributes = [.foregroundColor: UIColor.forestGreen]
+            appearance.largeTitleTextAttributes = [.foregroundColor: UIColor.forestGreen]
+            navigationBar.scrollEdgeAppearance = appearance
             navigationBar.compactScrollEdgeAppearance = appearance
+            navigationBar.standardAppearance = appearance
         }
-        navigationBar.tintColor = .bookBackground
+        navigationBar.tintColor = .forestGreen
     }
 
     func bind(reactor: T) {
