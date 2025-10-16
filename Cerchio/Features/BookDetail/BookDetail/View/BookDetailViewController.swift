@@ -14,14 +14,26 @@ import SnapKit
 final class BookDetailViewController: BaseViewController<BookDetailReactor> {
     private typealias DataSource = UICollectionViewDiffableDataSource<Section, Item>
     private typealias Snapshot = NSDiffableDataSourceSnapshot<Section, Item>
-    
+
     // MARK: - UI Components
     private let collectionView = UICollectionView(frame: .zero, collectionViewLayout: .init())
     private var dataSource: DataSource!
-    private let refreshControl = UIRefreshControl()
-    
+    // private let refreshControl = UIRefreshControl() // Disabled for now
+
     // MARK: - Navigation Bar Buttons
     private var favoriteButton: UIBarButtonItem?
+
+    // MARK: - Dummy Cell
+    private class DummyCell: UICollectionViewCell, IsIdentifiable {
+        override init(frame: CGRect) {
+            super.init(frame: frame)
+            backgroundColor = .clear
+        }
+
+        required init?(coder: NSCoder) {
+            fatalError("init(coder:) has not been implemented")
+        }
+    }
     
     // MARK: - Reading Statistics
     private var currentStatisticsPeriod: ReadingStatisticsPeriod = .total
@@ -36,7 +48,7 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
     }
     
     nonisolated enum Item: Hashable, Sendable {
-        case bookInfo(BookDetail)
+        case bookInfoDummy // Placeholder for bookInfo section
         case readingStatistics(ReadingStatistics)
         case addReadingRecordButton
         case savedQuote(String, Int?, Date)
@@ -47,9 +59,8 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
         
         func hash(into hasher: inout Hasher) {
             switch self {
-            case .bookInfo(let detail):
-                hasher.combine("bookInfo")
-                hasher.combine(detail)
+            case .bookInfoDummy:
+                hasher.combine("bookInfoDummy")
             case .readingStatistics(let stats):
                 hasher.combine("readingStatistics")
                 hasher.combine(stats)
@@ -75,8 +86,8 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
         
         static func == (lhs: Item, rhs: Item) -> Bool {
             switch (lhs, rhs) {
-            case (.bookInfo(let l), .bookInfo(let r)):
-                return l == r
+            case (.bookInfoDummy, .bookInfoDummy):
+                return true
             case (.readingStatistics(let l), .readingStatistics(let r)):
                 return l == r
             case (.addReadingRecordButton, .addReadingRecordButton):
@@ -155,11 +166,11 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
             .bind(to: reactor.action)
             .disposed(by: disposeBag)
         
-        // Refresh Control
-        refreshControl.rx.controlEvent(.valueChanged)
-            .map { BookDetailReactor.Action.updateBookAndReload(reactor.currentState.book) }
-            .bind(to: reactor.action)
-            .disposed(by: disposeBag)
+        // Refresh Control - Disabled
+        // refreshControl.rx.controlEvent(.valueChanged)
+        //     .map { BookDetailReactor.Action.updateBookAndReload(reactor.currentState.book) }
+        //     .bind(to: reactor.action)
+        //     .disposed(by: disposeBag)
         
         // MARK: - State Bindings
         
@@ -230,15 +241,15 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
             .disposed(by: disposeBag)
         
         // Loading state - end refresh control when loading completes
-        reactor.state
-            .map { $0.isLoading }
-            .distinctUntilChanged()
-            .filter { !$0 }
-            .asDriver(onErrorJustReturn: false)
-            .drive(onNext: { [weak self] _ in
-                self?.refreshControl.endRefreshing()
-            })
-            .disposed(by: disposeBag)
+        // reactor.state
+        //     .map { $0.isLoading }
+        //     .distinctUntilChanged()
+        //     .filter { !$0 }
+        //     .asDriver(onErrorJustReturn: false)
+        //     .drive(onNext: { [weak self] _ in
+        //         self?.refreshControl.endRefreshing()
+        //     })
+        //     .disposed(by: disposeBag)
         
         // Error
         reactor.state
@@ -287,12 +298,21 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
     private func setupCollectionView() {
         collectionView.backgroundColor = .systemBackground
         collectionView.showsVerticalScrollIndicator = false
-        collectionView.alwaysBounceVertical = true
+        collectionView.bounces = true // Enable bouncing for over-scroll
         collectionView.delegate = self
-        collectionView.refreshControl = refreshControl
+        // collectionView.refreshControl = refreshControl // Disabled
         collectionView.contentInsetAdjustmentBehavior = .never
         
-        collectionView.register(BookInfoCollectionViewCell.self)
+        // Register BookInfo header
+        collectionView.register(
+            BookInfoHeaderView.self,
+            forSupplementaryViewOfKind: UICollectionView.elementKindSectionHeader,
+            withReuseIdentifier: BookInfoHeaderView.identifier
+        )
+
+        // Register DummyCell
+        collectionView.register(DummyCell.self)
+
         collectionView.register(ReadingStatisticsCell.self)
         collectionView.register(AddReadingRecordButtonCell.self)
         collectionView.register(SavedQuoteCell.self)
@@ -336,7 +356,7 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
     private func createCompositionalLayout() -> UICollectionViewCompositionalLayout {
         return UICollectionViewCompositionalLayout { [weak self] sectionIndex, environment in
             guard let self = self else { return nil }
-            
+
             let section = Section.allCases[sectionIndex]
             switch section {
             case .bookInfo:
@@ -355,56 +375,59 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
     
     private func createBookInfoSection() -> NSCollectionLayoutSection {
         let screenHeight = UIScreen.main.bounds.height
-        let cellHeight = screenHeight / 2
+        let headerHeight = screenHeight * 0.6 // 60% of screen
 
-        // Get navigation bar height to offset content
-//        let navBarHeight = navigationController?.navigationBar.frame.height ?? 0
-//        let statusBarHeight = view.window?.windowScene?.statusBarManager?.statusBarFrame.height ?? 0
-//        let topInset = -(navBarHeight + statusBarHeight)
-        
-        let navBarHeight = navigationController?.navigationBar.frame.height ?? 0
-//        let statusBarHeight = view.window?.windowScene?.statusBarManager?.statusBarFrame.height ?? 0
-//        let topInset = -navBarHeight
-
+        // Create empty item (section with only header, no items)
         let itemSize = NSCollectionLayoutSize(
             widthDimension: .fractionalWidth(1.0),
-            heightDimension: .absolute(cellHeight)
+            heightDimension: .absolute(0.1) // Minimal height
         )
         let item = NSCollectionLayoutItem(layoutSize: itemSize)
 
         let groupSize = NSCollectionLayoutSize(
             widthDimension: .fractionalWidth(1.0),
-            heightDimension: .absolute(cellHeight)
+            heightDimension: .absolute(0.1)
         )
         let group = NSCollectionLayoutGroup.horizontal(layoutSize: groupSize, subitems: [item])
 
         let section = NSCollectionLayoutSection(group: group)
-        //        section.contentInsets = NSDirectionalEdgeInsets(top: topInset, leading: 0, bottom: 0, trailing: 0)
-        section.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0)
+
+        // Add header
+        let headerSize = NSCollectionLayoutSize(
+            widthDimension: .fractionalWidth(1.0),
+            heightDimension: .absolute(headerHeight)
+        )
+        let header = NSCollectionLayoutBoundarySupplementaryItem(
+            layoutSize: headerSize,
+            elementKind: UICollectionView.elementKindSectionHeader,
+            alignment: .top
+        )
+        // Do NOT pin - let it scroll away
+        section.boundarySupplementaryItems = [header]
 
         return section
     }
-    
+
     private func createReadingRecordsSection() -> NSCollectionLayoutSection {
         let itemSize = NSCollectionLayoutSize(
             widthDimension: .fractionalWidth(1.0),
-            heightDimension: .estimated(120)
+            heightDimension: .absolute(150)
         )
         let item = NSCollectionLayoutItem(layoutSize: itemSize)
         item.contentInsets = NSDirectionalEdgeInsets(top: 4, leading: 0, bottom: 4, trailing: 0)
-        
+
         let groupSize = NSCollectionLayoutSize(
             widthDimension: .fractionalWidth(1.0),
-            heightDimension: .estimated(120)
+            heightDimension: .absolute(150)
         )
         let group = NSCollectionLayoutGroup.vertical(layoutSize: groupSize, subitems: [item])
-        
+
         let section = NSCollectionLayoutSection(group: group)
         section.contentInsets = NSDirectionalEdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16)
-        
+
         let headerSize = NSCollectionLayoutSize(
             widthDimension: .fractionalWidth(1.0),
-            heightDimension: .estimated(44)
+            heightDimension: .absolute(80)
         )
         let header = NSCollectionLayoutBoundarySupplementaryItem(
             layoutSize: headerSize,
@@ -412,21 +435,21 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
             alignment: .top
         )
         section.boundarySupplementaryItems = [header]
-        
+
         return section
     }
     
     private func createSavedQuotesSection() -> NSCollectionLayoutSection {
         let itemSize = NSCollectionLayoutSize(
             widthDimension: .fractionalWidth(1.0),
-            heightDimension: .estimated(120)
+            heightDimension: .absolute(100)
         )
         let item = NSCollectionLayoutItem(layoutSize: itemSize)
         item.contentInsets = NSDirectionalEdgeInsets(top: 4, leading: 0, bottom: 4, trailing: 0)
 
         let groupSize = NSCollectionLayoutSize(
             widthDimension: .fractionalWidth(1.0),
-            heightDimension: .estimated(120)
+            heightDimension: .absolute(100)
         )
         let group = NSCollectionLayoutGroup.vertical(layoutSize: groupSize, subitems: [item])
 
@@ -483,17 +506,11 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
     private func configureDataSource() {
         dataSource = DataSource(collectionView: collectionView) { [weak self] collectionView, indexPath, item in
             switch item {
-            case .bookInfo(let bookDetail):
-                let cell: BookInfoCollectionViewCell = collectionView.dequeueReusableCell(BookInfoCollectionViewCell.self, for: indexPath)
-                cell.configure(with: bookDetail)
-                cell.onTagsTapped = { [weak self] in
-                    self?.showTagInputAlert()
-                }
-                cell.onReadingInfoTapped = { [weak self] in
-                    self?.showReadingInfoEdit(bookDetail: bookDetail)
-                }
+            case .bookInfoDummy:
+                // Return empty dummy cell (should not be visible)
+                let cell: DummyCell = collectionView.dequeueReusableCell(DummyCell.self, for: indexPath)
                 return cell
-                
+
             case .readingStatistics(let statistics):
                 let cell: ReadingStatisticsCell = collectionView.dequeueReusableCell(ReadingStatisticsCell.self, for: indexPath)
                 cell.configure(with: statistics, period: self?.currentStatisticsPeriod ?? .total)
@@ -559,10 +576,31 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
         
         dataSource.supplementaryViewProvider = { [weak self] collectionView, kind, indexPath in
             guard kind == UICollectionView.elementKindSectionHeader else { return nil }
-            
+
             let section = Section.allCases[indexPath.section]
-            
+
             switch section {
+            case .bookInfo:
+                let header = collectionView.dequeueReusableSupplementaryView(
+                    ofKind: kind,
+                    withReuseIdentifier: BookInfoHeaderView.identifier,
+                    for: indexPath
+                ) as! BookInfoHeaderView
+
+                if let bookDetail = self?.reactor?.currentState.bookDetail {
+                    header.configure(with: bookDetail)
+
+                    header.onTagsTapped = { [weak self] in
+                        self?.showTagInputAlert()
+                    }
+
+                    header.onReadingInfoTapped = { [weak self] in
+                        self?.showReadingInfoEdit(bookDetail: bookDetail)
+                    }
+                }
+
+                return header
+
             case .readingRecords:
                 let header = collectionView.dequeueReusableSupplementaryView(
                     ofKind: kind,
@@ -639,15 +677,19 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
     
     private func updateSnapshot(with bookDetail: BookDetail) {
         guard let dataSource = dataSource else { return }
-        
+
         var snapshot = dataSource.snapshot()
-        
+
         // 섹션이 없으면 초기화
         if snapshot.sectionIdentifiers.isEmpty {
             snapshot.appendSections([.bookInfo, .readingRecords, .savedQuotes, .photoPages, .settings])
+
+            // Add dummy item to bookInfo section (required for header to show)
+            snapshot.appendItems([.bookInfoDummy], toSection: .bookInfo)
+
             snapshot.appendItems([.addQuoteButton], toSection: .savedQuotes)
             snapshot.appendItems([.addPhotoButton], toSection: .photoPages)
-            
+
             // Settings items
             let settingsItems: [Item] = [
                 .settingsItem(.editBookInfo),
@@ -656,14 +698,10 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
             ]
             snapshot.appendItems(settingsItems, toSection: .settings)
         }
-        
-        // bookInfo 섹션만 업데이트 (기존 데이터 유지)
-        let existingBookInfoItems = snapshot.itemIdentifiers(inSection: .bookInfo)
-        if !existingBookInfoItems.isEmpty {
-            snapshot.deleteItems(existingBookInfoItems)
-        }
-        snapshot.appendItems([.bookInfo(bookDetail)], toSection: .bookInfo)
-        
+
+        // Reload bookInfo header by invalidating layout
+        collectionView.collectionViewLayout.invalidateLayout()
+
         dataSource.apply(snapshot, animatingDifferences: true)
     }
     
@@ -738,22 +776,9 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
     }
     
     private func updateTagsUI(_ tags: [RealmTag]) {
-        guard let reactor = reactor, let bookDetail = reactor.currentState.bookDetail else { return }
-        
-        let tagNames = tags.map { $0.tagName }
-        let updatedBookDetail = BookDetail(
-            book: bookDetail.book,
-            totalPages: bookDetail.totalPages,
-            startDate: bookDetail.startDate,
-            endDate: bookDetail.endDate,
-            tags: tagNames
-        )
-        
-        var snapshot = dataSource.snapshot()
-        let currentItems = snapshot.itemIdentifiers(inSection: .bookInfo)
-        snapshot.deleteItems(currentItems)
-        snapshot.appendItems([.bookInfo(updatedBookDetail)], toSection: .bookInfo)
-        dataSource.apply(snapshot, animatingDifferences: true)
+        // Tags are updated in the global header via bookDetail state change
+        // Simply invalidate layout to trigger header reload
+        collectionView.collectionViewLayout.invalidateLayout()
     }
     
     // MARK: - Navigation Methods
