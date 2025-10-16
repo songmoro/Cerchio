@@ -88,8 +88,8 @@ final class BookDetailCoordinator: BaseCoordinator, Coordinatable {
         viewController.navigationItem.scrollEdgeAppearance = appearance
         viewController.navigationItem.compactAppearance = appearance
 
-        // 뒤로가기 버튼 (기본 제공)
-        viewController.navigationItem.title = book.cleanTitle
+        // 타이틀 제거 (도서 정보 헤더에 이미 표시됨)
+        viewController.navigationItem.title = nil
 
         // 즐겨찾기 버튼
         let favoriteButton = UIBarButtonItem(
@@ -113,15 +113,15 @@ final class BookDetailCoordinator: BaseCoordinator, Coordinatable {
         bookDetailVC.setFavoriteButton(favoriteButton)
         bookDetailVC.setDeleteButton(deleteButton)
 
-        // Book 상태 변경 감지하여 네비게이션 타이틀 업데이트
-        reactor.state
-            .map { $0.book.cleanTitle }
-            .distinctUntilChanged()
-            .observe(on: MainScheduler.instance)
-            .subscribe(onNext: { [weak viewController] title in
-                viewController?.navigationItem.title = title
-            })
-            .disposed(by: disposeBag)
+        // 타이틀이 제거되었으므로 타이틀 업데이트 구독 제거
+        // reactor.state
+        //     .map { $0.book.cleanTitle }
+        //     .distinctUntilChanged()
+        //     .observe(on: MainScheduler.instance)
+        //     .subscribe(onNext: { [weak viewController] title in
+        //         viewController?.navigationItem.title = title
+        //     })
+        //     .disposed(by: disposeBag)
 
         // 즐겨찾기 상태 변경 감지
         reactor.state

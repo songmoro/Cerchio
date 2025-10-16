@@ -53,7 +53,6 @@ final class BookInfoHeaderView: UICollectionReusableView, IsIdentifiable {
         return imageView
     }()
 
-    // Info container (bottom-left)
     private let infoContainerView: UIView = {
         let view = UIView()
         view.isUserInteractionEnabled = true
@@ -63,7 +62,7 @@ final class BookInfoHeaderView: UICollectionReusableView, IsIdentifiable {
     private let titleLabel: UILabel = {
         let label = UILabel()
         label.font = .custom(weight: .bold, size: BookDetailConstants.Typography.bookInfoTitleFontSize)
-        label.textColor = .white
+        label.textColor = .bookBackground
         label.numberOfLines = 2
         return label
     }()
@@ -71,7 +70,7 @@ final class BookInfoHeaderView: UICollectionReusableView, IsIdentifiable {
     private let authorLabel: UILabel = {
         let label = UILabel()
         label.font = .custom(weight: .regular, size: BookDetailConstants.Typography.bookInfoSubtitleFontSize)
-        label.textColor = UIColor.white.withAlphaComponent(BookDetailConstants.Typography.bookInfoSubtitleAlpha)
+        label.textColor = .systemGray
         label.numberOfLines = 1
         return label
     }()
@@ -82,6 +81,13 @@ final class BookInfoHeaderView: UICollectionReusableView, IsIdentifiable {
         stackView.spacing = BookDetailConstants.Layout.stackSpacing
         stackView.alignment = .leading
         return stackView
+    }()
+
+    private let tagsScrollView: UIScrollView = {
+        let scrollView = UIScrollView()
+        scrollView.showsHorizontalScrollIndicator = false
+        scrollView.showsVerticalScrollIndicator = false
+        return scrollView
     }()
 
     private let tagsContainerView: UIView = {
@@ -112,19 +118,14 @@ final class BookInfoHeaderView: UICollectionReusableView, IsIdentifiable {
     private func setupUI() {
         clipsToBounds = true
 
-        // Add background layers
         addSubview(backgroundImageView)
         addSubview(blurEffectView)
         addSubview(overlayView)
-
-        // Add cover image (centered)
         addSubview(coverImageView)
-
-        // Add info container (bottom-left)
         addSubview(infoContainerView)
 
-        // Setup info container
-        tagsContainerView.addSubview(tagsStackView)
+        tagsScrollView.addSubview(tagsStackView)
+        tagsContainerView.addSubview(tagsScrollView)
 
         infoStackView.addArrangedSubview(titleLabel)
         infoStackView.addArrangedSubview(authorLabel)
@@ -132,7 +133,6 @@ final class BookInfoHeaderView: UICollectionReusableView, IsIdentifiable {
 
         infoContainerView.addSubview(infoStackView)
 
-        // Gesture recognizers
         let tagsTapGesture = UITapGestureRecognizer(target: self, action: #selector(handleTagsTapped))
         tagsContainerView.addGestureRecognizer(tagsTapGesture)
 
@@ -145,13 +145,11 @@ final class BookInfoHeaderView: UICollectionReusableView, IsIdentifiable {
 
     private func setupConstraints() {
         let screenHeight = UIScreen.main.bounds.height
-        let navBarHeight: CGFloat = 44 // Standard navigation bar height
-        let statusBarHeight: CGFloat = 44 // Approximate status bar height
+        let navBarHeight: CGFloat = 44
+        let statusBarHeight: CGFloat = 44
 
-        // Increased background height (60% of screen)
-        let backgroundHeight = screenHeight * 0.6
+        let backgroundHeight = screenHeight * 0.4
 
-        // Background layers fill the entire header view
         backgroundImageView.snp.makeConstraints {
             $0.edges.equalToSuperview()
         }
@@ -164,35 +162,37 @@ final class BookInfoHeaderView: UICollectionReusableView, IsIdentifiable {
             $0.edges.equalTo(backgroundImageView)
         }
 
-        // Cover image - increased size and positioned just below navigation bar
-        let coverImageWidth = BookDetailConstants.Layout.coverImageWidth * 1.2 // 20% larger
+        let coverImageWidth = BookDetailConstants.Layout.coverImageWidth * 1.2
 
         coverImageView.snp.makeConstraints {
             $0.centerX.equalToSuperview()
-            $0.top.equalToSuperview().offset(navBarHeight + statusBarHeight + 16) // Just below nav bar
+            $0.top.equalToSuperview().offset(navBarHeight + statusBarHeight + 16)
             $0.width.equalTo(coverImageWidth)
             $0.height.equalTo(coverImageView.snp.width).dividedBy(BookDetailConstants.Layout.coverImageAspectRatio)
         }
 
-        // Info container - bottom-left of background image
         infoContainerView.snp.makeConstraints {
             $0.leading.equalToSuperview().inset(BookDetailConstants.Layout.infoLeadingInset)
             $0.trailing.equalToSuperview().inset(BookDetailConstants.Layout.infoLeadingInset)
             $0.bottom.equalToSuperview().inset(BookDetailConstants.Layout.infoBottomInset)
         }
 
-        // Info stack view
         infoStackView.snp.makeConstraints {
             $0.edges.equalToSuperview()
         }
 
-        // Tags container
         tagsContainerView.snp.makeConstraints {
-            $0.height.greaterThanOrEqualTo(BookDetailConstants.Layout.tagHeight)
+            $0.height.equalTo(BookDetailConstants.Layout.tagHeight)
+            $0.leading.trailing.equalToSuperview()
+        }
+
+        tagsScrollView.snp.makeConstraints {
+            $0.edges.equalToSuperview()
         }
 
         tagsStackView.snp.makeConstraints {
-            $0.edges.equalToSuperview()
+            $0.top.bottom.leading.equalToSuperview()
+            $0.height.equalToSuperview()
         }
     }
 
@@ -201,12 +201,9 @@ final class BookInfoHeaderView: UICollectionReusableView, IsIdentifiable {
         titleLabel.text = bookDetail.book.cleanTitle
         authorLabel.text = bookDetail.book.author
 
-        // Tags
         setupTags(bookDetail.tags)
 
-        // Load images
         if let url = URL(string: bookDetail.book.image) {
-            // Background image (blurred)
             backgroundImageView.kf.setImage(
                 with: url,
                 placeholder: nil,
@@ -215,8 +212,6 @@ final class BookInfoHeaderView: UICollectionReusableView, IsIdentifiable {
                     .cacheOriginalImage
                 ]
             )
-
-            // Cover image (centered)
             coverImageView.kf.setImage(
                 with: url,
                 placeholder: nil,
@@ -225,35 +220,26 @@ final class BookInfoHeaderView: UICollectionReusableView, IsIdentifiable {
                     .cacheOriginalImage
                 ]
             )
-
-            // Update text colors based on background brightness
-            updateTextColors(for: url)
         } else {
             backgroundImageView.image = nil
             backgroundImageView.backgroundColor = .systemGray4
             coverImageView.image = nil
             coverImageView.backgroundColor = .systemGray4
 
-            // Default to white text for gray background
             titleLabel.textColor = .white
             authorLabel.textColor = UIColor.white.withAlphaComponent(BookDetailConstants.Typography.bookInfoSubtitleAlpha)
         }
     }
 
     private func setupTags(_ tags: [String]) {
-        // 기존 태그 제거
         tagsStackView.arrangedSubviews.forEach { $0.removeFromSuperview() }
 
-        if tags.isEmpty {
-            // 태그가 없을 때 플레이스홀더 표시
-            let placeholderLabel = createPlaceholderLabel()
-            tagsStackView.addArrangedSubview(placeholderLabel)
-        } else {
-            // 새 태그 추가
-            tags.forEach { tag in
-                let tagLabel = createTagLabel(text: tag)
-                tagsStackView.addArrangedSubview(tagLabel)
-            }
+        let placeholderLabel = createPlaceholderLabel()
+        tagsStackView.addArrangedSubview(placeholderLabel)
+        
+        tags.forEach { tag in
+            let tagLabel = createTagLabel(text: tag)
+            tagsStackView.addArrangedSubview(tagLabel)
         }
     }
 
@@ -291,38 +277,6 @@ final class BookInfoHeaderView: UICollectionReusableView, IsIdentifiable {
         }
 
         return label
-    }
-
-    // MARK: - Color Management
-    private func updateTextColors(for imageURL: URL) {
-        // Download image to analyze brightness
-        KingfisherManager.shared.retrieveImage(with: imageURL) { [weak self] result in
-            guard let self = self else { return }
-
-            switch result {
-            case .success(let imageResult):
-                let averageBrightness = imageResult.image.averageBrightness()
-
-                // If image is bright (> 0.6), use dark text (.forestGreen)
-                // If image is dark (<= 0.6), use light text (.bookBackground or white)
-                let textColor: UIColor = averageBrightness > 0.6 ? .forestGreen : .bookBackground
-
-                DispatchQueue.main.async {
-                    self.titleLabel.textColor = textColor
-                    self.authorLabel.textColor = textColor.withAlphaComponent(BookDetailConstants.Typography.bookInfoSubtitleAlpha)
-                }
-
-            case .failure:
-                // Default to white on failure
-                self.titleLabel.textColor = .white
-                self.authorLabel.textColor = UIColor.white.withAlphaComponent(BookDetailConstants.Typography.bookInfoSubtitleAlpha)
-            }
-        }
-    }
-
-    // Get current text color for navigation bar sync
-    func getCurrentTextColor() -> UIColor {
-        return titleLabel.textColor ?? .white
     }
 }
 

@@ -375,7 +375,7 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
     
     private func createBookInfoSection() -> NSCollectionLayoutSection {
         let screenHeight = UIScreen.main.bounds.height
-        let headerHeight = screenHeight * 0.6 // 60% of screen
+        let headerHeight = screenHeight * 0.55
 
         // Create empty item (section with only header, no items)
         let itemSize = NSCollectionLayoutSize(
@@ -588,6 +588,7 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
                 ) as! BookInfoHeaderView
 
                 if let bookDetail = self?.reactor?.currentState.bookDetail {
+                    print("📌 Configuring BookInfoHeaderView with bookDetail - tags count: \(bookDetail.tags.count)")
                     header.configure(with: bookDetail)
 
                     header.onTagsTapped = { [weak self] in
@@ -597,6 +598,8 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
                     header.onReadingInfoTapped = { [weak self] in
                         self?.showReadingInfoEdit(bookDetail: bookDetail)
                     }
+                } else {
+                    print("⚠️ bookDetail is nil!")
                 }
 
                 return header

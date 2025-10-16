@@ -441,6 +441,21 @@ final class BookDetailReactor: Reactor {
 
         case .setTags(let tags):
             newState.tags = tags
+            print("📌 BookDetailReactor.reduce - setTags: \(tags.map { $0.tagName })")
+            // Update bookDetail with new tags
+            if let bookDetail = newState.bookDetail {
+                let tagNames = tags.map { $0.tagName }
+                print("📌 Updating bookDetail with tags: \(tagNames)")
+                newState.bookDetail = BookDetail(
+                    book: bookDetail.book,
+                    totalPages: bookDetail.totalPages,
+                    startDate: bookDetail.startDate,
+                    endDate: bookDetail.endDate,
+                    tags: tagNames
+                )
+            } else {
+                print("⚠️ bookDetail is nil, cannot update tags!")
+            }
 
         case .photoSaved, .photoDeleted:
             newState.shouldRefreshPhotos = true

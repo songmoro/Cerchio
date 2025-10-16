@@ -97,7 +97,7 @@ class BaseViewController<T: Reactor>: UIViewController, BaseViewControllerType, 
 
         let appearance = UINavigationBarAppearance()
         appearance.configureWithOpaqueBackground()
-        appearance.backgroundColor = .clear // .forestGreen
+        appearance.backgroundColor = .clear
         appearance.titleTextAttributes = [.foregroundColor: UIColor.forestGreen]
         appearance.largeTitleTextAttributes = [.foregroundColor: UIColor.forestGreen]
 

@@ -33,7 +33,7 @@ enum BookDetailConstants {
         static let coverImageWidth: CGFloat = 120
         static let coverImageAspectRatio: CGFloat = 3.0 / 4.0 // 3:4 ratio
         static let coverImageCornerRadius: CGFloat = 8
-        static let overlayAlpha: CGFloat = 0.3
+        static let overlayAlpha: CGFloat = 0.2
         static let infoBottomInset: CGFloat = 32
         static let infoLeadingInset: CGFloat = 24
     }
@@ -47,7 +47,7 @@ enum BookDetailConstants {
         static let tagFontSize: CGFloat = 12
 
         // New BookInfo cell typography
-        static let bookInfoTitleFontSize: CGFloat = 24
+        static let bookInfoTitleFontSize: CGFloat = 21
         static let bookInfoSubtitleFontSize: CGFloat = 16
         static let bookInfoSubtitleAlpha: CGFloat = 0.8
     }
