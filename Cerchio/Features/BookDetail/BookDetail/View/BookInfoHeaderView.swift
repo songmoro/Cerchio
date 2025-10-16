@@ -39,13 +39,12 @@ final class BookInfoHeaderView: UICollectionReusableView, IsIdentifiable {
     private let coverImageView: UIImageView = {
         let imageView = UIImageView()
         imageView.contentMode = .scaleAspectFill
-        imageView.clipsToBounds = true
+        imageView.layer.masksToBounds = true
         imageView.layer.cornerRadius = BookDetailConstants.Layout.coverImageCornerRadius
         imageView.layer.shadowColor = UIColor.black.cgColor
         imageView.layer.shadowOffset = BookDetailConstants.Shadow.coverShadowOffset
         imageView.layer.shadowRadius = BookDetailConstants.Shadow.coverShadowRadius
         imageView.layer.shadowOpacity = BookDetailConstants.Shadow.coverShadowOpacity
-        
         return imageView
     }()
 
@@ -68,7 +67,7 @@ final class BookInfoHeaderView: UICollectionReusableView, IsIdentifiable {
     private let authorLabel: UILabel = {
         let label = UILabel()
         label.font = .custom(weight: .regular, size: BookDetailConstants.Typography.bookInfoSubtitleFontSize)
-        label.textColor = .systemGray
+        label.textColor = .bookBackground
         label.numberOfLines = 1
         label.setContentHuggingPriority(.required, for: .vertical)
         label.setContentCompressionResistancePriority(.required, for: .vertical)
@@ -101,7 +100,7 @@ final class BookInfoHeaderView: UICollectionReusableView, IsIdentifiable {
         stackView.axis = .vertical
         stackView.spacing = BookDetailConstants.Layout.stackSpacing
         stackView.alignment = .leading
-        stackView.distribution = .fill // 내용에 맞춰 크기 결정
+        stackView.distribution = .fill
         return stackView
     }()
 
@@ -197,7 +196,7 @@ final class BookInfoHeaderView: UICollectionReusableView, IsIdentifiable {
         authorLabel.text = bookDetail.book.author
 
         titleLabel.textColor = .bookBackground
-        authorLabel.textColor = .systemGray
+        authorLabel.textColor = .bookBackground
 
         setupTags(bookDetail.tags)
 
