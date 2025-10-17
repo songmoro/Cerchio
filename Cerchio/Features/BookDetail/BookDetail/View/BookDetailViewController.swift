@@ -2,7 +2,7 @@
 //  BookDetailViewController.swift
 //  Cerchio
 //
-//  Created by 송재훈 on 9/28/25.
+//  Created by 송재훈 on 10/17/25.
 //
 
 import UIKit
@@ -11,44 +11,54 @@ import RxSwift
 import RxCocoa
 import SnapKit
 
-final class BookDetailViewController: BaseViewController<BookDetailReactor> {
+@MainActor
+final class BookDetailViewController: NestedScrollViewController, View {
     private typealias DataSource = UICollectionViewDiffableDataSource<Section, Item>
     private typealias Snapshot = NSDiffableDataSourceSnapshot<Section, Item>
 
+    // MARK: - ReactorKit Properties
+    var disposeBag = DisposeBag()
+    weak var coordinator: Coordinator?
+    let navigationEvents = PublishRelay<NavigationEvent>()
+
+    var reactor: BookDetailReactor? {
+        didSet {
+            guard let reactor = reactor else { return }
+            if isViewLoaded {
+                self.bind(reactor: reactor)
+            }
+        }
+    }
+
     // MARK: - UI Components
-    private let collectionView = UICollectionView(frame: .zero, collectionViewLayout: .init())
     private var dataSource: DataSource!
-    // private let refreshControl = UIRefreshControl() // Disabled for now
+    private var bookInfoView: BookInfoView?
+    private var tabNavigationView: TabNavigationView<Section>?
 
     // MARK: - Navigation Bar Buttons
     private var favoriteButton: UIBarButtonItem?
 
-    // MARK: - Dummy Cell
-    private class DummyCell: UICollectionViewCell, IsIdentifiable {
-        override init(frame: CGRect) {
-            super.init(frame: frame)
-            backgroundColor = .clear
-        }
-
-        required init?(coder: NSCoder) {
-            fatalError("init(coder:) has not been implemented")
-        }
-    }
-    
     // MARK: - Reading Statistics
     private var currentStatisticsPeriod: ReadingStatisticsPeriod = .total
-    
+
     // MARK: - Section & Item Types
-    nonisolated enum Section: CaseIterable {
-        case bookInfo
-        case readingRecords
-        case savedQuotes
-        case photoPages
-        case settings
+    nonisolated enum Section: Int, CaseIterable, Hashable {
+        case readingRecords = 0
+        case savedQuotes = 1
+        case photoPages = 2
+        case settings = 3
+
+        var title: String {
+            switch self {
+            case .readingRecords: return "독서 기록"
+            case .savedQuotes: return String(localized: .bookDetailSavedQuotes)
+            case .photoPages: return String(localized: .bookDetailPhotos)
+            case .settings: return String(localized: .bookDetailSettings)
+            }
+        }
     }
-    
+
     nonisolated enum Item: Hashable, Sendable {
-        case bookInfoDummy // Placeholder for bookInfo section
         case readingStatistics(ReadingStatistics)
         case addReadingRecordButton
         case savedQuote(String, Int?, Date)
@@ -56,11 +66,9 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
         case photoItem(String, UIImage)
         case addPhotoButton
         case settingsItem(SettingsItemType)
-        
+
         func hash(into hasher: inout Hasher) {
             switch self {
-            case .bookInfoDummy:
-                hasher.combine("bookInfoDummy")
             case .readingStatistics(let stats):
                 hasher.combine("readingStatistics")
                 hasher.combine(stats)
@@ -83,11 +91,9 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
                 hasher.combine(type)
             }
         }
-        
+
         static func == (lhs: Item, rhs: Item) -> Bool {
             switch (lhs, rhs) {
-            case (.bookInfoDummy, .bookInfoDummy):
-                return true
             case (.readingStatistics(let l), .readingStatistics(let r)):
                 return l == r
             case (.addReadingRecordButton, .addReadingRecordButton):
@@ -107,27 +113,26 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
             }
         }
     }
-    
+
     nonisolated enum SettingsItemType: Hashable, Sendable {
         case editBookInfo
         case editReadingInfo
         case resetAndDelete
     }
-    
-    // MARK: - Lifecycle
-    override func setupUI() {
-        super.setupUI()
 
-        // Allow content to extend under navigation bar
-        extendedLayoutIncludesOpaqueBars = true
-        
+    // MARK: - Lifecycle
+    override func viewDidLoad() {
+        super.viewDidLoad()
+
         navigationController?.navigationBar.tintColor = .bookBackground
 
-        setupCollectionView()
-        setupLayout()
-        configureDataSource()
+        setupCustomContent()
+
+        if let reactor = reactor {
+            bind(reactor: reactor)
+        }
     }
-    
+
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         reactor?.action.onNext(.loadBookDetail)
@@ -136,236 +141,55 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
         reactor?.action.onNext(.loadQuotes)
         reactor?.action.onNext(.loadTags)
     }
-    
-    // MARK: - Public Methods
-    func setFavoriteButton(_ button: UIBarButtonItem) {
-        favoriteButton = button
-        
-        favoriteButton?.rx.tap
-            .map { BookDetailReactor.Action.toggleFavorite }
-            .bind(to: reactor!.action)
-            .disposed(by: disposeBag)
-    }
-    
-    func setDeleteButton(_ button: UIBarButtonItem) {
-        button.rx.tap
-            .subscribe(onNext: { [weak self] in
-                self?.showDeleteConfirmationAlert()
-            })
-            .disposed(by: disposeBag)
-    }
-    
-    private func updateFavoriteButton(isFavorite: Bool) {
-        let imageName = isFavorite ? "heart.fill" : "heart"
-        favoriteButton?.image = UIImage(systemName: imageName)
-    }
-    
-    override func bind(reactor: BookDetailReactor) {
-        // MARK: - Actions
-        
-        // Initial load
-        Observable.just(BookDetailReactor.Action.loadBookDetail)
-            .bind(to: reactor.action)
-            .disposed(by: disposeBag)
-        
-        // Refresh Control - Disabled
-        // refreshControl.rx.controlEvent(.valueChanged)
-        //     .map { BookDetailReactor.Action.updateBookAndReload(reactor.currentState.book) }
-        //     .bind(to: reactor.action)
-        //     .disposed(by: disposeBag)
-        
-        // MARK: - State Bindings
-        
-        // BookDetail
-        reactor.state
-            .map { $0.bookDetail }
-            .compactMap { $0 }
-            .distinctUntilChanged()
-            .asDriver(onErrorJustReturn: nil)
-            .compactMap { $0 }
-            .drive(onNext: { [weak self] bookDetail in
-                self?.updateSnapshot(with: bookDetail)
-            })
-            .disposed(by: disposeBag)
-        
-        // Trigger data loading when bookDetail is set (async to avoid reentrancy)
-        reactor.state
-            .map { $0.bookDetail }
-            .compactMap { $0 }
-            .distinctUntilChanged()
-            .take(1) // Only trigger once when bookDetail is first set
-            .observe(on: MainScheduler.asyncInstance)
-            .subscribe(onNext: { [weak self] bookDetail in
-                print("📌 BookDetail first set, loading all data")
-                print("📌 Current tags in bookDetail: \(bookDetail.tags)")
-                self?.reactor?.action.onNext(.loadReadingStatistics)
-                self?.reactor?.action.onNext(.loadPhotos)
-                self?.reactor?.action.onNext(.loadQuotes)
-                self?.reactor?.action.onNext(.loadTags)
-            })
-            .disposed(by: disposeBag)
-        
-        // Reading Statistics
-        reactor.state
-            .map { $0.readingStatistics }
-            .distinctUntilChanged()
-            .asDriver(onErrorJustReturn: nil)
-            .drive(onNext: { [weak self] statistics in
-                self?.updateReadingStatisticsUI(statistics)
-            })
-            .disposed(by: disposeBag)
-        
-        // Photos
-        reactor.state
-            .map { $0.photos }
-            .distinctUntilChanged()
-            .asDriver(onErrorJustReturn: [])
-            .drive(onNext: { [weak self] photos in
-                self?.updatePhotosUI(photos)
-            })
-            .disposed(by: disposeBag)
-        
-        // Quotes
-        reactor.state
-            .map { $0.quotes }
-            .distinctUntilChanged()
-            .asDriver(onErrorJustReturn: [])
-            .drive(onNext: { [weak self] quotes in
-                self?.updateQuotesUI(Array(quotes))
-            })
-            .disposed(by: disposeBag)
-        
-        // Tags
-        reactor.state
-            .map { $0.tags }
-            .distinctUntilChanged()
-            .asDriver(onErrorJustReturn: [])
-            .drive(onNext: { [weak self] tags in
-                self?.updateTagsUI(Array(tags))
-            })
-            .disposed(by: disposeBag)
-        
-        // Loading state - end refresh control when loading completes
-        // reactor.state
-        //     .map { $0.isLoading }
-        //     .distinctUntilChanged()
-        //     .filter { !$0 }
-        //     .asDriver(onErrorJustReturn: false)
-        //     .drive(onNext: { [weak self] _ in
-        //         self?.refreshControl.endRefreshing()
-        //     })
-        //     .disposed(by: disposeBag)
-        
-        // Error
-        reactor.state
-            .map { $0.error }
-            .compactMap { $0 }
-            .asDriver(onErrorJustReturn: nil as Error?)
-            .compactMap { $0 }
-            .drive(onNext: { error in
-                print("Error: \(error)")
-            })
-            .disposed(by: disposeBag)
-        
-        // Favorite status
-        reactor.state
-            .map { $0.isFavorite }
-            .distinctUntilChanged()
-            .asDriver(onErrorJustReturn: false)
-            .drive(onNext: { [weak self] isFavorite in
-                self?.updateFavoriteButton(isFavorite: isFavorite)
-            })
-            .disposed(by: disposeBag)
-        
-        // Refresh flags - use asyncInstance to avoid reentrancy
-        reactor.state
-            .map { $0.shouldRefreshPhotos }
-            .distinctUntilChanged()
-            .filter { $0 }
-            .observe(on: MainScheduler.asyncInstance)
-            .subscribe(onNext: { [weak self] _ in
-                self?.reactor?.action.onNext(.loadPhotos)
-            })
-            .disposed(by: disposeBag)
-        
-        reactor.state
-            .map { $0.shouldRefreshTags }
-            .distinctUntilChanged()
-            .filter { $0 }
-            .observe(on: MainScheduler.asyncInstance)
-            .subscribe(onNext: { [weak self] _ in
-                self?.reactor?.action.onNext(.loadTags)
-            })
-            .disposed(by: disposeBag)
-    }
-    
-    // MARK: - Setup Methods
-    private func setupCollectionView() {
-        collectionView.backgroundColor = .systemBackground
-        collectionView.showsVerticalScrollIndicator = false
-        collectionView.bounces = true // Enable bouncing for over-scroll
-        collectionView.delegate = self
-        // collectionView.refreshControl = refreshControl // Disabled
-        collectionView.contentInsetAdjustmentBehavior = .never
-        
-        // Register BookInfo header
-        collectionView.register(
-            BookInfoHeaderView.self,
-            forSupplementaryViewOfKind: UICollectionView.elementKindSectionHeader,
-            withReuseIdentifier: BookInfoHeaderView.identifier
-        )
 
-        // Register DummyCell
-        collectionView.register(DummyCell.self)
-
-        collectionView.register(ReadingStatisticsCell.self)
-        collectionView.register(AddReadingRecordButtonCell.self)
-        collectionView.register(SavedQuoteCell.self)
-        collectionView.register(AddQuoteButtonCell.self)
-        collectionView.register(PhotoItemCell.self)
-        collectionView.register(AddPhotoCell.self)
-        collectionView.register(SettingsItemCell.self)
-        
-        collectionView.register(
-            ReadingRecordsSectionHeader.self,
-            forSupplementaryViewOfKind: UICollectionView.elementKindSectionHeader,
-            withReuseIdentifier: ReadingRecordsSectionHeader.identifier
-        )
-        collectionView.register(
-            SavedQuotesSectionHeader.self,
-            forSupplementaryViewOfKind: UICollectionView.elementKindSectionHeader,
-            withReuseIdentifier: SavedQuotesSectionHeader.identifier
-        )
-        collectionView.register(
-            PhotosSectionHeader.self,
-            forSupplementaryViewOfKind: UICollectionView.elementKindSectionHeader,
-            withReuseIdentifier: PhotosSectionHeader.identifier
-        )
-        collectionView.register(
-            SettingsSectionHeader.self,
-            forSupplementaryViewOfKind: UICollectionView.elementKindSectionHeader,
-            withReuseIdentifier: SettingsSectionHeader.identifier
-        )
-        
-        view.addSubview(collectionView)
+    // MARK: - Info View Height
+    override var infoViewHeight: CGFloat {
+        let screenHeight = UIScreen.main.bounds.height
+        return screenHeight * 0.50
     }
-    
-    private func setupLayout() {
-        collectionView.snp.makeConstraints {
-            $0.edges.equalTo(view)
+
+    // MARK: - Override: Create Info View
+    override func createInfoView() -> UIView {
+        let infoView = BookInfoView()
+        self.bookInfoView = infoView
+
+        infoView.onTagsTapped = { [weak self] in
+            self?.showTagInputAlert()
         }
 
-        collectionView.collectionViewLayout = createCompositionalLayout()
+        infoView.onReadingInfoTapped = { [weak self] in
+            guard let bookDetail = self?.reactor?.currentState.bookDetail else { return }
+            self?.showReadingInfoEdit(bookDetail: bookDetail)
+        }
+
+        return infoView
     }
-    
-    private func createCompositionalLayout() -> UICollectionViewCompositionalLayout {
+
+    // MARK: - Override: Create Sticky Tab View
+    override func createStickyTabView() -> UIView {
+        let tabs: [(title: String, value: Section)] = Section.allCases.map { ($0.title, $0) }
+        let tabView = TabNavigationView<Section>(tabs: tabs)
+        self.tabNavigationView = tabView
+
+        tabView.onTabSelected = { [weak self] section in
+            self?.handleTabSelection(section)
+        }
+
+        return tabView
+    }
+
+    // MARK: - Tab Selection
+    private func handleTabSelection(_ section: Section) {
+        scrollToSection(section.rawValue)
+    }
+
+    // MARK: - Override: Collection View Layout
+    override func createCollectionViewLayout() -> UICollectionViewLayout {
         return UICollectionViewCompositionalLayout { [weak self] sectionIndex, environment in
             guard let self = self else { return nil }
 
             let section = Section.allCases[sectionIndex]
             switch section {
-            case .bookInfo:
-                return self.createBookInfoSection()
             case .readingRecords:
                 return self.createReadingRecordsSection()
             case .savedQuotes:
@@ -377,42 +201,8 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
             }
         }
     }
-    
-    private func createBookInfoSection() -> NSCollectionLayoutSection {
-        let screenHeight = UIScreen.main.bounds.height
-        let headerHeight = screenHeight * 0.50
 
-        // Create empty item (section with only header, no items)
-        let itemSize = NSCollectionLayoutSize(
-            widthDimension: .fractionalWidth(1.0),
-            heightDimension: .absolute(0.1) // Minimal height
-        )
-        let item = NSCollectionLayoutItem(layoutSize: itemSize)
-
-        let groupSize = NSCollectionLayoutSize(
-            widthDimension: .fractionalWidth(1.0),
-            heightDimension: .absolute(0.1)
-        )
-        let group = NSCollectionLayoutGroup.horizontal(layoutSize: groupSize, subitems: [item])
-
-        let section = NSCollectionLayoutSection(group: group)
-
-        // Add header
-        let headerSize = NSCollectionLayoutSize(
-            widthDimension: .fractionalWidth(1.0),
-            heightDimension: .absolute(headerHeight)
-        )
-        let header = NSCollectionLayoutBoundarySupplementaryItem(
-            layoutSize: headerSize,
-            elementKind: UICollectionView.elementKindSectionHeader,
-            alignment: .top
-        )
-        // Do NOT pin - let it scroll away
-        section.boundarySupplementaryItems = [header]
-
-        return section
-    }
-
+    // MARK: - Section Layouts
     private func createReadingRecordsSection() -> NSCollectionLayoutSection {
         let itemSize = NSCollectionLayoutSize(
             widthDimension: .fractionalWidth(1.0),
@@ -443,7 +233,7 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
 
         return section
     }
-    
+
     private func createSavedQuotesSection() -> NSCollectionLayoutSection {
         let itemSize = NSCollectionLayoutSize(
             widthDimension: .fractionalWidth(1.0),
@@ -464,7 +254,7 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
 
         return section
     }
-    
+
     private func createPhotoPagesSection() -> NSCollectionLayoutSection {
         let itemSize = NSCollectionLayoutSize(
             widthDimension: .absolute(120),
@@ -486,7 +276,7 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
 
         return section
     }
-    
+
     private func createSettingsSection() -> NSCollectionLayoutSection {
         let itemSize = NSCollectionLayoutSize(
             widthDimension: .fractionalWidth(1.0),
@@ -506,57 +296,237 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
 
         return section
     }
-    
+
+    // MARK: - Override: Setup Custom Content
+    override func setupCustomContent() {
+        collectionView.delegate = self
+
+        // Register cells
+        collectionView.register(ReadingStatisticsCell.self)
+        collectionView.register(AddReadingRecordButtonCell.self)
+        collectionView.register(SavedQuoteCell.self)
+        collectionView.register(AddQuoteButtonCell.self)
+        collectionView.register(PhotoItemCell.self)
+        collectionView.register(AddPhotoCell.self)
+        collectionView.register(SettingsItemCell.self)
+
+        // Register headers
+        collectionView.register(
+            ReadingRecordsSectionHeader.self,
+            forSupplementaryViewOfKind: UICollectionView.elementKindSectionHeader,
+            withReuseIdentifier: ReadingRecordsSectionHeader.identifier
+        )
+        collectionView.register(
+            SavedQuotesSectionHeader.self,
+            forSupplementaryViewOfKind: UICollectionView.elementKindSectionHeader,
+            withReuseIdentifier: SavedQuotesSectionHeader.identifier
+        )
+        collectionView.register(
+            PhotosSectionHeader.self,
+            forSupplementaryViewOfKind: UICollectionView.elementKindSectionHeader,
+            withReuseIdentifier: PhotosSectionHeader.identifier
+        )
+        collectionView.register(
+            SettingsSectionHeader.self,
+            forSupplementaryViewOfKind: UICollectionView.elementKindSectionHeader,
+            withReuseIdentifier: SettingsSectionHeader.identifier
+        )
+
+        configureDataSource()
+    }
+
+    // MARK: - Public Methods
+    func setFavoriteButton(_ button: UIBarButtonItem) {
+        favoriteButton = button
+
+        favoriteButton?.rx.tap
+            .map { BookDetailReactor.Action.toggleFavorite }
+            .bind(to: reactor!.action)
+            .disposed(by: disposeBag)
+    }
+
+    func setDeleteButton(_ button: UIBarButtonItem) {
+        button.rx.tap
+            .subscribe(onNext: { [weak self] in
+                self?.showDeleteConfirmationAlert()
+            })
+            .disposed(by: disposeBag)
+    }
+
+    private func updateFavoriteButton(isFavorite: Bool) {
+        let imageName = isFavorite ? "heart.fill" : "heart"
+        favoriteButton?.image = UIImage(systemName: imageName)
+    }
+
+    // MARK: - ReactorKit Binding
+    func bind(reactor: BookDetailReactor) {
+        // MARK: - Actions
+
+        // Initial load
+        Observable.just(BookDetailReactor.Action.loadBookDetail)
+            .bind(to: reactor.action)
+            .disposed(by: disposeBag)
+
+        // MARK: - State Bindings
+
+        // BookDetail
+        reactor.state
+            .map { $0.bookDetail }
+            .compactMap { $0 }
+            .distinctUntilChanged()
+            .asDriver(onErrorJustReturn: nil)
+            .compactMap { $0 }
+            .drive(onNext: { [weak self] bookDetail in
+                self?.updateBookInfo(with: bookDetail)
+                self?.updateSnapshot(with: bookDetail)
+            })
+            .disposed(by: disposeBag)
+
+        // Trigger data loading when bookDetail is set
+        reactor.state
+            .map { $0.bookDetail }
+            .compactMap { $0 }
+            .distinctUntilChanged()
+            .take(1)
+            .observe(on: MainScheduler.asyncInstance)
+            .subscribe(onNext: { [weak self] bookDetail in
+                print("📌 BookDetail first set, loading all data")
+                print("📌 Current tags in bookDetail: \(bookDetail.tags)")
+                self?.reactor?.action.onNext(.loadReadingStatistics)
+                self?.reactor?.action.onNext(.loadPhotos)
+                self?.reactor?.action.onNext(.loadQuotes)
+                self?.reactor?.action.onNext(.loadTags)
+            })
+            .disposed(by: disposeBag)
+
+        // Reading Statistics
+        reactor.state
+            .map { $0.readingStatistics }
+            .distinctUntilChanged()
+            .asDriver(onErrorJustReturn: nil)
+            .drive(onNext: { [weak self] statistics in
+                self?.updateReadingStatisticsUI(statistics)
+            })
+            .disposed(by: disposeBag)
+
+        // Photos
+        reactor.state
+            .map { $0.photos }
+            .distinctUntilChanged()
+            .asDriver(onErrorJustReturn: [])
+            .drive(onNext: { [weak self] photos in
+                self?.updatePhotosUI(photos)
+            })
+            .disposed(by: disposeBag)
+
+        // Quotes
+        reactor.state
+            .map { $0.quotes }
+            .distinctUntilChanged()
+            .asDriver(onErrorJustReturn: [])
+            .drive(onNext: { [weak self] quotes in
+                self?.updateQuotesUI(Array(quotes))
+            })
+            .disposed(by: disposeBag)
+
+        // Tags
+        reactor.state
+            .map { $0.tags }
+            .distinctUntilChanged()
+            .asDriver(onErrorJustReturn: [])
+            .drive(onNext: { [weak self] tags in
+                self?.updateTagsUI(Array(tags))
+            })
+            .disposed(by: disposeBag)
+
+        // Error
+        reactor.state
+            .map { $0.error }
+            .compactMap { $0 }
+            .asDriver(onErrorJustReturn: nil as Error?)
+            .compactMap { $0 }
+            .drive(onNext: { error in
+                print("Error: \(error)")
+            })
+            .disposed(by: disposeBag)
+
+        // Favorite status
+        reactor.state
+            .map { $0.isFavorite }
+            .distinctUntilChanged()
+            .asDriver(onErrorJustReturn: false)
+            .drive(onNext: { [weak self] isFavorite in
+                self?.updateFavoriteButton(isFavorite: isFavorite)
+            })
+            .disposed(by: disposeBag)
+
+        // Refresh flags
+        reactor.state
+            .map { $0.shouldRefreshPhotos }
+            .distinctUntilChanged()
+            .filter { $0 }
+            .observe(on: MainScheduler.asyncInstance)
+            .subscribe(onNext: { [weak self] _ in
+                self?.reactor?.action.onNext(.loadPhotos)
+            })
+            .disposed(by: disposeBag)
+
+        reactor.state
+            .map { $0.shouldRefreshTags }
+            .distinctUntilChanged()
+            .filter { $0 }
+            .observe(on: MainScheduler.asyncInstance)
+            .subscribe(onNext: { [weak self] _ in
+                self?.reactor?.action.onNext(.loadTags)
+            })
+            .disposed(by: disposeBag)
+    }
+
     // MARK: - DataSource Configuration
     private func configureDataSource() {
         dataSource = DataSource(collectionView: collectionView) { [weak self] collectionView, indexPath, item in
             switch item {
-            case .bookInfoDummy:
-                // Return empty dummy cell (should not be visible)
-                let cell: DummyCell = collectionView.dequeueReusableCell(DummyCell.self, for: indexPath)
-                return cell
-
             case .readingStatistics(let statistics):
                 let cell: ReadingStatisticsCell = collectionView.dequeueReusableCell(ReadingStatisticsCell.self, for: indexPath)
                 cell.configure(with: statistics, period: self?.currentStatisticsPeriod ?? .total)
                 return cell
-                
+
             case .addReadingRecordButton:
                 let cell: AddReadingRecordButtonCell = collectionView.dequeueReusableCell(AddReadingRecordButtonCell.self, for: indexPath)
                 cell.onAddRecordTapped = { [weak self] in
                     self?.showReadingRecordEntry()
                 }
                 return cell
-                
+
             case .savedQuote(let quote, let pageNumber, let date):
                 let cell: SavedQuoteCell = collectionView.dequeueReusableCell(SavedQuoteCell.self, for: indexPath)
                 cell.configure(with: quote, pageNumber: pageNumber, date: date)
                 self?.setupQuoteContextMenu(for: cell, quote: quote, pageNumber: pageNumber, date: date)
                 return cell
-                
+
             case .addQuoteButton:
                 let cell: AddQuoteButtonCell = collectionView.dequeueReusableCell(AddQuoteButtonCell.self, for: indexPath)
                 cell.onAddQuoteTapped = { [weak self] in
                     self?.showQuoteEntry()
                 }
                 return cell
-                
+
             case .photoItem(let photoId, let image):
                 let cell: PhotoItemCell = collectionView.dequeueReusableCell(PhotoItemCell.self, for: indexPath)
                 cell.configure(with: image)
                 self?.setupPhotoContextMenu(for: cell, photoId: photoId, image: image)
                 return cell
-                
+
             case .addPhotoButton:
                 let cell: AddPhotoCell = collectionView.dequeueReusableCell(AddPhotoCell.self, for: indexPath)
                 cell.onAddPhotoTapped = { [weak self] in
                     self?.showPhotoCapture()
                 }
                 return cell
-                
+
             case .settingsItem(let type):
                 let cell: SettingsItemCell = collectionView.dequeueReusableCell(SettingsItemCell.self, for: indexPath)
-                
+
                 switch type {
                 case .editBookInfo:
                     cell.configure(
@@ -574,41 +544,17 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
                         title: String(localized: .bookDetailResetAndDelete)
                     )
                 }
-                
+
                 return cell
             }
         }
-        
+
         dataSource.supplementaryViewProvider = { [weak self] collectionView, kind, indexPath in
             guard kind == UICollectionView.elementKindSectionHeader else { return nil }
 
             let section = Section.allCases[indexPath.section]
 
             switch section {
-            case .bookInfo:
-                let header = collectionView.dequeueReusableSupplementaryView(
-                    ofKind: kind,
-                    withReuseIdentifier: BookInfoHeaderView.identifier,
-                    for: indexPath
-                ) as! BookInfoHeaderView
-
-                if let bookDetail = self?.reactor?.currentState.bookDetail {
-                    print("📌 Configuring BookInfoHeaderView with bookDetail - tags count: \(bookDetail.tags.count)")
-                    header.configure(with: bookDetail)
-
-                    header.onTagsTapped = { [weak self] in
-                        self?.showTagInputAlert()
-                    }
-
-                    header.onReadingInfoTapped = { [weak self] in
-                        self?.showReadingInfoEdit(bookDetail: bookDetail)
-                    }
-                } else {
-                    print("⚠️ bookDetail is nil!")
-                }
-
-                return header
-
             case .readingRecords:
                 let header = collectionView.dequeueReusableSupplementaryView(
                     ofKind: kind,
@@ -632,7 +578,7 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
                 }
 
                 return header
-                
+
             case .savedQuotes:
                 let header = collectionView.dequeueReusableSupplementaryView(
                     ofKind: kind,
@@ -648,7 +594,7 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
                     self?.showAllQuotes()
                 }
                 return header
-                
+
             case .photoPages:
                 let header = collectionView.dequeueReusableSupplementaryView(
                     ofKind: kind,
@@ -664,36 +610,34 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
                     self?.showAllPhotos()
                 }
                 return header
-                
+
             case .settings:
                 let header = collectionView.dequeueReusableSupplementaryView(
                     ofKind: kind,
                     withReuseIdentifier: SettingsSectionHeader.identifier,
                     for: indexPath
                 ) as! SettingsSectionHeader
-                
+
                 header.configure(title: String(localized: .bookDetailSettings))
                 return header
-                
-            default:
-                return nil
             }
         }
     }
-    
+
     // MARK: - UI Update Methods
-    
+
+    private func updateBookInfo(with bookDetail: BookDetail) {
+        bookInfoView?.configure(with: bookDetail)
+    }
+
     private func updateSnapshot(with bookDetail: BookDetail) {
         guard let dataSource = dataSource else { return }
 
         var snapshot = dataSource.snapshot()
 
-        // 섹션이 없으면 초기화
+        // Initialize sections if empty
         if snapshot.sectionIdentifiers.isEmpty {
-            snapshot.appendSections([.bookInfo, .readingRecords, .savedQuotes, .photoPages, .settings])
-
-            // Add dummy item to bookInfo section (required for header to show)
-            snapshot.appendItems([.bookInfoDummy], toSection: .bookInfo)
+            snapshot.appendSections([.readingRecords, .savedQuotes, .photoPages, .settings])
 
             snapshot.appendItems([.addQuoteButton], toSection: .savedQuotes)
             snapshot.appendItems([.addPhotoButton], toSection: .photoPages)
@@ -707,45 +651,42 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
             snapshot.appendItems(settingsItems, toSection: .settings)
         }
 
-        // Reload bookInfo header by invalidating layout
-        collectionView.collectionViewLayout.invalidateLayout()
-
         dataSource.apply(snapshot, animatingDifferences: true)
     }
-    
+
     private func updateReadingStatisticsUI(_ statistics: ReadingStatistics?) {
         guard let dataSource = dataSource else { return }
         var snapshot = dataSource.snapshot()
-        
+
         guard snapshot.sectionIdentifiers.contains(.readingRecords) else { return }
-        
+
         let existingItems = snapshot.itemIdentifiers(inSection: .readingRecords)
         if !existingItems.isEmpty {
             snapshot.deleteItems(existingItems)
         }
-        
+
         if let statistics = statistics, !statistics.isEmpty {
             snapshot.appendItems([.readingStatistics(statistics)], toSection: .readingRecords)
         } else {
             snapshot.appendItems([.addReadingRecordButton], toSection: .readingRecords)
         }
-        
+
         dataSource.apply(snapshot, animatingDifferences: true)
     }
-    
+
     private func updatePhotosUI(_ photos: [BookDetailReactor.PhotoItem]) {
         guard let dataSource = dataSource else { return }
         var snapshot = dataSource.snapshot()
-        
+
         guard snapshot.sectionIdentifiers.contains(.photoPages) else { return }
-        
+
         let existingItems = snapshot.itemIdentifiers(inSection: .photoPages)
         let photoItemsToRemove = existingItems.filter {
             if case .photoItem = $0 { return true }
             return false
         }
         snapshot.deleteItems(photoItemsToRemove)
-        
+
         if let addButtonIndex = snapshot.itemIdentifiers(inSection: .photoPages).firstIndex(where: {
             if case .addPhotoButton = $0 { return true }
             return false
@@ -754,10 +695,10 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
             let photoItems = photos.map { Item.photoItem($0.id, $0.image) }
             snapshot.insertItems(photoItems, afterItem: addButtonItem)
         }
-        
+
         dataSource.apply(snapshot, animatingDifferences: true)
     }
-    
+
     private func updateQuotesUI(_ quotes: [RealmQuote]) {
         print(#function)
         guard let dataSource = dataSource, let _ = reactor?.currentState.bookDetail else { return }
@@ -772,9 +713,7 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
         if quotes.isEmpty {
             quoteItems.append(.addQuoteButton)
         } else {
-            let maxQuotes = min(quotes.count, 3)
-            for i in 0..<maxQuotes {
-                let quote = quotes[i]
+            for quote in quotes {
                 quoteItems.append(.savedQuote(quote.quote, quote.pageNumber, quote.createdAt))
             }
         }
@@ -782,65 +721,50 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
 
         dataSource.apply(snapshot, animatingDifferences: true)
     }
-    
+
     private func updateTagsUI(_ tags: [RealmTag]) {
         print("📌 updateTagsUI called with \(tags.count) tags")
-        // Force reload the bookInfo section header
-        guard let dataSource = dataSource else { return }
-
-        let indexPath = IndexPath(item: 0, section: 0) // bookInfo is first section
-        if let header = collectionView.supplementaryView(
-            forElementKind: UICollectionView.elementKindSectionHeader,
-            at: indexPath
-        ) as? BookInfoHeaderView {
-            print("📌 Found existing header, reconfiguring...")
-            if let bookDetail = reactor?.currentState.bookDetail {
-                header.configure(with: bookDetail)
-            }
-        } else {
-            print("📌 Header not visible, will update on next appearance")
-            // Header not visible - it will be configured when it becomes visible
-            // Just invalidate layout to ensure it's reconfigured
-            collectionView.collectionViewLayout.invalidateLayout()
+        if let bookDetail = reactor?.currentState.bookDetail {
+            bookInfoView?.configure(with: bookDetail)
         }
     }
-    
+
     // MARK: - Navigation Methods
-    
+
     private func showReadingRecordEntry() {
         guard let coordinator = coordinator as? BookDetailCoordinator else { return }
         coordinator.showReadingRecordEntry()
     }
-    
+
     private func showQuoteEntry() {
         guard let coordinator = coordinator as? BookDetailCoordinator else { return }
         coordinator.showQuoteEntry()
     }
-    
+
     private func showPhotoCapture() {
         guard let coordinator = coordinator as? BookDetailCoordinator else { return }
         coordinator.showPhotoCapture { [weak self] image in
             self?.reactor?.action.onNext(.savePhoto(image))
         }
     }
-    
+
     private func showAllQuotes() {
         guard let coordinator = coordinator as? BookDetailCoordinator else { return }
         coordinator.showAllQuotes()
     }
-    
+
     private func showAllPhotos() {
         guard let coordinator = coordinator as? BookDetailCoordinator else { return }
         coordinator.showAllPhotos()
     }
-    
+
     private func showReadingSessionList() {
         guard let coordinator = coordinator as? BookDetailCoordinator else { return }
         coordinator.showReadingSessionList()
     }
-    
+
     // MARK: - Context Menus
-    
+
     private func setupPhotoContextMenu(for cell: PhotoItemCell, photoId: String, image: UIImage) {
         let menuItems = [
             CircularMenuItem(name: "보기", image: UIImage(systemName: "eye")) { [weak self] in
@@ -853,7 +777,7 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
                 self?.showDeletePhotoConfirmation(for: photoId)
             }
         ]
-        
+
         let highlightConfig = ViewHighlightConfiguration.withContextualRotation()
         CircularMenuManager.shared.addLongPressMenu(
             to: cell,
@@ -864,7 +788,7 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
             highlightConfiguration: highlightConfig
         )
     }
-    
+
     private func setupQuoteContextMenu(for cell: SavedQuoteCell, quote: String, pageNumber: Int?, date: Date) {
         let menuItems = [
             CircularMenuItem(name: "공유", image: UIImage(systemName: "square.and.arrow.up")) { [weak self] in
@@ -877,7 +801,7 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
                 self?.showDeleteQuoteConfirmation(for: quote, date: date)
             }
         ]
-        
+
         let highlightConfig = ViewHighlightConfiguration.withCustomRotation(angle: -5.0)
         CircularMenuManager.shared.addLongPressMenu(
             to: cell,
@@ -888,36 +812,36 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
             highlightConfiguration: highlightConfig
         )
     }
-    
+
     // MARK: - Image Actions
-    
+
     private func showImagePreview(_ image: UIImage) {
         let previewVC = UIViewController()
         let imageView = UIImageView(image: image)
         imageView.contentMode = .scaleAspectFit
         imageView.backgroundColor = .black
-        
+
         previewVC.view = imageView
         previewVC.modalPresentationStyle = .fullScreen
-        
+
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(dismissImagePreview))
         imageView.isUserInteractionEnabled = true
         imageView.addGestureRecognizer(tapGesture)
-        
+
         present(previewVC, animated: true)
     }
-    
+
     @objc private func dismissImagePreview() {
         dismiss(animated: true)
     }
-    
+
     private func saveImageToPhotoLibrary(_ image: UIImage) {
         PhotoLibraryPermissionManager.shared.handlePhotoLibraryPermission(from: self) { [weak self] granted in
             guard granted else { return }
             UIImageWriteToSavedPhotosAlbum(image, self, #selector(self?.imageSaveCompleted(_:didFinishSavingWithError:contextInfo:)), nil)
         }
     }
-    
+
     @objc private func imageSaveCompleted(_ image: UIImage, didFinishSavingWithError error: Error?, contextInfo: UnsafeRawPointer) {
         let alert = UIAlertController(
             title: error == nil ? String(localized: .photoSaveSuccessTitle) : String(localized: .photoSaveFailureTitle),
@@ -927,74 +851,30 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
         alert.addAction(UIAlertAction(title: String(localized: .actionConfirm), style: .default))
         present(alert, animated: true)
     }
-    
+
     private func showDeletePhotoConfirmation(for photoId: String) {
         let alert = UIAlertController(
             title: String(localized: .photoDeleteConfirmationTitle),
             message: String(localized: .photoDeleteConfirmationMessage),
             preferredStyle: .alert
         )
-        
+
         alert.addAction(UIAlertAction(title: String(localized: .actionDelete), style: .destructive) { [weak self] _ in
             self?.reactor?.action.onNext(.deletePhoto(photoId))
         })
-        
+
         alert.addAction(UIAlertAction(title: String(localized: .actionCancel), style: .cancel))
         present(alert, animated: true)
-    }
-    
-    // MARK: - Photo Actions
-
-    private func showPhotoActionBottomSheet(for indexPath: IndexPath, photoId: String, image: UIImage) {
-        guard let cell = collectionView.cellForItem(at: indexPath) as? PhotoItemCell,
-              let window = view.window else { return }
-
-        let sheetHeight = view.bounds.height / 3
-        let bottomSheet = PhotoActionBottomSheet(sourceView: cell, sheetHeight: sheetHeight)
-
-        bottomSheet.onActionSelected = { [weak self] action in
-            switch action {
-            case .view:
-                self?.showImagePreview(image)
-            case .download:
-                self?.saveImageToPhotoLibrary(image)
-            case .delete:
-                self?.showDeletePhotoConfirmation(for: photoId)
-            }
-        }
-
-        bottomSheet.show(in: window)
     }
 
     // MARK: - Quote Actions
 
-    private func showQuoteActionBottomSheet(for indexPath: IndexPath, quote: String, pageNumber: Int?, date: Date) {
-        guard let cell = collectionView.cellForItem(at: indexPath) as? SavedQuoteCell,
-              let window = view.window else { return }
-
-        let sheetHeight = view.bounds.height / 3
-        let bottomSheet = QuoteActionBottomSheet(sourceView: cell, sheetHeight: sheetHeight)
-
-        bottomSheet.onActionSelected = { [weak self] action in
-            switch action {
-            case .share:
-                self?.shareQuote(quote, pageNumber: pageNumber)
-            case .edit:
-                self?.editQuote(quote, pageNumber: pageNumber, date: date)
-            case .delete:
-                self?.showDeleteQuoteConfirmation(for: quote, date: date)
-            }
-        }
-
-        bottomSheet.show(in: window)
-    }
-    
     private func shareQuote(_ quote: String, pageNumber: Int?) {
         guard let reactor = reactor, let coordinator = coordinator as? BookDetailCoordinator else { return }
-        
+
         let bookDetail = reactor.currentState.bookDetail
         let book = bookDetail?.book ?? reactor.currentState.book
-        
+
         let quoteData = QuoteShareData(
             bookCoverImageURL: book.image,
             bookCoverImage: nil,
@@ -1005,48 +885,48 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
             date: Date(),
             backgroundConfig: .default
         )
-        
+
         coordinator.showQuoteShare(quoteData: quoteData)
     }
-    
+
     private func editQuote(_ quote: String, pageNumber: Int?, date: Date) {
         guard let coordinator = coordinator as? BookDetailCoordinator else { return }
         coordinator.showQuoteEdit(quote: quote, pageNumber: pageNumber, date: date)
     }
-    
+
     private func showDeleteQuoteConfirmation(for quote: String, date: Date) {
         let alert = UIAlertController(
             title: "문장 삭제",
             message: "이 문장을 삭제하시겠습니까?",
             preferredStyle: .alert
         )
-        
+
         alert.addAction(UIAlertAction(title: "취소", style: .cancel))
         alert.addAction(UIAlertAction(title: "삭제", style: .destructive) { [weak self] _ in
             self?.reactor?.action.onNext(.deleteQuote(quote, date))
         })
-        
+
         present(alert, animated: true)
     }
-    
+
     // MARK: - Tag Input
-    
+
     private func showTagInputAlert() {
         guard let reactor = reactor else { return }
         let currentTags = reactor.currentState.tags.map { $0.tagName }
-        
+
         let tagEditVC = TagEditViewController()
         tagEditVC.configure(currentTags: currentTags, allTags: currentTags)
         tagEditVC.onTagsSaved = { [weak self] tags in
             self?.reactor?.action.onNext(.saveTags(tags))
         }
-        
+
         let navController = UINavigationController(rootViewController: tagEditVC)
         present(navController, animated: true)
     }
-    
+
     // MARK: - Reading Info Edit
-    
+
     private func showReadingInfoEdit(bookDetail: BookDetail) {
         let readingInfoEditVC = ReadingInfoEditViewController()
         readingInfoEditVC.configure(
@@ -1057,37 +937,37 @@ final class BookDetailViewController: BaseViewController<BookDetailReactor> {
         readingInfoEditVC.onSaved = { [weak self] totalPages, startDate, endDate in
             self?.reactor?.action.onNext(.updateReadingInfo(totalPages: totalPages, startDate: startDate, endDate: endDate))
         }
-        
+
         let navController = UINavigationController(rootViewController: readingInfoEditVC)
         present(navController, animated: true)
     }
-    
+
     // MARK: - Delete Confirmation
-    
+
     private func showDeleteConfirmationAlert() {
         guard let reactor = reactor else { return }
         let bookTitle = reactor.currentState.book.cleanTitle
-        
+
         let alert = UIAlertController(
             title: "도서 삭제",
             message: "'\(bookTitle)'\n이 책과 관련된 모든 데이터(사진, 문장, 태그)가 함께 삭제됩니다.\n\n이 작업은 되돌릴 수 없습니다.",
             preferredStyle: .alert
         )
-        
+
         alert.addAction(UIAlertAction(title: "계속 보기", style: .cancel))
         alert.addAction(UIAlertAction(title: "삭제", style: .destructive) { [weak self] _ in
             self?.reactor?.action.onNext(.deleteBook)
         })
-        
+
         present(alert, animated: true)
     }
-    
+
     private func handlePeriodChange(_ period: ReadingStatisticsPeriod) {
         currentStatisticsPeriod = period
-        
+
         let sectionIndex = Section.allCases.firstIndex(of: .readingRecords) ?? 0
         let indexPath = IndexPath(item: 0, section: sectionIndex)
-        
+
         if let cell = collectionView.cellForItem(at: indexPath) as? ReadingStatisticsCell {
             cell.updatePeriod(period)
         }
@@ -1113,10 +993,9 @@ extension BookDetailViewController: UICollectionViewDelegate {
             break
         }
 
-        // Deselect cell
         collectionView.deselectItem(at: indexPath, animated: true)
     }
-    
+
     private func handleSettingsItemTap(_ type: SettingsItemType) {
         switch type {
         case .editBookInfo:
@@ -1127,18 +1006,62 @@ extension BookDetailViewController: UICollectionViewDelegate {
             showResetAndDelete()
         }
     }
-    
+
+    // MARK: - Bottom Sheets
+
+    private func showPhotoActionBottomSheet(for indexPath: IndexPath, photoId: String, image: UIImage) {
+        guard let cell = collectionView.cellForItem(at: indexPath) as? PhotoItemCell,
+              let window = view.window else { return }
+
+        let sheetHeight = view.bounds.height / 3
+        let bottomSheet = PhotoActionBottomSheet(sourceView: cell, sheetHeight: sheetHeight)
+
+        bottomSheet.onActionSelected = { [weak self] action in
+            switch action {
+            case .view:
+                self?.showImagePreview(image)
+            case .download:
+                self?.saveImageToPhotoLibrary(image)
+            case .delete:
+                self?.showDeletePhotoConfirmation(for: photoId)
+            }
+        }
+
+        bottomSheet.show(in: window)
+    }
+
+    private func showQuoteActionBottomSheet(for indexPath: IndexPath, quote: String, pageNumber: Int?, date: Date) {
+        guard let cell = collectionView.cellForItem(at: indexPath) as? SavedQuoteCell,
+              let window = view.window else { return }
+
+        let sheetHeight = view.bounds.height / 3
+        let bottomSheet = QuoteActionBottomSheet(sourceView: cell, sheetHeight: sheetHeight)
+
+        bottomSheet.onActionSelected = { [weak self] action in
+            switch action {
+            case .share:
+                self?.shareQuote(quote, pageNumber: pageNumber)
+            case .edit:
+                self?.editQuote(quote, pageNumber: pageNumber, date: date)
+            case .delete:
+                self?.showDeleteQuoteConfirmation(for: quote, date: date)
+            }
+        }
+
+        bottomSheet.show(in: window)
+    }
+
     // MARK: - Settings Actions
     private func showEditBookInfo() {
         guard let coordinator = coordinator as? BookDetailCoordinator else { return }
         coordinator.showEditBookInfo()
     }
-    
+
     private func showReadingInfoEditFromSettings() {
         guard let bookDetail = reactor?.currentState.bookDetail else { return }
         showReadingInfoEdit(bookDetail: bookDetail)
     }
-    
+
     private func showResetAndDelete() {
         guard let coordinator = coordinator as? BookDetailCoordinator else { return }
         coordinator.showResetAndDelete()
