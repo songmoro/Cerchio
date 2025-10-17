@@ -10,12 +10,22 @@ import Charts
 
 struct ReadingChartView: View {
     let chartData: ReadingChartData
+    let onPeriodChanged: ((ReadingStatisticsPeriod) -> Void)?
+
+    @State private var selectedPeriod: ReadingStatisticsPeriod
+
+    init(chartData: ReadingChartData, onPeriodChanged: ((ReadingStatisticsPeriod) -> Void)? = nil) {
+        self.chartData = chartData
+        self.onPeriodChanged = onPeriodChanged
+        _selectedPeriod = State(initialValue: chartData.period)
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             if chartData.isEmpty {
                 emptyStateView
             } else {
+                segmentControl
                 headerView
                 chartView
             }
@@ -23,6 +33,19 @@ struct ReadingChartView: View {
         .padding(16)
         .background(Color(uiColor: UIColor(named: "BookBackground")?.withAlphaComponent(0.1) ?? .systemGray6))
         .cornerRadius(12)
+    }
+
+    private var segmentControl: some View {
+        Picker("Period", selection: $selectedPeriod) {
+            Text("전체").tag(ReadingStatisticsPeriod.total)
+            Text("오늘").tag(ReadingStatisticsPeriod.today)
+            Text("이번 주").tag(ReadingStatisticsPeriod.week)
+            Text("이번 달").tag(ReadingStatisticsPeriod.month)
+        }
+        .pickerStyle(.segmented)
+        .onChange(of: selectedPeriod) { newValue in
+            onPeriodChanged?(newValue)
+        }
     }
 
     private var emptyStateView: some View {

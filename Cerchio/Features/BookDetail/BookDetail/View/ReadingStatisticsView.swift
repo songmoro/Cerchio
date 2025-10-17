@@ -26,6 +26,7 @@ final class ReadingStatisticsView: UIView {
 
     private var chartData: ReadingChartData?
     private var currentPeriod: ReadingStatisticsPeriod = .total
+    var onPeriodChanged: ((ReadingStatisticsPeriod) -> Void)?
 
     // MARK: - Initialization
 
@@ -60,10 +61,10 @@ final class ReadingStatisticsView: UIView {
         guard let chartData = chartData else { return }
 
         if let hostingController = hostingController {
-            hostingController.rootView = ReadingChartView(chartData: chartData)
+            hostingController.rootView = ReadingChartView(chartData: chartData, onPeriodChanged: onPeriodChanged)
             hostingController.view.layoutIfNeeded()
         } else {
-            let chartView = ReadingChartView(chartData: chartData)
+            let chartView = ReadingChartView(chartData: chartData, onPeriodChanged: onPeriodChanged)
             let hosting = UIHostingController(rootView: chartView)
             hosting.view.backgroundColor = .clear
             self.hostingController = hosting

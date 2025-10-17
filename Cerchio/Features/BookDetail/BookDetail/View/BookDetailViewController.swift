@@ -220,7 +220,7 @@ final class BookDetailViewController: FullScreenNestedScrollViewController, View
 
         let headerSize = NSCollectionLayoutSize(
             widthDimension: .fractionalWidth(1.0),
-            heightDimension: .absolute(80)
+            heightDimension: .absolute(48)
         )
         let header = NSCollectionLayoutBoundarySupplementaryItem(
             layoutSize: headerSize,
@@ -281,6 +281,7 @@ final class BookDetailViewController: FullScreenNestedScrollViewController, View
             heightDimension: .absolute(56)
         )
         let item = NSCollectionLayoutItem(layoutSize: itemSize)
+        item.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 12, bottom: 4, trailing: 12)
 
         let groupSize = NSCollectionLayoutSize(
             widthDimension: .fractionalWidth(1.0),
@@ -310,24 +311,9 @@ final class BookDetailViewController: FullScreenNestedScrollViewController, View
 
         // Register headers
         collectionView.register(
-            ReadingRecordsSectionHeader.self,
+            CommonSectionHeader.self,
             forSupplementaryViewOfKind: UICollectionView.elementKindSectionHeader,
-            withReuseIdentifier: ReadingRecordsSectionHeader.identifier
-        )
-        collectionView.register(
-            SavedQuotesSectionHeader.self,
-            forSupplementaryViewOfKind: UICollectionView.elementKindSectionHeader,
-            withReuseIdentifier: SavedQuotesSectionHeader.identifier
-        )
-        collectionView.register(
-            PhotosSectionHeader.self,
-            forSupplementaryViewOfKind: UICollectionView.elementKindSectionHeader,
-            withReuseIdentifier: PhotosSectionHeader.identifier
-        )
-        collectionView.register(
-            SettingsSectionHeader.self,
-            forSupplementaryViewOfKind: UICollectionView.elementKindSectionHeader,
-            withReuseIdentifier: SettingsSectionHeader.identifier
+            withReuseIdentifier: CommonSectionHeader.identifier
         )
 
         configureDataSource()
@@ -500,7 +486,9 @@ final class BookDetailViewController: FullScreenNestedScrollViewController, View
             case .readingStatistics(_):
                 let cell: ReadingStatisticsCell = collectionView.dequeueReusableCell(ReadingStatisticsCell.self, for: indexPath)
                 if let chartData = self?.reactor?.currentState.readingChartData {
-                    cell.configure(with: chartData)
+                    cell.configure(with: chartData) { [weak self] period in
+                        self?.handlePeriodChange(period)
+                    }
                 }
                 return cell
 
@@ -566,39 +554,24 @@ final class BookDetailViewController: FullScreenNestedScrollViewController, View
             guard kind == UICollectionView.elementKindSectionHeader else { return nil }
 
             let section = Section.allCases[indexPath.section]
+            let header = collectionView.dequeueReusableSupplementaryView(
+                ofKind: kind,
+                withReuseIdentifier: CommonSectionHeader.identifier,
+                for: indexPath
+            ) as! CommonSectionHeader
 
             switch section {
             case .readingRecords:
-                let header = collectionView.dequeueReusableSupplementaryView(
-                    ofKind: kind,
-                    withReuseIdentifier: ReadingRecordsSectionHeader.identifier,
-                    for: indexPath
-                ) as! ReadingRecordsSectionHeader
-
                 let hasRecords = self?.reactor?.currentState.readingStatistics?.totalSessions ?? 0 > 0
                 header.configure(
                     title: "독서 기록",
-                    actionTitle: hasRecords ? String(localized: .actionViewAll) : nil,
-                    hasRecords: hasRecords
+                    actionTitle: hasRecords ? String(localized: .actionViewAll) : nil
                 )
-
-                header.onViewAllTapped = { [weak self] in
+                header.onActionTapped = { [weak self] in
                     self?.showReadingSessionList()
                 }
 
-                header.onPeriodChanged = { [weak self] period in
-                    self?.handlePeriodChange(period)
-                }
-
-                return header
-
             case .savedQuotes:
-                let header = collectionView.dequeueReusableSupplementaryView(
-                    ofKind: kind,
-                    withReuseIdentifier: SavedQuotesSectionHeader.identifier,
-                    for: indexPath
-                ) as! SavedQuotesSectionHeader
-
                 header.configure(
                     title: String(localized: .bookDetailSavedQuotes),
                     actionTitle: String(localized: .actionViewAll)
@@ -606,15 +579,8 @@ final class BookDetailViewController: FullScreenNestedScrollViewController, View
                 header.onActionTapped = { [weak self] in
                     self?.showAllQuotes()
                 }
-                return header
 
             case .photoPages:
-                let header = collectionView.dequeueReusableSupplementaryView(
-                    ofKind: kind,
-                    withReuseIdentifier: PhotosSectionHeader.identifier,
-                    for: indexPath
-                ) as! PhotosSectionHeader
-
                 header.configure(
                     title: String(localized: .bookDetailPhotos),
                     actionTitle: String(localized: .actionViewAll)
@@ -622,18 +588,12 @@ final class BookDetailViewController: FullScreenNestedScrollViewController, View
                 header.onActionTapped = { [weak self] in
                     self?.showAllPhotos()
                 }
-                return header
 
             case .settings:
-                let header = collectionView.dequeueReusableSupplementaryView(
-                    ofKind: kind,
-                    withReuseIdentifier: SettingsSectionHeader.identifier,
-                    for: indexPath
-                ) as! SettingsSectionHeader
-
                 header.configure(title: String(localized: .bookDetailSettings))
-                return header
             }
+
+            return header
         }
     }
 
