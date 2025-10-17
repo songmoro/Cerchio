@@ -50,7 +50,7 @@ final class SavedQuoteCell: UICollectionViewCell, IsIdentifiable {
             config.secondaryTextProperties.color = .forestGreen
         }
 
-        config.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 0, leading: 0, bottom: 16, trailing: 0)
+        config.directionalLayoutMargins = .zero
 
         contentConfiguration = config
     }

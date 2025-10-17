@@ -30,7 +30,7 @@ struct ReadingChartView: View {
                 chartView
             }
         }
-        .padding(16)
+        .padding(.vertical, 16)
         .background(Color(uiColor: UIColor(named: "BookBackground")?.withAlphaComponent(0.1) ?? .systemGray6))
         .cornerRadius(12)
     }

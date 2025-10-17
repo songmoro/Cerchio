@@ -207,7 +207,7 @@ final class BookDetailViewController: FullScreenNestedScrollViewController, View
             heightDimension: .absolute(220)
         )
         let item = NSCollectionLayoutItem(layoutSize: itemSize)
-        item.contentInsets = NSDirectionalEdgeInsets(top: 4, leading: 12, bottom: 4, trailing: 12)
+        item.contentInsets = NSDirectionalEdgeInsets(top: 4, leading: 0, bottom: 4, trailing: 0)
 
         let groupSize = NSCollectionLayoutSize(
             widthDimension: .fractionalWidth(1.0),
@@ -216,7 +216,7 @@ final class BookDetailViewController: FullScreenNestedScrollViewController, View
         let group = NSCollectionLayoutGroup.vertical(layoutSize: groupSize, subitems: [item])
 
         let section = NSCollectionLayoutSection(group: group)
-        section.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 12, bottom: 8, trailing: 12)
+        section.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 12, bottom: 24, trailing: 12)
 
         let headerSize = NSCollectionLayoutSize(
             widthDimension: .fractionalWidth(1.0),
@@ -238,7 +238,7 @@ final class BookDetailViewController: FullScreenNestedScrollViewController, View
             heightDimension: .estimated(100)
         )
         let item = NSCollectionLayoutItem(layoutSize: itemSize)
-        item.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 12, bottom: 4, trailing: 12)
+        item.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 0, bottom: 4, trailing: 0)
 
         let groupSize = NSCollectionLayoutSize(
             widthDimension: .fractionalWidth(1.0),
@@ -247,7 +247,7 @@ final class BookDetailViewController: FullScreenNestedScrollViewController, View
         let group = NSCollectionLayoutGroup.vertical(layoutSize: groupSize, subitems: [item])
 
         let section = NSCollectionLayoutSection(group: group)
-        section.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 12, bottom: 8, trailing: 12)
+        section.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 12, bottom: 24, trailing: 12)
         section.boundarySupplementaryItems = [CommonSectionHeader.createBoundarySupplementaryItem()]
 
         return section
@@ -259,7 +259,7 @@ final class BookDetailViewController: FullScreenNestedScrollViewController, View
             heightDimension: .absolute(120)
         )
         let item = NSCollectionLayoutItem(layoutSize: itemSize)
-        item.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 12, bottom: 4, trailing: 12)
+        item.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 0, bottom: 4, trailing: 12)
 
         let groupSize = NSCollectionLayoutSize(
             widthDimension: .estimated(120),
@@ -268,7 +268,7 @@ final class BookDetailViewController: FullScreenNestedScrollViewController, View
         let group = NSCollectionLayoutGroup.horizontal(layoutSize: groupSize, subitems: [item])
 
         let section = NSCollectionLayoutSection(group: group)
-        section.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 12, bottom: 8, trailing: 12)
+        section.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 12, bottom: 24, trailing: 12)
         section.orthogonalScrollingBehavior = .continuous
         section.boundarySupplementaryItems = [CommonSectionHeader.createBoundarySupplementaryItem()]
 
@@ -281,7 +281,7 @@ final class BookDetailViewController: FullScreenNestedScrollViewController, View
             heightDimension: .absolute(56)
         )
         let item = NSCollectionLayoutItem(layoutSize: itemSize)
-        item.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 12, bottom: 4, trailing: 12)
+        item.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 0, bottom: 4, trailing: 0)
 
         let groupSize = NSCollectionLayoutSize(
             widthDimension: .fractionalWidth(1.0),
@@ -290,7 +290,7 @@ final class BookDetailViewController: FullScreenNestedScrollViewController, View
         let group = NSCollectionLayoutGroup.vertical(layoutSize: groupSize, subitems: [item])
 
         let section = NSCollectionLayoutSection(group: group)
-        section.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 12, bottom: 8, trailing: 12)
+        section.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 12, bottom: 24, trailing: 12)
         section.boundarySupplementaryItems = [CommonSectionHeader.createBoundarySupplementaryItem()]
 
         return section
@@ -402,7 +402,7 @@ final class BookDetailViewController: FullScreenNestedScrollViewController, View
             .asDriver(onErrorJustReturn: nil)
             .compactMap { $0 }
             .drive(onNext: { [weak self] chartData in
-                self?.updateChartUI(chartData)
+                self?.updateChartData(chartData)
             })
             .disposed(by: disposeBag)
 
@@ -702,12 +702,21 @@ final class BookDetailViewController: FullScreenNestedScrollViewController, View
         }
     }
 
-    private func updateChartUI(_ chartData: ReadingChartData) {
+    private func updateChartData(_ chartData: ReadingChartData) {
+        guard let dataSource = dataSource else { return }
+        let snapshot = dataSource.snapshot()
+
+        guard snapshot.sectionIdentifiers.contains(.readingRecords) else { return }
+
         let sectionIndex = Section.allCases.firstIndex(of: .readingRecords) ?? 0
         let indexPath = IndexPath(item: 0, section: sectionIndex)
 
         if let cell = collectionView.cellForItem(at: indexPath) as? ReadingStatisticsCell {
-            cell.configure(with: chartData)
+            cell.configure(with: chartData) { [weak self] period in
+                self?.handlePeriodChange(period)
+            }
+        } else {
+            updateReadingStatisticsUI(reactor?.currentState.readingStatistics)
         }
     }
 
