@@ -65,19 +65,15 @@ struct ReadingChartView: View {
     }
 
     private var hourlyChart: some View {
-        Chart(chartData.dataPoints) { dataPoint in
-            BarMark(
-                x: .value("시간", dataPoint.xValue.isEmpty ? String(dataPoint.id) : dataPoint.xValue),
-                yStart: .value("시작", dataPoint.startMinute),
-                yEnd: .value("종료", dataPoint.endMinute)
-            )
-            .foregroundStyle(Color(uiColor: UIColor(named: "ForestGreen") ?? .green))
-            .cornerRadius(4)
+        Chart {
+            ForEach(0..<24, id: \.self) { hour in
+                createHourBar(for: hour)
+            }
         }
         .chartXAxis {
-            AxisMarks(values: .automatic) { value in
-                if let stringValue = value.as(String.self), !stringValue.isEmpty {
-                    AxisValueLabel(stringValue)
+            AxisMarks(values: [0, 6, 12, 18]) { value in
+                if let hour = value.as(Int.self) {
+                    AxisValueLabel(formatHourLabel(hour))
                 }
             }
         }
@@ -91,14 +87,42 @@ struct ReadingChartView: View {
         .frame(height: 140)
     }
 
-    private var weeklyChart: some View {
-        Chart(chartData.dataPoints) { dataPoint in
+    @ChartContentBuilder
+    private func createHourBar(for hour: Int) -> some ChartContent {
+        if let dataPoint = chartData.dataPoints.first(where: { Int($0.id) == hour }) {
             BarMark(
-                x: .value("요일", dataPoint.xValue),
-                y: .value("분", dataPoint.durationMinutes)
+                x: .value("시간", hour),
+                yStart: .value("시작", dataPoint.startMinute),
+                yEnd: .value("종료", dataPoint.endMinute)
             )
             .foregroundStyle(Color(uiColor: UIColor(named: "ForestGreen") ?? .green))
             .cornerRadius(4)
+        } else {
+            BarMark(
+                x: .value("시간", hour),
+                y: .value("값", 0)
+            )
+            .foregroundStyle(Color.clear)
+        }
+    }
+
+    private func formatHourLabel(_ hour: Int) -> String {
+        switch hour {
+        case 0: return "12 AM"
+        case 6: return "6"
+        case 12: return "12 PM"
+        case 18: return "6"
+        default: return ""
+        }
+    }
+
+    private var weeklyChart: some View {
+        let weekdaySymbols = ["일", "월", "화", "수", "목", "금", "토"]
+
+        return Chart {
+            ForEach(1...7, id: \.self) { weekday in
+                createWeekdayBar(for: weekday, label: weekdaySymbols[weekday - 1])
+            }
         }
         .chartYAxis {
             AxisMarks(position: .leading) { value in
@@ -109,14 +133,39 @@ struct ReadingChartView: View {
         .frame(height: 140)
     }
 
-    private var monthlyChart: some View {
-        Chart(chartData.dataPoints) { dataPoint in
+    @ChartContentBuilder
+    private func createWeekdayBar(for weekday: Int, label: String) -> some ChartContent {
+        if let dataPoint = chartData.dataPoints.first(where: { Int($0.id) == weekday }) {
             BarMark(
-                x: .value("일", dataPoint.xValue),
+                x: .value("요일", label),
                 y: .value("분", dataPoint.durationMinutes)
             )
             .foregroundStyle(Color(uiColor: UIColor(named: "ForestGreen") ?? .green))
             .cornerRadius(4)
+        } else {
+            BarMark(
+                x: .value("요일", label),
+                y: .value("분", 0)
+            )
+            .foregroundStyle(Color.clear)
+        }
+    }
+
+    private var monthlyChart: some View {
+        let daysInMonth = getDaysInCurrentMonth()
+        let labelDays = stride(from: 1, through: daysInMonth, by: 5).map { $0 }
+
+        return Chart {
+            ForEach(1...daysInMonth, id: \.self) { day in
+                createDayBar(for: day)
+            }
+        }
+        .chartXAxis {
+            AxisMarks(values: labelDays) { value in
+                if let day = value.as(Int.self) {
+                    AxisValueLabel(String(day))
+                }
+            }
         }
         .chartYAxis {
             AxisMarks(position: .leading) { value in
@@ -125,6 +174,31 @@ struct ReadingChartView: View {
             }
         }
         .frame(height: 140)
+    }
+
+    @ChartContentBuilder
+    private func createDayBar(for day: Int) -> some ChartContent {
+        if let dataPoint = chartData.dataPoints.first(where: { Int($0.id) == day }) {
+            BarMark(
+                x: .value("일", day),
+                y: .value("분", dataPoint.durationMinutes)
+            )
+            .foregroundStyle(Color(uiColor: UIColor(named: "ForestGreen") ?? .green))
+            .cornerRadius(4)
+        } else {
+            BarMark(
+                x: .value("일", day),
+                y: .value("분", 0)
+            )
+            .foregroundStyle(Color.clear)
+        }
+    }
+
+    private func getDaysInCurrentMonth() -> Int {
+        let calendar = Calendar.current
+        let now = Date()
+        let range = calendar.range(of: .day, in: .month, for: now)
+        return range?.count ?? 30
     }
 }
 

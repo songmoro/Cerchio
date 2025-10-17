@@ -15,13 +15,13 @@ final class AddPhotoCell: UICollectionViewCell, IsIdentifiable {
         view.backgroundColor = .systemGray6
         view.layer.cornerRadius = 8
         view.layer.borderWidth = 1.5
-        view.layer.borderColor = UIColor.systemBlue.withAlphaComponent(0.3).cgColor
+        view.layer.borderColor = UIColor.forestGreen.withAlphaComponent(0.3).cgColor
         return view
     }()
 
     private lazy var iconImageView: UIImageView = {
         let imageView = UIImageView(image: UIImage(systemName: "camera.fill"))
-        imageView.tintColor = .systemBlue
+        imageView.tintColor = .forestGreen
         imageView.contentMode = .scaleAspectFit
         return imageView
     }()
@@ -30,7 +30,7 @@ final class AddPhotoCell: UICollectionViewCell, IsIdentifiable {
         let label = UILabel()
         label.text = "추가"
         label.font = .custom(weight: .medium, size: 12)
-        label.textColor = .systemBlue
+        label.textColor = .forestGreen
         label.textAlignment = .center
         return label
     }()

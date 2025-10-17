@@ -40,14 +40,14 @@ enum BookDetailConstants {
 
     // MARK: - Typography
     enum Typography {
-        static let titleFontSize: CGFloat = 18
+        static let titleFontSize: CGFloat = 20
         static let authorFontSize: CGFloat = 14
         static let pagesFontSize: CGFloat = 14
         static let dateRangeFontSize: CGFloat = 14
         static let tagFontSize: CGFloat = 12
 
         // New BookInfo cell typography
-        static let bookInfoTitleFontSize: CGFloat = 14
+        static let bookInfoTitleFontSize: CGFloat = 17
         static let bookInfoSubtitleFontSize: CGFloat = 14
         static let bookInfoSubtitleAlpha: CGFloat = 0.8
     }

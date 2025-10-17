@@ -63,7 +63,7 @@ final class CommonSectionHeader: UICollectionReusableView, IsIdentifiable {
     private func setupViews() {
         backgroundColor = .clear
 
-        titleLabel.font = .custom(weight: .bold, size: 14)
+        titleLabel.font = .custom(weight: .bold, size: 16)
         titleLabel.textColor = .label
         addSubview(titleLabel)
 
