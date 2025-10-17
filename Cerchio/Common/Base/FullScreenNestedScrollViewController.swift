@@ -24,6 +24,9 @@ open class FullScreenNestedScrollViewController: NestedScrollViewController {
         // Set navigation bar tint color
         navigationController?.navigationBar.tintColor = .bookBackground
 
+        // Disable automatic content inset adjustment to allow content to start from top
+        mainScrollView.contentInsetAdjustmentBehavior = .never
+
         // Setup initial transparent navigation bar
         updateNavigationBarAppearance(isTabSticky: false)
     }
