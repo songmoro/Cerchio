@@ -6,6 +6,7 @@
 //
 
 import UIKit
+import SnapKit
 
 /// Extended version of NestedScrollViewController that provides full-screen layout
 /// with transparent navigation bar and content extending under status bar
@@ -21,6 +22,10 @@ open class FullScreenNestedScrollViewController: NestedScrollViewController {
         return view.safeAreaInsets.top
     }
 
+    // MARK: - Private Properties
+
+    private var navigationBarBackgroundView: UIView!
+
     // MARK: - Lifecycle
 
     open override func viewDidLoad() {
@@ -35,39 +40,46 @@ open class FullScreenNestedScrollViewController: NestedScrollViewController {
         // Disable automatic content inset adjustment to allow content to start from top
         mainScrollView.contentInsetAdjustmentBehavior = .never
 
-        // Setup initial transparent navigation bar
-        updateNavigationBarAppearance(isTabSticky: false)
+        // Setup transparent navigation bar
+        setupTransparentNavigationBar()
+
+        // Setup navigation bar background view
+        setupNavigationBarBackgroundView()
     }
 
-    // MARK: - Navigation Bar Appearance
+    // MARK: - Setup
 
-    /// Updates the navigation bar appearance based on sticky tab state
-    /// - Parameter isTabSticky: Whether the tab is currently sticky
-    private func updateNavigationBarAppearance(isTabSticky: Bool) {
+    private func setupTransparentNavigationBar() {
         let appearance = UINavigationBarAppearance()
-
-        if isTabSticky {
-            // Sticky mode: forestGreen background
-            appearance.configureWithOpaqueBackground()
-            appearance.backgroundColor = .forestGreen
-            appearance.shadowColor = nil
-            appearance.shadowImage = UIImage()
-        } else {
-            // Normal mode: transparent background
-            appearance.configureWithTransparentBackground()
-            appearance.shadowColor = nil
-            appearance.shadowImage = UIImage()
-        }
+        appearance.configureWithTransparentBackground()
+        appearance.shadowColor = nil
+        appearance.shadowImage = UIImage()
 
         navigationController?.navigationBar.standardAppearance = appearance
         navigationController?.navigationBar.scrollEdgeAppearance = appearance
         navigationController?.navigationBar.compactAppearance = appearance
     }
 
+    private func setupNavigationBarBackgroundView() {
+        navigationBarBackgroundView = UIView()
+        navigationBarBackgroundView.backgroundColor = .forestGreen
+        navigationBarBackgroundView.alpha = 0 // Initially hidden
+
+        view.addSubview(navigationBarBackgroundView)
+
+        navigationBarBackgroundView.snp.makeConstraints { make in
+            make.top.leading.trailing.equalToSuperview()
+            make.bottom.equalTo(view.safeAreaLayoutGuide.snp.top)
+        }
+    }
+
     // MARK: - Override: Sticky State Change
 
     open override func tabStickyStateDidChange(isSticky: Bool) {
         super.tabStickyStateDidChange(isSticky: isSticky)
-        updateNavigationBarAppearance(isTabSticky: isSticky)
+
+        UIView.animate(withDuration: 0.3) {
+            self.navigationBarBackgroundView.alpha = isSticky ? 1.0 : 0.0
+        }
     }
 }
