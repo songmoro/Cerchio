@@ -46,6 +46,12 @@ open class NestedScrollViewController: UIViewController {
     /// Whether the tab is currently in sticky mode
     public private(set) var isTabSticky = false
 
+    /// Additional offset to adjust sticky threshold (e.g., for safe area)
+    /// Override this in subclasses to customize when sticky behavior triggers
+    open var stickyThresholdOffset: CGFloat {
+        return 0
+    }
+
     // MARK: - Lifecycle
 
     open override func viewDidLoad() {
@@ -230,7 +236,7 @@ open class NestedScrollViewController: UIViewController {
     // MARK: - Sticky Tab Management
 
     private func updateStickyTab(with offsetY: CGFloat) {
-        let stickyThreshold = infoViewHeight
+        let stickyThreshold = infoViewHeight - stickyThresholdOffset
         let shouldBeSticky = offsetY >= stickyThreshold
 
         if shouldBeSticky != isTabSticky {

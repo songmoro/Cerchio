@@ -13,6 +13,14 @@ import UIKit
 @MainActor
 open class FullScreenNestedScrollViewController: NestedScrollViewController {
 
+    // MARK: - Override Properties
+
+    /// Adjust sticky threshold to account for safe area top inset
+    /// This ensures the tab becomes sticky when it reaches the navigation bar bottom
+    open override var stickyThresholdOffset: CGFloat {
+        return view.safeAreaInsets.top
+    }
+
     // MARK: - Lifecycle
 
     open override func viewDidLoad() {
