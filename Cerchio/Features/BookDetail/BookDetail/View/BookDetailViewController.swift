@@ -204,14 +204,14 @@ final class BookDetailViewController: FullScreenNestedScrollViewController, View
     private func createReadingRecordsSection() -> NSCollectionLayoutSection {
         let itemSize = NSCollectionLayoutSize(
             widthDimension: .fractionalWidth(1.0),
-            heightDimension: .absolute(150)
+            heightDimension: .absolute(220)
         )
         let item = NSCollectionLayoutItem(layoutSize: itemSize)
         item.contentInsets = NSDirectionalEdgeInsets(top: 4, leading: 0, bottom: 4, trailing: 0)
 
         let groupSize = NSCollectionLayoutSize(
             widthDimension: .fractionalWidth(1.0),
-            heightDimension: .absolute(150)
+            heightDimension: .absolute(220)
         )
         let group = NSCollectionLayoutGroup.vertical(layoutSize: groupSize, subitems: [item])
 
@@ -391,6 +391,7 @@ final class BookDetailViewController: FullScreenNestedScrollViewController, View
                 print("📌 BookDetail first set, loading all data")
                 print("📌 Current tags in bookDetail: \(bookDetail.tags)")
                 self?.reactor?.action.onNext(.loadReadingStatistics)
+                self?.reactor?.action.onNext(.loadReadingChartData(.total))
                 self?.reactor?.action.onNext(.loadPhotos)
                 self?.reactor?.action.onNext(.loadQuotes)
                 self?.reactor?.action.onNext(.loadTags)
@@ -404,6 +405,18 @@ final class BookDetailViewController: FullScreenNestedScrollViewController, View
             .asDriver(onErrorJustReturn: nil)
             .drive(onNext: { [weak self] statistics in
                 self?.updateReadingStatisticsUI(statistics)
+            })
+            .disposed(by: disposeBag)
+
+        // Reading Chart Data
+        reactor.state
+            .map { $0.readingChartData }
+            .compactMap { $0 }
+            .distinctUntilChanged()
+            .asDriver(onErrorJustReturn: nil)
+            .compactMap { $0 }
+            .drive(onNext: { [weak self] chartData in
+                self?.updateChartUI(chartData)
             })
             .disposed(by: disposeBag)
 
@@ -484,9 +497,11 @@ final class BookDetailViewController: FullScreenNestedScrollViewController, View
     private func configureDataSource() {
         dataSource = DataSource(collectionView: collectionView) { [weak self] collectionView, indexPath, item in
             switch item {
-            case .readingStatistics(let statistics):
+            case .readingStatistics(_):
                 let cell: ReadingStatisticsCell = collectionView.dequeueReusableCell(ReadingStatisticsCell.self, for: indexPath)
-                cell.configure(with: statistics, period: self?.currentStatisticsPeriod ?? .total)
+                if let chartData = self?.reactor?.currentState.readingChartData {
+                    cell.configure(with: chartData)
+                }
                 return cell
 
             case .addReadingRecordButton:
@@ -727,6 +742,15 @@ final class BookDetailViewController: FullScreenNestedScrollViewController, View
         }
     }
 
+    private func updateChartUI(_ chartData: ReadingChartData) {
+        let sectionIndex = Section.allCases.firstIndex(of: .readingRecords) ?? 0
+        let indexPath = IndexPath(item: 0, section: sectionIndex)
+
+        if let cell = collectionView.cellForItem(at: indexPath) as? ReadingStatisticsCell {
+            cell.configure(with: chartData)
+        }
+    }
+
     // MARK: - Navigation Methods
 
     private func showReadingRecordEntry() {
@@ -962,13 +986,7 @@ final class BookDetailViewController: FullScreenNestedScrollViewController, View
 
     private func handlePeriodChange(_ period: ReadingStatisticsPeriod) {
         currentStatisticsPeriod = period
-
-        let sectionIndex = Section.allCases.firstIndex(of: .readingRecords) ?? 0
-        let indexPath = IndexPath(item: 0, section: sectionIndex)
-
-        if let cell = collectionView.cellForItem(at: indexPath) as? ReadingStatisticsCell {
-            cell.updatePeriod(period)
-        }
+        reactor?.action.onNext(.loadReadingChartData(period))
     }
 }
 

@@ -6,6 +6,7 @@
 //
 
 import UIKit
+import SwiftUI
 import SnapKit
 
 enum ReadingStatisticsPeriod: Int {
@@ -19,42 +20,11 @@ final class ReadingStatisticsView: UIView {
 
     // MARK: - UI Components
 
-    private let containerView: UIView = {
-        let view = UIView()
-        view.backgroundColor = UIColor(named: "BookBackground")?.withAlphaComponent(0.1)
-        view.layer.cornerRadius = 12
-        return view
-    }()
-
-    private let timeLabel: UILabel = {
-        let label = UILabel()
-        label.font = UIFont.systemFont(ofSize: 28, weight: .bold)
-        label.textColor = UIColor(named: "ForestGreen")
-        label.textAlignment = .center
-        return label
-    }()
-
-    private let sessionLabel: UILabel = {
-        let label = UILabel()
-        label.font = UIFont.systemFont(ofSize: 16)
-        label.textColor = UIColor(named: "ForestGreen")?.withAlphaComponent(0.7)
-        label.textAlignment = .center
-        return label
-    }()
-
-    private let emptyLabel: UILabel = {
-        let label = UILabel()
-        label.text = "아직 독서 기록이 없습니다"
-        label.font = UIFont.systemFont(ofSize: 15)
-        label.textColor = UIColor(named: "ForestGreen")?.withAlphaComponent(0.6)
-        label.textAlignment = .center
-        label.isHidden = true
-        return label
-    }()
+    private var hostingController: UIHostingController<ReadingChartView>?
 
     // MARK: - Properties
 
-    private var statistics: ReadingStatistics?
+    private var chartData: ReadingChartData?
     private var currentPeriod: ReadingStatisticsPeriod = .total
 
     // MARK: - Initialization
@@ -71,86 +41,37 @@ final class ReadingStatisticsView: UIView {
     // MARK: - Setup
 
     private func setupUI() {
-        addSubview(containerView)
-        containerView.addSubview(timeLabel)
-        containerView.addSubview(sessionLabel)
-        containerView.addSubview(emptyLabel)
-
-        containerView.snp.makeConstraints {
-            $0.edges.equalToSuperview()
-        }
-
-        timeLabel.snp.makeConstraints {
-            $0.top.equalToSuperview().inset(20)
-            $0.centerX.equalToSuperview()
-        }
-
-        sessionLabel.snp.makeConstraints {
-            $0.top.equalTo(timeLabel.snp.bottom).offset(8)
-            $0.centerX.equalToSuperview()
-            $0.bottom.equalToSuperview().inset(20)
-        }
-
-        emptyLabel.snp.makeConstraints {
-            $0.top.equalToSuperview().inset(24)
-            $0.horizontalEdges.equalToSuperview().inset(16)
-            $0.bottom.equalToSuperview().inset(24)
-        }
+        backgroundColor = .clear
     }
 
     // MARK: - Configuration
 
-    func configure(with statistics: ReadingStatistics, period: ReadingStatisticsPeriod = .total) {
-        self.statistics = statistics
-        self.currentPeriod = period
-        updateUI()
+    func configure(with chartData: ReadingChartData) {
+        self.chartData = chartData
+        self.currentPeriod = chartData.period
+        updateChartView()
     }
 
     func updatePeriod(_ period: ReadingStatisticsPeriod) {
         self.currentPeriod = period
-        updateUI()
     }
 
-    private func updateUI() {
-        guard let statistics = statistics else { return }
+    private func updateChartView() {
+        guard let chartData = chartData else { return }
 
-        if statistics.isEmpty {
-            showEmptyState()
+        if let hostingController = hostingController {
+            hostingController.rootView = ReadingChartView(chartData: chartData)
+            hostingController.view.layoutIfNeeded()
         } else {
-            showStatistics(statistics, period: currentPeriod)
+            let chartView = ReadingChartView(chartData: chartData)
+            let hosting = UIHostingController(rootView: chartView)
+            hosting.view.backgroundColor = .clear
+            self.hostingController = hosting
+
+            addSubview(hosting.view)
+            hosting.view.snp.makeConstraints {
+                $0.edges.equalToSuperview()
+            }
         }
-    }
-
-    private func showEmptyState() {
-        emptyLabel.isHidden = false
-        timeLabel.isHidden = true
-        sessionLabel.isHidden = true
-    }
-
-    private func showStatistics(_ statistics: ReadingStatistics, period: ReadingStatisticsPeriod) {
-        emptyLabel.isHidden = true
-        timeLabel.isHidden = false
-        sessionLabel.isHidden = false
-
-        let time: String
-        let sessions: Int
-
-        switch period {
-        case .total:
-            time = statistics.totalTimeFormatted
-            sessions = statistics.totalSessions
-        case .today:
-            time = statistics.todayTimeFormatted
-            sessions = statistics.todaySessions
-        case .week:
-            time = statistics.weekTimeFormatted
-            sessions = statistics.weekSessions
-        case .month:
-            time = statistics.monthTimeFormatted
-            sessions = statistics.monthSessions
-        }
-
-        timeLabel.text = time
-        sessionLabel.text = "\(sessions)회 독서"
     }
 }

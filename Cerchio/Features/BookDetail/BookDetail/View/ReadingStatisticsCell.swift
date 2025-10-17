@@ -37,8 +37,8 @@ final class ReadingStatisticsCell: UICollectionViewCell, IsIdentifiable {
 
     // MARK: - Configuration
 
-    func configure(with statistics: ReadingStatistics, period: ReadingStatisticsPeriod) {
-        statisticsView.configure(with: statistics, period: period)
+    func configure(with chartData: ReadingChartData) {
+        statisticsView.configure(with: chartData)
     }
 
     func updatePeriod(_ period: ReadingStatisticsPeriod) {

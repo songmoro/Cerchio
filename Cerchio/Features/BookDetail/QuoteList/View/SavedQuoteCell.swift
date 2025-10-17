@@ -43,14 +43,14 @@ final class SavedQuoteCell: UICollectionViewCell, IsIdentifiable {
         if let pageNumber = pageNumber {
             config.secondaryText = "p.\(pageNumber) · \(dateString)"
             config.secondaryTextProperties.font = .custom(weight: .medium, size: 12)
-            config.secondaryTextProperties.color = .systemBlue
+            config.secondaryTextProperties.color = .forestGreen
         } else {
             config.secondaryText = dateString
             config.secondaryTextProperties.font = .custom(weight: .regular, size: 12)
-            config.secondaryTextProperties.color = .secondaryLabel
+            config.secondaryTextProperties.color = .forestGreen
         }
 
-        config.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 16, leading: 16, bottom: 16, trailing: 16)
+        config.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 0, leading: 0, bottom: 16, trailing: 0)
 
         contentConfiguration = config
     }

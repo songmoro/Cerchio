@@ -234,4 +234,189 @@ final class BookDetailService {
             return Disposables.create()
         }
     }
+
+    // MARK: - Reading Chart Data
+
+    func loadReadingChartData(for bookId: String, period: ReadingStatisticsPeriod) -> Observable<ReadingChartData> {
+        return Observable.create { observer in
+            do {
+                let realm = try Realm()
+                let calendar = Calendar.current
+                let now = Date()
+
+                let sessions = realm.objects(RealmReadingSession.self)
+                    .filter("bookId == %@ AND status == %@", bookId, ReadingSession.SessionStatus.completed.rawValue)
+                    .sorted(byKeyPath: "createdAt", ascending: false)
+
+                let chartData: ReadingChartData
+
+                switch period {
+                case .total, .today:
+                    chartData = self.createHourlyChartData(from: Array(sessions), period: period, calendar: calendar, now: now)
+                case .week:
+                    chartData = self.createWeeklyChartData(from: Array(sessions), calendar: calendar, now: now)
+                case .month:
+                    chartData = self.createMonthlyChartData(from: Array(sessions), calendar: calendar, now: now)
+                }
+
+                observer.onNext(chartData)
+                observer.onCompleted()
+            } catch {
+                observer.onError(error)
+            }
+
+            return Disposables.create()
+        }
+    }
+
+    private func createHourlyChartData(from sessions: [RealmReadingSession], period: ReadingStatisticsPeriod, calendar: Calendar, now: Date) -> ReadingChartData {
+        let todayStart = calendar.startOfDay(for: now)
+        let todayEnd = calendar.date(byAdding: .day, value: 1, to: todayStart)!
+
+        var filteredSessions = sessions
+        if period == .today {
+            filteredSessions = sessions.filter { $0.startTime >= todayStart && $0.startTime < todayEnd }
+        }
+
+        var hourlyData: [Int: [(startMinute: Int, endMinute: Int)]] = [:]
+
+        for session in filteredSessions {
+            let hour = calendar.component(.hour, from: session.startTime)
+            let minute = calendar.component(.minute, from: session.startTime)
+            let durationMinutes = session.durationSeconds / 60
+
+            let startMinute = minute
+            let endMinute = min(minute + durationMinutes, 60)
+
+            if hourlyData[hour] == nil {
+                hourlyData[hour] = []
+            }
+            hourlyData[hour]?.append((startMinute, endMinute))
+        }
+
+        var dataPoints: [ReadingChartData.DataPoint] = []
+
+        for hour in 0..<24 {
+            if let readings = hourlyData[hour], !readings.isEmpty {
+                let minStart = readings.map { $0.startMinute }.min() ?? 0
+                let maxEnd = readings.map { $0.endMinute }.max() ?? 0
+
+                if maxEnd > minStart {
+                    let xValue = self.formatHourLabel(hour)
+                    let id = "\(hour)"
+                    dataPoints.append(ReadingChartData.DataPoint(
+                        id: id,
+                        xValue: xValue,
+                        startMinute: minStart,
+                        endMinute: maxEnd
+                    ))
+                }
+            }
+        }
+
+        let totalMinutes = filteredSessions.reduce(0) { $0 + ($1.durationSeconds / 60) }
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateStyle = .medium
+        dateFormatter.timeStyle = .none
+        let dateRange = period == .today ? dateFormatter.string(from: now) : "전체"
+
+        return ReadingChartData(
+            period: period,
+            dataPoints: dataPoints,
+            totalMinutes: totalMinutes,
+            sessionCount: filteredSessions.count,
+            dateRange: dateRange
+        )
+    }
+
+    private func createWeeklyChartData(from sessions: [RealmReadingSession], calendar: Calendar, now: Date) -> ReadingChartData {
+        let weekStart = calendar.dateComponents([.calendar, .yearForWeekOfYear, .weekOfYear], from: now).date!
+        let weekEnd = calendar.date(byAdding: .weekOfYear, value: 1, to: weekStart)!
+
+        let filteredSessions = sessions.filter { $0.startTime >= weekStart && $0.startTime < weekEnd }
+
+        var dailyMinutes: [Int: Int] = [:]
+
+        for session in filteredSessions {
+            let weekday = calendar.component(.weekday, from: session.startTime)
+            let minutes = session.durationSeconds / 60
+            dailyMinutes[weekday, default: 0] += minutes
+        }
+
+        var dataPoints: [ReadingChartData.DataPoint] = []
+
+        let weekdaySymbols = ["일", "월", "화", "수", "목", "금", "토"]
+
+        for weekday in 1...7 {
+            if let minutes = dailyMinutes[weekday], minutes > 0 {
+                let xValue = weekdaySymbols[weekday - 1]
+                dataPoints.append(ReadingChartData.DataPoint(
+                    id: "\(weekday)",
+                    xValue: xValue,
+                    startMinute: 0,
+                    endMinute: minutes
+                ))
+            }
+        }
+
+        let totalMinutes = filteredSessions.reduce(0) { $0 + ($1.durationSeconds / 60) }
+
+        return ReadingChartData(
+            period: .week,
+            dataPoints: dataPoints,
+            totalMinutes: totalMinutes,
+            sessionCount: filteredSessions.count,
+            dateRange: "이번 주"
+        )
+    }
+
+    private func createMonthlyChartData(from sessions: [RealmReadingSession], calendar: Calendar, now: Date) -> ReadingChartData {
+        let monthStart = calendar.date(from: calendar.dateComponents([.year, .month], from: now))!
+        let monthEnd = calendar.date(byAdding: .month, value: 1, to: monthStart)!
+
+        let filteredSessions = sessions.filter { $0.startTime >= monthStart && $0.startTime < monthEnd }
+
+        var dailyMinutes: [Int: Int] = [:]
+
+        for session in filteredSessions {
+            let day = calendar.component(.day, from: session.startTime)
+            let minutes = session.durationSeconds / 60
+            dailyMinutes[day, default: 0] += minutes
+        }
+
+        var dataPoints: [ReadingChartData.DataPoint] = []
+
+        let daysInMonth = calendar.range(of: .day, in: .month, for: monthStart)?.count ?? 30
+
+        for day in 1...daysInMonth {
+            if let minutes = dailyMinutes[day], minutes > 0 {
+                dataPoints.append(ReadingChartData.DataPoint(
+                    id: "\(day)",
+                    xValue: "\(day)",
+                    startMinute: 0,
+                    endMinute: minutes
+                ))
+            }
+        }
+
+        let totalMinutes = filteredSessions.reduce(0) { $0 + ($1.durationSeconds / 60) }
+
+        return ReadingChartData(
+            period: .month,
+            dataPoints: dataPoints,
+            totalMinutes: totalMinutes,
+            sessionCount: filteredSessions.count,
+            dateRange: "이번 달"
+        )
+    }
+
+    private func formatHourLabel(_ hour: Int) -> String {
+        switch hour {
+        case 0: return "12 AM"
+        case 6: return "6"
+        case 12: return "12 PM"
+        case 18: return "6"
+        default: return ""
+        }
+    }
 }

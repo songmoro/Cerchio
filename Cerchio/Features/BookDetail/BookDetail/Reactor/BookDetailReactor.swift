@@ -22,6 +22,7 @@ final class BookDetailReactor: Reactor {
         case deleteBook
         case updateBookAndReload(Book)
         case loadReadingStatistics
+        case loadReadingChartData(ReadingStatisticsPeriod)
 
         // Photo actions
         case loadPhotos
@@ -47,6 +48,7 @@ final class BookDetailReactor: Reactor {
         case updateBook(Book)
         case bookDeleted
         case setReadingStatistics(ReadingStatistics)
+        case setReadingChartData(ReadingChartData)
 
         // Data loading
         case setPhotos([PhotoItem])
@@ -81,6 +83,7 @@ final class BookDetailReactor: Reactor {
         var readingProgress: ReadingProgress?
         var isDeleted: Bool = false
         var readingStatistics: ReadingStatistics?
+        var readingChartData: ReadingChartData?
 
         // Data
         var photos: [PhotoItem] = []
@@ -269,6 +272,15 @@ final class BookDetailReactor: Reactor {
                     return Observable.empty()
                 }
 
+        case .loadReadingChartData(let period):
+            let bookId = String(describing: currentState.book.id)
+            return service.loadReadingChartData(for: bookId, period: period)
+                .map { Mutation.setReadingChartData($0) }
+                .catch { error in
+                    print("❌ Failed to load reading chart data: \(error)")
+                    return Observable.empty()
+                }
+
         case .loadPhotos:
             let bookId = String(describing: currentState.book.id)
             return service.loadPhotos(bookId: bookId)
@@ -432,6 +444,9 @@ final class BookDetailReactor: Reactor {
 
         case .setReadingStatistics(let statistics):
             newState.readingStatistics = statistics
+
+        case .setReadingChartData(let chartData):
+            newState.readingChartData = chartData
 
         case .setPhotos(let photos):
             newState.photos = photos

@@ -1,6 +1,15 @@
 {
   "sourceLanguage" : "ko",
   "strings" : {
+    "%lld" : {
+
+    },
+    "%lld분" : {
+
+    },
+    "%lld회 독서" : {
+
+    },
     "action.add" : {
       "comment" : "Add button",
       "extractionState" : "manual",
@@ -127,6 +136,24 @@
         }
       }
     },
+    "action.reset" : {
+      "comment" : "Reset action",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reset"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "초기화"
+          }
+        }
+      }
+    },
     "action.save" : {
       "comment" : "Save button",
       "extractionState" : "manual",
@@ -169,14 +196,14 @@
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "translated",
+            "state" : "needs_review",
             "value" : "View More"
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "더보기"
+            "value" : "전체 보기"
           }
         }
       }
@@ -271,6 +298,24 @@
         }
       }
     },
+    "book_detail.reset_and_delete" : {
+      "comment" : "Reset and delete setting item",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reset & Delete"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "초기화 및 삭제"
+          }
+        }
+      }
+    },
     "book_detail.saved_quotes" : {
       "comment" : "Saved quotes section title",
       "extractionState" : "manual",
@@ -303,384 +348,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "설정"
-          }
-        }
-      }
-    },
-    "book_detail.reset_and_delete" : {
-      "comment" : "Reset and delete setting item",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Reset & Delete"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "초기화 및 삭제"
-          }
-        }
-      }
-    },
-    "edit_book.title" : {
-      "comment" : "Edit book info screen title",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Edit Book Info"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "도서 정보 수정"
-          }
-        }
-      }
-    },
-    "edit_book.book_title" : {
-      "comment" : "Book title field label",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Title"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "도서명"
-          }
-        }
-      }
-    },
-    "edit_book.author" : {
-      "comment" : "Author field label",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Author"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "저자"
-          }
-        }
-      }
-    },
-    "edit_book.cover_image" : {
-      "comment" : "Cover image field label",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Cover Image"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "커버 이미지"
-          }
-        }
-      }
-    },
-    "edit_book.change_cover" : {
-      "comment" : "Change cover button",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Change Cover"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "커버 변경"
-          }
-        }
-      }
-    },
-    "edit_book.reset_custom_info" : {
-      "comment" : "Reset custom info button",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Reset to Original"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "원본으로 초기화"
-          }
-        }
-      }
-    },
-    "edit_book.reset" : {
-      "comment" : "Reset action in edit book",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Reset"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "초기화"
-          }
-        }
-      }
-    },
-    "edit_book.reset_confirmation_title" : {
-      "comment" : "Reset confirmation title",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Reset to Original?"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "원본으로 초기화하시겠습니까?"
-          }
-        }
-      }
-    },
-    "edit_book.reset_confirmation_message" : {
-      "comment" : "Reset confirmation message",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Custom title, author, and cover image will be reset to original data."
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "커스텀 도서명, 저자, 커버 이미지가 원본 데이터로 초기화됩니다."
-          }
-        }
-      }
-    },
-    "reset_delete.title" : {
-      "comment" : "Reset and delete screen title",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Reset & Delete"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "초기화 및 삭제"
-          }
-        }
-      }
-    },
-    "reset_delete.reset_book_info" : {
-      "comment" : "Reset book info option",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Reset Book Information"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "도서 정보 초기화"
-          }
-        }
-      }
-    },
-    "reset_delete.reset_reading_records" : {
-      "comment" : "Reset reading records option",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Reset Reading Records"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "독서 기록 초기화"
-          }
-        }
-      }
-    },
-    "reset_delete.delete_book" : {
-      "comment" : "Delete book option",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Delete Book"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "도서 삭제"
-          }
-        }
-      }
-    },
-    "reset_delete.reset_book_info_confirm_title" : {
-      "comment" : "Reset book info confirmation title",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Reset Book Information?"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "도서 정보를 초기화하시겠습니까?"
-          }
-        }
-      }
-    },
-    "reset_delete.reset_book_info_confirm_message" : {
-      "comment" : "Reset book info confirmation message",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Custom title, author, and cover image will be reset to original data."
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "커스텀 도서명, 저자, 커버 이미지가 원본 데이터로 초기화됩니다."
-          }
-        }
-      }
-    },
-    "reset_delete.reset_records_confirm_title" : {
-      "comment" : "Reset reading records confirmation title",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Reset Reading Records?"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "독서 기록을 초기화하시겠습니까?"
-          }
-        }
-      }
-    },
-    "reset_delete.reset_records_confirm_message" : {
-      "comment" : "Reset reading records confirmation message",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "All reading session data will be permanently deleted."
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "모든 독서 세션 데이터가 영구적으로 삭제됩니다."
-          }
-        }
-      }
-    },
-    "reset_delete.delete_book_confirm_title" : {
-      "comment" : "Delete book confirmation title",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Delete Book?"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "도서를 삭제하시겠습니까?"
-          }
-        }
-      }
-    },
-    "reset_delete.delete_book_confirm_message" : {
-      "comment" : "Delete book confirmation message",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "All data related to this book will be permanently deleted."
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "이 도서와 관련된 모든 데이터가 영구적으로 삭제됩니다."
-          }
-        }
-      }
-    },
-    "action.reset" : {
-      "comment" : "Reset action",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Reset"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "초기화"
           }
         }
       }
@@ -753,6 +420,168 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "카메라 접근 권한이 필요해요"
+          }
+        }
+      }
+    },
+    "edit_book.author" : {
+      "comment" : "Author field label",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Author"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "저자"
+          }
+        }
+      }
+    },
+    "edit_book.book_title" : {
+      "comment" : "Book title field label",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Title"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "도서명"
+          }
+        }
+      }
+    },
+    "edit_book.change_cover" : {
+      "comment" : "Change cover button",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Change Cover"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "커버 변경"
+          }
+        }
+      }
+    },
+    "edit_book.cover_image" : {
+      "comment" : "Cover image field label",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cover Image"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "커버 이미지"
+          }
+        }
+      }
+    },
+    "edit_book.reset" : {
+      "comment" : "Reset action in edit book",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reset"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "초기화"
+          }
+        }
+      }
+    },
+    "edit_book.reset_confirmation_message" : {
+      "comment" : "Reset confirmation message",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Custom title, author, and cover image will be reset to original data."
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "커스텀 도서명, 저자, 커버 이미지가 원본 데이터로 초기화됩니다."
+          }
+        }
+      }
+    },
+    "edit_book.reset_confirmation_title" : {
+      "comment" : "Reset confirmation title",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reset to Original?"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "원본으로 초기화하시겠습니까?"
+          }
+        }
+      }
+    },
+    "edit_book.reset_custom_info" : {
+      "comment" : "Reset custom info button",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reset to Original"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "원본으로 초기화"
+          }
+        }
+      }
+    },
+    "edit_book.title" : {
+      "comment" : "Edit book info screen title",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Edit Book Info"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "도서 정보 수정"
           }
         }
       }
@@ -1135,6 +964,186 @@
         }
       }
     },
+    "reset_delete.delete_book" : {
+      "comment" : "Delete book option",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete Book"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "도서 삭제"
+          }
+        }
+      }
+    },
+    "reset_delete.delete_book_confirm_message" : {
+      "comment" : "Delete book confirmation message",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "All data related to this book will be permanently deleted."
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이 도서와 관련된 모든 데이터가 영구적으로 삭제됩니다."
+          }
+        }
+      }
+    },
+    "reset_delete.delete_book_confirm_title" : {
+      "comment" : "Delete book confirmation title",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete Book?"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "도서를 삭제하시겠습니까?"
+          }
+        }
+      }
+    },
+    "reset_delete.reset_book_info" : {
+      "comment" : "Reset book info option",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reset Book Information"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "도서 정보 초기화"
+          }
+        }
+      }
+    },
+    "reset_delete.reset_book_info_confirm_message" : {
+      "comment" : "Reset book info confirmation message",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Custom title, author, and cover image will be reset to original data."
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "커스텀 도서명, 저자, 커버 이미지가 원본 데이터로 초기화됩니다."
+          }
+        }
+      }
+    },
+    "reset_delete.reset_book_info_confirm_title" : {
+      "comment" : "Reset book info confirmation title",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reset Book Information?"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "도서 정보를 초기화하시겠습니까?"
+          }
+        }
+      }
+    },
+    "reset_delete.reset_reading_records" : {
+      "comment" : "Reset reading records option",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reset Reading Records"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "독서 기록 초기화"
+          }
+        }
+      }
+    },
+    "reset_delete.reset_records_confirm_message" : {
+      "comment" : "Reset reading records confirmation message",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "All reading session data will be permanently deleted."
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "모든 독서 세션 데이터가 영구적으로 삭제됩니다."
+          }
+        }
+      }
+    },
+    "reset_delete.reset_records_confirm_title" : {
+      "comment" : "Reset reading records confirmation title",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reset Reading Records?"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "독서 기록을 초기화하시겠습니까?"
+          }
+        }
+      }
+    },
+    "reset_delete.title" : {
+      "comment" : "Reset and delete screen title",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reset & Delete"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "초기화 및 삭제"
+          }
+        }
+      }
+    },
     "tab.library" : {
       "comment" : "Library tab title",
       "extractionState" : "manual",
@@ -1207,6 +1216,27 @@
           }
         }
       }
+    },
+    "분" : {
+
+    },
+    "시간" : {
+
+    },
+    "시작" : {
+
+    },
+    "아직 독서 기록이 없습니다" : {
+
+    },
+    "요일" : {
+
+    },
+    "일" : {
+
+    },
+    "종료" : {
+
     }
   },
   "version" : "1.1"
