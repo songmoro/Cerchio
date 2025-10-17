@@ -36,15 +36,39 @@ struct ReadingChartView: View {
     }
 
     private var segmentControl: some View {
-        Picker("Period", selection: $selectedPeriod) {
-            Text("전체").tag(ReadingStatisticsPeriod.total)
-            Text("오늘").tag(ReadingStatisticsPeriod.today)
-            Text("이번 주").tag(ReadingStatisticsPeriod.week)
-            Text("이번 달").tag(ReadingStatisticsPeriod.month)
+        HStack(spacing: 8) {
+            ForEach([ReadingStatisticsPeriod.total, .today, .week, .month], id: \.self) { period in
+                Button(action: {
+                    selectedPeriod = period
+                    onPeriodChanged?(period)
+                }) {
+                    Text(periodTitle(for: period))
+                        .font(.system(size: 14, weight: selectedPeriod == period ? .semibold : .regular))
+                        .foregroundColor(selectedPeriod == period ? .white : Color(uiColor: UIColor(named: "ForestGreen") ?? .green))
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 6)
+                        .background(
+                            selectedPeriod == period
+                                ? Color(uiColor: UIColor(named: "ForestGreen") ?? .green)
+                                : Color.clear
+                        )
+                        .cornerRadius(16)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 16)
+                                .stroke(Color(uiColor: UIColor(named: "ForestGreen") ?? .green), lineWidth: 1)
+                        )
+                }
+                .buttonStyle(PlainButtonStyle())
+            }
         }
-        .pickerStyle(.segmented)
-        .onChange(of: selectedPeriod) { newValue in
-            onPeriodChanged?(newValue)
+    }
+
+    private func periodTitle(for period: ReadingStatisticsPeriod) -> String {
+        switch period {
+        case .total: return "전체"
+        case .today: return "오늘"
+        case .week: return "이번 주"
+        case .month: return "이번 달"
         }
     }
 

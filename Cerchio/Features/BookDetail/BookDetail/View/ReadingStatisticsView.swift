@@ -9,7 +9,7 @@ import UIKit
 import SwiftUI
 import SnapKit
 
-enum ReadingStatisticsPeriod: Int {
+enum ReadingStatisticsPeriod: Int, Hashable {
     case total = 0
     case today = 1
     case week = 2

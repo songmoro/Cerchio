@@ -586,9 +586,6 @@
         }
       }
     },
-    "Period" : {
-
-    },
     "photo_library.permission.go_to_settings" : {
       "comment" : "Go to settings button for photo library",
       "extractionState" : "manual",
@@ -1235,22 +1232,10 @@
     "아직 독서 기록이 없습니다" : {
 
     },
-    "오늘" : {
-
-    },
     "요일" : {
 
     },
-    "이번 달" : {
-
-    },
     "일" : {
-
-    },
-    "이번 주" : {
-
-    },
-    "전체" : {
 
     },
     "종료" : {
