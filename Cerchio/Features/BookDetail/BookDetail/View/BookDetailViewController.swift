@@ -216,7 +216,7 @@ final class BookDetailViewController: FullScreenNestedScrollViewController, View
         let group = NSCollectionLayoutGroup.vertical(layoutSize: groupSize, subitems: [item])
 
         let section = NSCollectionLayoutSection(group: group)
-        section.contentInsets = NSDirectionalEdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16)
+        section.contentInsets = NSDirectionalEdgeInsets(top: 16, leading: 16, bottom: 8, trailing: 16)
 
         let headerSize = NSCollectionLayoutSize(
             widthDimension: .fractionalWidth(1.0),
@@ -247,7 +247,7 @@ final class BookDetailViewController: FullScreenNestedScrollViewController, View
         let group = NSCollectionLayoutGroup.vertical(layoutSize: groupSize, subitems: [item])
 
         let section = NSCollectionLayoutSection(group: group)
-        section.contentInsets = NSDirectionalEdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16)
+        section.contentInsets = NSDirectionalEdgeInsets(top: 16, leading: 16, bottom: 8, trailing: 16)
         section.boundarySupplementaryItems = [CommonSectionHeader.createBoundarySupplementaryItem()]
 
         return section
@@ -268,7 +268,7 @@ final class BookDetailViewController: FullScreenNestedScrollViewController, View
         let group = NSCollectionLayoutGroup.horizontal(layoutSize: groupSize, subitems: [item])
 
         let section = NSCollectionLayoutSection(group: group)
-        section.contentInsets = NSDirectionalEdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16)
+        section.contentInsets = NSDirectionalEdgeInsets(top: 16, leading: 16, bottom: 8, trailing: 16)
         section.orthogonalScrollingBehavior = .continuous
         section.boundarySupplementaryItems = [CommonSectionHeader.createBoundarySupplementaryItem()]
 
@@ -289,7 +289,7 @@ final class BookDetailViewController: FullScreenNestedScrollViewController, View
         let group = NSCollectionLayoutGroup.vertical(layoutSize: groupSize, subitems: [item])
 
         let section = NSCollectionLayoutSection(group: group)
-        section.contentInsets = NSDirectionalEdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16)
+        section.contentInsets = NSDirectionalEdgeInsets(top: 16, leading: 16, bottom: 8, trailing: 16)
         section.boundarySupplementaryItems = [CommonSectionHeader.createBoundarySupplementaryItem()]
 
         return section

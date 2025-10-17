@@ -34,17 +34,19 @@ open class FullScreenNestedScrollViewController: NestedScrollViewController {
         // Allow content to extend under navigation bar
         extendedLayoutIncludesOpaqueBars = true
 
-        // Set navigation bar tint color
-        navigationController?.navigationBar.tintColor = .bookBackground
-
         // Disable automatic content inset adjustment to allow content to start from top
         mainScrollView.contentInsetAdjustmentBehavior = .never
 
-        // Setup transparent navigation bar
-        setupTransparentNavigationBar()
-
         // Setup navigation bar background view
         setupNavigationBarBackgroundView()
+    }
+
+    open override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+
+        // Restore navigation bar appearance every time view appears
+        setupTransparentNavigationBar()
+        navigationController?.navigationBar.tintColor = .bookBackground
     }
 
     // MARK: - Setup

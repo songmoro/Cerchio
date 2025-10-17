@@ -25,7 +25,7 @@ open class NestedScrollViewController: UIViewController {
     public private(set) var collectionView: UICollectionView!
 
     /// Height of the sticky tab view
-    public var tabHeight: CGFloat { return 50 }
+    public var tabHeight: CGFloat { return 48.5 }
 
     /// Height of the info view (override to customize)
     open var infoViewHeight: CGFloat {
@@ -283,7 +283,8 @@ open class NestedScrollViewController: UIViewController {
         ) else { return }
 
         let headerY = headerAttributes.frame.origin.y
-        let absoluteY = infoViewHeight + headerY
+        // Adjust scroll position to show section header above sticky tab
+        let absoluteY = infoViewHeight + headerY - stickyThresholdOffset
 
         mainScrollView.setContentOffset(CGPoint(x: 0, y: absoluteY), animated: true)
     }

@@ -110,6 +110,9 @@ final class TabNavigationView<TabValue: Hashable>: UIView {
             var config = button.configuration
             config?.baseForegroundColor = button.isSelected ? .label : .secondaryLabel
 
+            // Remove background color for selected state
+            config?.background.backgroundColor = .clear
+
             config?.titleTextAttributesTransformer = UIConfigurationTextAttributesTransformer { incoming in
                 var outgoing = incoming
                 outgoing.font = button.isSelected ? .custom(weight: .bold, size: 16) : .custom(weight: .medium, size: 16)
