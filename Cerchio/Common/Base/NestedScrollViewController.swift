@@ -43,7 +43,8 @@ open class NestedScrollViewController: UIViewController {
     private var infoViewHeightConstraint: Constraint?
     private var contentSizeObservation: NSKeyValueObservation?
 
-    private var isTabSticky = false
+    /// Whether the tab is currently in sticky mode
+    public private(set) var isTabSticky = false
 
     // MARK: - Lifecycle
 
@@ -136,6 +137,13 @@ open class NestedScrollViewController: UIViewController {
         // 3. Apply initial snapshot
     }
 
+    /// Override this to respond to sticky tab state changes
+    /// Called when the tab transitions between sticky and normal mode
+    /// - Parameter isSticky: true if tab is now sticky, false if it returned to normal position
+    open func tabStickyStateDidChange(isSticky: Bool) {
+        // Subclasses can override this to react to sticky state changes
+    }
+
     // MARK: - Base UI Setup
 
     private func setupBaseUI() {
@@ -153,8 +161,7 @@ open class NestedScrollViewController: UIViewController {
 
         view.addSubview(mainScrollView)
         mainScrollView.snp.makeConstraints { make in
-            make.top.equalTo(view.safeAreaLayoutGuide)
-            make.leading.trailing.bottom.equalToSuperview()
+            make.edges.equalToSuperview()
         }
 
         // Content stack view
@@ -251,6 +258,9 @@ open class NestedScrollViewController: UIViewController {
             }
 
             view.layoutIfNeeded()
+
+            // Notify subclasses of sticky state change
+            tabStickyStateDidChange(isSticky: shouldBeSticky)
         }
     }
 
