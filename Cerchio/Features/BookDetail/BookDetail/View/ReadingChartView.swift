@@ -34,24 +34,28 @@ struct ReadingChartView: View {
             } else {
                 headerView
                 chartView
-                    .gesture(
-                        DragGesture(minimumDistance: 30)
-                            .onEnded { value in
-                                if value.translation.width < -50 {
-                                    // 왼쪽으로 스와이프 = 다음 기간
-                                    onSwipe?(.left)
-                                } else if value.translation.width > 50 {
-                                    // 오른쪽으로 스와이프 = 이전 기간
-                                    onSwipe?(.right)
-                                }
-                            }
-                    )
-                segmentControl
+                HStack {
+                    Spacer()
+                    segmentControl
+                    Spacer()
+                }
             }
         }
         .padding(.vertical, 16)
         .background(Color(uiColor: UIColor(named: "BookBackground")?.withAlphaComponent(0.1) ?? .systemGray6))
         .cornerRadius(12)
+        .gesture(
+            DragGesture(minimumDistance: 30)
+                .onEnded { value in
+                    if value.translation.width < -50 {
+                        // 왼쪽으로 스와이프 = 다음 기간
+                        onSwipe?(.left)
+                    } else if value.translation.width > 50 {
+                        // 오른쪽으로 스와이프 = 이전 기간
+                        onSwipe?(.right)
+                    }
+                }
+        )
     }
 
     private var segmentControl: some View {
