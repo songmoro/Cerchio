@@ -119,6 +119,7 @@ final class TagEditViewController: UIViewController {
             target: self,
             action: #selector(cancelTapped)
         )
+        cancelButton.tintColor = .forestGreen
 
         let saveButton = UIBarButtonItem(
             title: "저장",
@@ -126,6 +127,7 @@ final class TagEditViewController: UIViewController {
             target: self,
             action: #selector(saveTapped)
         )
+        saveButton.tintColor = .forestGreen
 
         navigationItem.leftBarButtonItem = cancelButton
         navigationItem.rightBarButtonItem = saveButton

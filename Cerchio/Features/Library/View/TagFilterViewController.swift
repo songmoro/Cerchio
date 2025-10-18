@@ -59,6 +59,7 @@ final class TagFilterViewController: UIViewController {
             target: self,
             action: #selector(cancelTapped)
         )
+        cancelButton.tintColor = .forestGreen
 
         let applyButton = UIBarButtonItem(
             title: "적용",
@@ -66,6 +67,7 @@ final class TagFilterViewController: UIViewController {
             target: self,
             action: #selector(applyTapped)
         )
+        applyButton.tintColor = .forestGreen
 
         let clearButton = UIBarButtonItem(
             title: "초기화",
@@ -73,6 +75,7 @@ final class TagFilterViewController: UIViewController {
             target: self,
             action: #selector(clearTapped)
         )
+        clearButton.tintColor = .forestGreen
 
         navigationItem.leftBarButtonItem = cancelButton
         navigationItem.rightBarButtonItems = [applyButton, clearButton]
