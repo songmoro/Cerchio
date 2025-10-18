@@ -13,7 +13,6 @@ import SnapKit
 /// - Top info view that scrolls away
 /// - Sticky tab that pins to top when scrolling
 /// - CollectionView with dynamic content
-@MainActor
 open class NestedScrollViewController: UIViewController {
 
     // MARK: - Public Properties

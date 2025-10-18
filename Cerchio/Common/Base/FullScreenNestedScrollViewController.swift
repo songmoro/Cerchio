@@ -11,7 +11,6 @@ import SnapKit
 /// Extended version of NestedScrollViewController that provides full-screen layout
 /// with transparent navigation bar and content extending under status bar
 /// Use this for immersive experiences where info view should reach the top of the screen
-@MainActor
 open class FullScreenNestedScrollViewController: NestedScrollViewController {
 
     // MARK: - Override Properties

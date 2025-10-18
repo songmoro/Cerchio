@@ -16,7 +16,6 @@ import SnapKit
 /// - Right bar buttons: [+, 편집] (Add, Edit)
 /// - Consistent navigation styling
 /// - Abstract methods for child classes to implement
-@MainActor
 class ListViewBaseViewController<R: Reactor>: BaseViewController<R> {
 
     // MARK: - UI Components

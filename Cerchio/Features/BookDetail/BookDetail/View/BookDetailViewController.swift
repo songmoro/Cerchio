@@ -11,7 +11,6 @@ import RxSwift
 import RxCocoa
 import SnapKit
 
-@MainActor
 final class BookDetailViewController: FullScreenNestedScrollViewController, View {
     private typealias DataSource = UICollectionViewDiffableDataSource<Section, Item>
     private typealias Snapshot = NSDiffableDataSourceSnapshot<Section, Item>
