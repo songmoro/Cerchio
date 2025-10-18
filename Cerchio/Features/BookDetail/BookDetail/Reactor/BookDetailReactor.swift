@@ -52,8 +52,8 @@ final class BookDetailReactor: Reactor {
 
         // Data loading
         case setPhotos([PhotoItem])
-        case setQuotes([RealmQuote])
-        case setTags([RealmTag])
+        case setQuotes([QuoteItem])
+        case setTags([TagItem])
 
         // Data change notifications
         case photoSaved
@@ -74,6 +74,30 @@ final class BookDetailReactor: Reactor {
         }
     }
 
+    struct QuoteItem: Hashable, Sendable {
+        let id: String
+        let quote: String
+        let pageNumber: Int?
+        let createdAt: Date
+
+        init(from realmQuote: RealmQuote) {
+            self.id = String(describing: realmQuote.id)
+            self.quote = realmQuote.quote
+            self.pageNumber = realmQuote.pageNumber
+            self.createdAt = realmQuote.createdAt
+        }
+    }
+
+    struct TagItem: Hashable, Sendable {
+        let id: String
+        let tagName: String
+
+        init(from realmTag: RealmTag) {
+            self.id = String(describing: realmTag.id)
+            self.tagName = realmTag.tagName
+        }
+    }
+
     struct State {
         var book: Book
         var bookDetail: BookDetail?
@@ -87,8 +111,8 @@ final class BookDetailReactor: Reactor {
 
         // Data
         var photos: [PhotoItem] = []
-        var quotes: [RealmQuote] = []
-        var tags: [RealmTag] = []
+        var quotes: [QuoteItem] = []
+        var tags: [TagItem] = []
 
         // Data change flags for UI refresh
         var shouldRefreshPhotos: Bool = false
@@ -314,7 +338,10 @@ final class BookDetailReactor: Reactor {
             let bookId = String(describing: currentState.book.id)
             return service.loadQuotes(bookId: bookId)
                 .observe(on: MainScheduler.instance)
-                .map { Mutation.setQuotes($0) }
+                .map { realmQuotes -> Mutation in
+                    let quoteItems = realmQuotes.map { QuoteItem(from: $0) }
+                    return Mutation.setQuotes(quoteItems)
+                }
                 .catch { error in
                     print("❌ Failed to load quotes: \(error)")
                     return Observable.empty()
@@ -324,7 +351,10 @@ final class BookDetailReactor: Reactor {
             let bookId = String(describing: currentState.book.id)
             return service.loadTags(bookId: bookId)
                 .observe(on: MainScheduler.instance)
-                .map { Mutation.setTags($0) }
+                .map { realmTags -> Mutation in
+                    let tagItems = realmTags.map { TagItem(from: $0) }
+                    return Mutation.setTags(tagItems)
+                }
                 .catch { error in
                     print("❌ Failed to load tags: \(error)")
                     return Observable.empty()
@@ -397,7 +427,10 @@ final class BookDetailReactor: Reactor {
                             // 삭제 후 즉시 최신 데이터 로드
                             return self.service.loadQuotes(bookId: bookId)
                                 .observe(on: MainScheduler.instance)
-                                .map { Mutation.setQuotes($0) }
+                                .map { realmQuotes -> Mutation in
+                                    let quoteItems = realmQuotes.map { QuoteItem(from: $0) }
+                                    return Mutation.setQuotes(quoteItems)
+                                }
                         }
                 }
                 .catch { error in

@@ -11,7 +11,7 @@ import RxSwift
 import RxCocoa
 import SnapKit
 
-final class ReadingSessionListViewController: BaseViewController<ReadingSessionListReactor> {
+final class ReadingSessionListViewController: ListViewBaseViewController<ReadingSessionListReactor> {
 
     // MARK: - UI Components
 
@@ -35,8 +35,12 @@ final class ReadingSessionListViewController: BaseViewController<ReadingSessionL
     }()
 
     // MARK: - Properties
-    private var isEditMode: Bool = false
     var onAddRecordRequested: (() -> Void)?
+
+    // MARK: - Override Properties
+    override var viewTitle: String {
+        return "독서 기록"
+    }
 
     // MARK: - Lifecycle
 
@@ -45,15 +49,22 @@ final class ReadingSessionListViewController: BaseViewController<ReadingSessionL
         reactor?.action.onNext(.loadSessions)
     }
 
+    // MARK: - Override Methods
+    override func addButtonTapped() {
+        onAddRecordRequested?()
+    }
+
+    override func editModeDidChange(_ isEditMode: Bool) {
+        tableView.setEditing(isEditMode, animated: true)
+    }
+
     // MARK: - Setup
 
     override func setupUI() {
         super.setupUI()
+        setupBackButton()
 
         view.backgroundColor = .systemBackground
-        title = "독서 기록"
-
-        setupNavigationBar()
 
         view.addSubview(tableView)
         view.addSubview(emptyLabel)
@@ -67,24 +78,9 @@ final class ReadingSessionListViewController: BaseViewController<ReadingSessionL
         }
     }
 
-    private func setupNavigationBar() {
-        // + 버튼
-        let addButton = UIBarButtonItem(
-            image: UIImage(systemName: "plus"),
-            style: .plain,
-            target: self,
-            action: #selector(addButtonTapped)
-        )
-
-        // 편집 버튼
-        let editButton = UIBarButtonItem(
-            title: "편집",
-            style: .plain,
-            target: self,
-            action: #selector(editButtonTapped)
-        )
-
-        navigationItem.rightBarButtonItems = [editButton, addButton]
+    private func setupBackButton() {
+        // Remove back button text, only show the chevron
+        navigationController?.navigationBar.topItem?.backBarButtonItem = UIBarButtonItem(title: "", style: .plain, target: nil, action: nil)
     }
 
     // MARK: - Binding
@@ -123,22 +119,8 @@ final class ReadingSessionListViewController: BaseViewController<ReadingSessionL
 
     // MARK: - Actions
 
-    @objc private func addButtonTapped() {
-        onAddRecordRequested?()
-    }
-
     func reloadSessions() {
         reactor?.action.onNext(.loadSessions)
-    }
-
-    @objc private func editButtonTapped() {
-        isEditMode.toggle()
-        tableView.setEditing(isEditMode, animated: true)
-
-        // 버튼 텍스트 변경
-        if let editButton = navigationItem.rightBarButtonItems?.first {
-            editButton.title = isEditMode ? "완료" : "편집"
-        }
     }
 
     // MARK: - Private Methods

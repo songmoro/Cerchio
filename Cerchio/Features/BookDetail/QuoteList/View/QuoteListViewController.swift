@@ -11,7 +11,7 @@ import RxSwift
 import RxCocoa
 import SnapKit
 
-final class QuoteListViewController: BaseViewController<QuoteListReactor> {
+final class QuoteListViewController: ListViewBaseViewController<QuoteListReactor> {
     private typealias DataSource = UITableViewDiffableDataSource<Section, Quote>
     private typealias Snapshot = NSDiffableDataSourceSnapshot<Section, Quote>
 
@@ -22,75 +22,38 @@ final class QuoteListViewController: BaseViewController<QuoteListReactor> {
     // MARK: - Properties
     var onAddQuoteTapped: (() -> Void)?
     var onQuoteEditTapped: ((Quote) -> Void)?
-    private var isEditMode: Bool = false
+
+    // MARK: - Override Properties
+    override var viewTitle: String {
+        return String(localized: .bookDetailSavedQuotes)
+    }
 
     // MARK: - Section Type
     nonisolated enum Section: CaseIterable {
         case quotes
     }
 
+    // MARK: - Override Methods
+    override func addButtonTapped() {
+        onAddQuoteTapped?()
+    }
+
+    override func editModeDidChange(_ isEditMode: Bool) {
+        tableView.setEditing(isEditMode, animated: true)
+    }
+
     // MARK: - Setup
     override func setupUI() {
         super.setupUI()
-        setupNavigationBar()
+        setupBackButton()
         setupTableView()
         setupLayout()
         configureDataSource()
     }
 
-    private func setupNavigationBar() {
-        title = String(localized: .bookDetailSavedQuotes)
-
-        // 추가 버튼
-        let addButton = UIBarButtonItem(
-            barButtonSystemItem: .add,
-            target: nil,
-            action: nil
-        )
-
-        // 편집 버튼
-        let editButton = UIBarButtonItem(
-            title: NSLocalizedString("action.edit", comment: "Edit action"),
-            style: .plain,
-            target: nil,
-            action: nil
-        )
-
-        navigationItem.rightBarButtonItems = [addButton, editButton]
-
-        // Rx bindings
-        addButton.rx.tap
-            .subscribe(onNext: { [weak self] in
-                self?.onAddQuoteTapped?()
-            })
-            .disposed(by: disposeBag)
-
-        editButton.rx.tap
-            .subscribe(onNext: { [weak self] in
-                self?.toggleEditMode()
-            })
-            .disposed(by: disposeBag)
-    }
-
-    private func toggleEditMode() {
-        isEditMode.toggle()
-        tableView.setEditing(isEditMode, animated: true)
-        updateNavigationBar()
-    }
-
-    private func updateNavigationBar() {
-        guard let rightBarButtonItems = navigationItem.rightBarButtonItems,
-              rightBarButtonItems.count >= 2 else { return }
-
-        let editButton = rightBarButtonItems[1]
-
-        if isEditMode {
-            editButton.title = NSLocalizedString("action.done", comment: "Done action")
-            editButton.style = .done
-        } else {
-            editButton.title = NSLocalizedString("action.edit", comment: "Edit action")
-            editButton.style = .plain
-        }
+    private func setupBackButton() {
+        // Remove back button text, only show the chevron
+        navigationController?.navigationBar.topItem?.backBarButtonItem = UIBarButtonItem(title: "", style: .plain, target: nil, action: nil)
     }
 
     private func setupTableView() {

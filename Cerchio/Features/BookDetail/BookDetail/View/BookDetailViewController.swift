@@ -61,11 +61,11 @@ final class BookDetailViewController: FullScreenNestedScrollViewController, View
 
     nonisolated enum Item: Hashable, Sendable {
         case readingStatistics(ReadingStatistics)
-        case addReadingRecordButton
+        case emptyReadingRecords
         case savedQuote(String, Int?, Date)
-        case addQuoteButton
+        case emptySavedQuotes
         case photoItem(String, UIImage)
-        case addPhotoButton
+        case emptyPhotos
         case settingsItem(SettingsItemType)
 
         func hash(into hasher: inout Hasher) {
@@ -73,20 +73,20 @@ final class BookDetailViewController: FullScreenNestedScrollViewController, View
             case .readingStatistics(let stats):
                 hasher.combine("readingStatistics")
                 hasher.combine(stats)
-            case .addReadingRecordButton:
-                hasher.combine("addReadingRecordButton")
+            case .emptyReadingRecords:
+                hasher.combine("emptyReadingRecords")
             case .savedQuote(let quote, let page, let date):
                 hasher.combine("savedQuote")
                 hasher.combine(quote)
                 hasher.combine(page)
                 hasher.combine(date)
-            case .addQuoteButton:
-                hasher.combine("addQuoteButton")
+            case .emptySavedQuotes:
+                hasher.combine("emptySavedQuotes")
             case .photoItem(let id, _):
                 hasher.combine("photoItem")
                 hasher.combine(id)
-            case .addPhotoButton:
-                hasher.combine("addPhotoButton")
+            case .emptyPhotos:
+                hasher.combine("emptyPhotos")
             case .settingsItem(let type):
                 hasher.combine("settingsItem")
                 hasher.combine(type)
@@ -97,15 +97,15 @@ final class BookDetailViewController: FullScreenNestedScrollViewController, View
             switch (lhs, rhs) {
             case (.readingStatistics(let l), .readingStatistics(let r)):
                 return l == r
-            case (.addReadingRecordButton, .addReadingRecordButton):
+            case (.emptyReadingRecords, .emptyReadingRecords):
                 return true
             case (.savedQuote(let lq, let lp, let ld), .savedQuote(let rq, let rp, let rd)):
                 return lq == rq && lp == rp && ld == rd
-            case (.addQuoteButton, .addQuoteButton):
+            case (.emptySavedQuotes, .emptySavedQuotes):
                 return true
             case (.photoItem(let l, _), .photoItem(let r, _)):
                 return l == r
-            case (.addPhotoButton, .addPhotoButton):
+            case (.emptyPhotos, .emptyPhotos):
                 return true
             case (.settingsItem(let l), .settingsItem(let r)):
                 return l == r
@@ -126,6 +126,7 @@ final class BookDetailViewController: FullScreenNestedScrollViewController, View
         super.viewDidLoad()
 
         setupCustomContent()
+        setupBackButton()
 
         if let reactor = reactor {
             bind(reactor: reactor)
@@ -139,6 +140,11 @@ final class BookDetailViewController: FullScreenNestedScrollViewController, View
         reactor?.action.onNext(.loadPhotos)
         reactor?.action.onNext(.loadQuotes)
         reactor?.action.onNext(.loadTags)
+    }
+
+    private func setupBackButton() {
+        // Remove back button text, only show the chevron
+        navigationController?.navigationBar.topItem?.backBarButtonItem = UIBarButtonItem(title: "", style: .plain, target: nil, action: nil)
     }
 
     // MARK: - Info View Height
@@ -303,11 +309,9 @@ final class BookDetailViewController: FullScreenNestedScrollViewController, View
 
         // Register cells
         collectionView.register(ReadingStatisticsCell.self)
-        collectionView.register(AddReadingRecordButtonCell.self)
+        collectionView.register(EmptyStateCell.self)
         collectionView.register(SavedQuoteCell.self)
-        collectionView.register(AddQuoteButtonCell.self)
         collectionView.register(PhotoItemCell.self)
-        collectionView.register(AddPhotoCell.self)
         collectionView.register(SettingsItemCell.self)
 
         // Register headers
@@ -499,11 +503,9 @@ final class BookDetailViewController: FullScreenNestedScrollViewController, View
                 }
                 return cell
 
-            case .addReadingRecordButton:
-                let cell: AddReadingRecordButtonCell = collectionView.dequeueReusableCell(AddReadingRecordButtonCell.self, for: indexPath)
-                cell.onAddRecordTapped = { [weak self] in
-                    self?.showReadingRecordEntry()
-                }
+            case .emptyReadingRecords:
+                let cell: EmptyStateCell = collectionView.dequeueReusableCell(EmptyStateCell.self, for: indexPath)
+                cell.configure(message: "아직 독서 기록이 없습니다")
                 return cell
 
             case .savedQuote(let quote, let pageNumber, let date):
@@ -515,11 +517,9 @@ final class BookDetailViewController: FullScreenNestedScrollViewController, View
                 self?.setupQuoteContextMenu(for: cell, quote: quote, pageNumber: pageNumber, date: date)
                 return cell
 
-            case .addQuoteButton:
-                let cell: AddQuoteButtonCell = collectionView.dequeueReusableCell(AddQuoteButtonCell.self, for: indexPath)
-                cell.onAddQuoteTapped = { [weak self] in
-                    self?.showQuoteEntry()
-                }
+            case .emptySavedQuotes:
+                let cell: EmptyStateCell = collectionView.dequeueReusableCell(EmptyStateCell.self, for: indexPath)
+                cell.configure(message: "저장한 문장이 없습니다")
                 return cell
 
             case .photoItem(let photoId, let image):
@@ -528,11 +528,9 @@ final class BookDetailViewController: FullScreenNestedScrollViewController, View
                 self?.setupPhotoContextMenu(for: cell, photoId: photoId, image: image)
                 return cell
 
-            case .addPhotoButton:
-                let cell: AddPhotoCell = collectionView.dequeueReusableCell(AddPhotoCell.self, for: indexPath)
-                cell.onAddPhotoTapped = { [weak self] in
-                    self?.showPhotoCapture()
-                }
+            case .emptyPhotos:
+                let cell: EmptyStateCell = collectionView.dequeueReusableCell(EmptyStateCell.self, for: indexPath)
+                cell.configure(message: "사진이 없습니다")
                 return cell
 
             case .settingsItem(let type):
@@ -582,18 +580,20 @@ final class BookDetailViewController: FullScreenNestedScrollViewController, View
                 }
 
             case .savedQuotes:
+                let hasQuotes = !(self?.reactor?.currentState.quotes.isEmpty ?? true)
                 header.configure(
                     title: String(localized: .bookDetailSavedQuotes),
-                    actionTitle: String(localized: .actionViewAll)
+                    actionTitle: hasQuotes ? String(localized: .actionViewAll) : nil
                 )
                 header.onActionTapped = { [weak self] in
                     self?.showAllQuotes()
                 }
 
             case .photoPages:
+                let hasPhotos = !(self?.reactor?.currentState.photos.isEmpty ?? true)
                 header.configure(
                     title: String(localized: .bookDetailPhotos),
-                    actionTitle: String(localized: .actionViewAll)
+                    actionTitle: hasPhotos ? String(localized: .actionViewAll) : nil
                 )
                 header.onActionTapped = { [weak self] in
                     self?.showAllPhotos()
@@ -622,10 +622,7 @@ final class BookDetailViewController: FullScreenNestedScrollViewController, View
         if snapshot.sectionIdentifiers.isEmpty {
             snapshot.appendSections([.readingRecords, .savedQuotes, .photoPages, .settings])
 
-            snapshot.appendItems([.addQuoteButton], toSection: .savedQuotes)
-            snapshot.appendItems([.addPhotoButton], toSection: .photoPages)
-
-            // Settings items
+            // Settings items (always shown)
             let settingsItems: [Item] = [
                 .settingsItem(.editBookInfo),
                 .settingsItem(.editReadingInfo),
@@ -651,7 +648,7 @@ final class BookDetailViewController: FullScreenNestedScrollViewController, View
         if let statistics = statistics, !statistics.isEmpty {
             snapshot.appendItems([.readingStatistics(statistics)], toSection: .readingRecords)
         } else {
-            snapshot.appendItems([.addReadingRecordButton], toSection: .readingRecords)
+            snapshot.appendItems([.emptyReadingRecords], toSection: .readingRecords)
         }
 
         dataSource.apply(snapshot, animatingDifferences: true)
@@ -664,25 +661,21 @@ final class BookDetailViewController: FullScreenNestedScrollViewController, View
         guard snapshot.sectionIdentifiers.contains(.photoPages) else { return }
 
         let existingItems = snapshot.itemIdentifiers(inSection: .photoPages)
-        let photoItemsToRemove = existingItems.filter {
-            if case .photoItem = $0 { return true }
-            return false
+        if !existingItems.isEmpty {
+            snapshot.deleteItems(existingItems)
         }
-        snapshot.deleteItems(photoItemsToRemove)
 
-        if let addButtonIndex = snapshot.itemIdentifiers(inSection: .photoPages).firstIndex(where: {
-            if case .addPhotoButton = $0 { return true }
-            return false
-        }) {
-            let addButtonItem = snapshot.itemIdentifiers(inSection: .photoPages)[addButtonIndex]
+        if photos.isEmpty {
+            snapshot.appendItems([.emptyPhotos], toSection: .photoPages)
+        } else {
             let photoItems = photos.map { Item.photoItem($0.id, $0.image) }
-            snapshot.insertItems(photoItems, afterItem: addButtonItem)
+            snapshot.appendItems(photoItems, toSection: .photoPages)
         }
 
         dataSource.apply(snapshot, animatingDifferences: true)
     }
 
-    private func updateQuotesUI(_ quotes: [RealmQuote]) {
+    private func updateQuotesUI(_ quotes: [BookDetailReactor.QuoteItem]) {
         print(#function)
         guard let dataSource = dataSource, let _ = reactor?.currentState.bookDetail else { return }
         var snapshot = dataSource.snapshot()
@@ -692,20 +685,17 @@ final class BookDetailViewController: FullScreenNestedScrollViewController, View
         let existingItems = snapshot.itemIdentifiers(inSection: .savedQuotes)
         snapshot.deleteItems(existingItems)
 
-        var quoteItems: [Item] = []
         if quotes.isEmpty {
-            quoteItems.append(.addQuoteButton)
+            snapshot.appendItems([.emptySavedQuotes], toSection: .savedQuotes)
         } else {
-            for quote in quotes {
-                quoteItems.append(.savedQuote(quote.quote, quote.pageNumber, quote.createdAt))
-            }
+            let quoteItems = quotes.map { Item.savedQuote($0.quote, $0.pageNumber, $0.createdAt) }
+            snapshot.appendItems(quoteItems, toSection: .savedQuotes)
         }
-        snapshot.appendItems(quoteItems, toSection: .savedQuotes)
 
         dataSource.apply(snapshot, animatingDifferences: true)
     }
 
-    private func updateTagsUI(_ tags: [RealmTag]) {
+    private func updateTagsUI(_ tags: [BookDetailReactor.TagItem]) {
         print("📌 updateTagsUI called with \(tags.count) tags")
         if let bookDetail = reactor?.currentState.bookDetail {
             bookInfoView?.configure(with: bookDetail)

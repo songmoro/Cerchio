@@ -11,7 +11,7 @@ import RxSwift
 import RxCocoa
 import SnapKit
 
-final class PhotoListViewController: BaseViewController<PhotoListReactor> {
+final class PhotoListViewController: ListViewBaseViewController<PhotoListReactor> {
     private typealias DataSource = UICollectionViewDiffableDataSource<Section, Photo>
     private typealias Snapshot = NSDiffableDataSourceSnapshot<Section, Photo>
 
@@ -26,7 +26,6 @@ final class PhotoListViewController: BaseViewController<PhotoListReactor> {
     // MARK: - Properties
     var onAddPhotoTapped: (() -> Void)?
     var onPhotosDeleted: (() -> Void)?
-    private var isEditMode: Bool = false
     private var selectedPhotoIds: Set<String> = []
     private var service: PhotoListService?
 
@@ -34,12 +33,15 @@ final class PhotoListViewController: BaseViewController<PhotoListReactor> {
     private var photoImages: [String: UIImage] = [:]  // photoId -> UIImage
     private let imageQueue = DispatchQueue(label: "com.cerchio.photoList.imageQueue", attributes: .concurrent)
 
-    // Navigation bar buttons
-    private var addButton: UIBarButtonItem!
-    private var editButton: UIBarButtonItem!
+    // Navigation bar buttons (for edit mode)
     private var cancelButton: UIBarButtonItem!
     private var selectAllButton: UIBarButtonItem!
     private var deleteButton: UIBarButtonItem!
+
+    // MARK: - Override Properties
+    override var viewTitle: String {
+        return String(localized: .bookDetailPhotos)
+    }
 
     // MARK: - Section Type
     nonisolated enum Section: CaseIterable {
@@ -51,14 +53,33 @@ final class PhotoListViewController: BaseViewController<PhotoListReactor> {
         self.service = service
     }
 
+    // MARK: - Override Methods
+    override func addButtonTapped() {
+        onAddPhotoTapped?()
+    }
+
+    override func editModeDidChange(_ isEditMode: Bool) {
+        if isEditMode {
+            enterEditMode()
+        } else {
+            exitEditMode()
+        }
+    }
+
     // MARK: - Setup
     override func setupUI() {
         super.setupUI()
-        setupNavigationBar()
+        setupBackButton()
+        setupEditModeButtons()
         setupCollectionView()
         setupLayout()
         configureDataSource()
         setupRxBindings()
+    }
+
+    private func setupBackButton() {
+        // Remove back button text, only show the chevron
+        navigationController?.navigationBar.topItem?.backBarButtonItem = UIBarButtonItem(title: "", style: .plain, target: nil, action: nil)
     }
 
     override func viewDidDisappear(_ animated: Bool) {
@@ -94,20 +115,7 @@ final class PhotoListViewController: BaseViewController<PhotoListReactor> {
         return UICollectionViewCompositionalLayout(section: section)
     }
 
-    private func setupNavigationBar() {
-        title = String(localized: .bookDetailPhotos)
-
-        // 추가 버튼
-        addButton = UIBarButtonItem(barButtonSystemItem: .add, target: nil, action: nil)
-
-        // 편집 버튼
-        editButton = UIBarButtonItem(
-            title: String(localized: .actionEdit),
-            style: .plain,
-            target: nil,
-            action: nil
-        )
-
+    private func setupEditModeButtons() {
         // 취소 버튼
         cancelButton = UIBarButtonItem(
             title: String(localized: .actionCancel),
@@ -133,28 +141,10 @@ final class PhotoListViewController: BaseViewController<PhotoListReactor> {
         )
         deleteButton.tintColor = .systemRed
 
-        navigationItem.rightBarButtonItems = [addButton, editButton]
-
         // Rx 바인딩
-        setupNavigationBarRx()
-    }
-
-    private func setupNavigationBarRx() {
-        addButton.rx.tap
-            .subscribe(onNext: { [weak self] in
-                self?.onAddPhotoTapped?()
-            })
-            .disposed(by: disposeBag)
-
-        editButton.rx.tap
-            .subscribe(onNext: { [weak self] in
-                self?.enterEditMode()
-            })
-            .disposed(by: disposeBag)
-
         cancelButton.rx.tap
             .subscribe(onNext: { [weak self] in
-                self?.exitEditMode()
+                self?.isEditMode = false
             })
             .disposed(by: disposeBag)
 
@@ -184,9 +174,8 @@ final class PhotoListViewController: BaseViewController<PhotoListReactor> {
                 navigationItem.rightBarButtonItems = [deleteButton]
             }
         } else {
-            // 일반 모드: [추가] [편집]
+            // 일반 모드는 부모 클래스가 처리함
             navigationItem.leftBarButtonItem = nil
-            navigationItem.rightBarButtonItems = [addButton, editButton]
         }
     }
 

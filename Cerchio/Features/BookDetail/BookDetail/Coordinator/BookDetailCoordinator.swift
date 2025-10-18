@@ -69,6 +69,10 @@ final class BookDetailCoordinator: BaseCoordinator, Coordinatable {
         bookDetailViewController.coordinator = self
         bookDetailViewController.reactor = bookDetailReactor
 
+        // 뒤로가기 버튼 텍스트 제거
+        let backBarButtonItem = UIBarButtonItem(title: "", style: .plain, target: nil, action: nil)
+        bookDetailViewController.navigationItem.backBarButtonItem = backBarButtonItem
+
         // 네비게이션 아이템 설정
         setupNavigationItems(for: bookDetailViewController, reactor: bookDetailReactor)
 
