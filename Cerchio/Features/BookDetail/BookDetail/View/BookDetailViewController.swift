@@ -171,13 +171,22 @@ final class BookDetailViewController: FullScreenNestedScrollViewController, View
         // Add circular menu on tap
         let menuItems: [CircularMenuItemProtocol] = [
             CircularMenuItem(name: "독서 기록", image: UIImage(systemName: "book.fill")) { [weak self] in
-                self?.showReadingRecordEntry()
+                // Dismiss menu first, then show reading record entry
+                self?.dismissPresentedMenuAndExecute {
+                    self?.showReadingRecordEntry()
+                }
             },
             CircularMenuItem(name: "문장 저장", image: UIImage(systemName: "quote.bubble.fill")) { [weak self] in
-                self?.showQuoteEntry()
+                // Dismiss menu first, then show quote entry
+                self?.dismissPresentedMenuAndExecute {
+                    self?.showQuoteEntry()
+                }
             },
             CircularMenuItem(name: "사진 찍기", image: UIImage(systemName: "camera.fill")) { [weak self] in
-                self?.showPhotoCapture()
+                // Dismiss menu first, then show photo capture
+                self?.dismissPresentedMenuAndExecute {
+                    self?.showPhotoCapture()
+                }
             }
         ]
 
@@ -764,6 +773,20 @@ final class BookDetailViewController: FullScreenNestedScrollViewController, View
             )
         } else {
             updateReadingStatisticsUI(reactor?.currentState.readingStatistics)
+        }
+    }
+
+    // MARK: - Helper Methods
+
+    private func dismissPresentedMenuAndExecute(_ action: @escaping () -> Void) {
+        // Find the presented CircularMenuViewController and dismiss it
+        if let presentedVC = presentedViewController {
+            presentedVC.dismiss(animated: true) {
+                action()
+            }
+        } else {
+            // If no menu is presented, execute action immediately
+            action()
         }
     }
 
