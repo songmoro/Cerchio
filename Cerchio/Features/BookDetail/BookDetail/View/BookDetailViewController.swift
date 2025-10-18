@@ -34,6 +34,7 @@ final class BookDetailViewController: FullScreenNestedScrollViewController, View
     private var dataSource: DataSource!
     private var bookInfoView: BookInfoView?
     private var tabNavigationView: TabNavigationView<Section>?
+    private var floatingActionButton: UIButton!
 
     // MARK: - Navigation Bar Buttons
     private var favoriteButton: UIBarButtonItem?
@@ -127,6 +128,7 @@ final class BookDetailViewController: FullScreenNestedScrollViewController, View
 
         setupCustomContent()
         setupBackButton()
+        setupFloatingActionButton()
 
         if let reactor = reactor {
             bind(reactor: reactor)
@@ -145,6 +147,46 @@ final class BookDetailViewController: FullScreenNestedScrollViewController, View
     private func setupBackButton() {
         // Remove back button text, only show the chevron
         navigationController?.navigationBar.topItem?.backBarButtonItem = UIBarButtonItem(title: "", style: .plain, target: nil, action: nil)
+    }
+
+    private func setupFloatingActionButton() {
+        floatingActionButton = UIButton(type: .custom)
+        floatingActionButton.backgroundColor = .forestGreen
+        floatingActionButton.setImage(UIImage(systemName: "plus"), for: .normal)
+        floatingActionButton.tintColor = .white
+        floatingActionButton.layer.cornerRadius = 28
+        floatingActionButton.layer.shadowColor = UIColor.black.cgColor
+        floatingActionButton.layer.shadowOffset = CGSize(width: 0, height: 2)
+        floatingActionButton.layer.shadowRadius = 4
+        floatingActionButton.layer.shadowOpacity = 0.3
+
+        view.addSubview(floatingActionButton)
+
+        floatingActionButton.snp.makeConstraints {
+            $0.width.height.equalTo(56)
+            $0.trailing.equalToSuperview().inset(20)
+            $0.bottom.equalTo(view.safeAreaLayoutGuide).inset(20)
+        }
+
+        // Add circular menu on tap
+        let menuItems: [CircularMenuItemProtocol] = [
+            CircularMenuItem(name: "독서 기록", image: UIImage(systemName: "book.fill")) { [weak self] in
+                self?.showReadingRecordEntry()
+            },
+            CircularMenuItem(name: "문장 저장", image: UIImage(systemName: "quote.bubble.fill")) { [weak self] in
+                self?.showQuoteEntry()
+            },
+            CircularMenuItem(name: "사진 찍기", image: UIImage(systemName: "camera.fill")) { [weak self] in
+                self?.showPhotoCapture()
+            }
+        ]
+
+        CircularMenuManager.shared.addTapMenu(
+            to: floatingActionButton,
+            targetView: floatingActionButton,
+            items: menuItems,
+            presentingViewController: self
+        )
     }
 
     // MARK: - Info View Height
@@ -622,11 +664,10 @@ final class BookDetailViewController: FullScreenNestedScrollViewController, View
         if snapshot.sectionIdentifiers.isEmpty {
             snapshot.appendSections([.readingRecords, .savedQuotes, .photoPages, .settings])
 
-            // Settings items (always shown)
+            // Settings items (always shown, excluding resetAndDelete)
             let settingsItems: [Item] = [
                 .settingsItem(.editBookInfo),
-                .settingsItem(.editReadingInfo),
-                .settingsItem(.resetAndDelete)
+                .settingsItem(.editReadingInfo)
             ]
             snapshot.appendItems(settingsItems, toSection: .settings)
         }
