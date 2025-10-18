@@ -36,6 +36,11 @@ final class EmptyStateCell: UICollectionViewCell, IsIdentifiable {
     }
 
     private func setupConstraints() {
+        // Set fixed height for empty state cells
+        contentView.snp.makeConstraints {
+            $0.height.equalTo(150)
+        }
+
         messageLabel.snp.makeConstraints {
             $0.center.equalToSuperview()
             $0.leading.trailing.equalToSuperview().inset(20)
