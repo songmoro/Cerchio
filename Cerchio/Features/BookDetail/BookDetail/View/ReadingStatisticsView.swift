@@ -10,10 +10,10 @@ import SwiftUI
 import SnapKit
 
 enum ReadingStatisticsPeriod: Int, Hashable {
-    case total = 0
-    case today = 1
-    case week = 2
-    case month = 3
+    case today = 0
+    case week = 1
+    case month = 2
+    case year = 3
 }
 
 final class ReadingStatisticsView: UIView {
@@ -25,8 +25,9 @@ final class ReadingStatisticsView: UIView {
     // MARK: - Properties
 
     private var chartData: ReadingChartData?
-    private var currentPeriod: ReadingStatisticsPeriod = .total
+    private var currentPeriod: ReadingStatisticsPeriod = .today
     var onPeriodChanged: ((ReadingStatisticsPeriod) -> Void)?
+    var onSwipe: ((ReadingChartView.SwipeDirection) -> Void)?
 
     // MARK: - Initialization
 
@@ -61,10 +62,10 @@ final class ReadingStatisticsView: UIView {
         guard let chartData = chartData else { return }
 
         if let hostingController = hostingController {
-            hostingController.rootView = ReadingChartView(chartData: chartData, onPeriodChanged: onPeriodChanged)
+            hostingController.rootView = ReadingChartView(chartData: chartData, onPeriodChanged: onPeriodChanged, onSwipe: onSwipe)
             hostingController.view.layoutIfNeeded()
         } else {
-            let chartView = ReadingChartView(chartData: chartData, onPeriodChanged: onPeriodChanged)
+            let chartView = ReadingChartView(chartData: chartData, onPeriodChanged: onPeriodChanged, onSwipe: onSwipe)
             let hosting = UIHostingController(rootView: chartView)
             hosting.view.backgroundColor = .clear
             self.hostingController = hosting

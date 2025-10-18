@@ -11,12 +11,19 @@ import Charts
 struct ReadingChartView: View {
     let chartData: ReadingChartData
     let onPeriodChanged: ((ReadingStatisticsPeriod) -> Void)?
+    let onSwipe: ((SwipeDirection) -> Void)?
 
     @State private var selectedPeriod: ReadingStatisticsPeriod
 
-    init(chartData: ReadingChartData, onPeriodChanged: ((ReadingStatisticsPeriod) -> Void)? = nil) {
+    enum SwipeDirection {
+        case left  // 다음 기간
+        case right // 이전 기간
+    }
+
+    init(chartData: ReadingChartData, onPeriodChanged: ((ReadingStatisticsPeriod) -> Void)? = nil, onSwipe: ((SwipeDirection) -> Void)? = nil) {
         self.chartData = chartData
         self.onPeriodChanged = onPeriodChanged
+        self.onSwipe = onSwipe
         _selectedPeriod = State(initialValue: chartData.period)
     }
 
@@ -25,9 +32,21 @@ struct ReadingChartView: View {
             if chartData.isEmpty {
                 emptyStateView
             } else {
-                segmentControl
                 headerView
                 chartView
+                    .gesture(
+                        DragGesture(minimumDistance: 30)
+                            .onEnded { value in
+                                if value.translation.width < -50 {
+                                    // 왼쪽으로 스와이프 = 다음 기간
+                                    onSwipe?(.left)
+                                } else if value.translation.width > 50 {
+                                    // 오른쪽으로 스와이프 = 이전 기간
+                                    onSwipe?(.right)
+                                }
+                            }
+                    )
+                segmentControl
             }
         }
         .padding(.vertical, 16)
@@ -36,8 +55,8 @@ struct ReadingChartView: View {
     }
 
     private var segmentControl: some View {
-        HStack(spacing: 8) {
-            ForEach([ReadingStatisticsPeriod.total, .today, .week, .month], id: \.self) { period in
+        HStack(spacing: 0) {
+            ForEach([ReadingStatisticsPeriod.today, .week, .month, .year], id: \.self) { period in
                 Button(action: {
                     selectedPeriod = period
                     onPeriodChanged?(period)
@@ -45,30 +64,37 @@ struct ReadingChartView: View {
                     Text(periodTitle(for: period))
                         .font(.system(size: 14, weight: selectedPeriod == period ? .semibold : .regular))
                         .foregroundColor(selectedPeriod == period ? .white : Color(uiColor: UIColor(named: "ForestGreen") ?? .green))
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 6)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 8)
                         .background(
                             selectedPeriod == period
                                 ? Color(uiColor: UIColor(named: "ForestGreen") ?? .green)
                                 : Color.clear
                         )
-                        .cornerRadius(16)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 16)
-                                .stroke(Color(uiColor: UIColor(named: "ForestGreen") ?? .green), lineWidth: 1)
-                        )
                 }
                 .buttonStyle(PlainButtonStyle())
+
+                if period != .year {
+                    Divider()
+                        .frame(height: 20)
+                        .background(Color(uiColor: UIColor(named: "ForestGreen")?.withAlphaComponent(0.3) ?? .gray))
+                }
             }
         }
+        .background(
+            RoundedRectangle(cornerRadius: 20)
+                .stroke(Color(uiColor: UIColor(named: "ForestGreen") ?? .green), lineWidth: 1)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 20))
+        .frame(maxWidth: 280)
     }
 
     private func periodTitle(for period: ReadingStatisticsPeriod) -> String {
         switch period {
-        case .total: return "전체"
         case .today: return "오늘"
         case .week: return "이번 주"
         case .month: return "이번 달"
+        case .year: return "올해"
         }
     }
 
@@ -102,12 +128,14 @@ struct ReadingChartView: View {
 
     @ViewBuilder
     private var chartView: some View {
-        if chartData.period == .total || chartData.period == .today {
+        if chartData.period == .today {
             hourlyChart
         } else if chartData.period == .week {
             weeklyChart
-        } else {
+        } else if chartData.period == .month {
             monthlyChart
+        } else {
+            yearlyChart
         }
     }
 
@@ -246,6 +274,41 @@ struct ReadingChartView: View {
         let now = Date()
         let range = calendar.range(of: .day, in: .month, for: now)
         return range?.count ?? 30
+    }
+
+    private var yearlyChart: some View {
+        let monthSymbols = ["1월", "2월", "3월", "4월", "5월", "6월", "7월", "8월", "9월", "10월", "11월", "12월"]
+
+        return Chart {
+            ForEach(1...12, id: \.self) { month in
+                createMonthBar(for: month, label: monthSymbols[month - 1])
+            }
+        }
+        .chartYAxis {
+            AxisMarks(position: .leading) { value in
+                AxisGridLine()
+                AxisValueLabel()
+            }
+        }
+        .frame(height: 140)
+    }
+
+    @ChartContentBuilder
+    private func createMonthBar(for month: Int, label: String) -> some ChartContent {
+        if let dataPoint = chartData.dataPoints.first(where: { Int($0.id) == month }) {
+            BarMark(
+                x: .value("월", label),
+                y: .value("분", dataPoint.durationMinutes)
+            )
+            .foregroundStyle(Color(uiColor: UIColor(named: "ForestGreen") ?? .green))
+            .cornerRadius(4)
+        } else {
+            BarMark(
+                x: .value("월", label),
+                y: .value("분", 0)
+            )
+            .foregroundStyle(Color.clear)
+        }
     }
 }
 

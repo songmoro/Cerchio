@@ -251,12 +251,14 @@ final class BookDetailService {
                 let chartData: ReadingChartData
 
                 switch period {
-                case .total, .today:
+                case .today:
                     chartData = self.createHourlyChartData(from: Array(sessions), period: period, calendar: calendar, now: now)
                 case .week:
                     chartData = self.createWeeklyChartData(from: Array(sessions), calendar: calendar, now: now)
                 case .month:
                     chartData = self.createMonthlyChartData(from: Array(sessions), calendar: calendar, now: now)
+                case .year:
+                    chartData = self.createYearlyChartData(from: Array(sessions), calendar: calendar, now: now)
                 }
 
                 observer.onNext(chartData)
@@ -407,6 +409,44 @@ final class BookDetailService {
             totalMinutes: totalMinutes,
             sessionCount: filteredSessions.count,
             dateRange: "이번 달"
+        )
+    }
+
+    private func createYearlyChartData(from sessions: [RealmReadingSession], calendar: Calendar, now: Date) -> ReadingChartData {
+        let yearStart = calendar.date(from: calendar.dateComponents([.year], from: now))!
+        let yearEnd = calendar.date(byAdding: .year, value: 1, to: yearStart)!
+
+        let filteredSessions = sessions.filter { $0.startTime >= yearStart && $0.startTime < yearEnd }
+
+        var monthlyMinutes: [Int: Int] = [:]
+
+        for session in filteredSessions {
+            let month = calendar.component(.month, from: session.startTime)
+            let minutes = session.durationSeconds / 60
+            monthlyMinutes[month, default: 0] += minutes
+        }
+
+        var dataPoints: [ReadingChartData.DataPoint] = []
+
+        for month in 1...12 {
+            if let minutes = monthlyMinutes[month], minutes > 0 {
+                dataPoints.append(ReadingChartData.DataPoint(
+                    id: "\(month)",
+                    xValue: "\(month)월",
+                    startMinute: 0,
+                    endMinute: minutes
+                ))
+            }
+        }
+
+        let totalMinutes = filteredSessions.reduce(0) { $0 + ($1.durationSeconds / 60) }
+
+        return ReadingChartData(
+            period: .year,
+            dataPoints: dataPoints,
+            totalMinutes: totalMinutes,
+            sessionCount: filteredSessions.count,
+            dateRange: "올해"
         )
     }
 

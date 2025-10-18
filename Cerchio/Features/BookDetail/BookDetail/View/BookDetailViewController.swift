@@ -39,7 +39,8 @@ final class BookDetailViewController: FullScreenNestedScrollViewController, View
     private var favoriteButton: UIBarButtonItem?
 
     // MARK: - Reading Statistics
-    private var currentStatisticsPeriod: ReadingStatisticsPeriod = .total
+    private var currentStatisticsPeriod: ReadingStatisticsPeriod = .today
+    private var currentPeriodDate: Date = Date()
 
     // MARK: - Section & Item Types
     nonisolated enum Section: Int, CaseIterable, Hashable {
@@ -377,7 +378,7 @@ final class BookDetailViewController: FullScreenNestedScrollViewController, View
                 print("📌 BookDetail first set, loading all data")
                 print("📌 Current tags in bookDetail: \(bookDetail.tags)")
                 self?.reactor?.action.onNext(.loadReadingStatistics)
-                self?.reactor?.action.onNext(.loadReadingChartData(.total))
+                self?.reactor?.action.onNext(.loadReadingChartData(.today))
                 self?.reactor?.action.onNext(.loadPhotos)
                 self?.reactor?.action.onNext(.loadQuotes)
                 self?.reactor?.action.onNext(.loadTags)
@@ -486,9 +487,15 @@ final class BookDetailViewController: FullScreenNestedScrollViewController, View
             case .readingStatistics(_):
                 let cell: ReadingStatisticsCell = collectionView.dequeueReusableCell(ReadingStatisticsCell.self, for: indexPath)
                 if let chartData = self?.reactor?.currentState.readingChartData {
-                    cell.configure(with: chartData) { [weak self] period in
-                        self?.handlePeriodChange(period)
-                    }
+                    cell.configure(
+                        with: chartData,
+                        onPeriodChanged: { [weak self] period in
+                            self?.handlePeriodChange(period)
+                        },
+                        onSwipe: { [weak self] direction in
+                            self?.handleSwipe(direction)
+                        }
+                    )
                 }
                 return cell
 
@@ -712,9 +719,15 @@ final class BookDetailViewController: FullScreenNestedScrollViewController, View
         let indexPath = IndexPath(item: 0, section: sectionIndex)
 
         if let cell = collectionView.cellForItem(at: indexPath) as? ReadingStatisticsCell {
-            cell.configure(with: chartData) { [weak self] period in
-                self?.handlePeriodChange(period)
-            }
+            cell.configure(
+                with: chartData,
+                onPeriodChanged: { [weak self] period in
+                    self?.handlePeriodChange(period)
+                },
+                onSwipe: { [weak self] direction in
+                    self?.handleSwipe(direction)
+                }
+            )
         } else {
             updateReadingStatisticsUI(reactor?.currentState.readingStatistics)
         }
@@ -955,7 +968,44 @@ final class BookDetailViewController: FullScreenNestedScrollViewController, View
 
     private func handlePeriodChange(_ period: ReadingStatisticsPeriod) {
         currentStatisticsPeriod = period
+        currentPeriodDate = Date()
         reactor?.action.onNext(.loadReadingChartData(period))
+    }
+
+    private func handleSwipe(_ direction: ReadingChartView.SwipeDirection) {
+        let calendar = Calendar.current
+        let newDate: Date
+
+        switch currentStatisticsPeriod {
+        case .today:
+            // 하루 단위
+            newDate = direction == .left
+                ? calendar.date(byAdding: .day, value: 1, to: currentPeriodDate) ?? currentPeriodDate
+                : calendar.date(byAdding: .day, value: -1, to: currentPeriodDate) ?? currentPeriodDate
+
+        case .week:
+            // 주 단위
+            newDate = direction == .left
+                ? calendar.date(byAdding: .weekOfYear, value: 1, to: currentPeriodDate) ?? currentPeriodDate
+                : calendar.date(byAdding: .weekOfYear, value: -1, to: currentPeriodDate) ?? currentPeriodDate
+
+        case .month:
+            // 월 단위
+            newDate = direction == .left
+                ? calendar.date(byAdding: .month, value: 1, to: currentPeriodDate) ?? currentPeriodDate
+                : calendar.date(byAdding: .month, value: -1, to: currentPeriodDate) ?? currentPeriodDate
+
+        case .year:
+            // 년 단위
+            newDate = direction == .left
+                ? calendar.date(byAdding: .year, value: 1, to: currentPeriodDate) ?? currentPeriodDate
+                : calendar.date(byAdding: .year, value: -1, to: currentPeriodDate) ?? currentPeriodDate
+        }
+
+        currentPeriodDate = newDate
+        // TODO: 날짜를 포함한 차트 데이터 로드 로직 구현 필요
+        // reactor?.action.onNext(.loadReadingChartData(period: currentStatisticsPeriod, date: newDate))
+        reactor?.action.onNext(.loadReadingChartData(currentStatisticsPeriod))
     }
 }
 

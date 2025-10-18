@@ -37,8 +37,9 @@ final class ReadingStatisticsCell: UICollectionViewCell, IsIdentifiable {
 
     // MARK: - Configuration
 
-    func configure(with chartData: ReadingChartData, onPeriodChanged: ((ReadingStatisticsPeriod) -> Void)? = nil) {
+    func configure(with chartData: ReadingChartData, onPeriodChanged: ((ReadingStatisticsPeriod) -> Void)? = nil, onSwipe: ((ReadingChartView.SwipeDirection) -> Void)? = nil) {
         statisticsView.onPeriodChanged = onPeriodChanged
+        statisticsView.onSwipe = onSwipe
         statisticsView.configure(with: chartData)
     }
 

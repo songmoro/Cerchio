@@ -90,7 +90,7 @@ final class ReadingRecordsSectionHeader: UICollectionReusableView, IsIdentifiabl
     }
 
     @objc private func segmentChanged() {
-        let period = ReadingStatisticsPeriod(rawValue: segmentedControl.selectedSegmentIndex) ?? .total
+        let period = ReadingStatisticsPeriod(rawValue: segmentedControl.selectedSegmentIndex) ?? .today
         onPeriodChanged?(period)
     }
 
