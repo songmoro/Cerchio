@@ -25,6 +25,7 @@ open class FullScreenNestedScrollViewController: NestedScrollViewController {
     // MARK: - Private Properties
 
     private var navigationBarBackgroundView: UIView!
+    private var logoBackgroundView: UIImageView!
 
     // MARK: - Lifecycle
 
@@ -39,6 +40,9 @@ open class FullScreenNestedScrollViewController: NestedScrollViewController {
 
         // Setup navigation bar background view
         setupNavigationBarBackgroundView()
+
+        // Setup logo background view for overscroll
+        setupLogoBackgroundView()
     }
 
     open override func viewWillAppear(_ animated: Bool) {
@@ -73,6 +77,32 @@ open class FullScreenNestedScrollViewController: NestedScrollViewController {
             make.top.leading.trailing.equalToSuperview()
             make.bottom.equalTo(view.safeAreaLayoutGuide.snp.top)
         }
+    }
+
+    private func setupLogoBackgroundView() {
+//        logoBackgroundView = UIImageView()
+//        logoBackgroundView.image = UIImage(named: "ClearLogo")
+//        logoBackgroundView.contentMode = .scaleAspectFit
+//        logoBackgroundView.alpha = 0.15
+//
+//        mainScrollView.backgroundColor = .clear
+//        view.insertSubview(logoBackgroundView, at: 0)
+//
+//        // Get reference to infoView from parent class
+//        guard let infoView = mainScrollView.subviews.first(where: { $0 is UIStackView })?.subviews.first else {
+//            return
+//        }
+
+        // Logo stretches between status bar top and info view top
+        // Size is 1:1 aspect ratio based on available height
+//        logoBackgroundView.snp.makeConstraints { make in
+//            make.centerX.equalToSuperview()
+//            make.size.equalTo(48)
+//            make.bottom.equalTo(infoView.snp.top).offset(-12).priority(.low)
+//            make.top.equalTo(view.safeAreaLayoutGuide.snp.top)
+//            make.bottom.equalTo(infoView.snp.top).priority(.low)
+//            make.width.equalTo(logoBackgroundView.snp.height) // 1:1 aspect ratio
+//        }
     }
 
     // MARK: - Override: Sticky State Change

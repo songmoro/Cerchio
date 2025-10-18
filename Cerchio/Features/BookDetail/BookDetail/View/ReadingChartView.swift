@@ -148,14 +148,16 @@ struct ReadingChartView: View {
         .chartXAxis {
             AxisMarks(values: [0, 6, 12, 18]) { value in
                 if let hour = value.as(Int.self) {
-                    AxisValueLabel(formatHourLabel(hour))
+                    AxisValueLabel("\(hour)시")
                 }
             }
         }
         .chartYAxis {
             AxisMarks(position: .leading, values: [0, 20, 40, 60]) { value in
                 AxisGridLine()
-                AxisValueLabel("\(value.as(Int.self) ?? 0)")
+                if let minutes = value.as(Int.self) {
+                    AxisValueLabel("\(minutes)분")
+                }
             }
         }
         .chartYScale(domain: 0...60)
@@ -181,16 +183,6 @@ struct ReadingChartView: View {
         }
     }
 
-    private func formatHourLabel(_ hour: Int) -> String {
-        switch hour {
-        case 0: return "12 AM"
-        case 6: return "6"
-        case 12: return "12 PM"
-        case 18: return "6"
-        default: return ""
-        }
-    }
-
     private var weeklyChart: some View {
         let weekdaySymbols = ["일", "월", "화", "수", "목", "금", "토"]
 
@@ -202,7 +194,9 @@ struct ReadingChartView: View {
         .chartYAxis {
             AxisMarks(position: .leading) { value in
                 AxisGridLine()
-                AxisValueLabel()
+                if let minutes = value.as(Int.self) {
+                    AxisValueLabel("\(minutes)분")
+                }
             }
         }
         .frame(height: 140)
@@ -238,14 +232,16 @@ struct ReadingChartView: View {
         .chartXAxis {
             AxisMarks(values: labelDays) { value in
                 if let day = value.as(Int.self) {
-                    AxisValueLabel(String(day))
+                    AxisValueLabel("\(day)일")
                 }
             }
         }
         .chartYAxis {
             AxisMarks(position: .leading) { value in
                 AxisGridLine()
-                AxisValueLabel()
+                if let minutes = value.as(Int.self) {
+                    AxisValueLabel("\(minutes)분")
+                }
             }
         }
         .frame(height: 140)
@@ -287,7 +283,9 @@ struct ReadingChartView: View {
         .chartYAxis {
             AxisMarks(position: .leading) { value in
                 AxisGridLine()
-                AxisValueLabel()
+                if let minutes = value.as(Int.self) {
+                    AxisValueLabel("\(minutes)분")
+                }
             }
         }
         .frame(height: 140)

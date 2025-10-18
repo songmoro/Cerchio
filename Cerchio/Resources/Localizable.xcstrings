@@ -1,7 +1,7 @@
 {
   "sourceLanguage" : "ko",
   "strings" : {
-    "%lld" : {
+    "%lld분" : {
 
     },
     "%lld분 · %lld회" : {
@@ -13,6 +13,12 @@
           }
         }
       }
+    },
+    "%lld시" : {
+
+    },
+    "%lld일" : {
+
     },
     "action.add" : {
       "comment" : "Add button",
