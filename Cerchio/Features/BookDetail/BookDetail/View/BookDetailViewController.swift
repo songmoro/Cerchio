@@ -509,6 +509,9 @@ final class BookDetailViewController: FullScreenNestedScrollViewController, View
             case .savedQuote(let quote, let pageNumber, let date):
                 let cell: SavedQuoteCell = collectionView.dequeueReusableCell(SavedQuoteCell.self, for: indexPath)
                 cell.configure(with: quote, pageNumber: pageNumber, date: date)
+                cell.onActionButtonTapped = { [weak self] in
+                    self?.showQuoteActionBottomSheet(for: indexPath, quote: quote, pageNumber: pageNumber, date: date)
+                }
                 self?.setupQuoteContextMenu(for: cell, quote: quote, pageNumber: pageNumber, date: date)
                 return cell
 
@@ -1017,9 +1020,6 @@ extension BookDetailViewController: UICollectionViewDelegate {
         switch item {
         case .photoItem(let photoId, let image):
             showPhotoActionBottomSheet(for: indexPath, photoId: photoId, image: image)
-
-        case .savedQuote(let quote, let pageNumber, let date):
-            showQuoteActionBottomSheet(for: indexPath, quote: quote, pageNumber: pageNumber, date: date)
 
         case .settingsItem(let type):
             handleSettingsItemTap(type)
