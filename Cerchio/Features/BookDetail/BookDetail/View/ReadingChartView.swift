@@ -112,21 +112,17 @@ struct ReadingChartView: View {
 
     private var headerView: some View {
         HStack(alignment: .top, spacing: 8) {
-            VStack(alignment: .leading, spacing: 4) {
-                Text("\(chartData.totalMinutes)분")
-                    .font(.system(size: 24, weight: .bold))
+            VStack(alignment: .leading, spacing: 2) {
+                Text("\(chartData.totalMinutes)분 · \(chartData.sessionCount)회")
+                    .font(.system(size: 13, weight: .medium))
                     .foregroundColor(Color(uiColor: UIColor(named: "ForestGreen") ?? .green))
 
-                Text("\(chartData.sessionCount)회 독서")
-                    .font(.system(size: 14))
-                    .foregroundColor(Color(uiColor: UIColor(named: "ForestGreen")?.withAlphaComponent(0.7) ?? .gray))
+                Text(chartData.dateRange)
+                    .font(.system(size: 11))
+                    .foregroundColor(Color(uiColor: .secondaryLabel))
             }
 
             Spacer()
-
-            Text(chartData.dateRange)
-                .font(.system(size: 14))
-                .foregroundColor(Color(uiColor: .secondaryLabel))
         }
     }
 

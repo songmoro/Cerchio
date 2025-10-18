@@ -4,11 +4,15 @@
     "%lld" : {
 
     },
-    "%lld분" : {
-
-    },
-    "%lld회 독서" : {
-
+    "%lld분 · %lld회" : {
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld분 · %2$lld회"
+          }
+        }
+      }
     },
     "action.add" : {
       "comment" : "Add button",
