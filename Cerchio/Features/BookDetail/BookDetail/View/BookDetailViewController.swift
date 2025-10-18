@@ -43,6 +43,9 @@ final class BookDetailViewController: FullScreenNestedScrollViewController, View
     private var currentStatisticsPeriod: ReadingStatisticsPeriod = .today
     private var currentPeriodDate: Date = Date()
 
+    // MARK: - Animation Control
+    private var isInitialLoad = true
+
     // MARK: - Section & Item Types
     nonisolated enum Section: Int, CaseIterable, Hashable {
         case readingRecords = 0
@@ -681,7 +684,9 @@ final class BookDetailViewController: FullScreenNestedScrollViewController, View
             snapshot.appendItems(settingsItems, toSection: .settings)
         }
 
-        dataSource.apply(snapshot, animatingDifferences: true)
+        let shouldAnimate = !isInitialLoad
+        dataSource.apply(snapshot, animatingDifferences: shouldAnimate)
+        isInitialLoad = false
     }
 
     private func updateReadingStatisticsUI(_ statistics: ReadingStatistics?) {
@@ -701,7 +706,8 @@ final class BookDetailViewController: FullScreenNestedScrollViewController, View
             snapshot.appendItems([.emptyReadingRecords], toSection: .readingRecords)
         }
 
-        dataSource.apply(snapshot, animatingDifferences: true)
+        let shouldAnimate = !isInitialLoad
+        dataSource.apply(snapshot, animatingDifferences: shouldAnimate)
     }
 
     private func updatePhotosUI(_ photos: [BookDetailReactor.PhotoItem]) {
@@ -722,7 +728,8 @@ final class BookDetailViewController: FullScreenNestedScrollViewController, View
             snapshot.appendItems(photoItems, toSection: .photoPages)
         }
 
-        dataSource.apply(snapshot, animatingDifferences: true)
+        let shouldAnimate = !isInitialLoad
+        dataSource.apply(snapshot, animatingDifferences: shouldAnimate)
     }
 
     private func updateQuotesUI(_ quotes: [BookDetailReactor.QuoteItem]) {
@@ -742,7 +749,8 @@ final class BookDetailViewController: FullScreenNestedScrollViewController, View
             snapshot.appendItems(quoteItems, toSection: .savedQuotes)
         }
 
-        dataSource.apply(snapshot, animatingDifferences: true)
+        let shouldAnimate = !isInitialLoad
+        dataSource.apply(snapshot, animatingDifferences: shouldAnimate)
     }
 
     private func updateTagsUI(_ tags: [BookDetailReactor.TagItem]) {

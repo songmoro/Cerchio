@@ -74,6 +74,14 @@ final class LibraryViewController: BaseViewController<LibraryReactor> {
 
         navigationController?.navigationBar.tintColor = .forestGreen
 
+        // Remove navigation bar bottom line
+        let appearance = UINavigationBarAppearance()
+        appearance.configureWithOpaqueBackground()
+        appearance.backgroundColor = .systemBackground
+        appearance.shadowColor = nil // Remove bottom line
+        navigationController?.navigationBar.standardAppearance = appearance
+        navigationController?.navigationBar.scrollEdgeAppearance = appearance
+
         // 편집 모드였다면 기본 모드로 복귀
         if isEditMode {
             exitEditMode()
