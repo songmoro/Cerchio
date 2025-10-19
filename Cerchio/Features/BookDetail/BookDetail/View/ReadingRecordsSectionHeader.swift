@@ -86,10 +86,12 @@ final class ReadingRecordsSectionHeader: UICollectionReusableView, IsIdentifiabl
 
     // MARK: - Actions
     @objc private func viewAllButtonTapped() {
+        HapticFeedbackManager.shared.impact()
         onViewAllTapped?()
     }
 
     @objc private func segmentChanged() {
+        HapticFeedbackManager.shared.selection()
         let period = ReadingStatisticsPeriod(rawValue: segmentedControl.selectedSegmentIndex) ?? .today
         onPeriodChanged?(period)
     }

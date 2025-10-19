@@ -50,6 +50,10 @@ class CircularMenuButton: UIButton {
     }
 
     func setHighlighted(_ highlighted: Bool) {
+        if highlighted {
+            HapticFeedbackManager.shared.selection()
+        }
+
         UIView.animate(withDuration: 0.15) {
             var config = self.baseConfiguration!
             config.image = self.menuItem?.image

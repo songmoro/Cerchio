@@ -169,6 +169,7 @@ final class EditBookInfoViewController: BaseViewController<EditBookInfoReactor> 
     override func bind(reactor: EditBookInfoReactor) {
         // Action
         navigationItem.leftBarButtonItem?.rx.tap
+            .do(onNext: { HapticFeedbackManager.shared.impact() })
             .subscribe(onNext: { [weak self] in
                 self?.onDismiss?(false)
                 self?.dismiss(animated: true)
@@ -176,6 +177,7 @@ final class EditBookInfoViewController: BaseViewController<EditBookInfoReactor> 
             .disposed(by: disposeBag)
 
         navigationItem.rightBarButtonItem?.rx.tap
+            .do(onNext: { HapticFeedbackManager.shared.impact() })
             .map { Reactor.Action.save }
             .bind(to: reactor.action)
             .disposed(by: disposeBag)
@@ -193,6 +195,7 @@ final class EditBookInfoViewController: BaseViewController<EditBookInfoReactor> 
             .disposed(by: disposeBag)
 
         resetButton.rx.tap
+            .do(onNext: { HapticFeedbackManager.shared.impact() })
             .subscribe(onNext: { [weak self] in
                 self?.showResetConfirmation()
             })
@@ -248,8 +251,11 @@ final class EditBookInfoViewController: BaseViewController<EditBookInfoReactor> 
             preferredStyle: .alert
         )
 
-        alert.addAction(UIAlertAction(title: String(localized: .`action.cancel`), style: .cancel))
+        alert.addAction(UIAlertAction(title: String(localized: .`action.cancel`), style: .cancel) { _ in
+            HapticFeedbackManager.shared.impact()
+        })
         alert.addAction(UIAlertAction(title: String(localized: .`edit_book.reset`), style: .destructive) { [weak self] _ in
+            HapticFeedbackManager.shared.impact()
             self?.reactor?.action.onNext(.reset)
         })
 

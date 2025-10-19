@@ -26,7 +26,7 @@ final class ReadingSessionListViewController: ListViewBaseViewController<Reading
 
     private let emptyLabel: UILabel = {
         let label = UILabel()
-        label.text = "아직 독서 기록이 없습니다"
+        label.text = String(localized: .emptyStateBookDetailNoReadingRecords)
         label.font = UIFont.systemFont(ofSize: 15)
         label.textColor = UIColor(named: "ForestGreen")?.withAlphaComponent(0.6)
         label.textAlignment = .center
@@ -39,7 +39,7 @@ final class ReadingSessionListViewController: ListViewBaseViewController<Reading
 
     // MARK: - Override Properties
     override var viewTitle: String {
-        return "독서 기록"
+        return String(localized: .bookDetailReadingRecords)
     }
 
     // MARK: - Lifecycle
@@ -51,6 +51,7 @@ final class ReadingSessionListViewController: ListViewBaseViewController<Reading
 
     // MARK: - Override Methods
     override func addButtonTapped() {
+        HapticFeedbackManager.shared.impact()
         onAddRecordRequested?()
     }
 
@@ -111,6 +112,7 @@ final class ReadingSessionListViewController: ListViewBaseViewController<Reading
             .subscribe(onNext: { [weak self] indexPath in
                 guard let self = self,
                       let reactor = self.reactor else { return }
+                HapticFeedbackManager.shared.impact()
                 let session = reactor.currentState.sessions[indexPath.row]
                 self.reactor?.action.onNext(.deleteSession(session.id))
             })
@@ -127,13 +129,14 @@ final class ReadingSessionListViewController: ListViewBaseViewController<Reading
 
     private func showDeleteConfirmation(for sessionId: String) {
         let alert = UIAlertController(
-            title: "독서 기록 삭제",
-            message: "이 독서 기록을 삭제하시겠습니까?",
+            title: String(localized: .alertDeleteReadingRecordTitle),
+            message: String(localized: .alertDeleteReadingRecordMessage),
             preferredStyle: .alert
         )
 
-        alert.addAction(UIAlertAction(title: "취소", style: .cancel))
-        alert.addAction(UIAlertAction(title: "삭제", style: .destructive) { [weak self] _ in
+        alert.addAction(UIAlertAction(title: String(localized: .actionCancel), style: .cancel))
+        alert.addAction(UIAlertAction(title: String(localized: .actionDelete), style: .destructive) { [weak self] _ in
+            HapticFeedbackManager.shared.impact()
             self?.reactor?.action.onNext(.deleteSession(sessionId))
         })
 
@@ -261,6 +264,7 @@ final class ReadingSessionCell: UITableViewCell {
     // MARK: - Actions
 
     @objc private func deleteButtonTapped() {
+        HapticFeedbackManager.shared.impact()
         onDeleteTapped?()
     }
 }

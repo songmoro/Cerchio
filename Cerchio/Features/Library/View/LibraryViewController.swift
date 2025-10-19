@@ -97,6 +97,7 @@ final class LibraryViewController: BaseViewController<LibraryReactor> {
 
         // Rx 바인딩
         editButton.rx.tap
+            .do(onNext: { HapticFeedbackManager.shared.impact() })
             .subscribe(onNext: { [weak self] in
                 self?.editButtonTapped()
             })
@@ -108,6 +109,7 @@ final class LibraryViewController: BaseViewController<LibraryReactor> {
 
         // Rx 바인딩
         filterButton.rx.tap
+            .do(onNext: { HapticFeedbackManager.shared.impact() })
             .subscribe(onNext: { [weak self] in
                 self?.filterButtonTapped()
             })
@@ -121,18 +123,20 @@ final class LibraryViewController: BaseViewController<LibraryReactor> {
             action: nil
         )
         cancelButton.rx.tap
+            .do(onNext: { HapticFeedbackManager.shared.impact() })
             .subscribe(onNext: { [weak self] in
                 self?.cancelButtonTapped()
             })
             .disposed(by: disposeBag)
 
         selectAllButton = UIBarButtonItem(
-            title: "전체 선택",
+            title: String(localized: .actionSelectAll),
             style: .plain,
             target: nil,
             action: nil
         )
         selectAllButton.rx.tap
+            .do(onNext: { HapticFeedbackManager.shared.impact() })
             .subscribe(onNext: { [weak self] in
                 self?.selectAllButtonTapped()
             })
@@ -146,6 +150,7 @@ final class LibraryViewController: BaseViewController<LibraryReactor> {
         )
         deleteButton.tintColor = .systemRed
         deleteButton.rx.tap
+            .do(onNext: { HapticFeedbackManager.shared.impact() })
             .subscribe(onNext: { [weak self] in
                 self?.deleteButtonTapped()
             })
@@ -378,23 +383,28 @@ final class LibraryViewController: BaseViewController<LibraryReactor> {
 
         let menuItems: [CircularMenuItem] = [
             // 1. 사진 찍기
-            CircularMenuItem(name: "사진", image: UIImage(systemName: "camera")) { [weak self] in
+            CircularMenuItem(name: String(localized: .circularMenuLibraryTakePhoto), image: UIImage(systemName: "camera")) { [weak self] in
+                HapticFeedbackManager.shared.selection()
                 self?.capturePhoto(for: book)
             },
             // 2. 문장 저장
-            CircularMenuItem(name: "문장", image: UIImage(systemName: "quote.bubble")) { [weak self] in
+            CircularMenuItem(name: String(localized: .circularMenuBookDetailSaveQuote), image: UIImage(systemName: "quote.bubble")) { [weak self] in
+                HapticFeedbackManager.shared.selection()
                 self?.saveQuote(for: book)
             },
             // 3. 즐겨찾기
-            CircularMenuItem(name: isFavorite ? "즐겨찾기 해제" : "즐겨찾기", image: UIImage(systemName: isFavorite ? "heart.fill" : "heart")) { [weak self] in
+            CircularMenuItem(name: isFavorite ? String(localized: .circularMenuBookDetailRemoveFavorite) : String(localized: .circularMenuBookDetailAddFavorite), image: UIImage(systemName: isFavorite ? "heart.fill" : "heart")) { [weak self] in
+                HapticFeedbackManager.shared.selection()
                 self?.toggleFavorite(book)
             },
             // 4. 삭제
-            CircularMenuItem(name: "삭제", image: UIImage(systemName: "trash")) { [weak self] in
+            CircularMenuItem(name: String(localized: .circularMenuCommonDelete), image: UIImage(systemName: "trash")) { [weak self] in
+                HapticFeedbackManager.shared.selection()
                 self?.deleteBook(book, at: indexPath)
             },
             // 5. 수정 (도서 정보 수정)
-            CircularMenuItem(name: "수정", image: UIImage(systemName: "pencil")) { [weak self] in
+            CircularMenuItem(name: String(localized: .circularMenuCommonEdit), image: UIImage(systemName: "pencil")) { [weak self] in
+                HapticFeedbackManager.shared.selection()
                 self?.editBookInfo(for: book)
             }
         ]
@@ -462,14 +472,17 @@ final class LibraryViewController: BaseViewController<LibraryReactor> {
     }
 
     private func showDeleteConfirmation(for book: Book, at indexPath: IndexPath) {
+        let messageFormat = NSLocalizedString("alert.library.delete_book_single.message_format", comment: "")
+        let message = String(format: messageFormat, book.title)
+
         let alert = UIAlertController(
-            title: "도서 삭제",
-            message: "'\(book.title)'을(를) 삭제하시겠습니까?",
+            title: String(localized: .alertDeleteBookTitle),
+            message: message,
             preferredStyle: .alert
         )
 
-        alert.addAction(UIAlertAction(title: "취소", style: .cancel))
-        alert.addAction(UIAlertAction(title: "삭제", style: .destructive) { [weak self] _ in
+        alert.addAction(UIAlertAction(title: String(localized: .actionCancel), style: .cancel))
+        alert.addAction(UIAlertAction(title: String(localized: .actionDelete), style: .destructive) { [weak self] _ in
             guard let self = self, let bookRepository = self.bookRepository else { return }
 
             bookRepository.deleteBooksByISBNs([book.isbn])
@@ -529,7 +542,7 @@ final class LibraryViewController: BaseViewController<LibraryReactor> {
         }
 
         if titleComponents.isEmpty {
-            tabBarController.navigationItem.title = "서재"
+            tabBarController.navigationItem.title = String(localized: .tabLibrary)
         } else {
             tabBarController.navigationItem.title = titleComponents.joined(separator: " ")
         }
@@ -594,8 +607,7 @@ final class LibraryViewController: BaseViewController<LibraryReactor> {
         selectedISBNs.removeAll()
 
         // 햅틱 피드백
-        let generator = UIImpactFeedbackGenerator(style: .medium)
-        generator.impactOccurred()
+        HapticFeedbackManager.shared.impact()
 
         updateNavigationBarForEditMode()
         updateCollectionViewForEditMode()
@@ -606,8 +618,7 @@ final class LibraryViewController: BaseViewController<LibraryReactor> {
         selectedISBNs.removeAll()
 
         // 햅틱 피드백
-        let generator = UIImpactFeedbackGenerator(style: .light)
-        generator.impactOccurred()
+        HapticFeedbackManager.shared.impact()
 
         updateNavigationBarForEditMode()
         updateCollectionViewForEditMode()
@@ -663,10 +674,6 @@ final class LibraryViewController: BaseViewController<LibraryReactor> {
             updateCellSelection(at: indexPath, isSelected: true)
         }
 
-        // 햅틱 피드백
-        let generator = UIImpactFeedbackGenerator(style: .light)
-        generator.impactOccurred()
-
         updateNavigationBarForEditMode()
     }
 
@@ -693,9 +700,12 @@ final class LibraryViewController: BaseViewController<LibraryReactor> {
     }
 
     private func deleteSelectedBooks() {
+        let messageFormat = NSLocalizedString("alert.library.delete_books_multiple.message_format", comment: "")
+        let message = String(format: messageFormat, selectedISBNs.count)
+
         let alert = UIAlertController(
             title: String(localized: .actionDelete),
-            message: "선택한 \(selectedISBNs.count)개의 책을 삭제하시겠습니까?",
+            message: message,
             preferredStyle: .alert
         )
 
@@ -750,11 +760,11 @@ final class LibraryViewController: BaseViewController<LibraryReactor> {
 
     private func showDeleteErrorAlert() {
         let alert = UIAlertController(
-            title: "삭제 실패",
-            message: "책 삭제에 실패했습니다. 다시 시도해주세요.",
+            title: String(localized: .alertLibraryDeleteFailedTitle),
+            message: String(localized: .alertLibraryDeleteFailedMessage),
             preferredStyle: .alert
         )
-        alert.addAction(UIAlertAction(title: "확인", style: .default))
+        alert.addAction(UIAlertAction(title: String(localized: .actionConfirm), style: .default))
         present(alert, animated: true)
     }
 }
@@ -763,22 +773,22 @@ final class LibraryViewController: BaseViewController<LibraryReactor> {
 extension LibraryViewController {
     private func showQuoteInputAlert(for book: Book) {
         let alert = UIAlertController(
-            title: "문장 저장",
-            message: "저장할 문장을 입력하세요",
+            title: String(localized: .quoteSaveTitle),
+            message: String(localized: .quoteSaveMessage),
             preferredStyle: .alert
         )
 
         alert.addTextField { textField in
-            textField.placeholder = "문장 입력"
+            textField.placeholder = String(localized: .quoteSavePlaceholderText)
         }
 
         alert.addTextField { textField in
-            textField.placeholder = "페이지 번호 (선택사항)"
+            textField.placeholder = String(localized: .quoteSavePageLabel)
             textField.keyboardType = .numberPad
         }
 
-        alert.addAction(UIAlertAction(title: "취소", style: .cancel))
-        alert.addAction(UIAlertAction(title: "저장", style: .default) { [weak self, weak alert] _ in
+        alert.addAction(UIAlertAction(title: String(localized: .actionCancel), style: .cancel))
+        alert.addAction(UIAlertAction(title: String(localized: .actionSave), style: .default) { [weak self, weak alert] _ in
             guard let quote = alert?.textFields?[0].text, !quote.isEmpty else { return }
             let pageNumberText = alert?.textFields?[1].text
             let pageNumber = pageNumberText.flatMap { Int($0) }

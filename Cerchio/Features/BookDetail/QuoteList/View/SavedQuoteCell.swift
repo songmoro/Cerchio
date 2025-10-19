@@ -111,6 +111,7 @@ final class SavedQuoteCell: UICollectionViewCell, IsIdentifiable {
 
     // MARK: - Actions
     @objc private func actionButtonTapped() {
+        HapticFeedbackManager.shared.impact()
         onActionButtonTapped?()
     }
 

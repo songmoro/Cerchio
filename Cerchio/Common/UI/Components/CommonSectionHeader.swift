@@ -97,6 +97,7 @@ final class CommonSectionHeader: UICollectionReusableView, IsIdentifiable {
 
     // MARK: - Actions
     @objc private func actionButtonTapped() {
+        HapticFeedbackManager.shared.impact()
         onActionTapped?()
     }
 

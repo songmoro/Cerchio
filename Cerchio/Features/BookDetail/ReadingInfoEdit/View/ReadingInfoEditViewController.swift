@@ -23,7 +23,7 @@ final class ReadingInfoEditViewController: UIViewController {
     // MARK: - UI Components
     private let pagesTextField: UITextField = {
         let field = UITextField()
-        field.placeholder = "페이지 수 입력"
+        field.placeholder = String(localized: .`reading_info_edit.pages_placeholder`)
         field.borderStyle = .roundedRect
         field.keyboardType = .numberPad
         field.font = .custom(weight: .regular, size: 16)
@@ -32,7 +32,7 @@ final class ReadingInfoEditViewController: UIViewController {
 
     private let pagesLabel: UILabel = {
         let label = UILabel()
-        label.text = "총 페이지"
+        label.text = String(localized: .`reading_info_edit.total_pages`)
         label.font = UIFont.custom(weight: .semiBold, size: 16)
         label.textColor = .label
         return label
@@ -40,24 +40,24 @@ final class ReadingInfoEditViewController: UIViewController {
 
     private let startDateLabel: UILabel = {
         let label = UILabel()
-        label.text = "읽기 시작한 날짜"
+        label.text = String(localized: .`reading_info_edit.start_date_label`)
         label.font = UIFont.custom(weight: .semiBold, size: 16)
         label.textColor = .label
         return label
     }()
 
-    private let startDatePicker: UIDatePicker = {
+    private lazy var startDatePicker: UIDatePicker = {
         let picker = UIDatePicker()
         picker.datePickerMode = .date
         picker.preferredDatePickerStyle = .inline
         picker.maximumDate = Date()
-        picker.addTarget(ReadingInfoEditViewController.self, action: #selector(startDateChanged), for: .valueChanged)
+        picker.addTarget(self, action: #selector(startDateChanged), for: .valueChanged)
         return picker
     }()
 
     private let clearStartDateButton: UIButton = {
         var config = UIButton.Configuration.plain()
-        config.title = "시작 날짜 초기화"
+        config.title = String(localized: .`reading_info_edit.clear_start_date`)
         config.baseForegroundColor = .systemRed
         config.contentInsets = .zero
 
@@ -76,29 +76,33 @@ final class ReadingInfoEditViewController: UIViewController {
 
     private let endDateLabel: UILabel = {
         let label = UILabel()
-        label.text = "읽기 완료한 날짜"
+        label.text = String(localized: .`reading_info_edit.end_date_label`)
         label.font = UIFont.custom(weight: .semiBold, size: 16)
         label.textColor = .label
         return label
     }()
 
     private let readingStatusSegmentedControl: UISegmentedControl = {
-        let control = UISegmentedControl(items: ["읽는 중", "완료"])
+        let control = UISegmentedControl(items: [
+            String(localized: .`reading_info_edit.reading_status.reading`),
+            String(localized: .`reading_info_edit.reading_status.completed`)
+        ])
         control.selectedSegmentIndex = 0
         return control
     }()
 
-    private let endDatePicker: UIDatePicker = {
+    private lazy var endDatePicker: UIDatePicker = {
         let picker = UIDatePicker()
         picker.datePickerMode = .date
         picker.preferredDatePickerStyle = .inline
         picker.maximumDate = Date()
+        picker.addTarget(self, action: #selector(endDateChanged), for: .valueChanged)
         return picker
     }()
 
     private let clearEndDateButton: UIButton = {
         var config = UIButton.Configuration.plain()
-        config.title = "완료 날짜 초기화"
+        config.title = String(localized: .`reading_info_edit.clear_end_date`)
         config.baseForegroundColor = .systemRed
         config.contentInsets = .zero
 
@@ -216,17 +220,17 @@ final class ReadingInfoEditViewController: UIViewController {
     }
 
     private func setupNavigationBar() {
-        title = "독서 정보 편집"
+        title = String(localized: .`reading_info_edit.title`)
 
         let cancelButton = UIBarButtonItem(
-            title: "취소",
+            title: String(localized: .`action.cancel`),
             style: .plain,
             target: self,
             action: #selector(cancelTapped)
         )
 
         let saveButton = UIBarButtonItem(
-            title: "저장",
+            title: String(localized: .`circular_menu.common.save`),
             style: .done,
             target: self,
             action: #selector(saveTapped)
@@ -243,6 +247,7 @@ final class ReadingInfoEditViewController: UIViewController {
     }
 
     @objc private func readingStatusChanged() {
+        HapticFeedbackManager.shared.selection()
         let isCompleted = readingStatusSegmentedControl.selectedSegmentIndex == 1
 
         // "읽는 중" 선택 시 날짜 선택 UI 숨기기, "완료" 선택 시 보이기
@@ -262,6 +267,7 @@ final class ReadingInfoEditViewController: UIViewController {
     }
 
     @objc private func startDateChanged() {
+        HapticFeedbackManager.shared.selection()
         // 시작 날짜가 변경되면 종료 날짜의 minimumDate를 업데이트
         isStartDateCleared = false
         endDatePicker.minimumDate = startDatePicker.date
@@ -270,6 +276,11 @@ final class ReadingInfoEditViewController: UIViewController {
         if endDatePicker.date < startDatePicker.date {
             endDatePicker.date = startDatePicker.date
         }
+    }
+
+    @objc private func endDateChanged() {
+        HapticFeedbackManager.shared.selection()
+        isEndDateCleared = false
     }
 
     // MARK: - Public Methods
@@ -304,10 +315,12 @@ final class ReadingInfoEditViewController: UIViewController {
 
     // MARK: - Actions
     @objc private func cancelTapped() {
+        HapticFeedbackManager.shared.impact()
         dismiss(animated: true)
     }
 
     @objc private func saveTapped() {
+        HapticFeedbackManager.shared.impact()
         let pagesText = pagesTextField.text?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
         let totalPages = Int(pagesText) ?? currentTotalPages
 
@@ -338,39 +351,41 @@ final class ReadingInfoEditViewController: UIViewController {
 
     private func showDateValidationAlert() {
         let alert = UIAlertController(
-            title: "날짜 오류",
-            message: "종료 날짜는 시작 날짜보다 앞설 수 없습니다.",
+            title: String(localized: .`reading_info_edit.date_error.title`),
+            message: String(localized: .`reading_info_edit.date_error.message`),
             preferredStyle: .alert
         )
-        alert.addAction(UIAlertAction(title: "확인", style: .default))
+        alert.addAction(UIAlertAction(title: String(localized: .`action.confirm`), style: .default))
         present(alert, animated: true)
     }
 
     @objc private func clearStartDateTapped() {
+        HapticFeedbackManager.shared.impact()
         isStartDateCleared = true
         startDatePicker.date = Date()
         // 시작 날짜를 초기화하면 종료 날짜 제약도 제거
         endDatePicker.minimumDate = nil
 
         let alert = UIAlertController(
-            title: "시작 날짜 초기화",
-            message: "읽기 시작 날짜가 초기화됩니다.",
+            title: String(localized: .`reading_info_edit.start_date_cleared.title`),
+            message: String(localized: .`reading_info_edit.start_date_cleared.message`),
             preferredStyle: .alert
         )
-        alert.addAction(UIAlertAction(title: "확인", style: .default))
+        alert.addAction(UIAlertAction(title: String(localized: .`action.confirm`), style: .default))
         present(alert, animated: true)
     }
 
     @objc private func clearEndDateTapped() {
+        HapticFeedbackManager.shared.impact()
         isEndDateCleared = true
         endDatePicker.date = Date()
 
         let alert = UIAlertController(
-            title: "완료 날짜 초기화",
-            message: "읽기 완료 날짜가 초기화됩니다.",
+            title: String(localized: .`reading_info_edit.end_date_cleared.title`),
+            message: String(localized: .`reading_info_edit.end_date_cleared.message`),
             preferredStyle: .alert
         )
-        alert.addAction(UIAlertAction(title: "확인", style: .default))
+        alert.addAction(UIAlertAction(title: String(localized: .`action.confirm`), style: .default))
         present(alert, animated: true)
     }
 }

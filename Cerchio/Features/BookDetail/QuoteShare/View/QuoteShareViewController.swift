@@ -27,7 +27,7 @@ final class QuoteShareViewController: BaseViewController<QuoteShareReactor> {
     )
 
     private let saveButton = UIBarButtonItem(
-        title: "저장",
+        title: String(localized: .`action.save`),
         style: .done,
         target: nil,
         action: nil
@@ -134,7 +134,7 @@ final class QuoteShareViewController: BaseViewController<QuoteShareReactor> {
     // MARK: - Lifecycle
     override func viewDidLoad() {
         super.viewDidLoad()
-        title = "문장 공유"
+        title = String(localized: .`quote_share.title`)
         setupNavigationBar()
     }
 
@@ -311,11 +311,13 @@ final class QuoteShareViewController: BaseViewController<QuoteShareReactor> {
     override func bind(reactor: QuoteShareReactor) {
         // Action
         dismissButton.rx.tap
+            .do(onNext: { HapticFeedbackManager.shared.impact() })
             .map { Reactor.Action.dismissTapped }
             .bind(to: reactor.action)
             .disposed(by: disposeBag)
 
         saveButton.rx.tap
+            .do(onNext: { HapticFeedbackManager.shared.impact() })
             .map { Reactor.Action.saveTapped }
             .bind(to: reactor.action)
             .disposed(by: disposeBag)
@@ -521,7 +523,7 @@ final class QuoteShareViewController: BaseViewController<QuoteShareReactor> {
         guard let reactor = reactor else { return }
 
         // Show loading indicator
-        let loadingAlert = UIAlertController(title: nil, message: "이미지 생성 중...", preferredStyle: .alert)
+        let loadingAlert = UIAlertController(title: nil, message: String(localized: .`quote_share.generating_image`), preferredStyle: .alert)
         let loadingIndicator = UIActivityIndicatorView(style: .medium)
         loadingIndicator.translatesAutoresizingMaskIntoConstraints = false
         loadingIndicator.startAnimating()
@@ -554,20 +556,20 @@ final class QuoteShareViewController: BaseViewController<QuoteShareReactor> {
             if let error = error {
                 // Show error alert
                 let errorAlert = UIAlertController(
-                    title: "저장 실패",
+                    title: String(localized: .`quote_share.save_failed.title`),
                     message: error.localizedDescription,
                     preferredStyle: .alert
                 )
-                errorAlert.addAction(UIAlertAction(title: "확인", style: .default))
+                errorAlert.addAction(UIAlertAction(title: String(localized: .`action.confirm`), style: .default))
                 self.present(errorAlert, animated: true)
             } else {
                 // Show success alert
                 let successAlert = UIAlertController(
-                    title: "저장 완료",
-                    message: "이미지가 사진 라이브러리에 저장되었습니다.",
+                    title: String(localized: .`quote_share.save_success.title`),
+                    message: String(localized: .`quote_share.save_success.message`),
                     preferredStyle: .alert
                 )
-                successAlert.addAction(UIAlertAction(title: "확인", style: .default) { [weak self] _ in
+                successAlert.addAction(UIAlertAction(title: String(localized: .`action.confirm`), style: .default) { [weak self] _ in
                     // Dismiss the quote share screen after successful save
                     self?.navigationEvents.accept(.close)
                 })

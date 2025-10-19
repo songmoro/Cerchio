@@ -54,7 +54,7 @@ final class BookDetailViewController: FullScreenNestedScrollViewController, View
 
         var title: String {
             switch self {
-            case .readingRecords: return "독서 기록"
+            case .readingRecords: return String(localized: .bookDetailReadingRecords)
             case .savedQuotes: return String(localized: .bookDetailSavedQuotes)
             case .photoPages: return String(localized: .bookDetailPhotos)
             case .settings: return String(localized: .bookDetailSettings)
@@ -172,19 +172,22 @@ final class BookDetailViewController: FullScreenNestedScrollViewController, View
 
         // Add circular menu on tap
         let menuItems: [CircularMenuItemProtocol] = [
-            CircularMenuItem(name: "독서 기록", image: UIImage(systemName: "book.fill")) { [weak self] in
+            CircularMenuItem(name: String(localized: .circularMenuBookDetailReadingRecord), image: UIImage(systemName: "book.fill")) { [weak self] in
+                HapticFeedbackManager.shared.selection()
                 // Dismiss menu first, then show reading record entry
                 self?.dismissPresentedMenuAndExecute {
                     self?.showReadingRecordEntry()
                 }
             },
-            CircularMenuItem(name: "문장 저장", image: UIImage(systemName: "quote.bubble.fill")) { [weak self] in
+            CircularMenuItem(name: String(localized: .circularMenuBookDetailSaveQuote), image: UIImage(systemName: "quote.bubble.fill")) { [weak self] in
+                HapticFeedbackManager.shared.selection()
                 // Dismiss menu first, then show quote entry
                 self?.dismissPresentedMenuAndExecute {
                     self?.showQuoteEntry()
                 }
             },
-            CircularMenuItem(name: "사진 찍기", image: UIImage(systemName: "camera.fill")) { [weak self] in
+            CircularMenuItem(name: String(localized: .circularMenuBookDetailTakePhoto), image: UIImage(systemName: "camera.fill")) { [weak self] in
+                HapticFeedbackManager.shared.selection()
                 // Dismiss menu first, then show photo capture
                 self?.dismissPresentedMenuAndExecute {
                     self?.showPhotoCapture()
@@ -382,6 +385,7 @@ final class BookDetailViewController: FullScreenNestedScrollViewController, View
         favoriteButton = button
 
         favoriteButton?.rx.tap
+            .do(onNext: { HapticFeedbackManager.shared.impact() })
             .map { BookDetailReactor.Action.toggleFavorite }
             .bind(to: reactor!.action)
             .disposed(by: disposeBag)
@@ -389,6 +393,7 @@ final class BookDetailViewController: FullScreenNestedScrollViewController, View
 
     func setDeleteButton(_ button: UIBarButtonItem) {
         button.rx.tap
+            .do(onNext: { HapticFeedbackManager.shared.impact() })
             .subscribe(onNext: { [weak self] in
                 self?.showDeleteConfirmationAlert()
             })
@@ -558,7 +563,7 @@ final class BookDetailViewController: FullScreenNestedScrollViewController, View
 
             case .emptyReadingRecords:
                 let cell: EmptyStateCell = collectionView.dequeueReusableCell(EmptyStateCell.self, for: indexPath)
-                cell.configure(message: "아직 독서 기록이 없습니다")
+                cell.configure(message: String(localized: .emptyStateBookDetailNoReadingRecords))
                 return cell
 
             case .savedQuote(let quote, let pageNumber, let date):
@@ -572,7 +577,7 @@ final class BookDetailViewController: FullScreenNestedScrollViewController, View
 
             case .emptySavedQuotes:
                 let cell: EmptyStateCell = collectionView.dequeueReusableCell(EmptyStateCell.self, for: indexPath)
-                cell.configure(message: "저장한 문장이 없습니다")
+                cell.configure(message: String(localized: .emptyStateBookDetailNoSavedQuotes))
                 return cell
 
             case .photoItem(let photoId, let image):
@@ -583,7 +588,7 @@ final class BookDetailViewController: FullScreenNestedScrollViewController, View
 
             case .emptyPhotos:
                 let cell: EmptyStateCell = collectionView.dequeueReusableCell(EmptyStateCell.self, for: indexPath)
-                cell.configure(message: "사진이 없습니다")
+                cell.configure(message: String(localized: .emptyStateBookDetailNoPhotos))
                 return cell
 
             case .settingsItem(let type):
@@ -625,10 +630,11 @@ final class BookDetailViewController: FullScreenNestedScrollViewController, View
             case .readingRecords:
                 let hasRecords = self?.reactor?.currentState.readingStatistics?.totalSessions ?? 0 > 0
                 header.configure(
-                    title: "독서 기록",
+                    title: String(localized: .bookDetailReadingRecords),
                     actionTitle: hasRecords ? String(localized: .actionViewAll) : nil
                 )
                 header.onActionTapped = { [weak self] in
+                    HapticFeedbackManager.shared.impact()
                     self?.showReadingSessionList()
                 }
 
@@ -639,6 +645,7 @@ final class BookDetailViewController: FullScreenNestedScrollViewController, View
                     actionTitle: hasQuotes ? String(localized: .actionViewAll) : nil
                 )
                 header.onActionTapped = { [weak self] in
+                    HapticFeedbackManager.shared.impact()
                     self?.showAllQuotes()
                 }
 
@@ -649,6 +656,7 @@ final class BookDetailViewController: FullScreenNestedScrollViewController, View
                     actionTitle: hasPhotos ? String(localized: .actionViewAll) : nil
                 )
                 header.onActionTapped = { [weak self] in
+                    HapticFeedbackManager.shared.impact()
                     self?.showAllPhotos()
                 }
 
@@ -835,13 +843,16 @@ final class BookDetailViewController: FullScreenNestedScrollViewController, View
 
     private func setupPhotoContextMenu(for cell: PhotoItemCell, photoId: String, image: UIImage) {
         let menuItems = [
-            CircularMenuItem(name: "보기", image: UIImage(systemName: "eye")) { [weak self] in
+            CircularMenuItem(name: String(localized: .circularMenuCommonView), image: UIImage(systemName: "eye")) { [weak self] in
+                HapticFeedbackManager.shared.selection()
                 self?.showImagePreview(image)
             },
-            CircularMenuItem(name: "저장", image: UIImage(systemName: "square.and.arrow.down")) { [weak self] in
+            CircularMenuItem(name: String(localized: .circularMenuCommonSave), image: UIImage(systemName: "square.and.arrow.down")) { [weak self] in
+                HapticFeedbackManager.shared.selection()
                 self?.saveImageToPhotoLibrary(image)
             },
-            CircularMenuItem(name: "삭제", image: UIImage(systemName: "trash")) { [weak self] in
+            CircularMenuItem(name: String(localized: .circularMenuCommonDelete), image: UIImage(systemName: "trash")) { [weak self] in
+                HapticFeedbackManager.shared.selection()
                 self?.showDeletePhotoConfirmation(for: photoId)
             }
         ]
@@ -859,13 +870,16 @@ final class BookDetailViewController: FullScreenNestedScrollViewController, View
 
     private func setupQuoteContextMenu(for cell: SavedQuoteCell, quote: String, pageNumber: Int?, date: Date) {
         let menuItems = [
-            CircularMenuItem(name: "공유", image: UIImage(systemName: "square.and.arrow.up")) { [weak self] in
+            CircularMenuItem(name: String(localized: .circularMenuCommonShare), image: UIImage(systemName: "square.and.arrow.up")) { [weak self] in
+                HapticFeedbackManager.shared.selection()
                 self?.shareQuote(quote, pageNumber: pageNumber)
             },
-            CircularMenuItem(name: "수정", image: UIImage(systemName: "pencil")) { [weak self] in
+            CircularMenuItem(name: String(localized: .circularMenuCommonEdit), image: UIImage(systemName: "pencil")) { [weak self] in
+                HapticFeedbackManager.shared.selection()
                 self?.editQuote(quote, pageNumber: pageNumber, date: date)
             },
-            CircularMenuItem(name: "삭제", image: UIImage(systemName: "trash")) { [weak self] in
+            CircularMenuItem(name: String(localized: .circularMenuCommonDelete), image: UIImage(systemName: "trash")) { [weak self] in
+                HapticFeedbackManager.shared.selection()
                 self?.showDeleteQuoteConfirmation(for: quote, date: date)
             }
         ]
@@ -964,13 +978,13 @@ final class BookDetailViewController: FullScreenNestedScrollViewController, View
 
     private func showDeleteQuoteConfirmation(for quote: String, date: Date) {
         let alert = UIAlertController(
-            title: "문장 삭제",
-            message: "이 문장을 삭제하시겠습니까?",
+            title: String(localized: .alertDeleteQuoteTitle),
+            message: String(localized: .alertDeleteQuoteMessage),
             preferredStyle: .alert
         )
 
-        alert.addAction(UIAlertAction(title: "취소", style: .cancel))
-        alert.addAction(UIAlertAction(title: "삭제", style: .destructive) { [weak self] _ in
+        alert.addAction(UIAlertAction(title: String(localized: .actionCancel), style: .cancel))
+        alert.addAction(UIAlertAction(title: String(localized: .actionDelete), style: .destructive) { [weak self] _ in
             self?.reactor?.action.onNext(.deleteQuote(quote, date))
         })
 
@@ -1016,14 +1030,17 @@ final class BookDetailViewController: FullScreenNestedScrollViewController, View
         guard let reactor = reactor else { return }
         let bookTitle = reactor.currentState.book.cleanTitle
 
+        let messageFormat = NSLocalizedString("alert.delete_book.message_format", comment: "")
+        let message = String(format: messageFormat, bookTitle)
+
         let alert = UIAlertController(
-            title: "도서 삭제",
-            message: "'\(bookTitle)'\n이 책과 관련된 모든 데이터(사진, 문장, 태그)가 함께 삭제됩니다.\n\n이 작업은 되돌릴 수 없습니다.",
+            title: String(localized: .alertDeleteBookTitle),
+            message: message,
             preferredStyle: .alert
         )
 
-        alert.addAction(UIAlertAction(title: "계속 보기", style: .cancel))
-        alert.addAction(UIAlertAction(title: "삭제", style: .destructive) { [weak self] _ in
+        alert.addAction(UIAlertAction(title: String(localized: .actionCancel), style: .cancel))
+        alert.addAction(UIAlertAction(title: String(localized: .actionDelete), style: .destructive) { [weak self] _ in
             self?.reactor?.action.onNext(.deleteBook)
         })
 

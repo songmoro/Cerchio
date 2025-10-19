@@ -126,7 +126,7 @@ final class PhotoListViewController: ListViewBaseViewController<PhotoListReactor
 
         // 전체 선택 버튼
         selectAllButton = UIBarButtonItem(
-            title: "전체 선택",
+            title: String(localized: .actionSelectAll),
             style: .plain,
             target: nil,
             action: nil
@@ -149,12 +149,14 @@ final class PhotoListViewController: ListViewBaseViewController<PhotoListReactor
             .disposed(by: disposeBag)
 
         selectAllButton.rx.tap
+            .do(onNext: { HapticFeedbackManager.shared.impact() })
             .subscribe(onNext: { [weak self] in
                 self?.selectAllPhotos()
             })
             .disposed(by: disposeBag)
 
         deleteButton.rx.tap
+            .do(onNext: { HapticFeedbackManager.shared.impact() })
             .subscribe(onNext: { [weak self] in
                 self?.deleteSelectedPhotos()
             })
@@ -191,6 +193,7 @@ final class PhotoListViewController: ListViewBaseViewController<PhotoListReactor
         // Collection View Selection - 일반 모드
         collectionView.rx.itemSelected(dataSource)
             .filter { [weak self] _ in self?.isEditMode == false }
+            .do(onNext: { _ in HapticFeedbackManager.shared.impact() })
             .subscribe(onNext: { [weak self] photo in
                 guard let self = self else { return }
                 if let indexPath = self.dataSource.indexPath(for: photo) {

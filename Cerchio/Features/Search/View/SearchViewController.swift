@@ -21,7 +21,7 @@ final class SearchViewController: BaseViewController<SearchReactor> {
     // MARK: - UI Components
     private let searchBar: UISearchBar = {
         let searchBar = UISearchBar()
-        searchBar.placeholder = "ISBN, 도서명, 작가 등 검색 키워드"
+        searchBar.placeholder = String(localized: .`search.placeholder`)
         searchBar.searchBarStyle = .minimal
         return searchBar
     }()
@@ -200,14 +200,14 @@ final class SearchViewController: BaseViewController<SearchReactor> {
     // MARK: - Alert
     private func showNavigationConfirmAlert(for book: Book) {
         let alert = UIAlertController(
-            title: "책이 서재에 담겼습니다",
-            message: "책 상세 화면으로 이동하시겠습니까?",
+            title: String(localized: .`search.book_saved.title`),
+            message: String(localized: .`search.book_saved.message`),
             preferredStyle: .alert
         )
 
-        let cancelAction = UIAlertAction(title: "취소", style: .cancel)
+        let cancelAction = UIAlertAction(title: String(localized: .`action.cancel`), style: .cancel)
 
-        let goToDetailAction = UIAlertAction(title: "이동", style: .default) { [weak self] _ in
+        let goToDetailAction = UIAlertAction(title: String(localized: .`search.navigate`), style: .default) { [weak self] _ in
             self?.onBookSaved?(book)
         }
 
@@ -219,12 +219,12 @@ final class SearchViewController: BaseViewController<SearchReactor> {
 
     private func showErrorAlert(message: String) {
         let alert = UIAlertController(
-            title: "알림",
+            title: String(localized: .`alert.notification`),
             message: message,
             preferredStyle: .alert
         )
 
-        let okAction = UIAlertAction(title: "확인", style: .default)
+        let okAction = UIAlertAction(title: String(localized: .`action.confirm`), style: .default)
         alert.addAction(okAction)
 
         present(alert, animated: true)
@@ -234,7 +234,7 @@ final class SearchViewController: BaseViewController<SearchReactor> {
     private func updateUI(for searchState: SearchState) {
         switch searchState {
         case .initial:
-            showEmptyState(message: "검색어를 입력해주세요.")
+            showEmptyState(message: String(localized: .`search.empty_state.enter_query`))
             updateSnapshot(with: [])
 
         case .searching:
@@ -245,11 +245,12 @@ final class SearchViewController: BaseViewController<SearchReactor> {
             updateSnapshot(with: books)
 
         case .noResults:
-            showEmptyState(message: "검색 결과가 없습니다.")
+            showEmptyState(message: String(localized: .`search.empty_state.no_results`))
             updateSnapshot(with: [])
 
         case .error(let message):
-            showEmptyState(message: "오류가 발생했습니다.\n\(message)")
+            let format = NSLocalizedString("alert.error.generic_message_format", comment: "")
+            showEmptyState(message: String(format: format, message))
             updateSnapshot(with: [])
         }
     }

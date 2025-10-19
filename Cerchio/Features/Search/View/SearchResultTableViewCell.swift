@@ -115,6 +115,7 @@ final class SearchResultTableViewCell: UITableViewCell, IsIdentifiable {
 
     @objc private func addButtonTapped() {
         guard let book = currentBook else { return }
+        HapticFeedbackManager.shared.impact()
         addBookHandler?(book)
 
         // 버튼 애니메이션

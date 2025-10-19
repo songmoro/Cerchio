@@ -33,7 +33,7 @@ final class ReadingTimerViewController: BaseViewController<ReadingTimerReactor> 
     override func setupUI() {
         super.setupUI()
         view.backgroundColor = .systemBackground
-        navigationItem.title = "독서 타이머"
+        navigationItem.title = String(localized: .readingTimerTitle)
 
         // 커스텀 뒤로가기 버튼
         let backButton = UIBarButtonItem(
@@ -46,6 +46,7 @@ final class ReadingTimerViewController: BaseViewController<ReadingTimerReactor> 
         navigationItem.leftBarButtonItem = backButton
 
         backButton.rx.tap
+            .do(onNext: { HapticFeedbackManager.shared.impact() })
             .bind(to: backButtonTapRelay)
             .disposed(by: disposeBag)
 
@@ -65,7 +66,7 @@ final class ReadingTimerViewController: BaseViewController<ReadingTimerReactor> 
         remainingTimeLabel.font = .custom(weight: .medium, size: 24)
         remainingTimeLabel.textColor = .secondaryLabel
         remainingTimeLabel.textAlignment = .center
-        remainingTimeLabel.text = "남은 시간: 00:00"
+        remainingTimeLabel.text = String(localized: .readingTimerRemainingTime)
 
         view.addSubview(elapsedTimeLabel)
         view.addSubview(remainingTimeLabel)
@@ -81,14 +82,14 @@ final class ReadingTimerViewController: BaseViewController<ReadingTimerReactor> 
 
     private func setupButtons() {
         var startConfig = UIButton.Configuration.filled()
-        startConfig.title = "시작"
+        startConfig.title = String(localized: .readingTimerStart)
         startConfig.baseBackgroundColor = .forestGreen
         startConfig.baseForegroundColor = .white
         startConfig.cornerStyle = .medium
         startButton.configuration = startConfig
 
         var pauseConfig = UIButton.Configuration.filled()
-        pauseConfig.title = "일시정지"
+        pauseConfig.title = String(localized: .readingTimerPause)
         pauseConfig.baseBackgroundColor = .systemOrange
         pauseConfig.baseForegroundColor = .white
         pauseConfig.cornerStyle = .medium
@@ -109,7 +110,7 @@ final class ReadingTimerViewController: BaseViewController<ReadingTimerReactor> 
         photoConfig.image = UIImage(systemName: "camera.fill")
         photoConfig.imagePlacement = .top
         photoConfig.imagePadding = 8
-        photoConfig.title = "사진 찍기"
+        photoConfig.title = String(localized: .readingTimerTakePhoto)
         photoConfig.baseForegroundColor = .forestGreen
         photoButton.configuration = photoConfig
         photoButton.addTarget(self, action: #selector(photoButtonTapped), for: .touchUpInside)
@@ -119,7 +120,7 @@ final class ReadingTimerViewController: BaseViewController<ReadingTimerReactor> 
         quoteConfig.image = UIImage(systemName: "quote.bubble.fill")
         quoteConfig.imagePlacement = .top
         quoteConfig.imagePadding = 8
-        quoteConfig.title = "문장 저장"
+        quoteConfig.title = String(localized: .readingTimerSaveQuote)
         quoteConfig.baseForegroundColor = .forestGreen
         quoteButton.configuration = quoteConfig
         quoteButton.addTarget(self, action: #selector(quoteButtonTapped), for: .touchUpInside)
@@ -131,10 +132,12 @@ final class ReadingTimerViewController: BaseViewController<ReadingTimerReactor> 
     }
 
     @objc private func photoButtonTapped() {
+        HapticFeedbackManager.shared.impact()
         onPhotoTapped?()
     }
 
     @objc private func quoteButtonTapped() {
+        HapticFeedbackManager.shared.impact()
         onQuoteTapped?()
     }
 
@@ -190,11 +193,13 @@ final class ReadingTimerViewController: BaseViewController<ReadingTimerReactor> 
             .disposed(by: disposeBag)
 
         startButton.rx.tap
+            .do(onNext: { HapticFeedbackManager.shared.impact() })
             .map { Reactor.Action.requestTimerStart }
             .bind(to: reactor.action)
             .disposed(by: disposeBag)
 
         pauseButton.rx.tap
+            .do(onNext: { HapticFeedbackManager.shared.impact() })
             .withLatestFrom(reactor.state.map { $0.timerState })
             .map { state in
                 state == .running ? Reactor.Action.pauseTimer : Reactor.Action.resumeTimer
@@ -231,9 +236,13 @@ final class ReadingTimerViewController: BaseViewController<ReadingTimerReactor> 
             .drive(elapsedTimeLabel.rx.text)
             .disposed(by: disposeBag)
 
-        reactor.state.map { "남은 시간: \($0.remainingTimeString)" }
+        reactor.state
+            .map { state in
+                let format = NSLocalizedString("reading_timer.remaining_time_format", comment: "")
+                return String(format: format, state.remainingTimeString)
+            }
             .distinctUntilChanged()
-            .asDriver(onErrorJustReturn: "남은 시간: 00:00")
+            .asDriver(onErrorJustReturn: String(localized: .readingTimerRemainingTime))
             .drive(remainingTimeLabel.rx.text)
             .disposed(by: disposeBag)
 
@@ -299,14 +308,14 @@ final class ReadingTimerViewController: BaseViewController<ReadingTimerReactor> 
             startButton.isHidden = true
             pauseButton.isHidden = false
             var config = pauseButton.configuration
-            config?.title = "일시정지"
+            config?.title = String(localized: .readingTimerPause)
             pauseButton.configuration = config
 
         case .paused:
             startButton.isHidden = true
             pauseButton.isHidden = false
             var config = pauseButton.configuration
-            config?.title = "재개"
+            config?.title = String(localized: .readingTimerResume)
             pauseButton.configuration = config
 
         case .completed:
@@ -353,19 +362,19 @@ final class ReadingTimerViewController: BaseViewController<ReadingTimerReactor> 
         // 1분 미만: 기록 없이 종료 확인
         if elapsedSeconds < minimumSeconds {
             let alert = UIAlertController(
-                title: "독서 타이머 종료",
-                message: "기록 시간이 1분 미만입니다.\n기록 없이 종료하시겠습니까?",
+                title: String(localized: .readingTimerExitTitle),
+                message: String(localized: .readingTimerExitMessageShort),
                 preferredStyle: .alert
             )
 
-            alert.addAction(UIAlertAction(title: "취소", style: .cancel) { [weak self] _ in
+            alert.addAction(UIAlertAction(title: String(localized: .actionCancel), style: .cancel) { [weak self] _ in
                 // 취소 시 타이머 재개 (원래 running이었다면)
                 if wasRunning {
                     self?.reactor?.action.onNext(.resumeTimer)
                 }
             })
 
-            alert.addAction(UIAlertAction(title: "종료", style: .destructive) { [weak self] _ in
+            alert.addAction(UIAlertAction(title: String(localized: .alertReadingTimerExit), style: .destructive) { [weak self] _ in
                 // 세션 정리하고 뒤로가기
                 TimerSessionManager.shared.clearActiveSession()
 
@@ -386,22 +395,26 @@ final class ReadingTimerViewController: BaseViewController<ReadingTimerReactor> 
         else {
             let minutes = elapsedSeconds / 60
             let seconds = elapsedSeconds % 60
-            let timeString = String(format: "%d분 %d초", minutes, seconds)
+            let format = NSLocalizedString("reading_timer.time_format", comment: "")
+            let timeString = String(format: format, minutes, seconds)
+
+            let messageFormat = NSLocalizedString("reading_timer.save_and_exit_message_format", comment: "")
+            let message = String(format: messageFormat, timeString)
 
             let alert = UIAlertController(
-                title: "독서 기록 저장",
-                message: "\(timeString) 동안의 독서 기록을 저장하고 종료하시겠습니까?",
+                title: String(localized: .readingTimerSaveTitle),
+                message: message,
                 preferredStyle: .alert
             )
 
-            alert.addAction(UIAlertAction(title: "취소", style: .cancel) { [weak self] _ in
+            alert.addAction(UIAlertAction(title: String(localized: .actionCancel), style: .cancel) { [weak self] _ in
                 // 취소 시 타이머 재개 (원래 running이었다면)
                 if wasRunning {
                     self?.reactor?.action.onNext(.resumeTimer)
                 }
             })
 
-            alert.addAction(UIAlertAction(title: "저장하고 종료", style: .default) { [weak self] _ in
+            alert.addAction(UIAlertAction(title: String(localized: .readingTimerSaveAndExit), style: .default) { [weak self] _ in
                 // stopTimer 액션 실행 (저장 후 종료)
                 self?.reactor?.action.onNext(.stopTimer)
             })
@@ -415,22 +428,19 @@ final class ReadingTimerViewController: BaseViewController<ReadingTimerReactor> 
 
         let elapsedMinutes = reactor.currentState.elapsedSeconds / 60
         let elapsedSeconds = reactor.currentState.elapsedSeconds % 60
-        let timeString = String(format: "%d분 %d초", elapsedMinutes, elapsedSeconds)
+        let timeFormat = NSLocalizedString("reading_timer.time_format", comment: "")
+        let timeString = String(format: timeFormat, elapsedMinutes, elapsedSeconds)
 
-        let message = """
-        독서 기록이 저장되었습니다.
-
-        📚 \(reactor.currentState.bookTitle)
-        ⏱️ \(timeString) 동안 읽었습니다
-        """
+        let messageFormat = NSLocalizedString("reading_timer.completion_message_format", comment: "")
+        let message = String(format: messageFormat, reactor.currentState.bookTitle, timeString)
 
         let alert = UIAlertController(
-            title: "🎉 독서 완료",
+            title: String(localized: .readingTimerCompletionTitle),
             message: message,
             preferredStyle: .alert
         )
 
-        alert.addAction(UIAlertAction(title: "확인", style: .default) { [weak self] _ in
+        alert.addAction(UIAlertAction(title: String(localized: .actionConfirm), style: .default) { [weak self] _ in
             self?.completionRelay.accept(())
         })
 
@@ -450,16 +460,16 @@ final class ReadingTimerViewController: BaseViewController<ReadingTimerReactor> 
 
     private func showNotificationDeniedAlert() {
         let alert = UIAlertController(
-            title: "알림 권한 필요",
-            message: "타이머 종료 알림을 받으려면 알림 권한이 필요합니다.\n알림 없이 타이머를 시작하거나 설정에서 알림을 허용해주세요.",
+            title: String(localized: .readingTimerNotificationPermissionTitle),
+            message: String(localized: .readingTimerNotificationPermissionMessage),
             preferredStyle: .alert
         )
 
-        alert.addAction(UIAlertAction(title: "알림 없이 시작", style: .default) { [weak self] _ in
+        alert.addAction(UIAlertAction(title: String(localized: .readingTimerStartWithoutNotification), style: .default) { [weak self] _ in
             self?.reactor?.action.onNext(.startTimerConfirmed)
         })
 
-        alert.addAction(UIAlertAction(title: "설정으로 이동", style: .default) { _ in
+        alert.addAction(UIAlertAction(title: String(localized: .cameraPermissionGoToSettings), style: .default) { _ in
             if let settingsURL = URL(string: UIApplication.openSettingsURLString) {
                 UIApplication.shared.open(settingsURL)
             }
@@ -470,12 +480,12 @@ final class ReadingTimerViewController: BaseViewController<ReadingTimerReactor> 
 
     private func showLiveActivityDisabledAlert() {
         let alert = UIAlertController(
-            title: "Live Activity 사용 불가",
-            message: "Live Activity를 사용할 수 없습니다. 타이머는 정상적으로 동작합니다.",
+            title: String(localized: .readingTimerLiveActivityDisabledTitle),
+            message: String(localized: .readingTimerLiveActivityDisabledMessage),
             preferredStyle: .alert
         )
 
-        alert.addAction(UIAlertAction(title: "확인", style: .default) { [weak self] _ in
+        alert.addAction(UIAlertAction(title: String(localized: .actionConfirm), style: .default) { [weak self] _ in
             self?.reactor?.action.onNext(.startTimerConfirmed)
         })
 
@@ -498,39 +508,42 @@ final class ReadingTimerViewController: BaseViewController<ReadingTimerReactor> 
         let seconds = elapsedSeconds % 60
         let timeString = String(format: "%02d:%02d", minutes, seconds)
 
+        let messageFormat = NSLocalizedString("reading_timer.duplicate_session_message_format", comment: "")
+        let message = String(format: messageFormat, sessionInfo.bookTitle, timeString)
+
         let alert = UIAlertController(
-            title: "진행 중인 타이머가 있습니다",
-            message: "\"\(sessionInfo.bookTitle)\" 독서 타이머가 진행 중입니다.\n경과 시간: \(timeString)",
+            title: String(localized: .readingTimerDuplicateSessionTitle),
+            message: message,
             preferredStyle: .alert
         )
 
-        alert.addAction(UIAlertAction(title: "현재 타이머 계속", style: .default) { [weak self] _ in
+        alert.addAction(UIAlertAction(title: String(localized: .readingTimerContinueCurrent), style: .default) { [weak self] _ in
             // TODO: 기존 타이머 화면으로 이동
             self?.navigationController?.popViewController(animated: true)
         })
 
-        alert.addAction(UIAlertAction(title: "기존 종료하고 새로 시작", style: .destructive) { [weak self] _ in
+        alert.addAction(UIAlertAction(title: String(localized: .readingTimerTerminateAndStart), style: .destructive) { [weak self] _ in
             self?.reactor?.action.onNext(.terminateExistingSessionAndStart)
         })
 
-        alert.addAction(UIAlertAction(title: "취소", style: .cancel))
+        alert.addAction(UIAlertAction(title: String(localized: .actionCancel), style: .cancel))
 
         present(alert, animated: true)
     }
 
     private func showSessionTooShortAlert() {
         let alert = UIAlertController(
-            title: "기록 시간이 너무 짧습니다",
-            message: "최소 1분 이상 읽어야 기록할 수 있습니다.\n계속 읽거나 기록 없이 종료하세요.",
+            title: String(localized: .readingTimerSessionTooShortTitle),
+            message: String(localized: .readingTimerSessionTooShortMessage),
             preferredStyle: .alert
         )
 
-        alert.addAction(UIAlertAction(title: "계속 읽기", style: .default) { [weak self] _ in
+        alert.addAction(UIAlertAction(title: String(localized: .readingTimerContinueReading), style: .default) { [weak self] _ in
             // 타이머 재개
             self?.reactor?.action.onNext(.resumeTimer)
         })
 
-        alert.addAction(UIAlertAction(title: "기록 없이 종료", style: .destructive) { [weak self] _ in
+        alert.addAction(UIAlertAction(title: String(localized: .readingTimerExitWithoutSaving), style: .destructive) { [weak self] _ in
             // 세션 정리하고 종료
             TimerSessionManager.shared.clearActiveSession()
 

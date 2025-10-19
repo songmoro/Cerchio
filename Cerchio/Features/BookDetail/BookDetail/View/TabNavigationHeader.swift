@@ -122,6 +122,7 @@ final class TabNavigationHeader: UICollectionReusableView, IsIdentifiable {
 
     // MARK: - Actions
     @objc private func tabButtonTapped(_ sender: UIButton) {
+        HapticFeedbackManager.shared.selection()
         let section = sectionForIndex(sender.tag)
         selectTab(section: section, animated: true)
         onTabSelected?(section)
