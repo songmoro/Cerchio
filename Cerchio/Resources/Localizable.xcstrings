@@ -92,6 +92,24 @@
         }
       }
     },
+    "action.deselect_all" : {
+      "comment" : "Deselect all button",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deselect All"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "선택 해제"
+          }
+        }
+      }
+    },
     "action.done" : {
       "comment" : "Done action",
       "extractionState" : "manual",
@@ -182,6 +200,24 @@
         }
       }
     },
+    "action.select_all" : {
+      "comment" : "Select all button",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Select All"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "전체 선택"
+          }
+        }
+      }
+    },
     "action.share" : {
       "comment" : "Share button",
       "extractionState" : "manual",
@@ -214,6 +250,438 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "전체 보기"
+          }
+        }
+      }
+    },
+    "alert.delete_book.message_format" : {
+      "comment" : "Delete book alert message with book title placeholder",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "'%@'\n\nAll data related to this book (photos, quotes, tags) will be deleted.\n\nThis action cannot be undone."
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "'%@'\n이 책과 관련된 모든 데이터(사진, 문장, 태그)가 함께 삭제됩니다.\n\n이 작업은 되돌릴 수 없습니다."
+          }
+        }
+      }
+    },
+    "alert.delete_book.title" : {
+      "comment" : "Delete book alert title",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete Book"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "책 삭제"
+          }
+        }
+      }
+    },
+    "alert.delete_quote.message" : {
+      "comment" : "Delete quote alert message",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Are you sure you want to delete this quote?"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이 문장을 삭제하시겠습니까?"
+          }
+        }
+      }
+    },
+    "alert.delete_quote.title" : {
+      "comment" : "Delete quote alert title",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete Quote"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "문장 삭제"
+          }
+        }
+      }
+    },
+    "alert.delete_reading_record.message" : {
+      "comment" : "Delete reading record alert message",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Are you sure you want to delete this reading record?"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이 독서 기록을 삭제하시겠습니까?"
+          }
+        }
+      }
+    },
+    "alert.delete_reading_record.title" : {
+      "comment" : "Delete reading record alert title",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete Reading Record"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "독서 기록 삭제"
+          }
+        }
+      }
+    },
+    "alert.error.generic_message_format" : {
+      "comment" : "Generic error alert with message placeholder",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "An error occurred.\n%@"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "오류가 발생했습니다.\n%@"
+          }
+        }
+      }
+    },
+    "alert.library.delete_book_single.message_format" : {
+      "comment" : "Delete single book confirmation message with title placeholder",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Are you sure you want to delete '%@'?"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "'%@'을(를) 삭제하시겠습니까?"
+          }
+        }
+      }
+    },
+    "alert.library.delete_books_multiple.message_format" : {
+      "comment" : "Delete multiple books confirmation message with count placeholder",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Are you sure you want to delete %lld selected book(s)?"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "선택한 %lld개의 책을 삭제하시겠습니까?"
+          }
+        }
+      }
+    },
+    "alert.library.delete_failed.message" : {
+      "comment" : "Delete failed alert message",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Failed to delete book(s). Please try again."
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "책 삭제에 실패했습니다. 다시 시도해주세요."
+          }
+        }
+      }
+    },
+    "alert.library.delete_failed.title" : {
+      "comment" : "Delete failed alert title",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete Failed"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "삭제 실패"
+          }
+        }
+      }
+    },
+    "alert.navigate_to_book_detail.message" : {
+      "comment" : "Navigate to book detail alert message",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Would you like to go to the book details?"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "책 상세 화면으로 이동하시겠습니까?"
+          }
+        }
+      }
+    },
+    "alert.navigate_to_book_detail.title" : {
+      "comment" : "Navigate to book detail alert title",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Go to Book Details"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "책 상세로 이동"
+          }
+        }
+      }
+    },
+    "alert.notification" : {
+      "comment" : "Generic notification alert title",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Notification"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "알림"
+          }
+        }
+      }
+    },
+    "alert.quote_share.save_failed.message" : {
+      "comment" : "Quote share: Save failed message",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Failed to save the quote image."
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "문장 이미지 저장에 실패했습니다."
+          }
+        }
+      }
+    },
+    "alert.quote_share.save_failed.title" : {
+      "comment" : "Quote share: Save failed title",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Save Failed"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "저장 실패"
+          }
+        }
+      }
+    },
+    "alert.reading_timer.discard" : {
+      "comment" : "Reading timer: Discard button",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Discard"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "삭제"
+          }
+        }
+      }
+    },
+    "alert.reading_timer.discard_session.message" : {
+      "comment" : "Reading timer: Discard session message",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This reading session will not be saved."
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이 독서 세션이 저장되지 않습니다."
+          }
+        }
+      }
+    },
+    "alert.reading_timer.discard_session.title" : {
+      "comment" : "Reading timer: Discard session title",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Discard Session?"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "기록을 삭제하시겠습니까?"
+          }
+        }
+      }
+    },
+    "alert.reading_timer.exit" : {
+      "comment" : "Reading timer: Exit button",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exit"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "나가기"
+          }
+        }
+      }
+    },
+    "alert.reading_timer.exit_without_saving.message" : {
+      "comment" : "Reading timer: Exit without saving message",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The reading session will not be saved."
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "독서 기록이 저장되지 않습니다."
+          }
+        }
+      }
+    },
+    "alert.reading_timer.exit_without_saving.title" : {
+      "comment" : "Reading timer: Exit without saving title",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exit Without Saving?"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "저장하지 않고 나가시겠습니까?"
+          }
+        }
+      }
+    },
+    "alert.search.enter_query" : {
+      "comment" : "Search alert: Enter query",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Please enter a search term."
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "검색어를 입력해주세요."
+          }
+        }
+      }
+    },
+    "alert.search.no_results" : {
+      "comment" : "Search alert: No results",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No search results found."
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "검색 결과가 없습니다."
           }
         }
       }
@@ -304,6 +772,24 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "찍은 사진"
+          }
+        }
+      }
+    },
+    "book_detail.reading_records" : {
+      "comment" : "Book detail: Reading records section title",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reading Records"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "독서 기록"
           }
         }
       }
@@ -430,6 +916,204 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "카메라 접근 권한이 필요해요"
+          }
+        }
+      }
+    },
+    "circular_menu.book_detail.add_favorite" : {
+      "comment" : "Circular menu item: Add favorite",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add to Favorites"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "즐겨찾기"
+          }
+        }
+      }
+    },
+    "circular_menu.book_detail.reading_record" : {
+      "comment" : "Circular menu item: Reading record",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reading Record"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "독서 기록"
+          }
+        }
+      }
+    },
+    "circular_menu.book_detail.remove_favorite" : {
+      "comment" : "Circular menu item: Remove favorite",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Remove Favorite"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "즐겨찾기 해제"
+          }
+        }
+      }
+    },
+    "circular_menu.book_detail.save_quote" : {
+      "comment" : "Circular menu item: Save quote",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Save Quote"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "문장 저장"
+          }
+        }
+      }
+    },
+    "circular_menu.book_detail.take_photo" : {
+      "comment" : "Circular menu item: Take photo",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Take Photo"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "사진 찍기"
+          }
+        }
+      }
+    },
+    "circular_menu.common.delete" : {
+      "comment" : "Circular menu item: Delete",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "삭제"
+          }
+        }
+      }
+    },
+    "circular_menu.common.edit" : {
+      "comment" : "Circular menu item: Edit",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Edit"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "수정"
+          }
+        }
+      }
+    },
+    "circular_menu.common.save" : {
+      "comment" : "Circular menu item: Save",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Save"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "저장"
+          }
+        }
+      }
+    },
+    "circular_menu.common.share" : {
+      "comment" : "Circular menu item: Share",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Share"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "공유"
+          }
+        }
+      }
+    },
+    "circular_menu.common.view" : {
+      "comment" : "Circular menu item: View",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "View"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "보기"
+          }
+        }
+      }
+    },
+    "circular_menu.library.take_photo" : {
+      "comment" : "Circular menu item: Take photo in library",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Photo"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "사진"
           }
         }
       }
@@ -592,6 +1276,78 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "도서 정보 수정"
+          }
+        }
+      }
+    },
+    "empty_state.book_detail.no_photos" : {
+      "comment" : "Book detail: No photos empty state",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No photos"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "사진이 없습니다"
+          }
+        }
+      }
+    },
+    "empty_state.book_detail.no_reading_records" : {
+      "comment" : "Book detail: No reading records empty state",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No reading records yet"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "아직 독서 기록이 없습니다"
+          }
+        }
+      }
+    },
+    "empty_state.book_detail.no_saved_quotes" : {
+      "comment" : "Book detail: No saved quotes empty state",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No saved quotes"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "저장한 문장이 없습니다"
+          }
+        }
+      }
+    },
+    "empty_state.library.no_books" : {
+      "comment" : "Library: No books empty state",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No books in library"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "서재에 책이 없습니다"
           }
         }
       }
@@ -902,6 +1658,24 @@
         }
       }
     },
+    "quote_save.message" : {
+      "comment" : "Quote save alert message",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enter the quote you want to save"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "저장할 문장을 입력하세요"
+          }
+        }
+      }
+    },
     "quote_save.page_label" : {
       "comment" : "Page label",
       "extractionState" : "manual",
@@ -938,20 +1712,20 @@
         }
       }
     },
-    "quote_save.message" : {
-      "comment" : "Quote save alert message",
+    "quote_save.placeholder" : {
+      "comment" : "Quote placeholder text",
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Enter the quote you want to save"
+            "value" : "Enter the quote you want to save..."
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "저장할 문장을 입력하세요"
+            "value" : "저장하고 싶은 문장을 입력하세요..."
           }
         }
       }
@@ -974,24 +1748,6 @@
         }
       }
     },
-    "quote_save.placeholder" : {
-      "comment" : "Quote placeholder text",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Enter the quote you want to save..."
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "저장하고 싶은 문장을 입력하세요..."
-          }
-        }
-      }
-    },
     "quote_save.title" : {
       "comment" : "Quote save screen title",
       "extractionState" : "manual",
@@ -1006,6 +1762,888 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "문장 저장"
+          }
+        }
+      }
+    },
+    "quote_share.generating_image" : {
+      "comment" : "Quote share: Generating image message",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Generating image..."
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이미지 생성 중..."
+          }
+        }
+      }
+    },
+    "quote_share.save_failed.title" : {
+      "comment" : "Quote share: Save failed title",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Save Failed"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "저장 실패"
+          }
+        }
+      }
+    },
+    "quote_share.save_success.message" : {
+      "comment" : "Quote share: Save success message",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The quote image has been saved to your photo library."
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이미지가 사진 라이브러리에 저장되었습니다."
+          }
+        }
+      }
+    },
+    "quote_share.save_success.title" : {
+      "comment" : "Quote share: Save success title",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Save Complete"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "저장 완료"
+          }
+        }
+      }
+    },
+    "quote_share.title" : {
+      "comment" : "Quote share screen title",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Share Quote"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "문장 공유"
+          }
+        }
+      }
+    },
+    "reading_info_edit.clear_end_date" : {
+      "comment" : "Clear end date button",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Clear Completion Date"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "완료 날짜 초기화"
+          }
+        }
+      }
+    },
+    "reading_info_edit.clear_start_date" : {
+      "comment" : "Clear start date button",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Clear Start Date"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "시작 날짜 초기화"
+          }
+        }
+      }
+    },
+    "reading_info_edit.date_error.message" : {
+      "comment" : "Date validation error message",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The completion date cannot be earlier than the start date."
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "종료 날짜는 시작 날짜보다 앞설 수 없습니다."
+          }
+        }
+      }
+    },
+    "reading_info_edit.date_error.title" : {
+      "comment" : "Date validation error title",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Date Error"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "날짜 오류"
+          }
+        }
+      }
+    },
+    "reading_info_edit.end_date_cleared.message" : {
+      "comment" : "End date cleared alert message",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The completion date has been cleared."
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "읽기 완료 날짜가 초기화됩니다."
+          }
+        }
+      }
+    },
+    "reading_info_edit.end_date_cleared.title" : {
+      "comment" : "End date cleared alert title",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Completion Date Cleared"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "완료 날짜 초기화"
+          }
+        }
+      }
+    },
+    "reading_info_edit.end_date_label" : {
+      "comment" : "End date label",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Completion Date"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "읽기 완료한 날짜"
+          }
+        }
+      }
+    },
+    "reading_info_edit.pages_placeholder" : {
+      "comment" : "Pages input placeholder",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enter page count"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "페이지 수 입력"
+          }
+        }
+      }
+    },
+    "reading_info_edit.reading_status.completed" : {
+      "comment" : "Reading status: Completed",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Completed"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "완료"
+          }
+        }
+      }
+    },
+    "reading_info_edit.reading_status.reading" : {
+      "comment" : "Reading status: Currently reading",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reading"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "읽는 중"
+          }
+        }
+      }
+    },
+    "reading_info_edit.start_date_cleared.message" : {
+      "comment" : "Start date cleared alert message",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The start date has been cleared."
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "읽기 시작 날짜가 초기화됩니다."
+          }
+        }
+      }
+    },
+    "reading_info_edit.start_date_cleared.title" : {
+      "comment" : "Start date cleared alert title",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Start Date Cleared"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "시작 날짜 초기화"
+          }
+        }
+      }
+    },
+    "reading_info_edit.start_date_label" : {
+      "comment" : "Start date label",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Start Date"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "읽기 시작한 날짜"
+          }
+        }
+      }
+    },
+    "reading_info_edit.title" : {
+      "comment" : "Reading info edit screen title",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Edit Reading Information"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "독서 정보 편집"
+          }
+        }
+      }
+    },
+    "reading_info_edit.total_pages" : {
+      "comment" : "Total pages label",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Total Pages"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "총 페이지"
+          }
+        }
+      }
+    },
+    "reading_timer.completion_message_format" : {
+      "comment" : "Reading timer completion message with book title and time",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reading record saved.\n\n%@\nYou read for %@"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "독서 기록이 저장되었습니다.\n\n%@\n%@ 동안 읽었습니다"
+          }
+        }
+      }
+    },
+    "reading_timer.completion_title" : {
+      "comment" : "Reading timer completion alert title",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reading Complete"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "독서 완료"
+          }
+        }
+      }
+    },
+    "reading_timer.continue_current" : {
+      "comment" : "Reading timer continue current session button",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Continue Current"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "현재 타이머 계속"
+          }
+        }
+      }
+    },
+    "reading_timer.continue_reading" : {
+      "comment" : "Reading timer continue reading button",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Continue Reading"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "계속 읽기"
+          }
+        }
+      }
+    },
+    "reading_timer.duplicate_session_message_format" : {
+      "comment" : "Reading timer duplicate session message with book title and time",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "\"%@\" reading timer is in progress.\nElapsed time: %@"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "\"%@\" 독서 타이머가 진행 중입니다.\n경과 시간: %@"
+          }
+        }
+      }
+    },
+    "reading_timer.duplicate_session_title" : {
+      "comment" : "Reading timer duplicate session title",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Timer in Progress"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "진행 중인 타이머가 있습니다"
+          }
+        }
+      }
+    },
+    "reading_timer.exit_message_short" : {
+      "comment" : "Reading timer exit message for sessions under 1 minute",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The session is less than 1 minute.\nExit without saving?"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "기록 시간이 1분 미만입니다.\n기록 없이 종료하시겠습니까?"
+          }
+        }
+      }
+    },
+    "reading_timer.exit_title" : {
+      "comment" : "Reading timer exit confirmation title",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exit Timer"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "독서 타이머 종료"
+          }
+        }
+      }
+    },
+    "reading_timer.exit_without_saving" : {
+      "comment" : "Reading timer exit without saving button",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exit Without Saving"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "기록 없이 종료"
+          }
+        }
+      }
+    },
+    "reading_timer.live_activity_disabled_message" : {
+      "comment" : "Reading timer Live Activity disabled message",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Live Activity is unavailable. The timer will work normally."
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Live Activity를 사용할 수 없습니다. 타이머는 정상적으로 동작합니다."
+          }
+        }
+      }
+    },
+    "reading_timer.live_activity_disabled_title" : {
+      "comment" : "Reading timer Live Activity disabled title",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Live Activity Unavailable"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Live Activity 사용 불가"
+          }
+        }
+      }
+    },
+    "reading_timer.notification_permission_message" : {
+      "comment" : "Reading timer notification permission message",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Notification permission is required to receive timer completion alerts.\n\nStart without notifications or enable them in Settings."
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "타이머 종료 알림을 받으려면 알림 권한이 필요합니다.\n알림 없이 타이머를 시작하거나 설정에서 알림을 허용해주세요."
+          }
+        }
+      }
+    },
+    "reading_timer.notification_permission_title" : {
+      "comment" : "Reading timer notification permission title",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Notification Permission Required"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "알림 권한 필요"
+          }
+        }
+      }
+    },
+    "reading_timer.pause" : {
+      "comment" : "Reading timer pause button",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pause"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "일시정지"
+          }
+        }
+      }
+    },
+    "reading_timer.remaining_time" : {
+      "comment" : "Reading timer remaining time label",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Remaining: 00:00"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "남은 시간: 00:00"
+          }
+        }
+      }
+    },
+    "reading_timer.remaining_time_format" : {
+      "comment" : "Reading timer remaining time format with placeholder",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Remaining: %@"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "남은 시간: %@"
+          }
+        }
+      }
+    },
+    "reading_timer.resume" : {
+      "comment" : "Reading timer resume button",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Resume"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "재개"
+          }
+        }
+      }
+    },
+    "reading_timer.save_and_exit" : {
+      "comment" : "Reading timer save and exit button",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Save and Exit"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "저장하고 종료"
+          }
+        }
+      }
+    },
+    "reading_timer.save_and_exit_message_format" : {
+      "comment" : "Reading timer save and exit message with time placeholder",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Save %@ of reading and exit?"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 동안의 독서 기록을 저장하고 종료하시겠습니까?"
+          }
+        }
+      }
+    },
+    "reading_timer.save_quote" : {
+      "comment" : "Reading timer save quote button",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Save Quote"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "문장 저장"
+          }
+        }
+      }
+    },
+    "reading_timer.save_title" : {
+      "comment" : "Reading timer save confirmation title",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Save Reading Record"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "독서 기록 저장"
+          }
+        }
+      }
+    },
+    "reading_timer.session_too_short_message" : {
+      "comment" : "Reading timer session too short message",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Minimum 1 minute of reading is required to save.\nContinue reading or exit without saving."
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "최소 1분 이상 읽어야 기록할 수 있습니다.\n계속 읽거나 기록 없이 종료하세요."
+          }
+        }
+      }
+    },
+    "reading_timer.session_too_short_title" : {
+      "comment" : "Reading timer session too short title",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Session Too Short"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "기록 시간이 너무 짧습니다"
+          }
+        }
+      }
+    },
+    "reading_timer.start" : {
+      "comment" : "Reading timer start button",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Start"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "시작"
+          }
+        }
+      }
+    },
+    "reading_timer.start_without_notification" : {
+      "comment" : "Reading timer start without notification button",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Start Without Notifications"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "알림 없이 시작"
+          }
+        }
+      }
+    },
+    "reading_timer.take_photo" : {
+      "comment" : "Reading timer take photo button",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Take Photo"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "사진 찍기"
+          }
+        }
+      }
+    },
+    "reading_timer.terminate_and_start" : {
+      "comment" : "Reading timer terminate existing and start new button",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "End Current and Start New"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "기존 종료하고 새로 시작"
+          }
+        }
+      }
+    },
+    "reading_timer.time_format" : {
+      "comment" : "Reading timer time format (minutes and seconds)",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%dmin %dsec"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%d분 %d초"
+          }
+        }
+      }
+    },
+    "reading_timer.title" : {
+      "comment" : "Reading timer screen title",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reading Timer"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "독서 타이머"
           }
         }
       }
@@ -1190,6 +2828,294 @@
         }
       }
     },
+    "search.book_saved.message" : {
+      "comment" : "Navigate to book detail confirmation message",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Would you like to go to the book details?"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "책 상세 화면으로 이동하시겠습니까?"
+          }
+        }
+      }
+    },
+    "search.book_saved.title" : {
+      "comment" : "Book saved to library alert title",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Book Added to Library"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "책이 서재에 담겼습니다"
+          }
+        }
+      }
+    },
+    "search.empty_state.enter_query" : {
+      "comment" : "Search empty state: enter query",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Please enter a search term."
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "검색어를 입력해주세요."
+          }
+        }
+      }
+    },
+    "search.empty_state.no_results" : {
+      "comment" : "Search empty state: no results",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No search results found."
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "검색 결과가 없습니다."
+          }
+        }
+      }
+    },
+    "search.navigate" : {
+      "comment" : "Navigate to book detail button",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Go"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이동"
+          }
+        }
+      }
+    },
+    "search.placeholder" : {
+      "comment" : "Search bar placeholder text",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Search by ISBN, Title, Author, etc."
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ISBN, 도서명, 작가 등 검색 키워드"
+          }
+        }
+      }
+    },
+    "settings.alert.language_changed.message" : {
+      "comment" : "Settings: Language changed alert message",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The changes will take effect when you restart the app."
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "앱을 재시작하면 변경 사항이 적용됩니다."
+          }
+        }
+      }
+    },
+    "settings.alert.language_changed.title" : {
+      "comment" : "Settings: Language changed alert title",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Language Changed"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "언어 변경됨"
+          }
+        }
+      }
+    },
+    "settings.alert.language_selection.message" : {
+      "comment" : "Settings: Language selection alert message",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Select the language for the app.\nYou need to restart the app for changes to take effect."
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "앱의 언어를 선택하세요.\n변경 사항을 적용하려면 앱을 재시작해야 합니다."
+          }
+        }
+      }
+    },
+    "settings.alert.language_selection.title" : {
+      "comment" : "Settings: Language selection alert title",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Select Language"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "언어 선택"
+          }
+        }
+      }
+    },
+    "settings.alert.reset_data.message" : {
+      "comment" : "Settings: Reset data alert message",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "All books, quotes, and photos will be deleted.\nThis action cannot be undone."
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "모든 책, 인용구, 사진이 삭제됩니다.\n이 작업은 되돌릴 수 없습니다."
+          }
+        }
+      }
+    },
+    "settings.alert.reset_data.title" : {
+      "comment" : "Settings: Reset data alert title",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reset All Data"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "모든 데이터 초기화"
+          }
+        }
+      }
+    },
+    "settings.row.language" : {
+      "comment" : "Settings: Language row title",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Language"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "언어"
+          }
+        }
+      }
+    },
+    "settings.row.reset_data" : {
+      "comment" : "Settings: Reset data row title",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reset All Data"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "모든 데이터 초기화"
+          }
+        }
+      }
+    },
+    "settings.section.data" : {
+      "comment" : "Settings: Data section title",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Data"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "데이터"
+          }
+        }
+      }
+    },
+    "settings.section.general" : {
+      "comment" : "Settings: General section title",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "General"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "일반"
+          }
+        }
+      }
+    },
     "tab.library" : {
       "comment" : "Library tab title",
       "extractionState" : "manual",
@@ -1263,1842 +3189,6 @@
         }
       }
     },
-    "circular_menu.book_detail.reading_record" : {
-      "comment" : "Circular menu item: Reading record",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Reading Record"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "독서 기록"
-          }
-        }
-      }
-    },
-    "circular_menu.book_detail.save_quote" : {
-      "comment" : "Circular menu item: Save quote",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Save Quote"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "문장 저장"
-          }
-        }
-      }
-    },
-    "circular_menu.book_detail.take_photo" : {
-      "comment" : "Circular menu item: Take photo",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Take Photo"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "사진 찍기"
-          }
-        }
-      }
-    },
-    "circular_menu.common.view" : {
-      "comment" : "Circular menu item: View",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "View"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "보기"
-          }
-        }
-      }
-    },
-    "circular_menu.common.save" : {
-      "comment" : "Circular menu item: Save",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Save"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "저장"
-          }
-        }
-      }
-    },
-    "circular_menu.common.delete" : {
-      "comment" : "Circular menu item: Delete",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Delete"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "삭제"
-          }
-        }
-      }
-    },
-    "circular_menu.common.share" : {
-      "comment" : "Circular menu item: Share",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Share"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "공유"
-          }
-        }
-      }
-    },
-    "circular_menu.common.edit" : {
-      "comment" : "Circular menu item: Edit",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Edit"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "수정"
-          }
-        }
-      }
-    },
-    "circular_menu.book_detail.remove_favorite" : {
-      "comment" : "Circular menu item: Remove favorite",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Remove Favorite"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "즐겨찾기 해제"
-          }
-        }
-      }
-    },
-    "circular_menu.book_detail.add_favorite" : {
-      "comment" : "Circular menu item: Add favorite",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Add to Favorites"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "즐겨찾기"
-          }
-        }
-      }
-    },
-    "circular_menu.library.take_photo" : {
-      "comment" : "Circular menu item: Take photo in library",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Photo"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "사진"
-          }
-        }
-      }
-    },
-    "alert.delete_quote.title" : {
-      "comment" : "Delete quote alert title",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Delete Quote"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "문장 삭제"
-          }
-        }
-      }
-    },
-    "alert.delete_quote.message" : {
-      "comment" : "Delete quote alert message",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Are you sure you want to delete this quote?"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "이 문장을 삭제하시겠습니까?"
-          }
-        }
-      }
-    },
-    "alert.delete_book.title" : {
-      "comment" : "Delete book alert title",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Delete Book"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "책 삭제"
-          }
-        }
-      }
-    },
-    "alert.delete_book.message_format" : {
-      "comment" : "Delete book alert message with book title placeholder",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "'%@'\n\nAll data related to this book (photos, quotes, tags) will be deleted.\n\nThis action cannot be undone."
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "'%@'\n이 책과 관련된 모든 데이터(사진, 문장, 태그)가 함께 삭제됩니다.\n\n이 작업은 되돌릴 수 없습니다."
-          }
-        }
-      }
-    },
-    "alert.navigate_to_book_detail.title" : {
-      "comment" : "Navigate to book detail alert title",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Go to Book Details"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "책 상세로 이동"
-          }
-        }
-      }
-    },
-    "alert.navigate_to_book_detail.message" : {
-      "comment" : "Navigate to book detail alert message",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Would you like to go to the book details?"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "책 상세 화면으로 이동하시겠습니까?"
-          }
-        }
-      }
-    },
-    "alert.search.enter_query" : {
-      "comment" : "Search alert: Enter query",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Please enter a search term."
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "검색어를 입력해주세요."
-          }
-        }
-      }
-    },
-    "alert.search.no_results" : {
-      "comment" : "Search alert: No results",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "No search results found."
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "검색 결과가 없습니다."
-          }
-        }
-      }
-    },
-    "alert.error.generic_message_format" : {
-      "comment" : "Generic error alert with message placeholder",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "An error occurred.\n%@"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "오류가 발생했습니다.\n%@"
-          }
-        }
-      }
-    },
-    "alert.delete_reading_record.title" : {
-      "comment" : "Delete reading record alert title",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Delete Reading Record"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "독서 기록 삭제"
-          }
-        }
-      }
-    },
-    "alert.delete_reading_record.message" : {
-      "comment" : "Delete reading record alert message",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Are you sure you want to delete this reading record?"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "이 독서 기록을 삭제하시겠습니까?"
-          }
-        }
-      }
-    },
-    "alert.reading_timer.exit_without_saving.title" : {
-      "comment" : "Reading timer: Exit without saving title",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Exit Without Saving?"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "저장하지 않고 나가시겠습니까?"
-          }
-        }
-      }
-    },
-    "alert.reading_timer.exit_without_saving.message" : {
-      "comment" : "Reading timer: Exit without saving message",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "The reading session will not be saved."
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "독서 기록이 저장되지 않습니다."
-          }
-        }
-      }
-    },
-    "alert.reading_timer.discard_session.title" : {
-      "comment" : "Reading timer: Discard session title",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Discard Session?"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "기록을 삭제하시겠습니까?"
-          }
-        }
-      }
-    },
-    "alert.reading_timer.discard_session.message" : {
-      "comment" : "Reading timer: Discard session message",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "This reading session will not be saved."
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "이 독서 세션이 저장되지 않습니다."
-          }
-        }
-      }
-    },
-    "alert.reading_timer.exit" : {
-      "comment" : "Reading timer: Exit button",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Exit"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "나가기"
-          }
-        }
-      }
-    },
-    "alert.reading_timer.discard" : {
-      "comment" : "Reading timer: Discard button",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Discard"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "삭제"
-          }
-        }
-      }
-    },
-    "alert.quote_share.save_failed.title" : {
-      "comment" : "Quote share: Save failed title",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Save Failed"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "저장 실패"
-          }
-        }
-      }
-    },
-    "alert.quote_share.save_failed.message" : {
-      "comment" : "Quote share: Save failed message",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Failed to save the quote image."
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "문장 이미지 저장에 실패했습니다."
-          }
-        }
-      }
-    },
-    "alert.library.delete_book_single.message_format" : {
-      "comment" : "Delete single book confirmation message with title placeholder",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Are you sure you want to delete '%@'?"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "'%@'을(를) 삭제하시겠습니까?"
-          }
-        }
-      }
-    },
-    "alert.library.delete_books_multiple.message_format" : {
-      "comment" : "Delete multiple books confirmation message with count placeholder",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Are you sure you want to delete %lld selected book(s)?"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "선택한 %lld개의 책을 삭제하시겠습니까?"
-          }
-        }
-      }
-    },
-    "alert.library.delete_failed.title" : {
-      "comment" : "Delete failed alert title",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Delete Failed"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "삭제 실패"
-          }
-        }
-      }
-    },
-    "alert.library.delete_failed.message" : {
-      "comment" : "Delete failed alert message",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Failed to delete book(s). Please try again."
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "책 삭제에 실패했습니다. 다시 시도해주세요."
-          }
-        }
-      }
-    },
-    "empty_state.book_detail.no_reading_records" : {
-      "comment" : "Book detail: No reading records empty state",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "No reading records yet"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "아직 독서 기록이 없습니다"
-          }
-        }
-      }
-    },
-    "empty_state.book_detail.no_saved_quotes" : {
-      "comment" : "Book detail: No saved quotes empty state",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "No saved quotes"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "저장한 문장이 없습니다"
-          }
-        }
-      }
-    },
-    "empty_state.book_detail.no_photos" : {
-      "comment" : "Book detail: No photos empty state",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "No photos"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "사진이 없습니다"
-          }
-        }
-      }
-    },
-    "empty_state.library.no_books" : {
-      "comment" : "Library: No books empty state",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "No books in library"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "서재에 책이 없습니다"
-          }
-        }
-      }
-    },
-    "settings.section.general" : {
-      "comment" : "Settings: General section title",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "General"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "일반"
-          }
-        }
-      }
-    },
-    "settings.section.data" : {
-      "comment" : "Settings: Data section title",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Data"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "데이터"
-          }
-        }
-      }
-    },
-    "settings.row.language" : {
-      "comment" : "Settings: Language row title",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Language"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "언어"
-          }
-        }
-      }
-    },
-    "settings.row.reset_data" : {
-      "comment" : "Settings: Reset data row title",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Reset All Data"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "모든 데이터 초기화"
-          }
-        }
-      }
-    },
-    "settings.alert.reset_data.title" : {
-      "comment" : "Settings: Reset data alert title",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Reset All Data"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "모든 데이터 초기화"
-          }
-        }
-      }
-    },
-    "settings.alert.reset_data.message" : {
-      "comment" : "Settings: Reset data alert message",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "All books, quotes, and photos will be deleted.\nThis action cannot be undone."
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "모든 책, 인용구, 사진이 삭제됩니다.\n이 작업은 되돌릴 수 없습니다."
-          }
-        }
-      }
-    },
-    "settings.alert.language_selection.title" : {
-      "comment" : "Settings: Language selection alert title",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Select Language"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "언어 선택"
-          }
-        }
-      }
-    },
-    "settings.alert.language_selection.message" : {
-      "comment" : "Settings: Language selection alert message",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Select the language for the app.\nYou need to restart the app for changes to take effect."
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "앱의 언어를 선택하세요.\n변경 사항을 적용하려면 앱을 재시작해야 합니다."
-          }
-        }
-      }
-    },
-    "settings.alert.language_changed.title" : {
-      "comment" : "Settings: Language changed alert title",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Language Changed"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "언어 변경됨"
-          }
-        }
-      }
-    },
-    "settings.alert.language_changed.message" : {
-      "comment" : "Settings: Language changed alert message",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "The changes will take effect when you restart the app."
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "앱을 재시작하면 변경 사항이 적용됩니다."
-          }
-        }
-      }
-    },
-    "book_detail.reading_records" : {
-      "comment" : "Book detail: Reading records section title",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Reading Records"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "독서 기록"
-          }
-        }
-      }
-    },
-    "action.select_all" : {
-      "comment" : "Select all button",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Select All"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "전체 선택"
-          }
-        }
-      }
-    },
-    "action.deselect_all" : {
-      "comment" : "Deselect all button",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Deselect All"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "선택 해제"
-          }
-        }
-      }
-    },
-    "reading_timer.title" : {
-      "comment" : "Reading timer screen title",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Reading Timer"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "독서 타이머"
-          }
-        }
-      }
-    },
-    "reading_timer.remaining_time" : {
-      "comment" : "Reading timer remaining time label",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Remaining: 00:00"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "남은 시간: 00:00"
-          }
-        }
-      }
-    },
-    "reading_timer.remaining_time_format" : {
-      "comment" : "Reading timer remaining time format with placeholder",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Remaining: %@"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "남은 시간: %@"
-          }
-        }
-      }
-    },
-    "reading_timer.start" : {
-      "comment" : "Reading timer start button",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Start"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "시작"
-          }
-        }
-      }
-    },
-    "reading_timer.pause" : {
-      "comment" : "Reading timer pause button",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Pause"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "일시정지"
-          }
-        }
-      }
-    },
-    "reading_timer.resume" : {
-      "comment" : "Reading timer resume button",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Resume"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "재개"
-          }
-        }
-      }
-    },
-    "reading_timer.take_photo" : {
-      "comment" : "Reading timer take photo button",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Take Photo"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "사진 찍기"
-          }
-        }
-      }
-    },
-    "reading_timer.save_quote" : {
-      "comment" : "Reading timer save quote button",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Save Quote"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "문장 저장"
-          }
-        }
-      }
-    },
-    "reading_timer.exit_title" : {
-      "comment" : "Reading timer exit confirmation title",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Exit Timer"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "독서 타이머 종료"
-          }
-        }
-      }
-    },
-    "reading_timer.exit_message_short" : {
-      "comment" : "Reading timer exit message for sessions under 1 minute",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "The session is less than 1 minute.\nExit without saving?"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "기록 시간이 1분 미만입니다.\n기록 없이 종료하시겠습니까?"
-          }
-        }
-      }
-    },
-    "reading_timer.save_title" : {
-      "comment" : "Reading timer save confirmation title",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Save Reading Record"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "독서 기록 저장"
-          }
-        }
-      }
-    },
-    "reading_timer.time_format" : {
-      "comment" : "Reading timer time format (minutes and seconds)",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%dmin %dsec"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%d분 %d초"
-          }
-        }
-      }
-    },
-    "reading_timer.save_and_exit_message_format" : {
-      "comment" : "Reading timer save and exit message with time placeholder",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Save %@ of reading and exit?"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ 동안의 독서 기록을 저장하고 종료하시겠습니까?"
-          }
-        }
-      }
-    },
-    "reading_timer.save_and_exit" : {
-      "comment" : "Reading timer save and exit button",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Save and Exit"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "저장하고 종료"
-          }
-        }
-      }
-    },
-    "reading_timer.completion_title" : {
-      "comment" : "Reading timer completion alert title",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Reading Complete"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "독서 완료"
-          }
-        }
-      }
-    },
-    "reading_timer.completion_message_format" : {
-      "comment" : "Reading timer completion message with book title and time",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Reading record saved.\n\n%@\nYou read for %@"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "독서 기록이 저장되었습니다.\n\n%@\n%@ 동안 읽었습니다"
-          }
-        }
-      }
-    },
-    "reading_timer.notification_permission_title" : {
-      "comment" : "Reading timer notification permission title",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Notification Permission Required"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "알림 권한 필요"
-          }
-        }
-      }
-    },
-    "reading_timer.notification_permission_message" : {
-      "comment" : "Reading timer notification permission message",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Notification permission is required to receive timer completion alerts.\n\nStart without notifications or enable them in Settings."
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "타이머 종료 알림을 받으려면 알림 권한이 필요합니다.\n알림 없이 타이머를 시작하거나 설정에서 알림을 허용해주세요."
-          }
-        }
-      }
-    },
-    "reading_timer.start_without_notification" : {
-      "comment" : "Reading timer start without notification button",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Start Without Notifications"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "알림 없이 시작"
-          }
-        }
-      }
-    },
-    "reading_timer.live_activity_disabled_title" : {
-      "comment" : "Reading timer Live Activity disabled title",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Live Activity Unavailable"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Live Activity 사용 불가"
-          }
-        }
-      }
-    },
-    "reading_timer.live_activity_disabled_message" : {
-      "comment" : "Reading timer Live Activity disabled message",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Live Activity is unavailable. The timer will work normally."
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Live Activity를 사용할 수 없습니다. 타이머는 정상적으로 동작합니다."
-          }
-        }
-      }
-    },
-    "reading_timer.duplicate_session_title" : {
-      "comment" : "Reading timer duplicate session title",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Timer in Progress"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "진행 중인 타이머가 있습니다"
-          }
-        }
-      }
-    },
-    "reading_timer.duplicate_session_message_format" : {
-      "comment" : "Reading timer duplicate session message with book title and time",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "\"%@\" reading timer is in progress.\nElapsed time: %@"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "\"%@\" 독서 타이머가 진행 중입니다.\n경과 시간: %@"
-          }
-        }
-      }
-    },
-    "reading_timer.continue_current" : {
-      "comment" : "Reading timer continue current session button",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Continue Current"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "현재 타이머 계속"
-          }
-        }
-      }
-    },
-    "reading_timer.terminate_and_start" : {
-      "comment" : "Reading timer terminate existing and start new button",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "End Current and Start New"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "기존 종료하고 새로 시작"
-          }
-        }
-      }
-    },
-    "reading_timer.session_too_short_title" : {
-      "comment" : "Reading timer session too short title",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Session Too Short"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "기록 시간이 너무 짧습니다"
-          }
-        }
-      }
-    },
-    "reading_timer.session_too_short_message" : {
-      "comment" : "Reading timer session too short message",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Minimum 1 minute of reading is required to save.\nContinue reading or exit without saving."
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "최소 1분 이상 읽어야 기록할 수 있습니다.\n계속 읽거나 기록 없이 종료하세요."
-          }
-        }
-      }
-    },
-    "reading_timer.continue_reading" : {
-      "comment" : "Reading timer continue reading button",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Continue Reading"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "계속 읽기"
-          }
-        }
-      }
-    },
-    "reading_timer.exit_without_saving" : {
-      "comment" : "Reading timer exit without saving button",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Exit Without Saving"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "기록 없이 종료"
-          }
-        }
-      }
-    },
-    "search.placeholder" : {
-      "comment" : "Search bar placeholder text",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Search by ISBN, Title, Author, etc."
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ISBN, 도서명, 작가 등 검색 키워드"
-          }
-        }
-      }
-    },
-    "search.book_saved.title" : {
-      "comment" : "Book saved to library alert title",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Book Added to Library"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "책이 서재에 담겼습니다"
-          }
-        }
-      }
-    },
-    "search.book_saved.message" : {
-      "comment" : "Navigate to book detail confirmation message",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Would you like to go to the book details?"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "책 상세 화면으로 이동하시겠습니까?"
-          }
-        }
-      }
-    },
-    "search.navigate" : {
-      "comment" : "Navigate to book detail button",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Go"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "이동"
-          }
-        }
-      }
-    },
-    "alert.notification" : {
-      "comment" : "Generic notification alert title",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Notification"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "알림"
-          }
-        }
-      }
-    },
-    "search.empty_state.enter_query" : {
-      "comment" : "Search empty state: enter query",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Please enter a search term."
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "검색어를 입력해주세요."
-          }
-        }
-      }
-    },
-    "search.empty_state.no_results" : {
-      "comment" : "Search empty state: no results",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "No search results found."
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "검색 결과가 없습니다."
-          }
-        }
-      }
-    },
-    "reading_info_edit.title" : {
-      "comment" : "Reading info edit screen title",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Edit Reading Information"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "독서 정보 편집"
-          }
-        }
-      }
-    },
-    "reading_info_edit.total_pages" : {
-      "comment" : "Total pages label",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Total Pages"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "총 페이지"
-          }
-        }
-      }
-    },
-    "reading_info_edit.pages_placeholder" : {
-      "comment" : "Pages input placeholder",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Enter page count"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "페이지 수 입력"
-          }
-        }
-      }
-    },
-    "reading_info_edit.start_date_label" : {
-      "comment" : "Start date label",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Start Date"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "읽기 시작한 날짜"
-          }
-        }
-      }
-    },
-    "reading_info_edit.clear_start_date" : {
-      "comment" : "Clear start date button",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Clear Start Date"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "시작 날짜 초기화"
-          }
-        }
-      }
-    },
-    "reading_info_edit.end_date_label" : {
-      "comment" : "End date label",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Completion Date"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "읽기 완료한 날짜"
-          }
-        }
-      }
-    },
-    "reading_info_edit.reading_status.reading" : {
-      "comment" : "Reading status: Currently reading",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Reading"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "읽는 중"
-          }
-        }
-      }
-    },
-    "reading_info_edit.reading_status.completed" : {
-      "comment" : "Reading status: Completed",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Completed"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "완료"
-          }
-        }
-      }
-    },
-    "reading_info_edit.clear_end_date" : {
-      "comment" : "Clear end date button",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Clear Completion Date"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "완료 날짜 초기화"
-          }
-        }
-      }
-    },
-    "reading_info_edit.date_error.title" : {
-      "comment" : "Date validation error title",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Date Error"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "날짜 오류"
-          }
-        }
-      }
-    },
-    "reading_info_edit.date_error.message" : {
-      "comment" : "Date validation error message",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "The completion date cannot be earlier than the start date."
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "종료 날짜는 시작 날짜보다 앞설 수 없습니다."
-          }
-        }
-      }
-    },
-    "reading_info_edit.start_date_cleared.title" : {
-      "comment" : "Start date cleared alert title",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Start Date Cleared"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "시작 날짜 초기화"
-          }
-        }
-      }
-    },
-    "reading_info_edit.start_date_cleared.message" : {
-      "comment" : "Start date cleared alert message",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "The start date has been cleared."
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "읽기 시작 날짜가 초기화됩니다."
-          }
-        }
-      }
-    },
-    "reading_info_edit.end_date_cleared.title" : {
-      "comment" : "End date cleared alert title",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Completion Date Cleared"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "완료 날짜 초기화"
-          }
-        }
-      }
-    },
-    "reading_info_edit.end_date_cleared.message" : {
-      "comment" : "End date cleared alert message",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "The completion date has been cleared."
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "읽기 완료 날짜가 초기화됩니다."
-          }
-        }
-      }
-    },
     "값" : {
 
     },
@@ -3109,9 +3199,6 @@
 
     },
     "시작" : {
-
-    },
-    "아직 독서 기록이 없습니다" : {
 
     },
     "요일" : {
@@ -3125,96 +3212,6 @@
     },
     "종료" : {
 
-    },
-    "quote_share.title" : {
-      "comment" : "Quote share screen title",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Share Quote"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "문장 공유"
-          }
-        }
-      }
-    },
-    "quote_share.generating_image" : {
-      "comment" : "Quote share: Generating image message",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Generating image..."
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "이미지 생성 중..."
-          }
-        }
-      }
-    },
-    "quote_share.save_failed.title" : {
-      "comment" : "Quote share: Save failed title",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Save Failed"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "저장 실패"
-          }
-        }
-      }
-    },
-    "quote_share.save_success.title" : {
-      "comment" : "Quote share: Save success title",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Save Complete"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "저장 완료"
-          }
-        }
-      }
-    },
-    "quote_share.save_success.message" : {
-      "comment" : "Quote share: Save success message",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "The quote image has been saved to your photo library."
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "이미지가 사진 라이브러리에 저장되었습니다."
-          }
-        }
-      }
     }
   },
   "version" : "1.1"

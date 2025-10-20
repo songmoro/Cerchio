@@ -29,16 +29,12 @@ struct ReadingChartView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            if chartData.isEmpty {
-                emptyStateView
-            } else {
-                headerView
-                chartView
-                HStack {
-                    Spacer()
-                    segmentControl
-                    Spacer()
-                }
+            headerView
+            chartView
+            HStack {
+                Spacer()
+                segmentControl
+                Spacer()
             }
         }
         .padding(.vertical, 16)
@@ -100,14 +96,6 @@ struct ReadingChartView: View {
         case .month: return "이번 달"
         case .year: return "올해"
         }
-    }
-
-    private var emptyStateView: some View {
-        Text("아직 독서 기록이 없습니다")
-            .font(.system(size: 15))
-            .foregroundColor(Color(uiColor: UIColor(named: "ForestGreen")?.withAlphaComponent(0.6) ?? .gray))
-            .frame(maxWidth: .infinity, alignment: .center)
-            .padding(.vertical, 24)
     }
 
     private var headerView: some View {
