@@ -57,7 +57,7 @@ final class TimerStopUseCase {
         sessionId: String,
         realmSession: RealmReadingSession?
     ) -> Observable<Void> {
-        print("[TimerStopUseCase] 🛑 Stopping timer")
+        print("[TimerStopUseCase]  Stopping timer")
         print("  - elapsed: \(stateManager.currentElapsedSeconds)s")
 
         // 1. 최소 시간 검증
@@ -66,7 +66,7 @@ final class TimerStopUseCase {
             elapsedSeconds: stateManager.currentElapsedSeconds,
             minimumSeconds: minimumSeconds
         ) else {
-            print("[TimerStopUseCase] ❌ Session too short")
+            print("[TimerStopUseCase]  Session too short")
             return .error(StopError.sessionTooShort(
                 elapsedSeconds: stateManager.currentElapsedSeconds,
                 minimumSeconds: minimumSeconds
@@ -74,7 +74,7 @@ final class TimerStopUseCase {
         }
 
         guard let session = realmSession else {
-            print("[TimerStopUseCase] ❌ No session to complete")
+            print("[TimerStopUseCase]  No session to complete")
             return .error(StopError.noSession)
         }
 
@@ -100,9 +100,9 @@ final class TimerStopUseCase {
         )
         .do(onNext: { [weak self] _ in
             self?.stateManager.setState(.completed)
-            print("[TimerStopUseCase] ✅ Session completed and saved (duration: \(elapsedSeconds)s)")
+            print("[TimerStopUseCase]  Session completed and saved (duration: \(elapsedSeconds)s)")
         }, onError: { error in
-            print("[TimerStopUseCase] ❌ Failed to complete session: \(error)")
+            print("[TimerStopUseCase]  Failed to complete session: \(error)")
         })
         .map { _ in () }
     }

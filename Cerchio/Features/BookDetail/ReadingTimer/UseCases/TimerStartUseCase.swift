@@ -59,11 +59,11 @@ final class TimerStartUseCase {
         bookTitle: String,
         targetMinutes: Int
     ) -> Observable<StartResult> {
-        print("[TimerStartUseCase] 🚀 Starting timer flow...")
+        print("[TimerStartUseCase]  Starting timer flow...")
 
         // 1. 중복 세션 확인
         if let duplicate = validationService.checkDuplicateSession() {
-            print("[TimerStartUseCase] ❌ Duplicate session found")
+            print("[TimerStartUseCase]  Duplicate session found")
             return .error(StartError.duplicateSessionExists(duplicate))
         }
 
@@ -157,7 +157,7 @@ final class TimerStartUseCase {
         let targetSeconds = targetMinutes * 60
         let targetEndTime = startTime.addingTimeInterval(TimeInterval(targetSeconds))
 
-        print("[TimerStartUseCase] ✅ Starting timer")
+        print("[TimerStartUseCase]  Starting timer")
         print("  - sessionId: \(sessionId)")
         print("  - startTime: \(startTime)")
         print("  - targetEndTime: \(targetEndTime)")
@@ -175,10 +175,10 @@ final class TimerStartUseCase {
         )
         .subscribe(
             onNext: { notificationId in
-                print("[TimerStartUseCase] 🔔 Notification scheduled: \(notificationId)")
+                print("[TimerStartUseCase]  Notification scheduled: \(notificationId)")
             },
             onError: { error in
-                print("[TimerStartUseCase] ❌ Notification scheduling failed: \(error)")
+                print("[TimerStartUseCase]  Notification scheduling failed: \(error)")
             }
         )
 
@@ -192,14 +192,14 @@ final class TimerStartUseCase {
             )
             .subscribe(
                 onNext: {
-                    print("[TimerStartUseCase] ✅ Live Activity started successfully")
+                    print("[TimerStartUseCase]  Live Activity started successfully")
                 },
                 onError: { error in
-                    print("[TimerStartUseCase] ❌ Live Activity failed to start: \(error)")
+                    print("[TimerStartUseCase]  Live Activity failed to start: \(error)")
                 }
             )
         } else {
-            print("[TimerStartUseCase] ⚠️ Live Activity not started - iOS version or permission issue")
+            print("[TimerStartUseCase]  Live Activity not started - iOS version or permission issue")
         }
 
         // 4. 세션 저장

@@ -15,7 +15,7 @@ final class TimerSessionManager {
     private let appGroupIdentifier = "group.com.moro.cerchio"
     private lazy var userDefaults: UserDefaults = {
         guard let defaults = UserDefaults(suiteName: appGroupIdentifier) else {
-            print("[TimerSession] ⚠️ Failed to create App Group UserDefaults, falling back to standard")
+            print("[TimerSession]  Failed to create App Group UserDefaults, falling back to standard")
             return UserDefaults.standard
         }
         return defaults
@@ -67,31 +67,31 @@ final class TimerSessionManager {
         if let encoded = try? JSONEncoder().encode(session) {
             userDefaults.set(encoded, forKey: sessionKey)
             userDefaults.synchronize()
-            print("[TimerSession] 💾 Saved active session:")
+            print("[TimerSession]  Saved active session:")
             print("[TimerSession]   - sessionId: \(sessionId)")
             print("[TimerSession]   - bookTitle: \(bookTitle)")
             print("[TimerSession]   - state: \(session.state)")
             print("[TimerSession]   - targetEndTime: \(targetEndTime)")
             print("[TimerSession]   - pausedAt: \(pausedAt?.description ?? "nil")")
         } else {
-            print("[TimerSession] ❌ Failed to encode session")
+            print("[TimerSession]  Failed to encode session")
         }
     }
 
     func getActiveSession() -> ActiveSession? {
-        print("[TimerSession] 🔍 Checking for stored session...")
+        print("[TimerSession]  Checking for stored session...")
 
         guard let data = userDefaults.data(forKey: sessionKey) else {
-            print("[TimerSession] ❌ No data found for key: \(sessionKey)")
+            print("[TimerSession]  No data found for key: \(sessionKey)")
             return nil
         }
 
         guard let session = try? JSONDecoder().decode(ActiveSession.self, from: data) else {
-            print("[TimerSession] ❌ Failed to decode session data")
+            print("[TimerSession]  Failed to decode session data")
             return nil
         }
 
-        print("[TimerSession] ✅ Retrieved active session:")
+        print("[TimerSession]  Retrieved active session:")
         print("[TimerSession]   - sessionId: \(session.sessionId)")
         print("[TimerSession]   - bookId: \(session.bookId)")
         print("[TimerSession]   - bookTitle: \(session.bookTitle)")
@@ -102,7 +102,7 @@ final class TimerSessionManager {
 
     func clearActiveSession() {
         userDefaults.removeObject(forKey: sessionKey)
-        print("[TimerSession] 🗑️ Cleared active session")
+        print("[TimerSession]  Cleared active session")
     }
 
     func hasActiveSession() -> Bool {

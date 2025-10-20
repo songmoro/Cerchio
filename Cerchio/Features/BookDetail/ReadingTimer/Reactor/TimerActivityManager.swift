@@ -46,11 +46,11 @@ final class TimerActivityManager {
         targetEndTime: Date
     ) -> Observable<Void> {
         guard !isStarted else {
-            print("[TimerActivity] ⚠️ Already started")
+            print("[TimerActivity]  Already started")
             return .just(())
         }
 
-        print("[TimerActivity] 🚀 Starting Live Activity")
+        print("[TimerActivity]  Starting Live Activity")
         print("  - bookTitle: \(bookTitle)")
         print("  - targetMinutes: \(targetMinutes)")
         print("  - targetEndTime: \(targetEndTime)")
@@ -63,27 +63,27 @@ final class TimerActivityManager {
         )
         .do(onNext: { [weak self] in
             self?.isStarted = true
-            print("[TimerActivity] ✅ Started successfully")
+            print("[TimerActivity]  Started successfully")
         }, onError: { error in
-            print("[TimerActivity] ❌ Failed to start: \(error)")
+            print("[TimerActivity]  Failed to start: \(error)")
         })
     }
 
     @available(iOS 16.2, *)
     func end(immediate: Bool = false) -> Observable<Void> {
         guard isStarted else {
-            print("[TimerActivity] ⚠️ Not started")
+            print("[TimerActivity]  Not started")
             return .just(())
         }
 
-        print("[TimerActivity] 🛑 Ending Live Activity (immediate: \(immediate))")
+        print("[TimerActivity]  Ending Live Activity (immediate: \(immediate))")
         return liveActivityManager.endActivity(immediate: immediate)
             .do(onNext: { [weak self] in
                 self?.isStarted = false
-                print("[TimerActivity] ✅ Ended successfully")
+                print("[TimerActivity]  Ended successfully")
             }, onError: { [weak self] error in
                 self?.isStarted = false
-                print("[TimerActivity] ❌ Failed to end: \(error)")
+                print("[TimerActivity]  Failed to end: \(error)")
             })
     }
 
@@ -96,12 +96,12 @@ final class TimerActivityManager {
         targetSeconds: Int
     ) -> Observable<Void> {
         guard isStarted else {
-            print("[TimerActivity] ⚠️ Cannot update (not started)")
+            print("[TimerActivity]  Cannot update (not started)")
             return .just(())
         }
 
         let isPaused = pausedAt != nil
-        print("[TimerActivity] \(isPaused ? "⏸️ PAUSED" : "▶️ RESUMED")")
+        print("[TimerActivity] \(isPaused ? " PAUSED" : " RESUMED")")
         print("  - targetEndTime: \(targetEndTime)")
         print("  - pausedAt: \(pausedAt?.description ?? "nil")")
 
@@ -130,7 +130,7 @@ final class TimerActivityManager {
             isPaused: isPaused
         )
         .catch { error -> Observable<Void> in
-            print("[TimerActivity] ❌ Update failed: \(error)")
+            print("[TimerActivity]  Update failed: \(error)")
             return .just(())
         }
     }
@@ -144,7 +144,7 @@ final class TimerActivityManager {
         pausedAt: Date?,
         targetSeconds: Int
     ) -> Observable<Void> {
-        print("[TimerActivity] 🔄 Restarting Live Activity")
+        print("[TimerActivity]  Restarting Live Activity")
 
         return start(
             bookTitle: bookTitle,
@@ -155,7 +155,7 @@ final class TimerActivityManager {
         .flatMap { [weak self] _ -> Observable<Void> in
             guard let self = self else { return .empty() }
 
-            print("[TimerActivity] ✅ Restarted - updating state...")
+            print("[TimerActivity]  Restarted - updating state...")
 
             // targetEndTime 기반에서 timerStartTime 기반으로 변환
             let timerStartTime: Date?
@@ -182,9 +182,9 @@ final class TimerActivityManager {
             )
         }
         .do(onNext: {
-            print("[TimerActivity] ✅ Restarted and synced")
+            print("[TimerActivity]  Restarted and synced")
         }, onError: { error in
-            print("[TimerActivity] ❌ Restart failed: \(error)")
+            print("[TimerActivity]  Restart failed: \(error)")
         })
     }
 
@@ -200,7 +200,7 @@ final class TimerActivityManager {
         let activeActivities = liveActivityManager.getActiveActivities()
 
         if activeActivities.isEmpty {
-            print("[TimerActivity] 📱 No active activity - creating new one")
+            print("[TimerActivity]  No active activity - creating new one")
 
             return start(
                 bookTitle: bookTitle,
@@ -235,7 +235,7 @@ final class TimerActivityManager {
             }
         }
 
-        print("[TimerActivity] 🔄 Syncing existing activity")
+        print("[TimerActivity]  Syncing existing activity")
 
         // 기존 액티비티를 LiveActivityManager에 복원
         liveActivityManager.restoreActivity(activeActivities.first!)
@@ -266,7 +266,7 @@ final class TimerActivityManager {
         )
         .do(onNext: { [weak self] in
             self?.isStarted = true
-            print("[TimerActivity] ✅ Synced successfully")
+            print("[TimerActivity]  Synced successfully")
         })
     }
 
@@ -279,7 +279,7 @@ final class TimerActivityManager {
             .subscribe(onNext: { [weak self] in
                 self?.isStarted = false
                 self?.dismissedRelay.accept(())
-                print("[TimerActivity] 🗑️ User dismissed activity")
+                print("[TimerActivity]  User dismissed activity")
             })
             .disposed(by: disposeBag)
 
@@ -287,7 +287,7 @@ final class TimerActivityManager {
         liveActivityManager.activityStale
             .subscribe(onNext: { [weak self] in
                 self?.staleRelay.accept(())
-                print("[TimerActivity] ⏰ Activity became stale")
+                print("[TimerActivity]  Activity became stale")
             })
             .disposed(by: disposeBag)
 
@@ -296,7 +296,7 @@ final class TimerActivityManager {
             .subscribe(onNext: { [weak self] in
                 self?.isStarted = false
                 self?.endedRelay.accept(())
-                print("[TimerActivity] ⏹️ Activity ended")
+                print("[TimerActivity]  Activity ended")
             })
             .disposed(by: disposeBag)
     }

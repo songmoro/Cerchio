@@ -134,7 +134,7 @@ final class LibraryCollectionViewCell: UICollectionViewCell, IsIdentifiable {
 
         // 셀 높이보다 저자 레이블이 벗어난 경우
         if authorMaxY > cellBounds.height - LibraryConstants.Layout.stackOffset {
-            print("[Cell Validation] ⚠️ Author label overflow detected")
+            print("[Cell Validation]  Author label overflow detected")
             print("  - Cell height: \(cellBounds.height)")
             print("  - Author maxY: \(authorMaxY)")
 

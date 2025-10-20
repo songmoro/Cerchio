@@ -18,12 +18,40 @@ final class SettingsViewController: BaseViewController<SettingsReactor> {
     private let tableView = UITableView(frame: .zero, style: .insetGrouped)
 
     private enum Section: Int, CaseIterable {
+        case contact
+        case info
         case data
 
         var title: String? {
             switch self {
+            case .contact:
+                return SettingsConstants.Strings.contactSectionTitle
+            case .info:
+                return SettingsConstants.Strings.infoSectionTitle
             case .data:
                 return SettingsConstants.Strings.dataSectionTitle
+            }
+        }
+    }
+
+    private enum ContactRow: Int, CaseIterable {
+        case contact
+
+        var title: String {
+            switch self {
+            case .contact:
+                return SettingsConstants.Strings.contactRowTitle
+            }
+        }
+    }
+
+    private enum InfoRow: Int, CaseIterable {
+        case appVersion
+
+        var title: String {
+            switch self {
+            case .appVersion:
+                return SettingsConstants.Strings.appVersionRowTitle
             }
         }
     }
@@ -149,6 +177,10 @@ extension SettingsViewController: UITableViewDataSource {
         guard let sectionType = Section(rawValue: section) else { return 0 }
 
         switch sectionType {
+        case .contact:
+            return ContactRow.allCases.count
+        case .info:
+            return InfoRow.allCases.count
         case .data:
             return DataRow.allCases.count
         }
@@ -160,6 +192,26 @@ extension SettingsViewController: UITableViewDataSource {
         }
 
         switch sectionType {
+        case .contact:
+            let cell = tableView.dequeueReusableCell(withIdentifier: SettingsConstants.CellIdentifiers.defaultCell, for: indexPath)
+            if let rowType = ContactRow(rawValue: indexPath.row) {
+                cell.textLabel?.text = rowType.title
+                cell.textLabel?.textColor = .label
+                cell.selectionStyle = .default
+                cell.accessoryType = .disclosureIndicator
+            }
+            return cell
+        case .info:
+            let cell = UITableViewCell(style: .value1, reuseIdentifier: nil)
+            if let rowType = InfoRow(rawValue: indexPath.row) {
+                cell.textLabel?.text = rowType.title
+                cell.textLabel?.textColor = .label
+                cell.detailTextLabel?.text = SettingsConstants.appVersion
+                cell.detailTextLabel?.textColor = .secondaryLabel
+                cell.selectionStyle = .none
+                cell.accessoryType = .none
+            }
+            return cell
         case .data:
             let cell = tableView.dequeueReusableCell(withIdentifier: SettingsConstants.CellIdentifiers.defaultCell, for: indexPath)
             if let rowType = DataRow(rawValue: indexPath.row) {
@@ -187,6 +239,17 @@ extension SettingsViewController: UITableViewDelegate {
         guard let sectionType = Section(rawValue: indexPath.section) else { return }
 
         switch sectionType {
+        case .contact:
+            if let rowType = ContactRow(rawValue: indexPath.row) {
+                switch rowType {
+                case .contact:
+                    HapticFeedbackManager.shared.impact()
+                    (coordinator as? SettingsCoordinator)?.showContactViewController()
+                }
+            }
+        case .info:
+            // No action for info rows
+            break
         case .data:
             if let rowType = DataRow(rawValue: indexPath.row) {
                 switch rowType {

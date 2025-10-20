@@ -133,9 +133,9 @@ final class ReadingTimerCoordinator: BaseCoordinator {
 
                 switch result {
                 case .quoteSaved:
-                    print("✅ Quote saved from reading timer")
+                    print(" Quote saved from reading timer")
                 case .cancelled:
-                    print("❌ Quote save cancelled")
+                    print(" Quote save cancelled")
                 }
             })
             .disposed(by: disposeBag)
@@ -154,7 +154,7 @@ extension ReadingTimerCoordinator: UIImagePickerControllerDelegate, UINavigation
         picker.dismiss(animated: true)
 
         guard let selectedImage = info[.editedImage] as? UIImage ?? info[.originalImage] as? UIImage else {
-            print("❌ Failed to get image from picker")
+            print(" Failed to get image from picker")
             return
         }
 
@@ -173,10 +173,10 @@ extension ReadingTimerCoordinator: UIImagePickerControllerDelegate, UINavigation
                 .observe(on: MainScheduler.instance)
                 .subscribe(
                     onNext: { _ in
-                        print("✅ Photo saved from reading timer")
+                        print(" Photo saved from reading timer")
                     },
                     onError: { error in
-                        print("❌ Failed to save photo: \(error.localizedDescription)")
+                        print(" Failed to save photo: \(error.localizedDescription)")
                     }
                 )
                 .disposed(by: disposeBag)

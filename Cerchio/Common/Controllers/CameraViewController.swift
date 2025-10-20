@@ -114,7 +114,7 @@ final class CameraViewController: UIViewController {
         captureSession.sessionPreset = .photo
 
         guard let backCamera = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .back) else {
-            print("❌ Unable to access back camera")
+            print(" Unable to access back camera")
             return
         }
 
@@ -130,7 +130,7 @@ final class CameraViewController: UIViewController {
                 setupLivePreview()
             }
         } catch {
-            print("❌ Error setting up camera: \(error.localizedDescription)")
+            print(" Error setting up camera: \(error.localizedDescription)")
         }
     }
 
@@ -183,17 +183,17 @@ final class CameraViewController: UIViewController {
 extension CameraViewController: AVCapturePhotoCaptureDelegate {
     func photoOutput(_ output: AVCapturePhotoOutput, didFinishProcessingPhoto photo: AVCapturePhoto, error: Error?) {
         guard error == nil else {
-            print("❌ Photo capture error: \(error!.localizedDescription)")
+            print(" Photo capture error: \(error!.localizedDescription)")
             return
         }
 
         guard let imageData = photo.fileDataRepresentation() else {
-            print("❌ Unable to generate image data")
+            print(" Unable to generate image data")
             return
         }
 
         guard let image = UIImage(data: imageData) else {
-            print("❌ Unable to generate image from data")
+            print(" Unable to generate image from data")
             return
         }
 

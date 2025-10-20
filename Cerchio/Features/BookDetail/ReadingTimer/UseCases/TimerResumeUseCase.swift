@@ -48,11 +48,11 @@ final class TimerResumeUseCase {
     ) -> Observable<Void> {
         guard let targetEndTime = stateManager.currentTargetEndTime,
               let pausedAt = stateManager.currentPausedAt else {
-            print("[TimerResumeUseCase] ❌ No pause info")
+            print("[TimerResumeUseCase]  No pause info")
             return .error(NSError(domain: "TimerResumeUseCase", code: -1))
         }
 
-        print("[TimerResumeUseCase] ▶️ Resuming timer")
+        print("[TimerResumeUseCase]  Resuming timer")
 
         // 1. 일시정지 시간 계산하여 종료 시간 연장
         let pauseDuration = Date().timeIntervalSince(pausedAt)
@@ -96,7 +96,7 @@ final class TimerResumeUseCase {
             activityId: nil
         )
 
-        print("[TimerResumeUseCase] ✅ Timer resumed successfully")
+        print("[TimerResumeUseCase]  Timer resumed successfully")
         return .just(())
     }
 }

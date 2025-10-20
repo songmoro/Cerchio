@@ -159,8 +159,8 @@ final class BookRepository: BaseRepository<RealmBook>, BookRepositoryProtocol {
             if let objectId = try? ObjectId(string: book.id),
                let existingBook = self.realm.object(ofType: RealmBook.self, forPrimaryKey: objectId) {
                 // 기존 책 업데이트
-                print("📚 Updating existing book - Before: startDate=\(String(describing: existingBook.startDate)), endDate=\(String(describing: existingBook.endDate))")
-                print("📚 New values: startDate=\(String(describing: book.startDate)), endDate=\(String(describing: book.endDate))")
+                print(" Updating existing book - Before: startDate=\(String(describing: existingBook.startDate)), endDate=\(String(describing: existingBook.endDate))")
+                print(" New values: startDate=\(String(describing: book.startDate)), endDate=\(String(describing: book.endDate))")
 
                 existingBook.title = book.title
                 existingBook.link = book.link
@@ -181,7 +181,7 @@ final class BookRepository: BaseRepository<RealmBook>, BookRepositoryProtocol {
                 existingBook.startDate = book.startDate
                 existingBook.endDate = book.endDate
 
-                print("📚 After update: startDate=\(String(describing: existingBook.startDate)), endDate=\(String(describing: existingBook.endDate))")
+                print(" After update: startDate=\(String(describing: existingBook.startDate)), endDate=\(String(describing: existingBook.endDate))")
                 return existingBook.toBook()
             } else {
                 // 새 책 생성

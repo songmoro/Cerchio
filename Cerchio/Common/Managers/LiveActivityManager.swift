@@ -41,7 +41,7 @@ final class LiveActivityManager {
         return Observable.create { observer in
             let authInfo = ActivityAuthorizationInfo()
             let isEnabled = authInfo.areActivitiesEnabled
-            print("[LiveActivity] 🔐 Authorization check: \(isEnabled ? "Enabled" : "Disabled")")
+            print("[LiveActivity] Authorization check: \(isEnabled ? "Enabled" : "Disabled")")
             observer.onNext(isEnabled)
             observer.onCompleted()
             return Disposables.create()
@@ -54,14 +54,14 @@ final class LiveActivityManager {
 
     /// 앱 재시작 후 기존 액티비티 복원
     func restoreActivity(_ activity: Activity<ReadingTimerAttributes>) {
-        print("[LiveActivity] 🔄 Restoring existing activity")
+        print("[LiveActivity] Restoring existing activity")
         print("  - activity.id: \(activity.id)")
         print("  - activity.activityState: \(activity.activityState)")
 
         currentActivity = activity
         observeActivityState(activity)
 
-        print("[LiveActivity] ✅ Activity restored successfully")
+        print("[LiveActivity] Activity restored successfully")
     }
 
     // MARK: - Start Activity
@@ -74,10 +74,10 @@ final class LiveActivityManager {
     ) -> Observable<Void> {
         return Observable.create { [weak self] observer in
             let authInfo = ActivityAuthorizationInfo()
-            print("[LiveActivity] 📱 Authorization status: \(authInfo.areActivitiesEnabled)")
+            print("[LiveActivity] Authorization status: \(authInfo.areActivitiesEnabled)")
 
             guard authInfo.areActivitiesEnabled else {
-                print("[LiveActivity] ❌ Activities are NOT enabled")
+                print("[LiveActivity] Activities are NOT enabled")
                 observer.onError(LiveActivityError.notEnabled)
                 return Disposables.create()
             }
@@ -97,7 +97,7 @@ final class LiveActivityManager {
                     isCompleted: false
                 )
 
-                print("[LiveActivity] 🚀 Requesting activity:")
+                print("[LiveActivity] Requesting activity:")
                 print("  - bookTitle: \(bookTitle)")
                 print("  - targetMinutes: \(targetMinutes) (\(targetSeconds)s)")
                 print("  - targetEndTime: \(targetEndTime)")
@@ -115,7 +115,7 @@ final class LiveActivityManager {
                     pushType: nil
                 )
 
-                print("[LiveActivity] ✅ Activity started successfully!")
+                print("[LiveActivity] Activity started successfully!")
                 print("  - activity.id: \(activity.id)")
                 print("  - activity.activityState: \(activity.activityState)")
 
@@ -127,7 +127,7 @@ final class LiveActivityManager {
                 observer.onNext(())
                 observer.onCompleted()
             } catch {
-                print("[LiveActivity] ❌ Failed to start activity:")
+                print("[LiveActivity] Failed to start activity:")
                 print("  - error: \(error)")
                 print("  - error localized: \(error.localizedDescription)")
                 observer.onError(error)
@@ -192,15 +192,15 @@ final class LiveActivityManager {
                 return Disposables.create()
             }
 
-            print("[LiveActivity] 🧹 Ending \(activities.count) active activities")
+            print("[LiveActivity] Ending \(activities.count) active activities")
 
             Task {
                 for activity in activities {
                     do {
                         await activity.end(nil, dismissalPolicy: .immediate)
-                        print("[LiveActivity] ✅ Ended activity: \(activity.id)")
+                        print("[LiveActivity] Ended activity: \(activity.id)")
                     } catch {
-                        print("[LiveActivity] ⚠️ Failed to end activity \(activity.id): \(error)")
+                        print("[LiveActivity] Failed to end activity \(activity.id): \(error)")
                     }
                 }
 
@@ -268,26 +268,26 @@ final class LiveActivityManager {
         // 새 관찰자 시작
         activityStateObserver = Task {
             for await state in activity.activityStateUpdates {
-                print("[LiveActivity] 📊 Activity state changed: \(state)")
+                print("[LiveActivity] Activity state changed: \(state)")
 
                 switch state {
                 case .dismissed:
-                    print("[LiveActivity] 🗑️ User dismissed the Live Activity")
+                    print("[LiveActivity] User dismissed the Live Activity")
                     self.activityDismissedSubject.onNext(())
                     self.cleanupActivity()
 
                 case .ended:
-                    print("[LiveActivity] ⏹️ Activity ended")
+                    print("[LiveActivity] Activity ended")
                     self.activityEndedSubject.onNext(())
                     self.cleanupActivity()
 
                 case .stale:
-                    print("[LiveActivity] ⏰ Activity became stale (8 hour limit reached)")
+                    print("[LiveActivity] Activity became stale (8 hour limit reached)")
                     self.activityStaleSubject.onNext(())
                     // stale 상태에서는 정리하지 않고 계속 유지 (새로 생성할 수 있음)
 
                 case .active:
-                    print("[LiveActivity] ✅ Activity is active")
+                    print("[LiveActivity] Activity is active")
                     break
 
                 @unknown default:
@@ -298,7 +298,7 @@ final class LiveActivityManager {
     }
 
     private func cleanupActivity() {
-        print("[LiveActivity] 🧹 Cleaning up activity")
+        print("[LiveActivity] Cleaning up activity")
         activityStateObserver?.cancel()
         activityStateObserver = nil
         currentActivity = nil

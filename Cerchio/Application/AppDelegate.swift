@@ -53,9 +53,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
             let realm = try Realm()
             print("📦 Realm configured successfully")
             print("📍 Realm file URL: \(realm.configuration.fileURL?.absoluteString ?? "N/A")")
-            print("📊 Schema version: \(schemaVersion)")
+            print(" Schema version: \(schemaVersion)")
         } catch {
-            print("❌ Realm configuration failed: \(error)")
+            print(" Realm configuration failed: \(error)")
         }
         #endif
     }
@@ -67,7 +67,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     private func updateBadgeCount() {
         NotificationManager.shared.updateBadgeCount()
             .subscribe(onNext: { count in
-                print("[AppDelegate] 📛 Initial badge count: \(count)")
+                print("[AppDelegate]  Initial badge count: \(count)")
             })
             .disposed(by: disposeBag)
     }
@@ -75,7 +75,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     private func cleanupExpiredNotifications() {
         NotificationManager.shared.cleanupExpiredNotifications()
             .subscribe(onNext: {
-                print("[AppDelegate] 🧹 Expired notifications cleaned")
+                print("[AppDelegate]  Expired notifications cleaned")
             })
             .disposed(by: disposeBag)
     }
@@ -95,7 +95,7 @@ extension AppDelegate: UNUserNotificationCenterDelegate {
         willPresent notification: UNNotification,
         withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
     ) {
-        print("[AppDelegate] 📬 Notification will present: \(notification.request.identifier)")
+        print("[AppDelegate]  Notification will present: \(notification.request.identifier)")
 
         // 알림을 전달됨으로 표시
         if let notificationId = notification.request.content.userInfo["notificationId"] as? String {
@@ -115,13 +115,13 @@ extension AppDelegate: UNUserNotificationCenterDelegate {
         didReceive response: UNNotificationResponse,
         withCompletionHandler completionHandler: @escaping () -> Void
     ) {
-        print("[AppDelegate] 👆 Notification tapped: \(response.notification.request.identifier)")
+        print("[AppDelegate]  Notification tapped: \(response.notification.request.identifier)")
 
         // 알림을 읽음으로 표시
         if let notificationId = response.notification.request.content.userInfo["notificationId"] as? String {
             NotificationManager.shared.markAsDismissed(notificationId: notificationId)
                 .subscribe(onNext: {
-                    print("[AppDelegate] ✅ Notification marked as dismissed")
+                    print("[AppDelegate]  Notification marked as dismissed")
                 })
                 .disposed(by: disposeBag)
         }

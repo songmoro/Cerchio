@@ -56,7 +56,7 @@ final class TimerForegroundUseCase {
         targetMinutes: Int,
         sessionStartTime: Date
     ) -> Observable<ForegroundResult> {
-        print("[TimerForegroundUseCase] 🔄 Returning from background")
+        print("[TimerForegroundUseCase]  Returning from background")
 
         // 1. 타이머가 이미 완료되었으면 Live Activity만 종료
         if stateManager.isCompleted() {
@@ -69,7 +69,7 @@ final class TimerForegroundUseCase {
 
         // 2. 시간 계산
         guard let targetEndTime = stateManager.currentTargetEndTime else {
-            print("[TimerForegroundUseCase] ❌ No targetEndTime")
+            print("[TimerForegroundUseCase]  No targetEndTime")
             return .just(.completed)
         }
 
@@ -84,7 +84,7 @@ final class TimerForegroundUseCase {
 
         // 3. 백그라운드에서 완료되었는지 확인
         if calc.isCompleted {
-            print("[TimerForegroundUseCase] 🏁 Completed in background")
+            print("[TimerForegroundUseCase]  Completed in background")
             _ = notificationManager.cancel().subscribe()
             if #available(iOS 16.2, *) {
                 _ = activityManager.end().subscribe()
@@ -95,7 +95,7 @@ final class TimerForegroundUseCase {
 
         // 4. Live Activity 복원 (사용자가 닫았을 경우)
         if #available(iOS 16.2, *), !activityManager.hasActiveActivity {
-            print("[TimerForegroundUseCase] 📱 Restarting Live Activity")
+            print("[TimerForegroundUseCase]  Restarting Live Activity")
             _ = activityManager.restart(
                 bookTitle: bookTitle,
                 targetMinutes: targetMinutes,
@@ -119,12 +119,12 @@ final class TimerForegroundUseCase {
 
         // 6. 일시정지 상태면 시간만 업데이트
         if stateManager.currentState == .paused {
-            print("[TimerForegroundUseCase] ⏸️ Paused - updating time only")
+            print("[TimerForegroundUseCase]  Paused - updating time only")
             return .just(.paused(remaining: calc.remaining))
         }
 
         // 7. 실행 중: 시간 업데이트
-        print("[TimerForegroundUseCase] ▶️ Running - updating time")
+        print("[TimerForegroundUseCase]  Running - updating time")
         return .just(.updated(remaining: calc.remaining))
     }
 }

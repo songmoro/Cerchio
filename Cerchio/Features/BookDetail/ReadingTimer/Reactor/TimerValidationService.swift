@@ -107,7 +107,7 @@ final class TimerValidationService {
     // MARK: - Logging
 
     func logValidationResult(_ result: ValidationResult) {
-        print("[TimerValidation] 🔍 Permission validation result:")
+        print("[TimerValidation]  Permission validation result:")
         print("  - isValid: \(result.isValid)")
         print("  - notificationStatus: \(result.notificationStatus)")
         print("  - liveActivityEnabled: \(result.liveActivityEnabled)")

@@ -6,6 +6,11 @@
 	<true/>
 	<key>NSSupportsLiveActivities</key>
 	<true/>
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>mailto</string>
+		<string>instagram</string>
+	</array>
 	<key>NSCameraUsageDescription</key>
 	<string>책의 페이지나 내용을 촬영하여 개인 도서 기록을 저장하기 위해 카메라 접근이 필요합니다.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>

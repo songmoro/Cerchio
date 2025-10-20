@@ -104,7 +104,7 @@ final class SearchReactor: Reactor {
                     guard let self = self else { return Observable.just(.setError("내부 오류")) }
 
                     if exists {
-                        print("⚠️ 이미 서재에 있는 책: \(book.cleanTitle)")
+                        print(" 이미 서재에 있는 책: \(book.cleanTitle)")
                         return Observable.just(.setError("이미 서재에 있는 책입니다."))
                     }
 
@@ -124,8 +124,8 @@ final class SearchReactor: Reactor {
                         return self.saveBookWithRepository(realmBook)
                             .do(onNext: { success in
                                 if success {
-                                    print("✅ 책 저장 성공: \(realmBook.cleanTitle)")
-                                    print("📚 저장된 데이터:")
+                                    print(" 책 저장 성공: \(realmBook.cleanTitle)")
+                                    print(" 저장된 데이터:")
                                     print("  - 제목: \(realmBook.cleanTitle)")
                                     print("  - 저자: \(realmBook.author)")
                                     print("  - 출판사: \(realmBook.publisher)")
@@ -133,7 +133,7 @@ final class SearchReactor: Reactor {
                                     print("  - 가격: \(realmBook.formattedPrice ?? "정보 없음")")
                                     print("  - ISBN: \(realmBook.isbn)")
                                 } else {
-                                    print("❌ 책 저장 실패: \(realmBook.cleanTitle)")
+                                    print(" 책 저장 실패: \(realmBook.cleanTitle)")
                                 }
                             })
                             .flatMap { success -> Observable<Mutation> in
@@ -154,7 +154,7 @@ final class SearchReactor: Reactor {
                                     }
                             }
                     } else {
-                        print("⚠️ 매칭되는 원본 데이터를 찾을 수 없음: \(book.title)")
+                        print(" 매칭되는 원본 데이터를 찾을 수 없음: \(book.title)")
                         return Observable.just(.setError("원본 데이터를 찾을 수 없습니다."))
                     }
                 }
@@ -209,7 +209,7 @@ final class SearchReactor: Reactor {
         return searchHistoryRepository.saveSearchHistory(keyword: keyword)
             .map { _ in .setError(nil) }
             .catch { error in
-                print("⚠️ 검색 이력 저장 실패: \(error.localizedDescription)")
+                print(" 검색 이력 저장 실패: \(error.localizedDescription)")
                 return Observable.just(.setError(nil)) // 이력 저장 실패는 검색에 영향 없음
             }
     }
@@ -277,7 +277,7 @@ final class SearchReactor: Reactor {
         return bookRepository.saveBook(realmBook)
             .map { _ in true }
             .catch { error in
-                print("❌ Failed to save book: \(error.localizedDescription)")
+                print(" Failed to save book: \(error.localizedDescription)")
                 return Observable.just(false)
             }
     }

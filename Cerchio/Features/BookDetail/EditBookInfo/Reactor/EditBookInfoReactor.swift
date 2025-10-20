@@ -136,7 +136,7 @@ final class EditBookInfoReactor: Reactor {
                     }
             }
             .catch { error in
-                print("❌ Failed to save book info: \(error)")
+                print(" Failed to save book info: \(error)")
                 return .just(.setSaveInProgress(false))
             }
         ])
@@ -156,7 +156,7 @@ final class EditBookInfoReactor: Reactor {
                     ])
                 }
                 .catch { error in
-                    print("❌ Failed to reset book info: \(error)")
+                    print(" Failed to reset book info: \(error)")
                     return .just(.setSaveInProgress(false))
                 }
         ])

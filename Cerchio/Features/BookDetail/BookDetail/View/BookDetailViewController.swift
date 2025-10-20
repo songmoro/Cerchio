@@ -431,8 +431,8 @@ final class BookDetailViewController: FullScreenNestedScrollViewController, View
             .take(1)
             .observe(on: MainScheduler.asyncInstance)
             .subscribe(onNext: { [weak self] bookDetail in
-                print("📌 BookDetail first set, loading all data")
-                print("📌 Current tags in bookDetail: \(bookDetail.tags)")
+                print(" BookDetail first set, loading all data")
+                print(" Current tags in bookDetail: \(bookDetail.tags)")
                 self?.reactor?.action.onNext(.loadReadingStatistics)
                 self?.reactor?.action.onNext(.loadReadingChartData(.today))
                 self?.reactor?.action.onNext(.loadPhotos)
@@ -763,7 +763,7 @@ final class BookDetailViewController: FullScreenNestedScrollViewController, View
     }
 
     private func updateTagsUI(_ tags: [BookDetailReactor.TagItem]) {
-        print("📌 updateTagsUI called with \(tags.count) tags")
+        print(" updateTagsUI called with \(tags.count) tags")
         if let bookDetail = reactor?.currentState.bookDetail {
             bookInfoView?.configure(with: bookDetail)
         }

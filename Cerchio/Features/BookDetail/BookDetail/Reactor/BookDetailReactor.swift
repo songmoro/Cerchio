@@ -165,11 +165,11 @@ final class BookDetailReactor: Reactor {
         case .updateReadingInfo(let totalPages, let startDate, let endDate):
             // BookDetail 업데이트
             guard let bookDetail = currentState.bookDetail else {
-                print("❌ No bookDetail in currentState")
+                print(" No bookDetail in currentState")
                 return Observable.empty()
             }
 
-            print("📖 Updating reading info - totalPages: \(totalPages), startDate: \(String(describing: startDate)), endDate: \(String(describing: endDate))")
+            print(" Updating reading info - totalPages: \(totalPages), startDate: \(String(describing: startDate)), endDate: \(String(describing: endDate))")
 
             let updatedBookDetail = BookDetail(
                 book: bookDetail.book,
@@ -183,11 +183,11 @@ final class BookDetailReactor: Reactor {
             return bookRepository.getBookByISBN(currentState.book.isbn)
                 .flatMap { [weak self] existingBook -> Observable<Mutation> in
                     guard let self = self, let existingBook = existingBook else {
-                        print("❌ No existing book found for ISBN: \(self?.currentState.book.isbn ?? "unknown")")
+                        print(" No existing book found for ISBN: \(self?.currentState.book.isbn ?? "unknown")")
                         return Observable.empty()
                     }
 
-                    print("📖 Found existing book - current startDate: \(String(describing: existingBook.startDate))")
+                    print(" Found existing book - current startDate: \(String(describing: existingBook.startDate))")
 
                     // Book 업데이트
                     let updatedBook = Book(
@@ -219,18 +219,18 @@ final class BookDetailReactor: Reactor {
                         rating: existingBook.rating
                     )
 
-                    print("📖 Created updatedBook - startDate: \(String(describing: updatedBook.startDate))")
+                    print(" Created updatedBook - startDate: \(String(describing: updatedBook.startDate))")
 
                     return self.bookRepository.saveBookStruct(updatedBook)
                         .flatMap { savedBook -> Observable<Mutation> in
-                            print("✅ Book saved - startDate: \(String(describing: savedBook.startDate))")
+                            print(" Book saved - startDate: \(String(describing: savedBook.startDate))")
                             return Observable.concat([
                                 Observable.just(.updateBook(savedBook)),
                                 Observable.just(.setBookDetail(updatedBookDetail))
                             ])
                         }
                         .catch { error in
-                            print("❌ Failed to update reading info: \(error.localizedDescription)")
+                            print(" Failed to update reading info: \(error.localizedDescription)")
                             return Observable.empty()
                         }
                 }
@@ -275,7 +275,7 @@ final class BookDetailReactor: Reactor {
             return bookRepository.deleteBookByISBN(currentState.book.isbn)
                 .map { _ in .bookDeleted }
                 .catch { error in
-                    print("❌ Failed to delete book: \(error.localizedDescription)")
+                    print(" Failed to delete book: \(error.localizedDescription)")
                     return Observable.just(.setError(error))
                 }
 
@@ -292,7 +292,7 @@ final class BookDetailReactor: Reactor {
             return service.calculateReadingStatistics(for: currentState.book.id)
                 .map { Mutation.setReadingStatistics($0) }
                 .catch { error in
-                    print("❌ Failed to load reading statistics: \(error)")
+                    print(" Failed to load reading statistics: \(error)")
                     return Observable.empty()
                 }
 
@@ -301,7 +301,7 @@ final class BookDetailReactor: Reactor {
             return service.loadReadingChartData(for: bookId, period: period)
                 .map { Mutation.setReadingChartData($0) }
                 .catch { error in
-                    print("❌ Failed to load reading chart data: \(error)")
+                    print(" Failed to load reading chart data: \(error)")
                     return Observable.empty()
                 }
 
@@ -330,7 +330,7 @@ final class BookDetailReactor: Reactor {
                     }
                 }
                 .catch { error in
-                    print("❌ Failed to load photos: \(error)")
+                    print(" Failed to load photos: \(error)")
                     return Observable.empty()
                 }
 
@@ -343,7 +343,7 @@ final class BookDetailReactor: Reactor {
                     return Mutation.setQuotes(quoteItems)
                 }
                 .catch { error in
-                    print("❌ Failed to load quotes: \(error)")
+                    print(" Failed to load quotes: \(error)")
                     return Observable.empty()
                 }
 
@@ -356,7 +356,7 @@ final class BookDetailReactor: Reactor {
                     return Mutation.setTags(tagItems)
                 }
                 .catch { error in
-                    print("❌ Failed to load tags: \(error)")
+                    print(" Failed to load tags: \(error)")
                     return Observable.empty()
                 }
 
@@ -365,7 +365,7 @@ final class BookDetailReactor: Reactor {
             return service.savePhoto(image, bookId: bookId)
                 .map { _ in Mutation.photoSaved }
                 .catch { error in
-                    print("❌ Failed to save photo: \(error)")
+                    print(" Failed to save photo: \(error)")
                     return Observable.just(Mutation.setError(error))
                 }
 
@@ -373,7 +373,7 @@ final class BookDetailReactor: Reactor {
             guard let objectId = try? ObjectId(string: photoId),
                   let realm = try? Realm(),
                   let photo = realm.object(ofType: RealmPhoto.self, forPrimaryKey: objectId) else {
-                print("❌ Photo not found")
+                print(" Photo not found")
                 return Observable.empty()
             }
 
@@ -385,7 +385,7 @@ final class BookDetailReactor: Reactor {
             return photoRepository.deletePhoto(photo)
                 .map { _ in Mutation.photoDeleted }
                 .catch { error in
-                    print("❌ Failed to delete photo: \(error)")
+                    print(" Failed to delete photo: \(error)")
                     return Observable.just(Mutation.setError(error))
                 }
 
@@ -405,7 +405,7 @@ final class BookDetailReactor: Reactor {
                         .map { _ in Mutation.tagsSaved }
                 }
                 .catch { error in
-                    print("❌ Failed to save tags: \(error)")
+                    print(" Failed to save tags: \(error)")
                     return Observable.just(Mutation.setError(error))
                 }
 
@@ -418,7 +418,7 @@ final class BookDetailReactor: Reactor {
                 .flatMap { quotes -> Observable<Mutation> in
                     let quotesArray = Array(quotes)
                     guard let quoteToDelete = quotesArray.first(where: { $0.quote == quote && $0.createdAt == date }) else {
-                        print("❌ Quote not found")
+                        print(" Quote not found")
                         return Observable.empty()
                     }
 
@@ -434,7 +434,7 @@ final class BookDetailReactor: Reactor {
                         }
                 }
                 .catch { error in
-                    print("❌ Failed to delete quote: \(error)")
+                    print(" Failed to delete quote: \(error)")
                     return Observable.just(Mutation.setError(error))
                 }
         }
@@ -489,11 +489,11 @@ final class BookDetailReactor: Reactor {
 
         case .setTags(let tags):
             newState.tags = tags
-            print("📌 BookDetailReactor.reduce - setTags: \(tags.map { $0.tagName })")
+            print(" BookDetailReactor.reduce - setTags: \(tags.map { $0.tagName })")
             // Update bookDetail with new tags
             if let bookDetail = newState.bookDetail {
                 let tagNames = tags.map { $0.tagName }
-                print("📌 Updating bookDetail with tags: \(tagNames)")
+                print(" Updating bookDetail with tags: \(tagNames)")
                 newState.bookDetail = BookDetail(
                     book: bookDetail.book,
                     totalPages: bookDetail.totalPages,
@@ -502,7 +502,7 @@ final class BookDetailReactor: Reactor {
                     tags: tagNames
                 )
             } else {
-                print("⚠️ bookDetail is nil, cannot update tags!")
+                print(" bookDetail is nil, cannot update tags!")
             }
 
         case .photoSaved, .photoDeleted:

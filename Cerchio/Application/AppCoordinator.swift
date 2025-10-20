@@ -51,7 +51,7 @@ final class AppCoordinator: BaseCoordinator {
     }
 
     private func checkAndRestoreActiveTimerSession() {
-        print("[AppCoordinator] 🔍 Checking for active timer session...")
+        print("[AppCoordinator]  Checking for active timer session...")
 
         let activeSession = TimerSessionManager.shared.getActiveSession()
         var hasActiveActivity = false
@@ -59,12 +59,12 @@ final class AppCoordinator: BaseCoordinator {
         // 라이브 액티비티 체크
         if #available(iOS 16.2, *) {
             hasActiveActivity = !LiveActivityManager.shared.getActiveActivities().isEmpty
-            print("[AppCoordinator] 📱 Active Live Activities: \(hasActiveActivity)")
+            print("[AppCoordinator]  Active Live Activities: \(hasActiveActivity)")
         }
 
         // 세션이 있으면 복원 (라이브 액티비티 유무와 관계없이)
         if let session = activeSession {
-            print("[AppCoordinator] ✅ Found active session")
+            print("[AppCoordinator]  Found active session")
             cleanupInactiveNotifications(activeSessionId: session.sessionId)
 
             // 경과 시간 체크하여 복원 또는 다이얼로그 표시
@@ -81,7 +81,7 @@ final class AppCoordinator: BaseCoordinator {
 
             if isCompleted {
                 // 완료된 세션 - 모든 라이브 액티비티 정리 후 다이얼로그 표시
-                print("[AppCoordinator] ⏱️ Session completed, cleaning up activities")
+                print("[AppCoordinator]  Session completed, cleaning up activities")
                 if #available(iOS 16.2, *) {
                     _ = LiveActivityManager.shared.endAllActivities()
                         .subscribe(onNext: { [weak self] in
@@ -92,11 +92,11 @@ final class AppCoordinator: BaseCoordinator {
                 }
             } else if hasActiveActivity {
                 // 진행 중 + 액티비티 있음 - 바로 복원
-                print("[AppCoordinator] ✅ Restoring active session with Live Activity")
+                print("[AppCoordinator]  Restoring active session with Live Activity")
                 restoreSession(session, reason: "정상 복구")
             } else {
                 // 진행 중이지만 액티비티 없음 - 다이얼로그 표시
-                print("[AppCoordinator] ⚠️ Session active but no Live Activity, showing dialog")
+                print("[AppCoordinator]  Session active but no Live Activity, showing dialog")
                 showSessionRecoveryDialog(session)
             }
             return
@@ -104,7 +104,7 @@ final class AppCoordinator: BaseCoordinator {
 
         // 세션 없고 액티비티 있음 → 데이터 불일치 (모든 액티비티 정리)
         if hasActiveActivity {
-            print("[AppCoordinator] ⚠️ Found Live Activity but no session (data mismatch)")
+            print("[AppCoordinator]  Found Live Activity but no session (data mismatch)")
             if #available(iOS 16.2, *) {
                 _ = LiveActivityManager.shared.endAllActivities().subscribe()
             }
@@ -113,22 +113,22 @@ final class AppCoordinator: BaseCoordinator {
         }
 
         // 둘 다 없음 → 정상
-        print("[AppCoordinator] ✅ No active timer session to restore")
+        print("[AppCoordinator]  No active timer session to restore")
         cleanupInactiveNotifications(activeSessionId: nil)
     }
 
     private func cleanupInactiveNotifications(activeSessionId: String?) {
         NotificationManager.shared.removeInactiveTimerNotifications(activeSessionId: activeSessionId)
             .subscribe(onNext: {
-                print("[AppCoordinator] 🧹 Inactive timer notifications cleaned up")
+                print("[AppCoordinator]  Inactive timer notifications cleaned up")
             }, onError: { error in
-                print("[AppCoordinator] ⚠️ Failed to cleanup notifications: \(error)")
+                print("[AppCoordinator]  Failed to cleanup notifications: \(error)")
             })
             .disposed(by: disposeBag)
     }
 
     private func restoreSession(_ session: TimerSessionManager.ActiveSession, reason: String) {
-        print("[AppCoordinator] 🔄 Restoring session - \(reason)")
+        print("[AppCoordinator]  Restoring session - \(reason)")
         print("[AppCoordinator]   - sessionId: \(session.sessionId)")
         print("[AppCoordinator]   - bookTitle: \(session.bookTitle)")
         print("[AppCoordinator]   - targetEndTime: \(session.targetEndTime)")
@@ -138,7 +138,7 @@ final class AppCoordinator: BaseCoordinator {
             .observe(on: MainScheduler.instance)
             .subscribe(onNext: { [weak self] realmBook in
                 guard let self = self, let realmBook = realmBook else {
-                    print("[AppCoordinator] ❌ Failed to find book for session")
+                    print("[AppCoordinator]  Failed to find book for session")
                     TimerSessionManager.shared.clearActiveSession()
                     return
                 }
@@ -146,7 +146,7 @@ final class AppCoordinator: BaseCoordinator {
                 let book = realmBook.toBook()
                 self.navigateToTimerScreen(book: book, session: session)
             }, onError: { error in
-                print("[AppCoordinator] ❌ Error loading book: \(error)")
+                print("[AppCoordinator]  Error loading book: \(error)")
                 TimerSessionManager.shared.clearActiveSession()
             })
     }
@@ -202,14 +202,14 @@ final class AppCoordinator: BaseCoordinator {
     }
 
     private func saveAndTerminateSession(_ session: TimerSessionManager.ActiveSession) {
-        print("[AppCoordinator] 💾 Saving and terminating session")
+        print("[AppCoordinator]  Saving and terminating session")
 
         // TODO: ReadingRecord 생성 및 저장
         _ = dependencies.serviceFactory.createReadingSessionRepository()
 
         // 임시로 세션만 정리
         TimerSessionManager.shared.clearActiveSession()
-        print("[AppCoordinator] ✅ Session terminated")
+        print("[AppCoordinator]  Session terminated")
     }
 
     private func navigateToTimerScreen(book: Book, session: TimerSessionManager.ActiveSession) {
@@ -259,6 +259,6 @@ final class AppCoordinator: BaseCoordinator {
             readingTimerViewController
         ], animated: false)
 
-        print("[AppCoordinator] ✅ Navigated to timer screen without transition")
+        print("[AppCoordinator]  Navigated to timer screen without transition")
     }
 }

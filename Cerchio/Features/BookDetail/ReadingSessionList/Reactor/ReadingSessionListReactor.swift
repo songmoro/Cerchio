@@ -52,7 +52,7 @@ final class ReadingSessionListReactor: Reactor {
                         return Mutation.setSessions(sessions)
                     }
                     .catch { error in
-                        print("❌ Failed to load sessions: \(error)")
+                        print(" Failed to load sessions: \(error)")
                         return Observable.just(Mutation.setError(error))
                     },
                 Observable.just(.setLoading(false))
@@ -62,7 +62,7 @@ final class ReadingSessionListReactor: Reactor {
             return deleteSessionFromRealm(sessionId)
                 .map { Mutation.removeSession(sessionId) }
                 .catch { error in
-                    print("❌ Failed to delete session: \(error)")
+                    print(" Failed to delete session: \(error)")
                     return Observable.just(Mutation.setError(error))
                 }
         }
@@ -98,7 +98,7 @@ final class ReadingSessionListReactor: Reactor {
                     try realm.write {
                         realm.delete(session)
                     }
-                    print("✅ Session deleted: \(sessionId)")
+                    print(" Session deleted: \(sessionId)")
                     observer.onNext(())
                     observer.onCompleted()
                 } else {

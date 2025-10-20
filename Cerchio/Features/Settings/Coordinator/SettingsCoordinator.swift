@@ -77,6 +77,17 @@ final class SettingsCoordinator: BaseCoordinator, Coordinatable {
             navigationController.dismiss(animated: true)
         case .finished:
             finish()
+        case let settingsEvent as SettingsNavigationEvent:
+            handleSettingsNavigationEvent(settingsEvent)
+        default:
+            break
+        }
+    }
+
+    private func handleSettingsNavigationEvent(_ event: SettingsNavigationEvent) {
+        switch event {
+        case .navigateToLibrary:
+            navigateToLibrary()
         }
     }
 
@@ -84,5 +95,13 @@ final class SettingsCoordinator: BaseCoordinator, Coordinatable {
 
     func navigateToLibrary() {
         onNavigateToLibrary?()
+    }
+
+    func showContactViewController() {
+        let contactViewController = ContactViewController()
+        contactViewController.instagramURL = "https://www.instagram.com/com.moro/"
+        contactViewController.emailAddress = "wlqgkr159@gmail.com"
+        
+        navigationController.pushViewController(contactViewController, animated: true)
     }
 }

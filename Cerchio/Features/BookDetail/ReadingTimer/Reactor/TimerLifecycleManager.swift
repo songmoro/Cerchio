@@ -53,7 +53,7 @@ final class TimerLifecycleManager {
     // MARK: - Logging
 
     func logForegroundCalculation(_ calc: TimeCalculation) {
-        print("[TimerLifecycle] 🔄 Foreground time calculation:")
+        print("[TimerLifecycle]  Foreground time calculation:")
         print("  - remaining: \(calc.remaining)s")
         print("  - isCompleted: \(calc.isCompleted)")
     }

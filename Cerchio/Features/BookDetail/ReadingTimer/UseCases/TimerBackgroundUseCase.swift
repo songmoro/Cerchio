@@ -37,14 +37,14 @@ final class TimerBackgroundUseCase {
         targetMinutes: Int,
         sessionStartTime: Date
     ) -> Observable<Void> {
-        print("[TimerBackgroundUseCase] 📱 Entering background")
+        print("[TimerBackgroundUseCase]  Entering background")
         print("  - state: \(stateManager.currentState)")
         print("  - targetEndTime: \(String(describing: stateManager.currentTargetEndTime))")
         print("  - pausedAt: \(String(describing: stateManager.currentPausedAt))")
 
         // 백그라운드 진입 시 즉시 저장하여 오차 최소화
         guard let targetEndTime = stateManager.currentTargetEndTime else {
-            print("[TimerBackgroundUseCase] ❌ No targetEndTime")
+            print("[TimerBackgroundUseCase]  No targetEndTime")
             return .error(NSError(domain: "TimerBackgroundUseCase", code: -1))
         }
 
@@ -59,7 +59,7 @@ final class TimerBackgroundUseCase {
             activityId: nil
         )
 
-        print("[TimerBackgroundUseCase] ✅ Session saved")
+        print("[TimerBackgroundUseCase]  Session saved")
         return .just(())
     }
 }

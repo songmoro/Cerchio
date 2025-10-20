@@ -123,8 +123,14 @@ enum Localized: String {
     // MARK: - Settings
     case `settings.section.general`
     case `settings.section.data`
+    case `settings.section.contact`
+    case `settings.section.info`
     case `settings.row.language`
     case `settings.row.reset_data`
+    case `settings.row.contact`
+    case `settings.row.app_version`
+    case `settings.contact.instagram`
+    case `settings.contact.email`
     case `settings.alert.reset_data.title`
     case `settings.alert.reset_data.message`
     case `settings.alert.language_selection.title`

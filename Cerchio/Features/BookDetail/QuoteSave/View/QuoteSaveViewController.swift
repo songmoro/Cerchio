@@ -177,7 +177,7 @@ final class QuoteSaveViewController: UIViewController {
             target: self,
             action: #selector(cancelTapped)
         )
-        cancelButton.tintColor = .systemBlue
+        cancelButton.tintColor = .forestGreen
         navigationItem.leftBarButtonItem = cancelButton
 
         // 저장 버튼
@@ -187,7 +187,7 @@ final class QuoteSaveViewController: UIViewController {
             target: self,
             action: #selector(saveTapped)
         )
-        saveButton.tintColor = .systemBlue
+        saveButton.tintColor = .forestGreen
         navigationItem.rightBarButtonItem = saveButton
 
         // 네비게이션 바 스타일 설정
@@ -285,7 +285,7 @@ final class QuoteSaveViewController: UIViewController {
                         self?.eventRelay.accept(.quoteSaved(quote))
                     },
                     onError: { [weak self] error in
-                        print("❌ Failed to save quote: \(error.localizedDescription)")
+                        print("Failed to save quote: \(error.localizedDescription)")
                         self?.showSaveErrorAlert()
                     }
                 )
@@ -298,7 +298,7 @@ final class QuoteSaveViewController: UIViewController {
             let realm = try Realm()
             guard let objectId = try? ObjectId(string: quoteId),
                   let realmQuote = realm.object(ofType: RealmQuote.self, forPrimaryKey: objectId) else {
-                print("❌ Quote not found for update")
+                print("Quote not found for update")
                 return
             }
 
@@ -309,7 +309,7 @@ final class QuoteSaveViewController: UIViewController {
 
             eventRelay.accept(.quoteSaved(newQuote))
         } catch {
-            print("❌ Failed to update quote: \(error.localizedDescription)")
+            print("Failed to update quote: \(error.localizedDescription)")
             showSaveErrorAlert()
         }
     }
@@ -405,7 +405,7 @@ final class QuoteSaveViewController: UIViewController {
                     self?.editingQuoteId = String(describing: matchingQuote.id)
                 }
             }, onError: { error in
-                print("❌ Failed to load quote ID for editing: \(error)")
+                print("Failed to load quote ID for editing: \(error)")
             })
             .disposed(by: disposeBag)
     }

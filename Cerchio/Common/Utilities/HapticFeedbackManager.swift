@@ -2,7 +2,7 @@
 //  HapticFeedbackManager.swift
 //  Cerchio
 //
-//  Created by Claude Code
+//  Created by 송재훈 Code
 //
 
 import UIKit

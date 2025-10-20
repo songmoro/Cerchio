@@ -33,7 +33,7 @@ final class EditBookInfoViewController: BaseViewController<EditBookInfoReactor> 
     private let changeCoverButton: UIButton = {
         var config = UIButton.Configuration.plain()
         config.title = String(localized: .`edit_book.change_cover`)
-        config.baseForegroundColor = .systemBlue
+        config.baseForegroundColor = .forestGreen
         let button = UIButton(configuration: config)
         return button
     }()

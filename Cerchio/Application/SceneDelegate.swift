@@ -82,17 +82,17 @@ final class SceneDelegate: UIResponder, UIWindowSceneDelegate, UISceneDelegate {
     }
 
     private func handleDeepLink(_ url: URL) {
-        print("[SceneDelegate] 🔗 Handling deeplink: \(url.absoluteString)")
+        print("[SceneDelegate]  Handling deeplink: \(url.absoluteString)")
 
         // 딥링크 스킴: cerchio://timer/{bookId}
         guard url.scheme == "cerchio" else {
-            print("[SceneDelegate] ❌ Invalid scheme: \(url.scheme ?? "nil")")
+            print("[SceneDelegate]  Invalid scheme: \(url.scheme ?? "nil")")
             return
         }
 
         let pathComponents = url.pathComponents.filter { $0 != "/" }
         guard pathComponents.count >= 1 else {
-            print("[SceneDelegate] ❌ Invalid path components")
+            print("[SceneDelegate]  Invalid path components")
             return
         }
 
@@ -104,29 +104,29 @@ final class SceneDelegate: UIResponder, UIWindowSceneDelegate, UISceneDelegate {
             checkAndRestoreActiveTimerSession()
 
         default:
-            print("[SceneDelegate] ⚠️ Unknown deeplink action: \(action)")
+            print("[SceneDelegate]  Unknown deeplink action: \(action)")
         }
     }
 
     private func cleanupTimerOnAppTermination() {
-        print("[SceneDelegate] 🧹 Cleaning up timer on app termination...")
+        print("[SceneDelegate]  Cleaning up timer on app termination...")
 
         // Live Activity 종료
         if #available(iOS 16.2, *) {
             _ = LiveActivityManager.shared.endActivity()
                 .subscribe(onNext: {
-                    print("[SceneDelegate] ✅ Live Activity ended")
+                    print("[SceneDelegate]  Live Activity ended")
                 }, onError: { error in
-                    print("[SceneDelegate] ❌ Failed to end Live Activity: \(error)")
+                    print("[SceneDelegate]  Failed to end Live Activity: \(error)")
                 })
         }
 
         // 알림 취소
         NotificationManager.shared.cancelTimerCompletionNotification()
-        print("[SceneDelegate] ✅ Notifications cancelled")
+        print("[SceneDelegate]  Notifications cancelled")
 
         // 세션은 UserDefaults에 유지 (복원용)
-        print("[SceneDelegate] 💾 Timer session preserved for restoration")
+        print("[SceneDelegate]  Timer session preserved for restoration")
     }
 }
 

@@ -32,7 +32,7 @@ final class TimerNotificationManager {
         bookTitle: String
     ) -> Observable<String> {
         guard !isScheduled else {
-            print("[TimerNotification] ⚠️ Already scheduled")
+            print("[TimerNotification]  Already scheduled")
             return .empty()
         }
 
@@ -46,7 +46,7 @@ final class TimerNotificationManager {
         .do(onNext: { [weak self] notificationId in
             self?.scheduledNotificationId = notificationId
             self?.isScheduled = true
-            print("[TimerNotification] 🔔 Scheduled at \(targetEndTime) with ID: \(notificationId)")
+            print("[TimerNotification]  Scheduled at \(targetEndTime) with ID: \(notificationId)")
         })
     }
 
@@ -58,7 +58,7 @@ final class TimerNotificationManager {
             // 전달된 알림도 제거
             notificationManager.removeDeliveredNotification(withIdentifier: "timer_completion")
             isScheduled = false
-            print("[TimerNotification] 🔕 Cancelled (legacy)")
+            print("[TimerNotification]  Cancelled (legacy)")
             return .just(())
         }
 
@@ -68,7 +68,7 @@ final class TimerNotificationManager {
                 self?.notificationManager.removeDeliveredNotification(withIdentifier: notificationId)
                 self?.scheduledNotificationId = nil
                 self?.isScheduled = false
-                print("[TimerNotification] 🔕 Cancelled with ID: \(notificationId)")
+                print("[TimerNotification]  Cancelled with ID: \(notificationId)")
             })
     }
 

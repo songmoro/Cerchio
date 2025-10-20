@@ -43,10 +43,10 @@ final class NotificationManager {
 
             self.notificationCenter.requestAuthorization(options: [.alert, .sound]) { granted, error in
                 if let error = error {
-                    print("❌ Notification authorization error: \(error)")
+                    print(" Notification authorization error: \(error)")
                     observer.onNext(false)
                 } else {
-                    print("✅ Notification authorization: \(granted)")
+                    print(" Notification authorization: \(granted)")
                     observer.onNext(granted)
                 }
                 observer.onCompleted()
@@ -107,7 +107,7 @@ final class NotificationManager {
             self.notificationRepository.saveNotification(realmNotification)
                 .observe(on: MainScheduler.instance)
                 .subscribe(onNext: { savedNotification in
-                    print("[NotificationManager] 💾 Saved notification to Realm: \(savedNotification.id)")
+                    print("[NotificationManager]  Saved notification to Realm: \(savedNotification.id)")
 
                     // 시스템 알림 스케줄
                     let content = UNMutableNotificationContent()
@@ -121,15 +121,15 @@ final class NotificationManager {
 
                     self.notificationCenter.add(request) { error in
                         if let error = error {
-                            print("[NotificationManager] ❌ Failed to schedule notification: \(error)")
+                            print("[NotificationManager]  Failed to schedule notification: \(error)")
                         } else {
-                            print("[NotificationManager] ✅ Notification scheduled for \(seconds) seconds")
+                            print("[NotificationManager]  Notification scheduled for \(seconds) seconds")
                         }
                         observer.onNext(notificationId)
                         observer.onCompleted()
                     }
                 }, onError: { error in
-                    print("[NotificationManager] ❌ Failed to save notification: \(error)")
+                    print("[NotificationManager]  Failed to save notification: \(error)")
                     observer.onError(error)
                 })
                 .disposed(by: self.disposeBag)
@@ -153,11 +153,11 @@ final class NotificationManager {
             self.notificationRepository.cancelNotification(identifier)
                 .observe(on: MainScheduler.instance)
                 .subscribe(onNext: {
-                    print("[NotificationManager] ✅ Notification cancelled: \(identifier)")
+                    print("[NotificationManager]  Notification cancelled: \(identifier)")
                     observer.onNext(())
                     observer.onCompleted()
                 }, onError: { error in
-                    print("[NotificationManager] ⚠️ Failed to update notification status: \(error)")
+                    print("[NotificationManager]  Failed to update notification status: \(error)")
                     // 시스템 알림은 이미 취소되었으므로 성공으로 처리
                     observer.onNext(())
                     observer.onCompleted()
@@ -172,31 +172,31 @@ final class NotificationManager {
     func cancelTimerCompletionNotification() {
         // 기존 호환성을 위한 동기 메서드
         notificationCenter.removePendingNotificationRequests(withIdentifiers: ["timer_completion"])
-        print("[NotificationManager] ✅ Legacy timer notification cancelled")
+        print("[NotificationManager]  Legacy timer notification cancelled")
     }
 
     /// 모든 예약된 알림 취소
     func cancelAllPendingNotifications() {
         notificationCenter.removeAllPendingNotificationRequests()
-        print("✅ All pending notifications cancelled")
+        print(" All pending notifications cancelled")
     }
 
     /// 모든 전달된 알림 제거
     func removeAllDeliveredNotifications() {
         notificationCenter.removeAllDeliveredNotifications()
-        print("✅ All delivered notifications removed")
+        print(" All delivered notifications removed")
     }
 
     /// 특정 전달된 알림 제거
     func removeDeliveredNotification(withIdentifier identifier: String) {
         notificationCenter.removeDeliveredNotifications(withIdentifiers: [identifier])
-        print("✅ Delivered notification removed: \(identifier)")
+        print(" Delivered notification removed: \(identifier)")
     }
 
     /// 앱 배지 제거
     func clearBadge() {
         UNUserNotificationCenter.current().setBadgeCount(0)
-        print("✅ Badge cleared")
+        print(" Badge cleared")
     }
 
     // MARK: - Badge Management
@@ -207,7 +207,7 @@ final class NotificationManager {
             .observe(on: MainScheduler.instance)
             .do(onNext: { count in
                 UNUserNotificationCenter.current().setBadgeCount(count)
-                print("[NotificationManager] 📛 Badge count updated: \(count)")
+                print("[NotificationManager]  Badge count updated: \(count)")
             })
     }
 
@@ -237,7 +237,7 @@ final class NotificationManager {
         return notificationRepository.deleteExpiredNotifications(olderThan: thirtyDaysAgo)
             .observe(on: MainScheduler.instance)
             .do(onNext: {
-                print("[NotificationManager] 🧹 Expired notifications cleaned up")
+                print("[NotificationManager]  Expired notifications cleaned up")
             })
     }
 
@@ -273,13 +273,13 @@ final class NotificationManager {
                 }
 
                 guard !notificationsToRemove.isEmpty else {
-                    print("[NotificationManager] ✅ No inactive timer notifications to remove")
+                    print("[NotificationManager]  No inactive timer notifications to remove")
                     observer.onNext(())
                     observer.onCompleted()
                     return
                 }
 
-                print("[NotificationManager] 🧹 Removing \(notificationsToRemove.count) inactive timer notification(s)")
+                print("[NotificationManager]  Removing \(notificationsToRemove.count) inactive timer notification(s)")
 
                 // 3. 시스템 알림 제거
                 self.notificationCenter.removePendingNotificationRequests(withIdentifiers: notificationsToRemove)
@@ -292,11 +292,11 @@ final class NotificationManager {
                 Observable.zip(cancelObservables)
                     .observe(on: MainScheduler.instance)
                     .subscribe(onNext: { _ in
-                        print("[NotificationManager] ✅ Inactive timer notifications removed")
+                        print("[NotificationManager]  Inactive timer notifications removed")
                         observer.onNext(())
                         observer.onCompleted()
                     }, onError: { error in
-                        print("[NotificationManager] ⚠️ Failed to update notification status: \(error)")
+                        print("[NotificationManager]  Failed to update notification status: \(error)")
                         // 시스템 알림은 이미 제거되었으므로 성공으로 처리
                         observer.onNext(())
                         observer.onCompleted()

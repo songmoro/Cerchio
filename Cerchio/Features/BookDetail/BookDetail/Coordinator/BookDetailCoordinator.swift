@@ -196,7 +196,7 @@ final class BookDetailCoordinator: BaseCoordinator, Coordinatable {
             .subscribe(onNext: { [weak self] result in
                 switch result {
                 case .quoteSaved(let quote):
-                    print("✅ Quote saved: \(quote)")
+                    print(" Quote saved: \(quote)")
                     self?.currentReactor?.action.onNext(.loadQuotes)
                 case .cancelled:
                     print("📝 Quote save cancelled")
@@ -225,7 +225,7 @@ final class BookDetailCoordinator: BaseCoordinator, Coordinatable {
             .subscribe(onNext: { [weak self] result in
                 switch result {
                 case .imageExported(let image):
-                    print("✅ Quote image exported")
+                    print(" Quote image exported")
                     self?.saveImageToPhotoLibrary(image)
                 case .cancelled:
                     print("📝 Quote share cancelled")
@@ -242,7 +242,7 @@ final class BookDetailCoordinator: BaseCoordinator, Coordinatable {
 
         CameraPermissionManager.shared.handleCameraPermission(from: topViewController) { [weak self] granted in
             guard granted else {
-                print("❌ Camera permission denied")
+                print(" Camera permission denied")
                 return
             }
 
@@ -274,7 +274,7 @@ final class BookDetailCoordinator: BaseCoordinator, Coordinatable {
             .subscribe(onNext: { [weak self] result in
                 switch result {
                 case .quotesUpdated:
-                    print("✅ Quotes updated, refreshing...")
+                    print(" Quotes updated, refreshing...")
                     self?.currentReactor?.action.onNext(.loadQuotes)
                 case .dismissed:
                     print("📝 Quote list dismissed")
@@ -308,7 +308,7 @@ final class BookDetailCoordinator: BaseCoordinator, Coordinatable {
             .subscribe(onNext: { [weak self] result in
                 switch result {
                 case .photosUpdated:
-                    print("✅ Photos updated, refreshing...")
+                    print(" Photos updated, refreshing...")
                     self?.currentReactor?.action.onNext(.loadPhotos)
                 case .dismissed:
                     print("📷 Photo list dismissed")
@@ -355,7 +355,7 @@ final class BookDetailCoordinator: BaseCoordinator, Coordinatable {
             .subscribe(onNext: { [weak self] result in
                 switch result {
                 case .recordSaved(let content):
-                    print("✅ Reading record saved: \(content)")
+                    print(" Reading record saved: \(content)")
                     // Trigger statistics reload
                     self?.currentReactor?.action.onNext(.loadReadingStatistics)
                     reloadHandler?()
@@ -384,7 +384,7 @@ final class BookDetailCoordinator: BaseCoordinator, Coordinatable {
             .subscribe(onNext: { [weak self] result in
                 switch result {
                 case .bookInfoUpdated(let updatedBook):
-                    print("✅ Book info updated - customTitle: \(updatedBook.customTitle ?? "nil"), refreshing...")
+                    print(" Book info updated - customTitle: \(updatedBook.customTitle ?? "nil"), refreshing...")
                     // 업데이트된 Book으로 BookDetail 다시 로드
                     self?.currentReactor?.action.onNext(.updateBookAndReload(updatedBook))
                 case .cancelled:
@@ -429,7 +429,7 @@ final class BookDetailCoordinator: BaseCoordinator, Coordinatable {
             .subscribe(onNext: { [weak self] result in
                 switch result {
                 case .quoteSaved(let updatedQuote):
-                    print("✅ Quote updated: \(updatedQuote)")
+                    print(" Quote updated: \(updatedQuote)")
                     self?.currentReactor?.action.onNext(.loadQuotes)
                 case .cancelled:
                     print("📝 Quote edit cancelled")
@@ -447,7 +447,7 @@ final class BookDetailCoordinator: BaseCoordinator, Coordinatable {
 
         PhotoLibraryPermissionManager.shared.handlePhotoLibraryPermission(from: topViewController) { [weak self] granted in
             guard granted else {
-                print("❌ Photo library permission denied")
+                print(" Photo library permission denied")
                 return
             }
 

@@ -34,7 +34,7 @@ final class AddQuoteButtonCell: UICollectionViewCell, IsIdentifiable {
 
         // 아이콘 이미지뷰
         iconImageView.image = UIImage(systemName: "plus.circle.fill")
-        iconImageView.tintColor = .systemBlue
+        iconImageView.tintColor = .forestGreen
         iconImageView.contentMode = .scaleAspectFit
         contentView.addSubview(iconImageView)
     }

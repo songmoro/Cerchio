@@ -92,7 +92,7 @@ final class ResetAndDeleteReactor: Reactor {
                 ])
             }
             .catch { error in
-                print("❌ Failed to reset book info: \(error)")
+                print(" Failed to reset book info: \(error)")
                 return .just(.setResetInProgress(false))
             }
         ])
@@ -112,7 +112,7 @@ final class ResetAndDeleteReactor: Reactor {
                     ])
                 }
                 .catch { error in
-                    print("❌ Failed to reset reading records: \(error)")
+                    print(" Failed to reset reading records: \(error)")
                     return .just(.setResetInProgress(false))
                 }
         ])
@@ -131,7 +131,7 @@ final class ResetAndDeleteReactor: Reactor {
                     ])
                 }
                 .catch { error in
-                    print("❌ Failed to delete book: \(error)")
+                    print(" Failed to delete book: \(error)")
                     return .just(.setDeleteInProgress(false))
                 }
         ])

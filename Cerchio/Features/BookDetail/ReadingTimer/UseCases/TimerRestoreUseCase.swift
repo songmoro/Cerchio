@@ -50,7 +50,7 @@ final class TimerRestoreUseCase {
         session: TimerSessionManager.ActiveSession,
         sessionStartTime: Date
     ) -> Observable<RestoreResult> {
-        print("[TimerRestoreUseCase] 🔄 Restoring session")
+        print("[TimerRestoreUseCase]  Restoring session")
         print("  - sessionId: \(session.sessionId)")
         print("  - targetEndTime: \(session.targetEndTime)")
         print("  - pausedAt: \(String(describing: session.pausedAt))")
@@ -71,7 +71,7 @@ final class TimerRestoreUseCase {
         let finalState: TimerStateManager.TimerState
 
         if calc.isCompleted {
-            print("[TimerRestoreUseCase] ⏱️ Session already completed, restoring with final state")
+            print("[TimerRestoreUseCase]  Session already completed, restoring with final state")
             finalState = .completed
         } else {
             print("[TimerRestoreUseCase] Was running? \(wasRunning)")
@@ -87,7 +87,7 @@ final class TimerRestoreUseCase {
         if #available(iOS 16.2, *) {
             if calc.isCompleted {
                 // 완료된 세션은 모든 라이브 액티비티 종료
-                print("[TimerRestoreUseCase] 🛑 Ending all Live Activities (session completed)")
+                print("[TimerRestoreUseCase]  Ending all Live Activities (session completed)")
                 activitySync = LiveActivityManager.shared.endAllActivities()
             } else {
                 // 진행 중인 세션은 동기화
@@ -111,15 +111,15 @@ final class TimerRestoreUseCase {
                 .observe(on: MainScheduler.instance)
         )
         .map { _, realmSession -> RestoreResult in
-            print("[TimerRestoreUseCase] ✅ Realm session loaded: \(realmSession?.id ?? "nil")")
+            print("[TimerRestoreUseCase]  Realm session loaded: \(realmSession?.id ?? "nil")")
 
             // 6. 자동 재개 여부 결정
             let shouldAutoResume = !calc.isCompleted && session.state == "running"
 
             if shouldAutoResume {
-                print("[TimerRestoreUseCase] ⏰ Will auto-resume (was running)")
+                print("[TimerRestoreUseCase]  Will auto-resume (was running)")
             } else if calc.isCompleted {
-                print("[TimerRestoreUseCase] ⏱️ Will not resume (already completed)")
+                print("[TimerRestoreUseCase]  Will not resume (already completed)")
             }
 
             return RestoreResult(

@@ -116,7 +116,7 @@ final class DebugLogger {
                     .subscribe(
                         onNext: { _ in },
                         onError: { error in
-                            print("❌ Failed to save log to Realm: \(error)")
+                            print(" Failed to save log to Realm: \(error)")
                         }
                     )
                     .disposed(by: self.disposeBag)

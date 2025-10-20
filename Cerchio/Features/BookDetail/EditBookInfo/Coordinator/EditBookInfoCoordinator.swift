@@ -55,7 +55,7 @@ final class EditBookInfoCoordinator: BaseCoordinator {
                     self?.resultRelay.accept(.bookInfoUpdated(updatedBook))
                 } else {
                     // fallback: updatedBook이 없으면 취소로 처리
-                    print("⚠️ No updated book found after save")
+                    print("No updated book found after save")
                     self?.resultRelay.accept(.cancelled)
                 }
             } else {

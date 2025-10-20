@@ -452,11 +452,11 @@ final class LibraryViewController: BaseViewController<LibraryReactor> {
         bookRepository.toggleFavorite(bookId: bookId)
             .observe(on: MainScheduler.instance)
             .subscribe(onNext: { [weak self] isFavorite in
-                print("✅ Favorite toggled for '\(book.cleanTitle)': \(isFavorite)")
+                print(" Favorite toggled for '\(book.cleanTitle)': \(isFavorite)")
                 // 데이터 새로고침
                 self?.reactor?.action.onNext(.loadBooks)
             }, onError: { error in
-                print("❌ Failed to toggle favorite: \(error.localizedDescription)")
+                print(" Failed to toggle favorite: \(error.localizedDescription)")
             })
             .disposed(by: disposeBag)
     }
@@ -488,11 +488,11 @@ final class LibraryViewController: BaseViewController<LibraryReactor> {
             bookRepository.deleteBooksByISBNs([book.isbn])
                 .observe(on: MainScheduler.instance)
                 .subscribe(onNext: { [weak self] _ in
-                    print("✅ Book deleted: \(book.cleanTitle)")
+                    print(" Book deleted: \(book.cleanTitle)")
                     // 데이터 새로고침
                     self?.reactor?.action.onNext(.loadBooks)
                 }, onError: { error in
-                    print("❌ Failed to delete book: \(error.localizedDescription)")
+                    print(" Failed to delete book: \(error.localizedDescription)")
                 })
                 .disposed(by: self.disposeBag)
         })
@@ -801,7 +801,7 @@ extension LibraryViewController {
 
     private func saveQuoteToRealm(quote: String, pageNumber: Int?, for book: Book) {
         guard let quoteRepository = quoteRepository else {
-            print("❌ QuoteRepository not available")
+            print(" QuoteRepository not available")
             return
         }
 
@@ -818,11 +818,11 @@ extension LibraryViewController {
             .subscribe(
                 onNext: { [weak self] savedQuote in
                     guard self != nil else { return }
-                    print("✅ Quote saved: \(quote), page: \(pageNumber ?? 0) for book: \(book.cleanTitle)")
+                    print(" Quote saved: \(quote), page: \(pageNumber ?? 0) for book: \(book.cleanTitle)")
                     // 필요시 UI 업데이트
                 },
                 onError: { error in
-                    print("❌ Failed to save quote: \(error.localizedDescription)")
+                    print(" Failed to save quote: \(error.localizedDescription)")
                 }
             )
             .disposed(by: disposeBag)
@@ -848,7 +848,7 @@ extension LibraryViewController: UIImagePickerControllerDelegate, UINavigationCo
 
     private func savePhotoToRealm(image: UIImage, for book: Book) {
         guard let photoRepository = photoRepository else {
-            print("❌ PhotoRepository not available")
+            print(" PhotoRepository not available")
             return
         }
 
@@ -857,7 +857,7 @@ extension LibraryViewController: UIImagePickerControllerDelegate, UINavigationCo
         // 이미지를 로컬에 저장
         let imageName = ImageStorageManager.shared.generateUniqueImageName(for: bookId)
         guard let localPath = ImageStorageManager.shared.saveImage(image, withName: imageName) else {
-            print("❌ Failed to save image locally")
+            print(" Failed to save image locally")
             return
         }
 
@@ -872,12 +872,12 @@ extension LibraryViewController: UIImagePickerControllerDelegate, UINavigationCo
             .subscribe(
                 onNext: { [weak self] savedPhoto in
                     guard self != nil else { return }
-                    print("✅ Photo saved for book: \(book.cleanTitle)")
+                    print(" Photo saved for book: \(book.cleanTitle)")
                     // 필요시 UI 업데이트
                 },
                 onError: { [weak self] error in
                     guard self != nil else { return }
-                    print("❌ Failed to save photo: \(error.localizedDescription)")
+                    print(" Failed to save photo: \(error.localizedDescription)")
                     // 저장 실패 시 로컬 이미지 삭제
                     _ = ImageStorageManager.shared.deleteImage(atPath: localPath)
                 }
@@ -938,10 +938,10 @@ extension LibraryViewController {
         bookRepository.saveBookStruct(updatedBook)
             .observe(on: MainScheduler.instance)
             .subscribe(onNext: { [weak self] _ in
-                print("✅ Book reading info updated")
+                print(" Book reading info updated")
                 self?.reactor?.action.onNext(.loadBooks)
             }, onError: { error in
-                print("❌ Failed to update book reading info: \(error.localizedDescription)")
+                print(" Failed to update book reading info: \(error.localizedDescription)")
             })
             .disposed(by: disposeBag)
     }

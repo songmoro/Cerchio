@@ -241,11 +241,11 @@ final class ReadingTimerService {
             status: .inProgress
         )
 
-        print("[ReadingTimerService] 💾 Creating Realm session: \(sessionId)")
+        print("[ReadingTimerService]  Creating Realm session: \(sessionId)")
 
         return sessionRepository.saveSession(session)
             .do(onNext: { savedSession in
-                print("[ReadingTimerService] ✅ Realm session created: \(savedSession.id)")
+                print("[ReadingTimerService]  Realm session created: \(savedSession.id)")
             })
     }
 

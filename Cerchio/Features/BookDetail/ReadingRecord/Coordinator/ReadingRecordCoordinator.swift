@@ -63,7 +63,7 @@ final class ReadingRecordCoordinator: BaseCoordinator {
             .observe(on: MainScheduler.instance)
             .subscribe(onNext: { [weak self] realmBook in
                 guard let self = self, let realmBook = realmBook else {
-                    print("❌ Failed to load book for timer")
+                    print(" Failed to load book for timer")
                     return
                 }
 

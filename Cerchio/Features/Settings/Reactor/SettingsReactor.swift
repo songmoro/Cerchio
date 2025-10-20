@@ -44,7 +44,7 @@ final class SettingsReactor: Reactor {
                 resetAllData()
                     .map { _ in .resetCompleted }
                     .catch { error in
-                        print("❌ Failed to reset data: \(error.localizedDescription)")
+                        print(" Failed to reset data: \(error.localizedDescription)")
                         return Observable.just(.setError(error))
                     },
                 Observable.just(.setResetting(false))

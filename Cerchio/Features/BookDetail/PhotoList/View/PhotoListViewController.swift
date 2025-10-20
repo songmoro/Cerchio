@@ -470,7 +470,7 @@ final class PhotoGridCell: UICollectionViewCell {
         imageView.clipsToBounds = true
         contentView.addSubview(imageView)
 
-        selectionOverlay.backgroundColor = UIColor.systemBlue.withAlphaComponent(0.3)
+        selectionOverlay.backgroundColor = UIColor.forestGreen.withAlphaComponent(0.3)
         selectionOverlay.isHidden = true
         contentView.addSubview(selectionOverlay)
 

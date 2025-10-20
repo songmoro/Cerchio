@@ -49,11 +49,11 @@ final class TimerPauseUseCase {
         let pauseTime = Date()
 
         guard let targetEndTime = stateManager.currentTargetEndTime else {
-            print("[TimerPauseUseCase] ❌ No target end time")
+            print("[TimerPauseUseCase]  No target end time")
             return .error(NSError(domain: "TimerPauseUseCase", code: -1))
         }
 
-        print("[TimerPauseUseCase] ⏸️ Pausing timer")
+        print("[TimerPauseUseCase]  Pausing timer")
         print("  - pauseTime: \(pauseTime)")
         print("  - targetEndTime: \(targetEndTime)")
 
@@ -86,7 +86,7 @@ final class TimerPauseUseCase {
             activityId: nil
         )
 
-        print("[TimerPauseUseCase] ✅ Timer paused successfully")
+        print("[TimerPauseUseCase]  Timer paused successfully")
         return .just(())
     }
 }

@@ -72,7 +72,7 @@ final class QuoteListCoordinator: BaseCoordinator {
             .subscribe(onNext: { [weak self] result in
                 switch result {
                 case .quoteSaved:
-                    print("✅ Quote saved")
+                    print(" Quote saved")
                     self?.resultRelay.accept(.quotesUpdated)
                     // QuoteListViewController의 reactor에 reload 트리거
                     if let quoteListVC = self?.navigationController.topViewController as? QuoteListViewController {
@@ -101,7 +101,7 @@ final class QuoteListCoordinator: BaseCoordinator {
                 switch event {
                 case .quoteSaved(let savedQuote):
                     quoteSaveVC.dismiss(animated: true) { [weak self] in
-                        print("✅ Quote updated: \(savedQuote)")
+                        print(" Quote updated: \(savedQuote)")
                         self?.resultRelay.accept(.quotesUpdated)
 
                         // QuoteListViewController 새로고침
