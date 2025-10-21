@@ -2,7 +2,7 @@
 //  UIColor+NeutralPastel.swift
 //  Cerchio
 //
-//  Created by Claude on 10/22/25.
+//  Created by 송재훈 on 10/22/25.
 //
 
 import UIKit
