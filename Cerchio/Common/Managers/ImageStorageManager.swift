@@ -36,7 +36,8 @@ class ImageStorageManager {
     func saveImage(_ image: UIImage, withName imageName: String) -> String? {
         createImagesDirectoryIfNeeded()
 
-        let imageURL = imagesDirectory.appendingPathComponent("\(imageName).jpg")
+        let fileName = "\(imageName).jpg"
+        let imageURL = imagesDirectory.appendingPathComponent(fileName)
 
         guard let imageData = image.jpegData(compressionQuality: 0.8) else {
             print("Failed to convert image to JPEG data")
@@ -46,7 +47,8 @@ class ImageStorageManager {
         do {
             try imageData.write(to: imageURL)
             print("Image saved successfully at: \(imageURL.path)")
-            return imageURL.path
+            // 파일명만 반환 (절대 경로가 아닌 상대 경로)
+            return fileName
         } catch {
             print("Failed to save image: \(error.localizedDescription)")
             return nil
@@ -55,14 +57,33 @@ class ImageStorageManager {
 
     // MARK: - Load Image
     func loadImage(fromPath path: String) -> UIImage? {
-        return UIImage(contentsOfFile: path)
+        // 파일명만 전달된 경우 전체 경로 구성
+        let fullPath: String
+        if path.contains("/") {
+            // 절대 경로인 경우 (기존 데이터 호환성)
+            fullPath = path
+        } else {
+            // 파일명만 있는 경우 전체 경로 구성
+            fullPath = imagesDirectory.appendingPathComponent(path).path
+        }
+        return UIImage(contentsOfFile: fullPath)
     }
 
     // MARK: - Delete Image
     func deleteImage(atPath path: String) -> Bool {
+        // 파일명만 전달된 경우 전체 경로 구성
+        let fullPath: String
+        if path.contains("/") {
+            // 절대 경로인 경우
+            fullPath = path
+        } else {
+            // 파일명만 있는 경우
+            fullPath = imagesDirectory.appendingPathComponent(path).path
+        }
+
         do {
-            try FileManager.default.removeItem(atPath: path)
-            print("Image deleted successfully from: \(path)")
+            try FileManager.default.removeItem(atPath: fullPath)
+            print("Image deleted successfully from: \(fullPath)")
             return true
         } catch {
             print("Failed to delete image: \(error.localizedDescription)")
@@ -84,7 +105,8 @@ class ImageStorageManager {
         do {
             let files = try FileManager.default.contentsOfDirectory(atPath: imagesDirectory.path)
             let bookImageFiles = files.filter { $0.contains("book_\(bookId)_") && $0.hasSuffix(".jpg") }
-            return bookImageFiles.map { imagesDirectory.appendingPathComponent($0).path }
+            // 파일명만 반환 (절대 경로가 아닌 상대 경로)
+            return bookImageFiles
         } catch {
             print("Failed to get image paths: \(error.localizedDescription)")
             return []
