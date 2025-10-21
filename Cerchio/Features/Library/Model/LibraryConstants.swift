@@ -15,6 +15,8 @@ enum LibraryConstants {
         static let cellInset: CGFloat = 8
         static let stackOffset: CGFloat = 4
         static let aspectRatio: CGFloat = 4.0/3.0
+        static let backgroundCornerRadius: CGFloat = 12
+        static let backgroundImagePadding: CGFloat = 8
     }
 
     // MARK: - Typography

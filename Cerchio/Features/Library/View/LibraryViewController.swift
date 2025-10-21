@@ -972,8 +972,8 @@ extension LibraryViewController: MasonryLayoutProtocol {
         // 실제 콘텐츠 사용 가능 너비
         let availableWidth = columnWidth - masonryLeftPadding - masonryRightPadding - (cellInset * 2)
 
-        // 이미지 뷰 높이 (이미지 원본 비율 또는 기본 비율)
-        let imageHeight = calculateImageHeight(for: book, availableWidth: availableWidth)
+        // 백그라운드 뷰 높이 (정사각형)
+        let backgroundHeight = availableWidth
 
         // 타이틀 레이블 높이 동적 계산
         let titleHeight = calculateLabelHeight(
@@ -989,8 +989,8 @@ extension LibraryViewController: MasonryLayoutProtocol {
             width: availableWidth
         ) * 2
 
-        // 총 높이 = 이미지 + 간격 + 타이틀 + 간격 + 저자 + 하단 여백
-        let totalHeight = imageHeight
+        // 총 높이 = 백그라운드 + 간격 + 타이틀 + 간격 + 저자 + 하단 여백
+        let totalHeight = backgroundHeight
             + LibraryConstants.Layout.stackOffset
             + titleHeight
             + LibraryConstants.Layout.stackOffset
@@ -998,22 +998,6 @@ extension LibraryViewController: MasonryLayoutProtocol {
             + LibraryConstants.Layout.stackOffset
 
         return totalHeight
-    }
-
-    private func calculateImageHeight(for book: Book, availableWidth: CGFloat) -> CGFloat {
-        guard let url = URL(string: book.image) else {
-            return availableWidth * LibraryConstants.Layout.aspectRatio
-        }
-
-        // Kingfisher 캐시에서 이미지 확인
-        let cache = ImageCache.default
-        if let cachedImage = cache.retrieveImageInMemoryCache(forKey: url.absoluteString) {
-            let aspectRatio = cachedImage.size.height / cachedImage.size.width
-            return availableWidth * aspectRatio
-        }
-
-        // 캐시에 없으면 기본 비율 사용
-        return availableWidth * LibraryConstants.Layout.aspectRatio
     }
 
     private func calculateLabelHeight(text: String, font: UIFont, width: CGFloat) -> CGFloat {
