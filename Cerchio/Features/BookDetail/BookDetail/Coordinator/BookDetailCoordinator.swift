@@ -199,7 +199,7 @@ final class BookDetailCoordinator: BaseCoordinator, Coordinatable {
                     print(" Quote saved: \(quote)")
                     self?.currentReactor?.action.onNext(.loadQuotes)
                 case .cancelled:
-                    print("📝 Quote save cancelled")
+                    print("Quote save cancelled")
                 }
                 self?.removeChildCoordinator(quoteSaveCoordinator)
             })
@@ -228,7 +228,7 @@ final class BookDetailCoordinator: BaseCoordinator, Coordinatable {
                     print(" Quote image exported")
                     self?.saveImageToPhotoLibrary(image)
                 case .cancelled:
-                    print("📝 Quote share cancelled")
+                    print("Quote share cancelled")
                 }
                 self?.removeChildCoordinator(quoteShareCoordinator)
             })
@@ -277,7 +277,7 @@ final class BookDetailCoordinator: BaseCoordinator, Coordinatable {
                     print(" Quotes updated, refreshing...")
                     self?.currentReactor?.action.onNext(.loadQuotes)
                 case .dismissed:
-                    print("📝 Quote list dismissed")
+                    print("Quote list dismissed")
                 }
                 self?.removeChildCoordinator(quoteListCoordinator)
             })
@@ -311,7 +311,7 @@ final class BookDetailCoordinator: BaseCoordinator, Coordinatable {
                     print(" Photos updated, refreshing...")
                     self?.currentReactor?.action.onNext(.loadPhotos)
                 case .dismissed:
-                    print("📷 Photo list dismissed")
+                    print("Photo list dismissed")
                 }
                 self?.removeChildCoordinator(photoListCoordinator)
             })
@@ -360,7 +360,7 @@ final class BookDetailCoordinator: BaseCoordinator, Coordinatable {
                     self?.currentReactor?.action.onNext(.loadReadingStatistics)
                     reloadHandler?()
                 case .cancelled:
-                    print("📝 Reading record cancelled")
+                    print("Reading record cancelled")
                 }
                 self?.removeChildCoordinator(readingRecordCoordinator)
             })
@@ -388,7 +388,7 @@ final class BookDetailCoordinator: BaseCoordinator, Coordinatable {
                     // 업데이트된 Book으로 BookDetail 다시 로드
                     self?.currentReactor?.action.onNext(.updateBookAndReload(updatedBook))
                 case .cancelled:
-                    print("📝 Book info edit cancelled")
+                    print("Book info edit cancelled")
                 }
                 self?.removeChildCoordinator(editBookInfoCoordinator)
             })
@@ -432,7 +432,7 @@ final class BookDetailCoordinator: BaseCoordinator, Coordinatable {
                     print(" Quote updated: \(updatedQuote)")
                     self?.currentReactor?.action.onNext(.loadQuotes)
                 case .cancelled:
-                    print("📝 Quote edit cancelled")
+                    print("Quote edit cancelled")
                 }
                 self?.removeChildCoordinator(quoteSaveCoordinator)
             })

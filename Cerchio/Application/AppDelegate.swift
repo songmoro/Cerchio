@@ -26,18 +26,15 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     }
 
     private func configureRealm() {
-        // Schema version: (major * 1000) + (minor * 100) + build
+        // 스키마 버전: (major * 1000) + (minor * 100) + build
         // v1.2 build 2 = 1000 + 200 + 2 = 1202
         let schemaVersion: UInt64 = 1201
 
         let config = Realm.Configuration(
             schemaVersion: schemaVersion,
             migrationBlock: { migration, oldSchemaVersion in
-                // Migration from version < 1202 (v1.2 build 1)
                 if oldSchemaVersion < 1201 {
-                    // Added custom book info properties
                     migration.enumerateObjects(ofType: "RealmBook") { oldObject, newObject in
-                        // Set default nil for new optional properties
                         newObject!["customTitle"] = nil
                         newObject!["customAuthor"] = nil
                         newObject!["customCoverImagePath"] = nil
@@ -51,11 +48,11 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         #if DEBUG
         do {
             let realm = try Realm()
-            print("📦 Realm configured successfully")
-            print("📍 Realm file URL: \(realm.configuration.fileURL?.absoluteString ?? "N/A")")
-            print(" Schema version: \(schemaVersion)")
+            print("Realm configured successfully")
+            print("Realm file URL: \(realm.configuration.fileURL?.absoluteString ?? "N/A")")
+            print("Schema version: \(schemaVersion)")
         } catch {
-            print(" Realm configuration failed: \(error)")
+            print("Realm configuration failed: \(error)")
         }
         #endif
     }
@@ -105,7 +102,6 @@ extension AppDelegate: UNUserNotificationCenterDelegate {
         }
 
         // 알림 표시 (배너, 소리, 배지)
-//        completionHandler([.banner, .sound, .badge])
         completionHandler([.banner, .sound])
     }
 

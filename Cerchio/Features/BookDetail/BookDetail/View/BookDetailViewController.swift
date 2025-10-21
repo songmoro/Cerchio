@@ -46,19 +46,33 @@ final class BookDetailViewController: FullScreenNestedScrollViewController, View
     private var isInitialLoad = true
 
     // MARK: - Section & Item Types
-    nonisolated enum Section: Int, CaseIterable, Hashable {
+    nonisolated enum Section: Int, Hashable {
         case readingRecords = 0
         case savedQuotes = 1
-        case photoPages = 2
-        case settings = 3
+        case addQuoteAction = 2
+        case photoPages = 3
+        case addPhotoAction = 4
+        case settings = 5
 
         var title: String {
             switch self {
             case .readingRecords: return String(localized: .bookDetailReadingRecords)
             case .savedQuotes: return String(localized: .bookDetailSavedQuotes)
+            case .addQuoteAction: return ""
             case .photoPages: return String(localized: .bookDetailPhotos)
+            case .addPhotoAction: return ""
             case .settings: return String(localized: .bookDetailSettings)
             }
+        }
+
+        // Sections visible in tab navigation (excludes action sections)
+        static var visibleSections: [Section] {
+            [.readingRecords, .savedQuotes, .photoPages, .settings]
+        }
+
+        // All sections for layout purposes
+        static var allCases: [Section] {
+            [.readingRecords, .savedQuotes, .addQuoteAction, .photoPages, .addPhotoAction, .settings]
         }
     }
 
@@ -223,7 +237,7 @@ final class BookDetailViewController: FullScreenNestedScrollViewController, View
 
     // MARK: - Override: Create Sticky Tab View
     override func createStickyTabView() -> UIView {
-        let tabs: [(title: String, value: Section)] = Section.allCases.map { ($0.title, $0) }
+        let tabs: [(title: String, value: Section)] = Section.visibleSections.map { ($0.title, $0) }
         let tabView = TabNavigationView<Section>(tabs: tabs)
         self.tabNavigationView = tabView
 
@@ -232,146 +246,6 @@ final class BookDetailViewController: FullScreenNestedScrollViewController, View
         }
 
         return tabView
-    }
-
-    // MARK: - Tab Selection
-    private func handleTabSelection(_ section: Section) {
-        scrollToSection(section.rawValue)
-    }
-
-    // MARK: - Override: Collection View Layout
-    override func createCollectionViewLayout() -> UICollectionViewLayout {
-        return UICollectionViewCompositionalLayout { [weak self] sectionIndex, environment in
-            guard let self = self else { return nil }
-
-            let section = Section.allCases[sectionIndex]
-            switch section {
-            case .readingRecords:
-                return self.createReadingRecordsSection()
-            case .savedQuotes:
-                return self.createSavedQuotesSection()
-            case .photoPages:
-                return self.createPhotoPagesSection()
-            case .settings:
-                return self.createSettingsSection()
-            }
-        }
-    }
-
-    // MARK: - Section Layouts
-    private func createReadingRecordsSection() -> NSCollectionLayoutSection {
-        let itemSize = NSCollectionLayoutSize(
-            widthDimension: .fractionalWidth(1.0),
-            heightDimension: .absolute(220)
-        )
-        let item = NSCollectionLayoutItem(layoutSize: itemSize)
-        item.contentInsets = NSDirectionalEdgeInsets(top: 4, leading: 0, bottom: 4, trailing: 0)
-
-        let groupSize = NSCollectionLayoutSize(
-            widthDimension: .fractionalWidth(1.0),
-            heightDimension: .absolute(220)
-        )
-        let group = NSCollectionLayoutGroup.vertical(layoutSize: groupSize, subitems: [item])
-
-        let section = NSCollectionLayoutSection(group: group)
-        section.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 12, bottom: 24, trailing: 12)
-
-        let headerSize = NSCollectionLayoutSize(
-            widthDimension: .fractionalWidth(1.0),
-            heightDimension: .absolute(48)
-        )
-        let header = NSCollectionLayoutBoundarySupplementaryItem(
-            layoutSize: headerSize,
-            elementKind: UICollectionView.elementKindSectionHeader,
-            alignment: .top
-        )
-        section.boundarySupplementaryItems = [header]
-
-        return section
-    }
-
-    private func createSavedQuotesSection() -> NSCollectionLayoutSection {
-        let itemSize = NSCollectionLayoutSize(
-            widthDimension: .fractionalWidth(1.0),
-            heightDimension: .estimated(100)
-        )
-        let item = NSCollectionLayoutItem(layoutSize: itemSize)
-        item.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 0, bottom: 4, trailing: 0)
-
-        let groupSize = NSCollectionLayoutSize(
-            widthDimension: .fractionalWidth(1.0),
-            heightDimension: .estimated(100)
-        )
-        let group = NSCollectionLayoutGroup.vertical(layoutSize: groupSize, subitems: [item])
-
-        let section = NSCollectionLayoutSection(group: group)
-        section.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 12, bottom: 24, trailing: 12)
-        section.boundarySupplementaryItems = [CommonSectionHeader.createBoundarySupplementaryItem()]
-
-        return section
-    }
-
-    private func createPhotoPagesSection() -> NSCollectionLayoutSection {
-        let itemSize = NSCollectionLayoutSize(
-            widthDimension: .fractionalWidth(1.0),
-            heightDimension: .absolute(120)
-        )
-        let item = NSCollectionLayoutItem(layoutSize: itemSize)
-        item.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 0, bottom: 4, trailing: 0)
-
-        let groupSize = NSCollectionLayoutSize(
-            widthDimension: .fractionalWidth(1.0),
-            heightDimension: .absolute(120)
-        )
-        let group = NSCollectionLayoutGroup.vertical(layoutSize: groupSize, subitems: [item])
-
-        let section = NSCollectionLayoutSection(group: group)
-        section.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 12, bottom: 24, trailing: 12)
-        section.boundarySupplementaryItems = [CommonSectionHeader.createBoundarySupplementaryItem()]
-
-        return section
-    }
-
-    private func createSettingsSection() -> NSCollectionLayoutSection {
-        let itemSize = NSCollectionLayoutSize(
-            widthDimension: .fractionalWidth(1.0),
-            heightDimension: .absolute(56)
-        )
-        let item = NSCollectionLayoutItem(layoutSize: itemSize)
-        item.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 0, bottom: 4, trailing: 0)
-
-        let groupSize = NSCollectionLayoutSize(
-            widthDimension: .fractionalWidth(1.0),
-            heightDimension: .absolute(56)
-        )
-        let group = NSCollectionLayoutGroup.vertical(layoutSize: groupSize, subitems: [item])
-
-        let section = NSCollectionLayoutSection(group: group)
-        section.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 12, bottom: 24, trailing: 12)
-        section.boundarySupplementaryItems = [CommonSectionHeader.createBoundarySupplementaryItem()]
-
-        return section
-    }
-
-    // MARK: - Override: Setup Custom Content
-    override func setupCustomContent() {
-        collectionView.delegate = self
-
-        // Register cells
-        collectionView.register(ReadingStatisticsCell.self)
-        collectionView.register(AddActionCell.self)
-        collectionView.register(SavedQuoteCell.self)
-        collectionView.register(PhotoItemCell.self)
-        collectionView.register(SettingsItemCell.self)
-
-        // Register headers
-        collectionView.register(
-            CommonSectionHeader.self,
-            forSupplementaryViewOfKind: UICollectionView.elementKindSectionHeader,
-            withReuseIdentifier: CommonSectionHeader.identifier
-        )
-
-        configureDataSource()
     }
 
     // MARK: - Public Methods
@@ -536,6 +410,202 @@ final class BookDetailViewController: FullScreenNestedScrollViewController, View
             .disposed(by: disposeBag)
     }
 
+    // MARK: - Override: Collection View Layout
+    override func createCollectionViewLayout() -> UICollectionViewLayout {
+        return UICollectionViewCompositionalLayout { [weak self] sectionIndex, environment in
+            guard let self = self,
+                  let dataSource = self.dataSource else { return nil }
+
+            let snapshot = dataSource.snapshot()
+            guard sectionIndex < snapshot.sectionIdentifiers.count else { return nil }
+
+            let section = snapshot.sectionIdentifiers[sectionIndex]
+            switch section {
+            case .readingRecords:
+                return self.createReadingRecordsSection()
+            case .savedQuotes:
+                return self.createSavedQuotesSection()
+            case .addQuoteAction:
+                return self.createAddQuoteActionSection()
+            case .photoPages:
+                return self.createPhotoPagesSection()
+            case .addPhotoAction:
+                return self.createAddPhotoActionSection()
+            case .settings:
+                return self.createSettingsSection()
+            }
+        }
+    }
+
+    private func handleTabSelection(_ section: Section) {
+        scrollToSection(section.rawValue)
+    }
+
+    // MARK: - Override: Setup Custom Content
+    override func setupCustomContent() {
+        collectionView.delegate = self
+
+        // Register cells
+        collectionView.register(ReadingStatisticsCell.self)
+        collectionView.register(AddActionCell.self)
+        collectionView.register(SavedQuoteCell.self)
+        collectionView.register(PhotoItemCell.self)
+        collectionView.register(SettingsItemCell.self)
+
+        // Register headers
+        collectionView.register(
+            CommonSectionHeader.self,
+            forSupplementaryViewOfKind: UICollectionView.elementKindSectionHeader,
+            withReuseIdentifier: CommonSectionHeader.identifier
+        )
+
+        configureDataSource()
+    }
+}
+
+// MARK: - Layout
+extension BookDetailViewController {
+    // MARK: - Section Layouts
+    private func createReadingRecordsSection() -> NSCollectionLayoutSection {
+        let itemSize = NSCollectionLayoutSize(
+            widthDimension: .fractionalWidth(1.0),
+            heightDimension: .absolute(220)
+        )
+        let item = NSCollectionLayoutItem(layoutSize: itemSize)
+        item.contentInsets = NSDirectionalEdgeInsets(top: 4, leading: 0, bottom: 4, trailing: 0)
+
+        let groupSize = NSCollectionLayoutSize(
+            widthDimension: .fractionalWidth(1.0),
+            heightDimension: .absolute(220)
+        )
+        let group = NSCollectionLayoutGroup.vertical(layoutSize: groupSize, subitems: [item])
+
+        let section = NSCollectionLayoutSection(group: group)
+        section.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 12, bottom: 24, trailing: 12)
+
+        let headerSize = NSCollectionLayoutSize(
+            widthDimension: .fractionalWidth(1.0),
+            heightDimension: .absolute(48)
+        )
+        let header = NSCollectionLayoutBoundarySupplementaryItem(
+            layoutSize: headerSize,
+            elementKind: UICollectionView.elementKindSectionHeader,
+            alignment: .top
+        )
+        section.boundarySupplementaryItems = [header]
+
+        return section
+    }
+
+    private func createSavedQuotesSection() -> NSCollectionLayoutSection {
+        let itemSize = NSCollectionLayoutSize(
+            widthDimension: .fractionalWidth(1.0),
+            heightDimension: .estimated(100)
+        )
+        let item = NSCollectionLayoutItem(layoutSize: itemSize)
+        item.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 0, bottom: 4, trailing: 0)
+
+        let groupSize = NSCollectionLayoutSize(
+            widthDimension: .fractionalWidth(1.0),
+            heightDimension: .estimated(100)
+        )
+        let group = NSCollectionLayoutGroup.vertical(layoutSize: groupSize, subitems: [item])
+
+        let section = NSCollectionLayoutSection(group: group)
+        section.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 12, bottom: 24, trailing: 12)
+        section.boundarySupplementaryItems = [CommonSectionHeader.createBoundarySupplementaryItem()]
+
+        return section
+    }
+
+    private func createPhotoPagesSection() -> NSCollectionLayoutSection {
+        let itemSize = NSCollectionLayoutSize(
+            widthDimension: .fractionalWidth(1/3),
+            heightDimension: .fractionalHeight(1.0)
+        )
+        let item = NSCollectionLayoutItem(layoutSize: itemSize)
+        item.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0)
+
+        let groupSize = NSCollectionLayoutSize(
+            widthDimension: .fractionalWidth(1.0),
+            heightDimension: .fractionalWidth(1/3)
+        )
+        let group = NSCollectionLayoutGroup.horizontal(layoutSize: groupSize, subitems: [item])
+        group.interItemSpacing = .fixed(4)
+
+        let section = NSCollectionLayoutSection(group: group)
+        section.interGroupSpacing = 4
+        section.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 12, bottom: 24, trailing: 12)
+        section.orthogonalScrollingBehavior = .continuous
+        section.boundarySupplementaryItems = [CommonSectionHeader.createBoundarySupplementaryItem()]
+
+        return section
+    }
+
+    private func createAddQuoteActionSection() -> NSCollectionLayoutSection {
+        let itemSize = NSCollectionLayoutSize(
+            widthDimension: .fractionalWidth(1.0),
+            heightDimension: .estimated(100)
+        )
+        let item = NSCollectionLayoutItem(layoutSize: itemSize)
+        item.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 0, bottom: 4, trailing: 0)
+
+        let groupSize = NSCollectionLayoutSize(
+            widthDimension: .fractionalWidth(1.0),
+            heightDimension: .estimated(100)
+        )
+        let group = NSCollectionLayoutGroup.vertical(layoutSize: groupSize, subitems: [item])
+
+        let section = NSCollectionLayoutSection(group: group)
+        section.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 12, bottom: 24, trailing: 12)
+
+        return section
+    }
+
+    private func createAddPhotoActionSection() -> NSCollectionLayoutSection {
+        let itemSize = NSCollectionLayoutSize(
+            widthDimension: .fractionalWidth(1.0),
+            heightDimension: .estimated(100)
+        )
+        let item = NSCollectionLayoutItem(layoutSize: itemSize)
+        item.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 0, bottom: 4, trailing: 0)
+
+        let groupSize = NSCollectionLayoutSize(
+            widthDimension: .fractionalWidth(1.0),
+            heightDimension: .estimated(100)
+        )
+        let group = NSCollectionLayoutGroup.vertical(layoutSize: groupSize, subitems: [item])
+
+        let section = NSCollectionLayoutSection(group: group)
+        section.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 12, bottom: 24, trailing: 12)
+
+        return section
+    }
+
+    private func createSettingsSection() -> NSCollectionLayoutSection {
+        let itemSize = NSCollectionLayoutSize(
+            widthDimension: .fractionalWidth(1.0),
+            heightDimension: .absolute(56)
+        )
+        let item = NSCollectionLayoutItem(layoutSize: itemSize)
+        item.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 0, bottom: 4, trailing: 0)
+
+        let groupSize = NSCollectionLayoutSize(
+            widthDimension: .fractionalWidth(1.0),
+            heightDimension: .absolute(56)
+        )
+        let group = NSCollectionLayoutGroup.vertical(layoutSize: groupSize, subitems: [item])
+
+        let section = NSCollectionLayoutSection(group: group)
+        section.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 12, bottom: 24, trailing: 12)
+        section.boundarySupplementaryItems = [CommonSectionHeader.createBoundarySupplementaryItem()]
+
+        return section
+    }
+}
+
+// MARK: - DataSource
+extension BookDetailViewController {
     // MARK: - DataSource Configuration
     private func configureDataSource() {
         dataSource = DataSource(collectionView: collectionView) { [weak self] collectionView, indexPath, item in
@@ -616,9 +686,19 @@ final class BookDetailViewController: FullScreenNestedScrollViewController, View
         }
 
         dataSource.supplementaryViewProvider = { [weak self] collectionView, kind, indexPath in
-            guard kind == UICollectionView.elementKindSectionHeader else { return nil }
+            guard kind == UICollectionView.elementKindSectionHeader,
+                  let dataSource = self?.dataSource else { return nil }
 
-            let section = Section.allCases[indexPath.section]
+            let snapshot = dataSource.snapshot()
+            guard indexPath.section < snapshot.sectionIdentifiers.count else { return nil }
+
+            let section = snapshot.sectionIdentifiers[indexPath.section]
+
+            // No header for action sections
+            if section == .addQuoteAction || section == .addPhotoAction {
+                return nil
+            }
+
             let header = collectionView.dequeueReusableSupplementaryView(
                 ofKind: kind,
                 withReuseIdentifier: CommonSectionHeader.identifier,
@@ -648,6 +728,10 @@ final class BookDetailViewController: FullScreenNestedScrollViewController, View
                     self?.showAllQuotes()
                 }
 
+            case .addQuoteAction:
+                // Already handled above, but included for exhaustiveness
+                return nil
+
             case .photoPages:
                 let hasPhotos = !(self?.reactor?.currentState.photos.isEmpty ?? true)
                 header.configure(
@@ -658,6 +742,10 @@ final class BookDetailViewController: FullScreenNestedScrollViewController, View
                     HapticFeedbackManager.shared.impact()
                     self?.showAllPhotos()
                 }
+
+            case .addPhotoAction:
+                // Already handled above, but included for exhaustiveness
+                return nil
 
             case .settings:
                 header.configure(title: String(localized: .bookDetailSettings))
@@ -680,9 +768,10 @@ final class BookDetailViewController: FullScreenNestedScrollViewController, View
 
         // Initialize sections if empty
         if snapshot.sectionIdentifiers.isEmpty {
+            // Add main sections (always visible with headers)
             snapshot.appendSections([.readingRecords, .savedQuotes, .photoPages, .settings])
 
-            // Settings items (always shown, excluding resetAndDelete)
+            // Settings items (always shown)
             let settingsItems: [Item] = [
                 .settingsItem(.editBookInfo),
                 .settingsItem(.editReadingInfo)
@@ -690,7 +779,7 @@ final class BookDetailViewController: FullScreenNestedScrollViewController, View
             snapshot.appendItems(settingsItems, toSection: .settings)
 
             // Note: 독서 기록 섹션은 차트 데이터 로드 후 추가
-            // 나머지 섹션은 빈 상태로 시작 (AddActionCell로 교체됨)
+            // addQuoteAction과 addPhotoAction 섹션은 updateQuotesUI/updatePhotosUI에서 조건부로 추가
         }
 
         let shouldAnimate = !isInitialLoad
@@ -725,16 +814,39 @@ final class BookDetailViewController: FullScreenNestedScrollViewController, View
 
         guard snapshot.sectionIdentifiers.contains(.photoPages) else { return }
 
+        // Clear existing items in photoPages section
         let existingItems = snapshot.itemIdentifiers(inSection: .photoPages)
-        if !existingItems.isEmpty {
-            snapshot.deleteItems(existingItems)
-        }
+        snapshot.deleteItems(existingItems)
 
         if photos.isEmpty {
-            snapshot.appendItems([.addPhotoAction], toSection: .photoPages)
+            // photoPages section remains empty (header only)
+            // Add addPhotoAction section
+            if !snapshot.sectionIdentifiers.contains(.addPhotoAction) {
+                // Insert addPhotoAction after photoPages
+                if let settingsIndex = snapshot.sectionIdentifiers.firstIndex(of: .settings) {
+                    snapshot.insertSections([.addPhotoAction], beforeSection: .settings)
+                } else {
+                    snapshot.appendSections([.addPhotoAction])
+                }
+            }
+
+            // Clear and add item to addPhotoAction section
+            if snapshot.sectionIdentifiers.contains(.addPhotoAction) {
+                let existingActionItems = snapshot.itemIdentifiers(inSection: .addPhotoAction)
+                snapshot.deleteItems(existingActionItems)
+                snapshot.appendItems([.addPhotoAction], toSection: .addPhotoAction)
+            }
         } else {
+            // Add photo items to photoPages section
             let photoItems = photos.map { Item.photoItem($0.id, $0.image) }
             snapshot.appendItems(photoItems, toSection: .photoPages)
+
+            // Remove addPhotoAction section if exists
+            if snapshot.sectionIdentifiers.contains(.addPhotoAction) {
+                let existingActionItems = snapshot.itemIdentifiers(inSection: .addPhotoAction)
+                snapshot.deleteItems(existingActionItems)
+                snapshot.deleteSections([.addPhotoAction])
+            }
         }
 
         let shouldAnimate = !isInitialLoad
@@ -748,14 +860,39 @@ final class BookDetailViewController: FullScreenNestedScrollViewController, View
 
         guard snapshot.sectionIdentifiers.contains(.savedQuotes) else { return }
 
+        // Clear existing items in savedQuotes section
         let existingItems = snapshot.itemIdentifiers(inSection: .savedQuotes)
         snapshot.deleteItems(existingItems)
 
         if quotes.isEmpty {
-            snapshot.appendItems([.addQuoteAction], toSection: .savedQuotes)
+            // savedQuotes section remains empty (header only)
+            // Add addQuoteAction section
+            if !snapshot.sectionIdentifiers.contains(.addQuoteAction) {
+                // Insert addQuoteAction after savedQuotes
+                if let photoIndex = snapshot.sectionIdentifiers.firstIndex(of: .photoPages) {
+                    snapshot.insertSections([.addQuoteAction], beforeSection: .photoPages)
+                } else {
+                    snapshot.appendSections([.addQuoteAction])
+                }
+            }
+
+            // Clear and add item to addQuoteAction section
+            if snapshot.sectionIdentifiers.contains(.addQuoteAction) {
+                let existingActionItems = snapshot.itemIdentifiers(inSection: .addQuoteAction)
+                snapshot.deleteItems(existingActionItems)
+                snapshot.appendItems([.addQuoteAction], toSection: .addQuoteAction)
+            }
         } else {
+            // Add quote items to savedQuotes section
             let quoteItems = quotes.map { Item.savedQuote($0.quote, $0.pageNumber, $0.createdAt) }
             snapshot.appendItems(quoteItems, toSection: .savedQuotes)
+
+            // Remove addQuoteAction section if exists
+            if snapshot.sectionIdentifiers.contains(.addQuoteAction) {
+                let existingActionItems = snapshot.itemIdentifiers(inSection: .addQuoteAction)
+                snapshot.deleteItems(existingActionItems)
+                snapshot.deleteSections([.addQuoteAction])
+            }
         }
 
         let shouldAnimate = !isInitialLoad
@@ -794,10 +931,12 @@ final class BookDetailViewController: FullScreenNestedScrollViewController, View
             updateReadingStatisticsUI(reactor?.currentState.readingStatistics)
         }
     }
+}
 
+// MARK: - Actions
+extension BookDetailViewController {
     // MARK: - Helper Methods
-
-    private func dismissPresentedMenuAndExecute(_ action: @escaping () -> Void) {
+    func dismissPresentedMenuAndExecute(_ action: @escaping () -> Void) {
         // Find the presented CircularMenuViewController and dismiss it
         if let presentedVC = presentedViewController {
             presentedVC.dismiss(animated: true) {
@@ -809,255 +948,14 @@ final class BookDetailViewController: FullScreenNestedScrollViewController, View
         }
     }
 
-    // MARK: - Navigation Methods
-
-    private func showReadingRecordEntry() {
-        guard let coordinator = coordinator as? BookDetailCoordinator else { return }
-        coordinator.showReadingRecordEntry()
-    }
-
-    private func showQuoteEntry() {
-        guard let coordinator = coordinator as? BookDetailCoordinator else { return }
-        coordinator.showQuoteEntry()
-    }
-
-    private func showPhotoCapture() {
-        guard let coordinator = coordinator as? BookDetailCoordinator else { return }
-        coordinator.showPhotoCapture { [weak self] image in
-            self?.reactor?.action.onNext(.savePhoto(image))
-        }
-    }
-
-    private func showAllQuotes() {
-        guard let coordinator = coordinator as? BookDetailCoordinator else { return }
-        coordinator.showAllQuotes()
-    }
-
-    private func showAllPhotos() {
-        guard let coordinator = coordinator as? BookDetailCoordinator else { return }
-        coordinator.showAllPhotos()
-    }
-
-    private func showReadingSessionList() {
-        guard let coordinator = coordinator as? BookDetailCoordinator else { return }
-        coordinator.showReadingSessionList()
-    }
-
-    // MARK: - Context Menus
-
-    private func setupPhotoContextMenu(for cell: PhotoItemCell, photoId: String, image: UIImage) {
-        let menuItems = [
-            CircularMenuItem(name: String(localized: .circularMenuCommonView), image: UIImage(systemName: "eye")) { [weak self] in
-                HapticFeedbackManager.shared.selection()
-                self?.showImagePreview(image)
-            },
-            CircularMenuItem(name: String(localized: .circularMenuCommonSave), image: UIImage(systemName: "square.and.arrow.down")) { [weak self] in
-                HapticFeedbackManager.shared.selection()
-                self?.saveImageToPhotoLibrary(image)
-            },
-            CircularMenuItem(name: String(localized: .circularMenuCommonDelete), image: UIImage(systemName: "trash")) { [weak self] in
-                HapticFeedbackManager.shared.selection()
-                self?.showDeletePhotoConfirmation(for: photoId)
-            }
-        ]
-
-        let highlightConfig = ViewHighlightConfiguration.withContextualRotation()
-        CircularMenuManager.shared.addLongPressMenu(
-            to: cell,
-            targetView: cell,
-            items: menuItems,
-            presentingViewController: self,
-            minimumPressDuration: 0.5,
-            highlightConfiguration: highlightConfig
-        )
-    }
-
-    private func setupQuoteContextMenu(for cell: SavedQuoteCell, quote: String, pageNumber: Int?, date: Date) {
-        let menuItems = [
-            CircularMenuItem(name: String(localized: .circularMenuCommonShare), image: UIImage(systemName: "square.and.arrow.up")) { [weak self] in
-                HapticFeedbackManager.shared.selection()
-                self?.shareQuote(quote, pageNumber: pageNumber)
-            },
-            CircularMenuItem(name: String(localized: .circularMenuCommonEdit), image: UIImage(systemName: "pencil")) { [weak self] in
-                HapticFeedbackManager.shared.selection()
-                self?.editQuote(quote, pageNumber: pageNumber, date: date)
-            },
-            CircularMenuItem(name: String(localized: .circularMenuCommonDelete), image: UIImage(systemName: "trash")) { [weak self] in
-                HapticFeedbackManager.shared.selection()
-                self?.showDeleteQuoteConfirmation(for: quote, date: date)
-            }
-        ]
-
-        let highlightConfig = ViewHighlightConfiguration.withCustomRotation(angle: -5.0)
-        CircularMenuManager.shared.addLongPressMenu(
-            to: cell,
-            targetView: cell,
-            items: menuItems,
-            presentingViewController: self,
-            minimumPressDuration: 0.5,
-            highlightConfiguration: highlightConfig
-        )
-    }
-
-    // MARK: - Image Actions
-
-    private func showImagePreview(_ image: UIImage) {
-        let previewVC = UIViewController()
-        let imageView = UIImageView(image: image)
-        imageView.contentMode = .scaleAspectFit
-        imageView.backgroundColor = .black
-
-        previewVC.view = imageView
-        previewVC.modalPresentationStyle = .fullScreen
-
-        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(dismissImagePreview))
-        imageView.isUserInteractionEnabled = true
-        imageView.addGestureRecognizer(tapGesture)
-
-        present(previewVC, animated: true)
-    }
-
-    @objc private func dismissImagePreview() {
-        dismiss(animated: true)
-    }
-
-    private func saveImageToPhotoLibrary(_ image: UIImage) {
-        PhotoLibraryPermissionManager.shared.handlePhotoLibraryPermission(from: self) { [weak self] granted in
-            guard granted else { return }
-            UIImageWriteToSavedPhotosAlbum(image, self, #selector(self?.imageSaveCompleted(_:didFinishSavingWithError:contextInfo:)), nil)
-        }
-    }
-
-    @objc private func imageSaveCompleted(_ image: UIImage, didFinishSavingWithError error: Error?, contextInfo: UnsafeRawPointer) {
-        let alert = UIAlertController(
-            title: error == nil ? String(localized: .photoSaveSuccessTitle) : String(localized: .photoSaveFailureTitle),
-            message: error == nil ? String(localized: .photoSaveSuccessMessage) : String(localized: .photoSaveFailureMessage),
-            preferredStyle: .alert
-        )
-        alert.addAction(UIAlertAction(title: String(localized: .actionConfirm), style: .default))
-        present(alert, animated: true)
-    }
-
-    private func showDeletePhotoConfirmation(for photoId: String) {
-        let alert = UIAlertController(
-            title: String(localized: .photoDeleteConfirmationTitle),
-            message: String(localized: .photoDeleteConfirmationMessage),
-            preferredStyle: .alert
-        )
-
-        alert.addAction(UIAlertAction(title: String(localized: .actionDelete), style: .destructive) { [weak self] _ in
-            self?.reactor?.action.onNext(.deletePhoto(photoId))
-        })
-
-        alert.addAction(UIAlertAction(title: String(localized: .actionCancel), style: .cancel))
-        present(alert, animated: true)
-    }
-
-    // MARK: - Quote Actions
-
-    private func shareQuote(_ quote: String, pageNumber: Int?) {
-        guard let reactor = reactor, let coordinator = coordinator as? BookDetailCoordinator else { return }
-
-        let bookDetail = reactor.currentState.bookDetail
-        let book = bookDetail?.book ?? reactor.currentState.book
-
-        let quoteData = QuoteShareData(
-            bookCoverImageURL: book.image,
-            bookCoverImage: nil,
-            bookTitle: book.customTitle ?? book.cleanTitle,
-            bookAuthor: book.author,
-            quote: quote,
-            pageNumber: pageNumber,
-            date: Date(),
-            backgroundConfig: .default
-        )
-
-        coordinator.showQuoteShare(quoteData: quoteData)
-    }
-
-    private func editQuote(_ quote: String, pageNumber: Int?, date: Date) {
-        guard let coordinator = coordinator as? BookDetailCoordinator else { return }
-        coordinator.showQuoteEdit(quote: quote, pageNumber: pageNumber, date: date)
-    }
-
-    private func showDeleteQuoteConfirmation(for quote: String, date: Date) {
-        let alert = UIAlertController(
-            title: String(localized: .alertDeleteQuoteTitle),
-            message: String(localized: .alertDeleteQuoteMessage),
-            preferredStyle: .alert
-        )
-
-        alert.addAction(UIAlertAction(title: String(localized: .actionCancel), style: .cancel))
-        alert.addAction(UIAlertAction(title: String(localized: .actionDelete), style: .destructive) { [weak self] _ in
-            self?.reactor?.action.onNext(.deleteQuote(quote, date))
-        })
-
-        present(alert, animated: true)
-    }
-
-    // MARK: - Tag Input
-
-    private func showTagInputAlert() {
-        guard let reactor = reactor else { return }
-        let currentTags = reactor.currentState.tags.map { $0.tagName }
-
-        let tagEditVC = TagEditViewController()
-        tagEditVC.configure(currentTags: currentTags, allTags: currentTags)
-        tagEditVC.onTagsSaved = { [weak self] tags in
-            self?.reactor?.action.onNext(.saveTags(tags))
-        }
-
-        let navController = UINavigationController(rootViewController: tagEditVC)
-        present(navController, animated: true)
-    }
-
-    // MARK: - Reading Info Edit
-
-    private func showReadingInfoEdit(bookDetail: BookDetail) {
-        let readingInfoEditVC = ReadingInfoEditViewController()
-        readingInfoEditVC.configure(
-            totalPages: bookDetail.totalPages,
-            startDate: bookDetail.startDate,
-            endDate: bookDetail.endDate
-        )
-        readingInfoEditVC.onSaved = { [weak self] totalPages, startDate, endDate in
-            self?.reactor?.action.onNext(.updateReadingInfo(totalPages: totalPages, startDate: startDate, endDate: endDate))
-        }
-
-        let navController = UINavigationController(rootViewController: readingInfoEditVC)
-        present(navController, animated: true)
-    }
-
-    // MARK: - Delete Confirmation
-
-    private func showDeleteConfirmationAlert() {
-        guard let reactor = reactor else { return }
-        let bookTitle = reactor.currentState.book.cleanTitle
-
-        let messageFormat = NSLocalizedString("alert.delete_book.message_format", comment: "")
-        let message = String(format: messageFormat, bookTitle)
-
-        let alert = UIAlertController(
-            title: String(localized: .alertDeleteBookTitle),
-            message: message,
-            preferredStyle: .alert
-        )
-
-        alert.addAction(UIAlertAction(title: String(localized: .actionCancel), style: .cancel))
-        alert.addAction(UIAlertAction(title: String(localized: .actionDelete), style: .destructive) { [weak self] _ in
-            self?.reactor?.action.onNext(.deleteBook)
-        })
-
-        present(alert, animated: true)
-    }
-
-    private func handlePeriodChange(_ period: ReadingStatisticsPeriod) {
+    // MARK: - Chart Navigation
+    func handlePeriodChange(_ period: ReadingStatisticsPeriod) {
         currentStatisticsPeriod = period
         currentPeriodDate = Date()
         reactor?.action.onNext(.loadReadingChartData(period))
     }
 
-    private func handleSwipe(_ direction: ReadingChartView.SwipeDirection) {
+    func handleSwipe(_ direction: ReadingChartView.SwipeDirection) {
         let calendar = Calendar.current
         let newDate: Date
 
@@ -1091,6 +989,241 @@ final class BookDetailViewController: FullScreenNestedScrollViewController, View
         // TODO: 날짜를 포함한 차트 데이터 로드 로직 구현 필요
         // reactor?.action.onNext(.loadReadingChartData(period: currentStatisticsPeriod, date: newDate))
         reactor?.action.onNext(.loadReadingChartData(currentStatisticsPeriod))
+    }
+
+    // MARK: - Navigation Methods
+    func showReadingRecordEntry() {
+        guard let coordinator = coordinator as? BookDetailCoordinator else { return }
+        coordinator.showReadingRecordEntry()
+    }
+
+    func showQuoteEntry() {
+        guard let coordinator = coordinator as? BookDetailCoordinator else { return }
+        coordinator.showQuoteEntry()
+    }
+
+    func showPhotoCapture() {
+        guard let coordinator = coordinator as? BookDetailCoordinator else { return }
+        coordinator.showPhotoCapture { [weak self] image in
+            self?.reactor?.action.onNext(.savePhoto(image))
+        }
+    }
+
+    func showAllQuotes() {
+        guard let coordinator = coordinator as? BookDetailCoordinator else { return }
+        coordinator.showAllQuotes()
+    }
+
+    func showAllPhotos() {
+        guard let coordinator = coordinator as? BookDetailCoordinator else { return }
+        coordinator.showAllPhotos()
+    }
+
+    func showReadingSessionList() {
+        guard let coordinator = coordinator as? BookDetailCoordinator else { return }
+        coordinator.showReadingSessionList()
+    }
+
+    // MARK: - Context Menus
+    func setupPhotoContextMenu(for cell: PhotoItemCell, photoId: String, image: UIImage) {
+        let menuItems = [
+            CircularMenuItem(name: String(localized: .circularMenuCommonView), image: UIImage(systemName: "eye")) { [weak self] in
+                HapticFeedbackManager.shared.selection()
+                self?.showImagePreview(image)
+            },
+            CircularMenuItem(name: String(localized: .circularMenuCommonSave), image: UIImage(systemName: "square.and.arrow.down")) { [weak self] in
+                HapticFeedbackManager.shared.selection()
+                self?.saveImageToPhotoLibrary(image)
+            },
+            CircularMenuItem(name: String(localized: .circularMenuCommonDelete), image: UIImage(systemName: "trash")) { [weak self] in
+                HapticFeedbackManager.shared.selection()
+                self?.showDeletePhotoConfirmation(for: photoId)
+            }
+        ]
+
+        let highlightConfig = ViewHighlightConfiguration.withContextualRotation()
+        CircularMenuManager.shared.addLongPressMenu(
+            to: cell,
+            targetView: cell,
+            items: menuItems,
+            presentingViewController: self,
+            minimumPressDuration: 0.5,
+            highlightConfiguration: highlightConfig
+        )
+    }
+
+    func setupQuoteContextMenu(for cell: SavedQuoteCell, quote: String, pageNumber: Int?, date: Date) {
+        let menuItems = [
+            CircularMenuItem(name: String(localized: .circularMenuCommonShare), image: UIImage(systemName: "square.and.arrow.up")) { [weak self] in
+                HapticFeedbackManager.shared.selection()
+                self?.shareQuote(quote, pageNumber: pageNumber)
+            },
+            CircularMenuItem(name: String(localized: .circularMenuCommonEdit), image: UIImage(systemName: "pencil")) { [weak self] in
+                HapticFeedbackManager.shared.selection()
+                self?.editQuote(quote, pageNumber: pageNumber, date: date)
+            },
+            CircularMenuItem(name: String(localized: .circularMenuCommonDelete), image: UIImage(systemName: "trash")) { [weak self] in
+                HapticFeedbackManager.shared.selection()
+                self?.showDeleteQuoteConfirmation(for: quote, date: date)
+            }
+        ]
+
+        let highlightConfig = ViewHighlightConfiguration.withCustomRotation(angle: -5.0)
+        CircularMenuManager.shared.addLongPressMenu(
+            to: cell,
+            targetView: cell,
+            items: menuItems,
+            presentingViewController: self,
+            minimumPressDuration: 0.5,
+            highlightConfiguration: highlightConfig
+        )
+    }
+
+    // MARK: - Image Actions
+    func showImagePreview(_ image: UIImage) {
+        let previewVC = UIViewController()
+        let imageView = UIImageView(image: image)
+        imageView.contentMode = .scaleAspectFit
+        imageView.backgroundColor = .black
+
+        previewVC.view = imageView
+        previewVC.modalPresentationStyle = .fullScreen
+
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(dismissImagePreview))
+        imageView.isUserInteractionEnabled = true
+        imageView.addGestureRecognizer(tapGesture)
+
+        present(previewVC, animated: true)
+    }
+
+    @objc func dismissImagePreview() {
+        dismiss(animated: true)
+    }
+
+    func saveImageToPhotoLibrary(_ image: UIImage) {
+        PhotoLibraryPermissionManager.shared.handlePhotoLibraryPermission(from: self) { [weak self] granted in
+            guard granted else { return }
+            UIImageWriteToSavedPhotosAlbum(image, self, #selector(self?.imageSaveCompleted(_:didFinishSavingWithError:contextInfo:)), nil)
+        }
+    }
+
+    @objc func imageSaveCompleted(_ image: UIImage, didFinishSavingWithError error: Error?, contextInfo: UnsafeRawPointer) {
+        let alert = UIAlertController(
+            title: error == nil ? String(localized: .photoSaveSuccessTitle) : String(localized: .photoSaveFailureTitle),
+            message: error == nil ? String(localized: .photoSaveSuccessMessage) : String(localized: .photoSaveFailureMessage),
+            preferredStyle: .alert
+        )
+        alert.addAction(UIAlertAction(title: String(localized: .actionConfirm), style: .default))
+        present(alert, animated: true)
+    }
+
+    func showDeletePhotoConfirmation(for photoId: String) {
+        let alert = UIAlertController(
+            title: String(localized: .photoDeleteConfirmationTitle),
+            message: String(localized: .photoDeleteConfirmationMessage),
+            preferredStyle: .alert
+        )
+
+        alert.addAction(UIAlertAction(title: String(localized: .actionDelete), style: .destructive) { [weak self] _ in
+            self?.reactor?.action.onNext(.deletePhoto(photoId))
+        })
+
+        alert.addAction(UIAlertAction(title: String(localized: .actionCancel), style: .cancel))
+        present(alert, animated: true)
+    }
+
+    // MARK: - Quote Actions
+    func shareQuote(_ quote: String, pageNumber: Int?) {
+        guard let reactor = reactor, let coordinator = coordinator as? BookDetailCoordinator else { return }
+
+        let bookDetail = reactor.currentState.bookDetail
+        let book = bookDetail?.book ?? reactor.currentState.book
+
+        let quoteData = QuoteShareData(
+            bookCoverImageURL: book.image,
+            bookCoverImage: nil,
+            bookTitle: book.customTitle ?? book.cleanTitle,
+            bookAuthor: book.author,
+            quote: quote,
+            pageNumber: pageNumber,
+            date: Date(),
+            backgroundConfig: .default
+        )
+
+        coordinator.showQuoteShare(quoteData: quoteData)
+    }
+
+    func editQuote(_ quote: String, pageNumber: Int?, date: Date) {
+        guard let coordinator = coordinator as? BookDetailCoordinator else { return }
+        coordinator.showQuoteEdit(quote: quote, pageNumber: pageNumber, date: date)
+    }
+
+    func showDeleteQuoteConfirmation(for quote: String, date: Date) {
+        let alert = UIAlertController(
+            title: String(localized: .alertDeleteQuoteTitle),
+            message: String(localized: .alertDeleteQuoteMessage),
+            preferredStyle: .alert
+        )
+
+        alert.addAction(UIAlertAction(title: String(localized: .actionCancel), style: .cancel))
+        alert.addAction(UIAlertAction(title: String(localized: .actionDelete), style: .destructive) { [weak self] _ in
+            self?.reactor?.action.onNext(.deleteQuote(quote, date))
+        })
+
+        present(alert, animated: true)
+    }
+
+    // MARK: - Tag Input
+    func showTagInputAlert() {
+        guard let reactor = reactor else { return }
+        let currentTags = reactor.currentState.tags.map { $0.tagName }
+
+        let tagEditVC = TagEditViewController()
+        tagEditVC.configure(currentTags: currentTags, allTags: currentTags)
+        tagEditVC.onTagsSaved = { [weak self] tags in
+            self?.reactor?.action.onNext(.saveTags(tags))
+        }
+
+        let navController = UINavigationController(rootViewController: tagEditVC)
+        present(navController, animated: true)
+    }
+
+    // MARK: - Reading Info Edit
+    func showReadingInfoEdit(bookDetail: BookDetail) {
+        let readingInfoEditVC = ReadingInfoEditViewController()
+        readingInfoEditVC.configure(
+            totalPages: bookDetail.totalPages,
+            startDate: bookDetail.startDate,
+            endDate: bookDetail.endDate
+        )
+        readingInfoEditVC.onSaved = { [weak self] totalPages, startDate, endDate in
+            self?.reactor?.action.onNext(.updateReadingInfo(totalPages: totalPages, startDate: startDate, endDate: endDate))
+        }
+
+        let navController = UINavigationController(rootViewController: readingInfoEditVC)
+        present(navController, animated: true)
+    }
+
+    // MARK: - Delete Confirmation
+    func showDeleteConfirmationAlert() {
+        guard let reactor = reactor else { return }
+        let bookTitle = reactor.currentState.book.cleanTitle
+
+        let messageFormat = NSLocalizedString("alert.delete_book.message_format", comment: "")
+        let message = String(format: messageFormat, bookTitle)
+
+        let alert = UIAlertController(
+            title: String(localized: .alertDeleteBookTitle),
+            message: message,
+            preferredStyle: .alert
+        )
+
+        alert.addAction(UIAlertAction(title: String(localized: .actionCancel), style: .cancel))
+        alert.addAction(UIAlertAction(title: String(localized: .actionDelete), style: .destructive) { [weak self] _ in
+            self?.reactor?.action.onNext(.deleteBook)
+        })
+
+        present(alert, animated: true)
     }
 }
 

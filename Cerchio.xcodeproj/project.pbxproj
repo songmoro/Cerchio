@@ -97,7 +97,6 @@
 		F84E0F0A2E829797006B98C0 /* Exceptions for "Cerchio" folder in "Cerchio" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
-				Features/BookDetail/BookDetail/View/BookDetailViewControllerLegacy.swift.txt,
 				Info.plist,
 			);
 			target = F84E0EE12E829796006B98C0 /* Cerchio */;

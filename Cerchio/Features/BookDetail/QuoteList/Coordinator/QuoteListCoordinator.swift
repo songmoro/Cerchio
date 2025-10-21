@@ -79,7 +79,7 @@ final class QuoteListCoordinator: BaseCoordinator {
                         quoteListVC.reactor?.action.onNext(.loadQuotes)
                     }
                 case .cancelled:
-                    print("📝 Quote save cancelled")
+                    print("Quote save cancelled")
                 }
                 self?.removeChildCoordinator(quoteSaveCoordinator)
             })

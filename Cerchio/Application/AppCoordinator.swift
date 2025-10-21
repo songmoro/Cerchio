@@ -213,9 +213,6 @@ final class AppCoordinator: BaseCoordinator {
     }
 
     private func navigateToTimerScreen(book: Book, session: TimerSessionManager.ActiveSession) {
-        // UI 작업이므로 메인 스레드 보장
-        assert(Thread.isMainThread, "navigateToTimerScreen must be called on main thread")
-
         // BookDetail Coordinator 생성
         let bookDetailCoordinator = BookDetailCoordinator(navigationController: navigationController)
         bookDetailCoordinator.setupDependencies(serviceFactory: dependencies.serviceFactory, book: book)
