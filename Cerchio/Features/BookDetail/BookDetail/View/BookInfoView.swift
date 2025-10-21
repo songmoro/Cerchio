@@ -201,7 +201,14 @@ final class BookInfoView: UIView {
 
         setupTags(bookDetail.tags)
 
-        if let url = URL(string: bookDetail.book.image) {
+        // Check for custom cover image first
+        if let customCoverPath = bookDetail.book.customCoverImagePath,
+           let customImage = ImageStorageManager.shared.loadImage(fromPath: customCoverPath) {
+            // Use custom local cover image
+            backgroundImageView.image = customImage
+            coverImageView.image = customImage
+        } else if let url = URL(string: bookDetail.book.image) {
+            // Use original remote cover image
             backgroundImageView.kf.setImage(
                 with: url,
                 placeholder: nil,

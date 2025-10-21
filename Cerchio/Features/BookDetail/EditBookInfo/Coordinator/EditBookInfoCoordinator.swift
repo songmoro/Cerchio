@@ -9,6 +9,7 @@ import UIKit
 import RxSwift
 import RxCocoa
 import ReactorKit
+import PhotosUI
 
 final class EditBookInfoCoordinator: BaseCoordinator {
     enum Result {
@@ -63,9 +64,60 @@ final class EditBookInfoCoordinator: BaseCoordinator {
             }
         }
 
+        // onChangeCover 콜백 설정
+        viewController.onChangeCover = { [weak self, weak viewController] in
+            self?.showImagePicker(from: viewController)
+        }
+
         let navController = UINavigationController(rootViewController: viewController)
         navController.modalPresentationStyle = .fullScreen
 
         navigationController.present(navController, animated: true)
+    }
+
+    private func showImagePicker(from viewController: EditBookInfoViewController?) {
+        guard let viewController = viewController else { return }
+
+        var configuration = PHPickerConfiguration()
+        configuration.filter = .images
+        configuration.selectionLimit = 1
+
+        let picker = PHPickerViewController(configuration: configuration)
+        picker.delegate = self
+        viewController.present(picker, animated: true)
+    }
+}
+
+// MARK: - PHPickerViewControllerDelegate
+extension EditBookInfoCoordinator: PHPickerViewControllerDelegate {
+    func picker(_ picker: PHPickerViewController, didFinishPicking results: [PHPickerResult]) {
+        picker.dismiss(animated: true)
+
+        guard let result = results.first else { return }
+
+        result.itemProvider.loadObject(ofClass: UIImage.self) { [weak self] object, error in
+            guard let self = self,
+                  let image = object as? UIImage else {
+                if let error = error {
+                    print("Failed to load image: \(error)")
+                }
+                return
+            }
+
+            // 이미지 저장
+            let imageName = ImageStorageManager.shared.generateUniqueImageName(for: self.dependencies.book.id)
+            guard let imagePath = ImageStorageManager.shared.saveImage(image, withName: imageName) else {
+                print("Failed to save custom cover image")
+                return
+            }
+
+            // 메인 스레드에서 UI 업데이트
+            DispatchQueue.main.async {
+                if let editVC = picker.presentingViewController as? UINavigationController,
+                   let viewController = editVC.viewControllers.first as? EditBookInfoViewController {
+                    viewController.updateCoverImage(image, imagePath: imagePath)
+                }
+            }
+        }
     }
 }

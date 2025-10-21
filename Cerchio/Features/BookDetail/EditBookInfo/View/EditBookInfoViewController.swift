@@ -15,6 +15,7 @@ final class EditBookInfoViewController: BaseViewController<EditBookInfoReactor> 
 
     // MARK: - Callbacks
     var onDismiss: ((Bool) -> Void)? // Bool: isSaved
+    var onChangeCover: (() -> Void)?
 
     // MARK: - UI Components
 
@@ -201,13 +202,29 @@ final class EditBookInfoViewController: BaseViewController<EditBookInfoReactor> 
             })
             .disposed(by: disposeBag)
 
+        changeCoverButton.rx.tap
+            .do(onNext: { HapticFeedbackManager.shared.impact() })
+            .subscribe(onNext: { [weak self] in
+                self?.onChangeCover?()
+            })
+            .disposed(by: disposeBag)
+
         // State
         reactor.state
             .map { $0.book }
             .take(1)
             .asDriver(onErrorJustReturn: reactor.currentState.book)
             .drive(onNext: { [weak self] book in
-                self?.loadCoverImage(url: book.displayImage)
+                // 커스텀 커버가 있으면 로컬 이미지 사용, 없으면 원본 URL 사용
+                if let customCoverPath = book.customCoverImagePath {
+                    if let image = ImageStorageManager.shared.loadImage(fromPath: customCoverPath) {
+                        self?.coverImageView.image = image
+                    } else {
+                        self?.loadCoverImage(url: book.image)
+                    }
+                } else {
+                    self?.loadCoverImage(url: book.displayImage)
+                }
                 self?.titleTextField.placeholder = book.originalCleanTitle
                 self?.authorTextField.placeholder = book.author
             })
@@ -242,6 +259,11 @@ final class EditBookInfoViewController: BaseViewController<EditBookInfoReactor> 
     private func loadCoverImage(url: String) {
         guard let imageURL = URL(string: url) else { return }
         coverImageView.kf.setImage(with: imageURL, placeholder: UIImage(systemName: "book.closed"))
+    }
+
+    func updateCoverImage(_ image: UIImage, imagePath: String) {
+        coverImageView.image = image
+        reactor?.action.onNext(.updateCoverImage(imagePath))
     }
 
     private func showResetConfirmation() {

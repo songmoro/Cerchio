@@ -90,34 +90,47 @@ final class LibraryCollectionViewCell: UICollectionViewCell, IsIdentifiable {
         // 컬럼에 따라 코너 반경 설정
         updateCornerRadius()
 
-        guard let url = URL(string: item.image) else { return }
+        // Check for custom cover image first
+        if let customCoverPath = item.customCoverImagePath,
+           let customImage = ImageStorageManager.shared.loadImage(fromPath: customCoverPath) {
+            // Use custom local cover image
+            coverImageView.image = customImage
+            loadingIndicator.stopAnimating()
+            updateImageHeight(with: customImage)
 
-        // Kingfisher 로딩 인디케이터 설정
-        loadingIndicator.startAnimating()
-
-        coverImageView.kf.setImage(
-            with: url,
-            options: [
-                .transition(.fade(0.2)),
-                .cacheOriginalImage
-            ]
-        ) { [weak self] result in
-            guard let self = self else { return }
-            self.loadingIndicator.stopAnimating()
-
-            // 이미지 로드 성공 시 실제 이미지 비율로 높이 업데이트
-            switch result {
-            case .success(let imageResult):
-                let image = imageResult.image
-                self.updateImageHeight(with: image)
-
-                // 레이아웃 검증 (레이블이 벗어났는지 확인)
-                DispatchQueue.main.async {
-                    self.validateLayout()
-                }
-            case .failure:
-                break
+            DispatchQueue.main.async { [weak self] in
+                self?.validateLayout()
             }
+        } else if let url = URL(string: item.image) {
+            // Use original remote cover image
+            loadingIndicator.startAnimating()
+
+            coverImageView.kf.setImage(
+                with: url,
+                options: [
+                    .transition(.fade(0.2)),
+                    .cacheOriginalImage
+                ]
+            ) { [weak self] result in
+                guard let self = self else { return }
+                self.loadingIndicator.stopAnimating()
+
+                // 이미지 로드 성공 시 실제 이미지 비율로 높이 업데이트
+                switch result {
+                case .success(let imageResult):
+                    let image = imageResult.image
+                    self.updateImageHeight(with: image)
+
+                    // 레이아웃 검증 (레이블이 벗어났는지 확인)
+                    DispatchQueue.main.async {
+                        self.validateLayout()
+                    }
+                case .failure:
+                    break
+                }
+            }
+        } else {
+            loadingIndicator.stopAnimating()
         }
     }
 
