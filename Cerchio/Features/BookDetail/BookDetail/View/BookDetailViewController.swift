@@ -707,10 +707,9 @@ extension BookDetailViewController {
 
             switch section {
             case .readingRecords:
-                let hasRecords = self?.reactor?.currentState.readingStatistics?.totalSessions ?? 0 > 0
                 header.configure(
                     title: String(localized: .bookDetailReadingRecords),
-                    actionTitle: hasRecords ? String(localized: .actionViewAll) : nil
+                    actionTitle: String(localized: .actionViewAll)
                 )
                 header.onActionTapped = { [weak self] in
                     HapticFeedbackManager.shared.impact()
@@ -718,10 +717,9 @@ extension BookDetailViewController {
                 }
 
             case .savedQuotes:
-                let hasQuotes = !(self?.reactor?.currentState.quotes.isEmpty ?? true)
                 header.configure(
                     title: String(localized: .bookDetailSavedQuotes),
-                    actionTitle: hasQuotes ? String(localized: .actionViewAll) : nil
+                    actionTitle: String(localized: .actionViewAll)
                 )
                 header.onActionTapped = { [weak self] in
                     HapticFeedbackManager.shared.impact()
@@ -733,10 +731,9 @@ extension BookDetailViewController {
                 return nil
 
             case .photoPages:
-                let hasPhotos = !(self?.reactor?.currentState.photos.isEmpty ?? true)
                 header.configure(
                     title: String(localized: .bookDetailPhotos),
-                    actionTitle: hasPhotos ? String(localized: .actionViewAll) : nil
+                    actionTitle: String(localized: .actionViewAll)
                 )
                 header.onActionTapped = { [weak self] in
                     HapticFeedbackManager.shared.impact()
