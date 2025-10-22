@@ -87,12 +87,16 @@ final class LibraryCollectionViewCell: UICollectionViewCell, IsIdentifiable {
         titleLabel.text = item.cleanTitle
         authorLabel.text = item.author
 
+        // 기본 배경색 설정
         backgroundContainerView.backgroundColor = .randomBookColor()
 
         if let customCoverPath = item.customCoverImagePath,
            let customImage = ImageStorageManager.shared.loadImage(fromPath: customCoverPath) {
             coverImageView.image = customImage
             loadingIndicator.stopAnimating()
+
+            // 커스텀 이미지의 주 색상 추출
+            extractAndApplyDominantColor(from: customImage)
         } else if let url = URL(string: item.image) {
             loadingIndicator.startAnimating()
 
@@ -105,9 +109,28 @@ final class LibraryCollectionViewCell: UICollectionViewCell, IsIdentifiable {
             ) { [weak self] result in
                 guard let self = self else { return }
                 self.loadingIndicator.stopAnimating()
+
+                // 다운로드된 이미지의 주 색상 추출
+                if case .success(let imageResult) = result {
+                    self.extractAndApplyDominantColor(from: imageResult.image)
+                }
             }
         } else {
             loadingIndicator.stopAnimating()
+        }
+    }
+
+    private func extractAndApplyDominantColor(from image: UIImage) {
+        Task {
+            let dominantColor = await Task.detached(priority: .userInitiated) {
+                DominantColorExtractor.extract(from: image).first ?? .gray
+            }.value
+
+            await MainActor.run {
+                UIView.animate(withDuration: 0.3) {
+                    self.backgroundContainerView.backgroundColor = dominantColor
+                }
+            }
         }
     }
 
