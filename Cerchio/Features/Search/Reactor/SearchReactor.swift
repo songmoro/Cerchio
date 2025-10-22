@@ -17,6 +17,7 @@ final class SearchReactor: Reactor {
         case searchButtonTapped
         case addBookToLibrary(Book)
         case loadMore
+        case refresh
     }
 
     enum Mutation {
@@ -30,6 +31,7 @@ final class SearchReactor: Reactor {
         case setCurrentPage(Int)
         case setHasMore(Bool)
         case setIsLoadingMore(Bool)
+        case refreshSearchResults([Book], [BookSearchItem])
     }
 
     struct State {
@@ -96,6 +98,29 @@ final class SearchReactor: Reactor {
                 performSearch(query: searchText, page: nextPage, isLoadMore: true),
                 Observable.just(.setIsLoadingMore(false))
             ])
+
+        case .refresh:
+            // 현재 검색 결과가 있으면 각 도서의 존재 여부를 다시 확인
+            guard case .results(let books, let items) = currentState.searchState else {
+                return Observable.empty()
+            }
+
+            return Observable.from(books.map { $0.isbn })
+                .flatMap { [weak self] isbn -> Observable<Bool> in
+                    guard let self = self else { return Observable.just(false) }
+                    return self.bookRepository.bookExistsByISBN(isbn)
+                }
+                .toArray()
+                .asObservable()
+                .map { existsArray -> Mutation in
+                    // 존재 여부에 따라 검색 결과 업데이트
+                    let refreshedBooks = zip(books, existsArray).map { book, exists -> Book in
+                        // Book 구조체에 isAdded 같은 필드가 없으므로, 그대로 반환
+                        return book
+                    }
+                    return .refreshSearchResults(refreshedBooks, items)
+                }
+                .catch { _ in Observable.empty() }
 
         case .addBookToLibrary(let book):
             // ISBN 중복 체크 먼저 수행
@@ -199,6 +224,10 @@ final class SearchReactor: Reactor {
 
         case .setIsLoadingMore(let isLoadingMore):
             newState.isLoadingMore = isLoadingMore
+
+        case .refreshSearchResults(let books, let items):
+            newState.searchState = .results(books, items)
+            newState.originalSearchItems = items
         }
 
         return newState

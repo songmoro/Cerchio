@@ -29,6 +29,7 @@ final class BookDetailReactor: Reactor {
         case deletePhoto(String)
 
         case loadTags
+        case loadAllUniqueTagNames
         case saveTags([String])
 
         case loadQuotes
@@ -50,6 +51,7 @@ final class BookDetailReactor: Reactor {
         case setPhotos([PhotoItem])
         case setQuotes([QuoteItem])
         case setTags([TagItem])
+        case setAllUniqueTagNames([String])
 
         case photoSaved
         case photoDeleted
@@ -107,6 +109,7 @@ final class BookDetailReactor: Reactor {
         var photos: [PhotoItem] = []
         var quotes: [QuoteItem] = []
         var tags: [TagItem] = []
+        var allUniqueTagNames: [String] = []
 
         var shouldRefreshPhotos: Bool = false
         var shouldRefreshTags: Bool = false
@@ -346,6 +349,18 @@ final class BookDetailReactor: Reactor {
                     return Observable.empty()
                 }
 
+        case .loadAllUniqueTagNames:
+            let tagRepository = service.serviceFactory.createTagRepository()
+            return tagRepository.getAllUniqueTagNames()
+                .observe(on: MainScheduler.instance)
+                .map { tagNames -> Mutation in
+                    return Mutation.setAllUniqueTagNames(tagNames)
+                }
+                .catch { error in
+                    print(" Failed to load all unique tag names: \(error)")
+                    return Observable.empty()
+                }
+
         case .savePhoto(let image):
             let bookId = String(describing: currentState.book.id)
             return service.savePhoto(image, bookId: bookId)
@@ -485,6 +500,9 @@ final class BookDetailReactor: Reactor {
             } else {
                 print(" bookDetail is nil, cannot update tags!")
             }
+
+        case .setAllUniqueTagNames(let tagNames):
+            newState.allUniqueTagNames = tagNames
 
         case .photoSaved, .photoDeleted:
             newState.shouldRefreshPhotos = true

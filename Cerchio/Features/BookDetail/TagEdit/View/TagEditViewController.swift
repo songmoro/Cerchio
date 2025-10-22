@@ -136,6 +136,15 @@ final class TagEditViewController: UIViewController {
     private func setupTableView() {
         tableView.delegate = self
         tableView.dataSource = self
+
+        // 테이블뷰 터치 시 키보드 숨김
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(dismissKeyboard))
+        tapGesture.cancelsTouchesInView = false
+        tableView.addGestureRecognizer(tapGesture)
+    }
+
+    @objc private func dismissKeyboard() {
+        textField.resignFirstResponder()
     }
 
     // MARK: - Public Methods

@@ -12,6 +12,7 @@ import RxSwift
 protocol TagRepositoryProtocol {
     func getAllTags() -> Observable<[RealmTag]>
     func getTags(for bookId: String) -> Observable<[RealmTag]>
+    func getAllUniqueTagNames() -> Observable<[String]>
     func saveTags(_ tags: [RealmTag]) -> Observable<[RealmTag]>
     func deleteTag(_ tag: RealmTag) -> Observable<Void>
     func deleteTags(for bookId: String) -> Observable<Void>
@@ -31,6 +32,19 @@ final class TagRepository: BaseRepository<RealmTag>, TagRepositoryProtocol {
             ascending: true,
             bookId
         )
+    }
+
+    func getAllUniqueTagNames() -> Observable<[String]> {
+        return Observable.create { observer in
+            DispatchQueue.main.async {
+                let allTags = self.realm.objects(RealmTag.self)
+                let uniqueTagNames = Array(Set(allTags.map { $0.tagName }))
+                    .sorted { $0.localizedCaseInsensitiveCompare($1) == .orderedAscending }
+                observer.onNext(uniqueTagNames)
+                observer.onCompleted()
+            }
+            return Disposables.create()
+        }
     }
 
     func saveTags(_ tags: [RealmTag]) -> Observable<[RealmTag]> {

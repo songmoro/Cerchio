@@ -41,6 +41,7 @@ class SnapshotBottomSheet: UIView {
         snapshot.backgroundColor = .systemBackground
         snapshot.frame.size = sourceView.bounds.size
         snapshot.layer.cornerRadius = 12
+        snapshot.layer.masksToBounds = true
         snapshot.layer.borderWidth = 1
         snapshot.layer.borderColor = UIColor.forestGreen.cgColor
 

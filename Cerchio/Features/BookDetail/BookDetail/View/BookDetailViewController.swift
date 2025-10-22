@@ -1129,7 +1129,21 @@ extension BookDetailViewController {
         let currentTags = reactor.currentState.tags.map { $0.tagName }
 
         let tagEditVC = TagEditViewController()
-        tagEditVC.configure(currentTags: currentTags, allTags: currentTags)
+
+        // 전체 태그 목록 로드 액션 발동
+        reactor.action.onNext(.loadAllUniqueTagNames)
+
+        // 전체 태그 목록을 state에서 구독하여 설정
+        reactor.state
+            .map { $0.allUniqueTagNames }
+            .skip(1) // 초기 빈 배열 스킵
+            .take(1)
+            .observe(on: MainScheduler.instance)
+            .subscribe(onNext: { [weak tagEditVC] allTagNames in
+                tagEditVC?.configure(currentTags: currentTags, allTags: allTagNames)
+            })
+            .disposed(by: disposeBag)
+
         tagEditVC.onTagsSaved = { [weak self] tags in
             self?.reactor?.action.onNext(.saveTags(tags))
         }

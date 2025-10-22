@@ -579,6 +579,7 @@ class SliderCell: UITableViewCell {
 
     private let slider: UISlider = {
         let slider = UISlider()
+        slider.tintColor = .forestGreen
         return slider
     }()
 
@@ -663,6 +664,7 @@ class ColorPickerCell: UITableViewCell {
         var config = UIButton.Configuration.filled()
         config.title = "색상 선택"
         config.cornerStyle = .medium
+        config.baseBackgroundColor = .forestGreen
         button.configuration = config
         return button
     }()

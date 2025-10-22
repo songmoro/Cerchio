@@ -71,8 +71,14 @@ final class SearchViewController: BaseViewController<SearchReactor> {
         setupEmptyState()
         setupLayout()
         configureDataSource()
+        setupTapGesture()
     }
 
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        // 탭 전환 시 검색 결과의 도서 존재 여부 갱신
+        reactor?.action.onNext(.refresh)
+    }
 
     override func bind(reactor: SearchReactor) {
         searchBar.rx.text.orEmpty
@@ -136,6 +142,7 @@ final class SearchViewController: BaseViewController<SearchReactor> {
         view.addSubview(searchBar)
         searchBar.showsCancelButton = true
         searchBar.delegate = self
+        searchBar.tintColor = .forestGreen
 
         searchBar.snp.makeConstraints {
             $0.top.equalTo(view.safeAreaLayoutGuide.snp.top)
@@ -177,6 +184,16 @@ final class SearchViewController: BaseViewController<SearchReactor> {
         loadingIndicator.snp.makeConstraints {
             $0.center.equalToSuperview()
         }
+    }
+
+    private func setupTapGesture() {
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(handleTap))
+        tapGesture.cancelsTouchesInView = false
+        view.addGestureRecognizer(tapGesture)
+    }
+
+    @objc private func handleTap() {
+        searchBar.resignFirstResponder()
     }
 
     // MARK: - DataSource Configuration
