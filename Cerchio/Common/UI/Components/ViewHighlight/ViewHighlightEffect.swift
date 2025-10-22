@@ -42,12 +42,10 @@ struct ViewHighlightEffect: OptionSet {
     func asTransform(viewCenter: CGPoint, screenCenter: CGPoint, customAngle: CGFloat? = nil) -> CGAffineTransform {
         var transform = CGAffineTransform.identity
 
-        // Apply scale
         if contains(.scale) {
             transform = transform.scaledBy(x: scaleMultiplier, y: scaleMultiplier)
         }
 
-        // Apply rotation
         if contains(.contextualRotation) {
             // 기본 contextual rotation은 좌우 구분
             let isLeftSide = viewCenter.x < screenCenter.x

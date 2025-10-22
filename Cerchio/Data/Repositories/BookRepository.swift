@@ -10,7 +10,6 @@ import RealmSwift
 import RxSwift
 
 protocol BookRepositoryProtocol {
-    // RealmBook-based methods (legacy)
     func getAllBooks() -> Observable<[RealmBook]>
     func getBook(by id: String) -> Observable<RealmBook?>
     func saveBook(_ book: RealmBook) -> Observable<RealmBook>
@@ -18,7 +17,6 @@ protocol BookRepositoryProtocol {
     func deleteBooksWithRelatedData(_ books: [RealmBook]) -> Observable<Void>
     func deleteBooksByIds(_ bookIds: [ObjectId]) -> Observable<Void>
 
-    // Book struct-based methods (preferred)
     func getAllBooksAsStruct() -> Observable<[Book]>
     func getBookByISBN(_ isbn: String) -> Observable<Book?>
     func bookExistsByISBN(_ isbn: String) -> Observable<Bool>
@@ -26,15 +24,12 @@ protocol BookRepositoryProtocol {
     func deleteBookByISBN(_ isbn: String) -> Observable<Void>
     func deleteBooksByISBNs(_ isbns: [String]) -> Observable<Void>
 
-    // Favorite methods
     func toggleFavorite(bookId: String) -> Observable<Bool>
     func getFavoriteBooks() -> Observable<[Book]>
 
-    // Custom book info methods
     func updateBookCustomInfo(bookId: String, customTitle: String, customAuthor: String, customCoverImagePath: String?) -> Observable<Void>
     func resetBookCustomInfo(bookId: String) -> Observable<Void>
 
-    // Data management
     func deleteAllData() -> Observable<Void>
 }
 
@@ -47,7 +42,6 @@ final class BookRepository: BaseRepository<RealmBook>, BookRepositoryProtocol {
 
     func getBook(by id: String) -> Observable<RealmBook?> {
         return performOnMainThread {
-            // Try to convert String to ObjectId
             guard let objectId = try? ObjectId(string: id) else {
                 return nil
             }
@@ -66,7 +60,6 @@ final class BookRepository: BaseRepository<RealmBook>, BookRepositoryProtocol {
     func deleteBooksWithRelatedData(_ books: [RealmBook]) -> Observable<Void> {
         return performWriteTransaction {
             for book in books {
-                // Check if book is still valid before deletion
                 guard !book.isInvalidated else {
                     continue // Skip already deleted books
                 }
@@ -95,7 +88,6 @@ final class BookRepository: BaseRepository<RealmBook>, BookRepositoryProtocol {
     func deleteBooksByIds(_ bookIds: [ObjectId]) -> Observable<Void> {
         return performWriteTransaction {
             for bookId in bookIds {
-                // Find book by ID
                 guard let book = self.realm.object(ofType: RealmBook.self, forPrimaryKey: bookId),
                       !book.isInvalidated else {
                     continue

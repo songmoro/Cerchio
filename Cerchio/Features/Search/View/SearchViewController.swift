@@ -75,7 +75,6 @@ final class SearchViewController: BaseViewController<SearchReactor> {
 
 
     override func bind(reactor: SearchReactor) {
-        // Action
         searchBar.rx.text.orEmpty
             .distinctUntilChanged()
             .map { SearchReactor.Action.searchTextChanged($0) }
@@ -87,7 +86,6 @@ final class SearchViewController: BaseViewController<SearchReactor> {
             .bind(to: reactor.action)
             .disposed(by: disposeBag)
 
-        // State
         reactor.state
             .map { $0.searchState }
             .distinctUntilChanged { $0.description == $1.description }

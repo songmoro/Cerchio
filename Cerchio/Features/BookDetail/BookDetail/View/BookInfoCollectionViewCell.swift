@@ -16,7 +16,6 @@ final class BookInfoCollectionViewCell: UICollectionViewCell, IsIdentifiable {
 
     // MARK: - UI Components
 
-    // Background layers
     private let backgroundImageView: UIImageView = {
         let imageView = UIImageView()
         imageView.contentMode = .scaleAspectFill
@@ -36,7 +35,6 @@ final class BookInfoCollectionViewCell: UICollectionViewCell, IsIdentifiable {
         return view
     }()
 
-    // Cover image (centered)
     private let coverImageView: UIImageView = {
         let imageView = UIImageView()
         imageView.contentMode = .scaleAspectFill
@@ -44,7 +42,6 @@ final class BookInfoCollectionViewCell: UICollectionViewCell, IsIdentifiable {
         imageView.layer.cornerRadius = BookDetailConstants.Layout.coverImageCornerRadius
         imageView.backgroundColor = .systemGray5
 
-        // Add shadow
         imageView.layer.shadowColor = UIColor.black.cgColor
         imageView.layer.shadowOffset = BookDetailConstants.Shadow.coverShadowOffset
         imageView.layer.shadowRadius = BookDetailConstants.Shadow.coverShadowRadius
@@ -53,7 +50,6 @@ final class BookInfoCollectionViewCell: UICollectionViewCell, IsIdentifiable {
         return imageView
     }()
 
-    // Info container (bottom-left)
     private let infoContainerView: UIView = {
         let view = UIView()
         view.isUserInteractionEnabled = true
@@ -112,18 +108,14 @@ final class BookInfoCollectionViewCell: UICollectionViewCell, IsIdentifiable {
     private func setupUI() {
         contentView.clipsToBounds = true
 
-        // Add background layers
         contentView.addSubview(backgroundImageView)
         contentView.addSubview(blurEffectView)
         contentView.addSubview(overlayView)
 
-        // Add cover image (centered)
         contentView.addSubview(coverImageView)
 
-        // Add info container (bottom-left)
         contentView.addSubview(infoContainerView)
 
-        // Setup info container
         tagsContainerView.addSubview(tagsStackView)
 
         infoStackView.addArrangedSubview(titleLabel)
@@ -132,7 +124,6 @@ final class BookInfoCollectionViewCell: UICollectionViewCell, IsIdentifiable {
 
         infoContainerView.addSubview(infoStackView)
 
-        // Gesture recognizers
         let tagsTapGesture = UITapGestureRecognizer(target: self, action: #selector(handleTagsTapped))
         tagsContainerView.addGestureRecognizer(tagsTapGesture)
 
@@ -147,7 +138,6 @@ final class BookInfoCollectionViewCell: UICollectionViewCell, IsIdentifiable {
         let screenHeight = UIScreen.main.bounds.height
         let backgroundHeight = screenHeight / 2
 
-        // Background layers - exactly half screen height
         backgroundImageView.snp.makeConstraints {
             $0.top.leading.trailing.equalToSuperview()
             $0.height.equalTo(backgroundHeight)
@@ -161,26 +151,22 @@ final class BookInfoCollectionViewCell: UICollectionViewCell, IsIdentifiable {
             $0.edges.equalTo(backgroundImageView)
         }
 
-        // Cover image - centered in background image with 3:4 aspect ratio
         coverImageView.snp.makeConstraints {
             $0.center.equalTo(backgroundImageView)
             $0.width.equalTo(BookDetailConstants.Layout.coverImageWidth)
             $0.height.equalTo(coverImageView.snp.width).dividedBy(BookDetailConstants.Layout.coverImageAspectRatio)
         }
 
-        // Info container - bottom-left of background image
         infoContainerView.snp.makeConstraints {
             $0.leading.equalTo(backgroundImageView).inset(BookDetailConstants.Layout.infoLeadingInset)
             $0.trailing.equalTo(backgroundImageView).inset(BookDetailConstants.Layout.infoLeadingInset)
             $0.bottom.equalTo(backgroundImageView).inset(BookDetailConstants.Layout.infoBottomInset)
         }
 
-        // Info stack view
         infoStackView.snp.makeConstraints {
             $0.edges.equalToSuperview()
         }
 
-        // Tags container
         tagsContainerView.snp.makeConstraints {
             $0.height.greaterThanOrEqualTo(BookDetailConstants.Layout.tagHeight)
         }
@@ -195,12 +181,9 @@ final class BookInfoCollectionViewCell: UICollectionViewCell, IsIdentifiable {
         titleLabel.text = bookDetail.book.cleanTitle
         authorLabel.text = bookDetail.book.author
 
-        // Tags
         setupTags(bookDetail.tags)
 
-        // Load images
         if let url = URL(string: bookDetail.book.image) {
-            // Background image (blurred)
             backgroundImageView.kf.setImage(
                 with: url,
                 placeholder: nil,
@@ -210,7 +193,6 @@ final class BookInfoCollectionViewCell: UICollectionViewCell, IsIdentifiable {
                 ]
             )
 
-            // Cover image (centered)
             coverImageView.kf.setImage(
                 with: url,
                 placeholder: nil,

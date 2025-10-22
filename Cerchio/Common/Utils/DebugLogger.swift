@@ -100,7 +100,6 @@ final class DebugLogger {
                 metadata: metadata
             )
 
-            // Console output
             let timestamp = DateFormatter.localizedString(from: debugLog.timestamp, dateStyle: .none, timeStyle: .medium)
             let consoleMessage = "\(level.emoji) [\(timestamp)] [\(category)] \(fileName):\(line) - \(message)"
             print(consoleMessage)
@@ -109,7 +108,6 @@ final class DebugLogger {
                 print("   Metadata: \(metadata)")
             }
 
-            // Save to Realm on main thread
             DispatchQueue.main.async {
                 self.repository.saveLog(debugLog)
                     .observe(on: MainScheduler.instance)

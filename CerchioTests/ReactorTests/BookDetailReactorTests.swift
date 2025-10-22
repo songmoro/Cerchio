@@ -30,7 +30,6 @@ struct BookDetailReactorTests {
 
     @Test("초기 상태 설정")
     func initialState() throws {
-        // Given
         let book = Book(
             title: "테스트 도서",
             image: "https://example.com/image.jpg",
@@ -42,7 +41,6 @@ struct BookDetailReactorTests {
         let mockRepository = MockBookRepository()
         let reactor = BookDetailReactor(book: book, bookRepository: mockRepository)
 
-        // Then
         #expect(reactor.currentState.book.title == "테스트 도서")
         #expect(reactor.currentState.isFavorite == true)
         #expect(reactor.currentState.bookDetail == nil)
@@ -53,7 +51,6 @@ struct BookDetailReactorTests {
 
     @Test("책 상세 정보 로드")
     func loadBookDetail() async throws {
-        // Given
         let realm = try await MainActor.run { try Realm() }
         let book = Book(
             title: "테스트 도서",
@@ -73,7 +70,6 @@ struct BookDetailReactorTests {
         let repository = try BookRepository()
         let reactor = BookDetailReactor(book: book, bookRepository: repository)
 
-        // When
         reactor.action.onNext(.loadBookDetail)
 
         // Then: State 변화 확인
@@ -91,7 +87,6 @@ struct BookDetailReactorTests {
 
     @Test("즐겨찾기 토글 - false to true")
     func toggleFavoriteToTrue() async throws {
-        // Given
         let realm = try await MainActor.run { try Realm() }
         let book = Book(
             title: "테스트 도서",
@@ -111,10 +106,8 @@ struct BookDetailReactorTests {
         let repository = try BookRepository()
         let reactor = BookDetailReactor(book: book, bookRepository: repository)
 
-        // When
         reactor.action.onNext(.toggleFavorite)
 
-        // Then
         let state = try await reactor.state
             .filter { $0.isFavorite == true }
             .take(1)
@@ -126,7 +119,6 @@ struct BookDetailReactorTests {
 
     @Test("즐겨찾기 토글 - true to false")
     func toggleFavoriteToFalse() async throws {
-        // Given
         let realm = try await MainActor.run { try Realm() }
         let book = Book(
             title: "테스트 도서",
@@ -146,10 +138,8 @@ struct BookDetailReactorTests {
         let repository = try BookRepository()
         let reactor = BookDetailReactor(book: book, bookRepository: repository)
 
-        // When
         reactor.action.onNext(.toggleFavorite)
 
-        // Then
         let state = try await reactor.state
             .filter { $0.isFavorite == false }
             .take(1)
@@ -162,7 +152,6 @@ struct BookDetailReactorTests {
 
     @Test("독서 정보 업데이트")
     func updateReadingInfo() async throws {
-        // Given
         let realm = try await MainActor.run { try Realm() }
         let book = Book(
             title: "테스트 도서",
@@ -195,7 +184,6 @@ struct BookDetailReactorTests {
         // When: 독서 정보 업데이트
         reactor.action.onNext(.updateReadingInfo(totalPages: 500, startDate: startDate, endDate: endDate))
 
-        // Then
         let state = try await reactor.state
             .filter { $0.bookDetail?.totalPages == 500 }
             .take(1)
@@ -211,7 +199,6 @@ struct BookDetailReactorTests {
 
     @Test("책 삭제")
     func deleteBook() async throws {
-        // Given
         let realm = try await MainActor.run { try Realm() }
         let book = Book(
             title: "삭제될 도서",
@@ -230,10 +217,8 @@ struct BookDetailReactorTests {
         let repository = try BookRepository()
         let reactor = BookDetailReactor(book: book, bookRepository: repository)
 
-        // When
         reactor.action.onNext(.deleteBook)
 
-        // Then
         let state = try await reactor.state
             .filter { $0.isDeleted }
             .take(1)
@@ -250,7 +235,6 @@ struct BookDetailReactorTests {
 
     @Test("책 정보 업데이트 및 재로드")
     func updateBookAndReload() async throws {
-        // Given
         let realm = try await MainActor.run { try Realm() }
         let originalBook = Book(
             title: "원본 제목",
@@ -280,7 +264,6 @@ struct BookDetailReactorTests {
 
         reactor.action.onNext(.updateBookAndReload(updatedBook))
 
-        // Then
         let state = try await reactor.state
             .filter { $0.book.title == "수정된 제목" }
             .take(1)
@@ -295,7 +278,6 @@ struct BookDetailReactorTests {
 
     @Test("Loading 상태 변화")
     func loadingStateChanges() async throws {
-        // Given
         let book = Book(
             title: "테스트 도서",
             image: "https://example.com/image.jpg",
@@ -334,7 +316,6 @@ struct BookDetailReactorTests {
         let repository = try BookRepository()
         let reactor = BookDetailReactor(book: book, bookRepository: repository)
 
-        // When
         reactor.action.onNext(.loadBookDetail)
 
         // Then: BookDetail은 기본 Book 정보로 생성되어야 함

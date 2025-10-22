@@ -28,7 +28,6 @@ final class HapticFeedbackManager {
         self.selectionGenerator = UISelectionFeedbackGenerator()
         self.notificationGenerator = UINotificationFeedbackGenerator()
 
-        // Prepare generators for reduced latency
         impactGenerator.prepare()
         selectionGenerator.prepare()
         notificationGenerator.prepare()

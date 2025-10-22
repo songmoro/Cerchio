@@ -48,7 +48,6 @@ final class TabNavigationView<TabValue: Hashable>: UIView {
         setupViews()
         setupConstraints()
 
-        // Select first tab by default
         if let firstTab = tabs.first {
             currentSelectedTab = firstTab.value
         }
@@ -62,7 +61,6 @@ final class TabNavigationView<TabValue: Hashable>: UIView {
     private func setupViews() {
         backgroundColor = .systemBackground
 
-        // Create tab buttons
         tabs.enumerated().forEach { index, tab in
             let button = createTabButton(title: tab.title, index: index)
             tabButtons.append(button)
@@ -110,7 +108,6 @@ final class TabNavigationView<TabValue: Hashable>: UIView {
             var config = button.configuration
             config?.baseForegroundColor = button.isSelected ? .label : .secondaryLabel
 
-            // Remove background color for selected state
             config?.background.backgroundColor = .clear
 
             config?.titleTextAttributesTransformer = UIConfigurationTextAttributesTransformer { incoming in
@@ -122,7 +119,6 @@ final class TabNavigationView<TabValue: Hashable>: UIView {
             button.configuration = config
         }
 
-        // Select first button by default
         if index == 0 {
             button.isSelected = true
         }
@@ -170,7 +166,6 @@ final class TabNavigationView<TabValue: Hashable>: UIView {
 
     override func layoutSubviews() {
         super.layoutSubviews()
-        // Update indicator position on layout changes (e.g., rotation)
         if let currentTab = currentSelectedTab,
            let index = tabs.firstIndex(where: { $0.value == currentTab }) {
             moveIndicator(to: index, animated: false)

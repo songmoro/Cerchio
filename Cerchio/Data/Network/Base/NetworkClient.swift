@@ -30,7 +30,6 @@ final class URLSessionNetworkClient: NetworkClientProtocol {
         self.decoder = decoder
         self.encoder = encoder
 
-        // Configure decoder
         setupDecoder()
     }
 
@@ -40,7 +39,6 @@ final class URLSessionNetworkClient: NetworkClientProtocol {
         formatter.timeZone = TimeZone(abbreviation: "UTC")
         decoder.dateDecodingStrategy = .formatted(formatter)
         // 네이버 API는 camelCase 사용하므로 snake_case 변환 제거
-        // decoder.keyDecodingStrategy = .convertFromSnakeCase
     }
 
     // MARK: - Execute Request (Direct Response)
@@ -212,7 +210,6 @@ private extension URLSessionNetworkClient {
         let finalURL = request.path.isEmpty ? request.baseURL : request.baseURL.appendingPathComponent(request.path)
         var urlComponents = URLComponents(url: finalURL, resolvingAgainstBaseURL: false)
 
-        // Add query parameters
         if let queryParameters = request.queryParameters {
             urlComponents?.queryItems = queryParameters.map { URLQueryItem(name: $0.key, value: $0.value) }
         }
@@ -225,12 +222,10 @@ private extension URLSessionNetworkClient {
         urlRequest.httpMethod = request.method.rawValue
         urlRequest.timeoutInterval = request.timeout
 
-        // Add headers
         request.headers?.forEach { key, value in
             urlRequest.addValue(value, forHTTPHeaderField: key)
         }
 
-        // Add body for POST/PUT/PATCH requests
         if let body = request.body {
             urlRequest.httpBody = body
         } else if let parameters = request.parameters,
@@ -290,4 +285,3 @@ private extension URLSessionNetworkClient {
         return message
     }
 }
-

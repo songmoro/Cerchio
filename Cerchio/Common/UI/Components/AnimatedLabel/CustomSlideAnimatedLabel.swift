@@ -55,11 +55,9 @@ final class CustomSlideAnimatedLabel: UIView {
     private func setupUI() {
         clipsToBounds = true
 
-        // Current label
         currentLabel.textAlignment = .center
         addSubview(currentLabel)
 
-        // Next label (hidden initially)
         nextLabel.textAlignment = .center
         nextLabel.alpha = 0
         addSubview(nextLabel)
@@ -80,7 +78,6 @@ final class CustomSlideAnimatedLabel: UIView {
             return
         }
 
-        // Setup next label
         nextLabel.text = newText
         nextLabel.alpha = 1
         nextLabel.transform = CGAffineTransform(translationX: 0, y: -slideDistance)
@@ -92,14 +89,11 @@ final class CustomSlideAnimatedLabel: UIView {
             initialSpringVelocity: 0.5,
             options: [.curveEaseOut]
         ) {
-            // Slide next label down to center
             self.nextLabel.transform = .identity
 
-            // Slide current label down and fade out
             self.currentLabel.transform = CGAffineTransform(translationX: 0, y: self.slideDistance)
             self.currentLabel.alpha = 0
         } completion: { _ in
-            // Swap labels
             self.currentLabel.text = newText
             self.currentLabel.alpha = 1
             self.currentLabel.transform = .identity

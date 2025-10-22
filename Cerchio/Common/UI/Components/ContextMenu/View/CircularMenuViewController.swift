@@ -15,7 +15,6 @@ class CircularMenuViewController: UIViewController {
     private var labelView: UIView?
     var centerPoint: CGPoint = .zero
 
-    // View highlighting
     private var highlightManager: ViewHighlightManager?
     var highlightConfiguration: ViewHighlightConfiguration = .withContextualRotation()
 
@@ -50,7 +49,6 @@ class CircularMenuViewController: UIViewController {
         initialTouchPosition = point // 롱 프레스 시작 위치 저장
         menuItems = items
 
-        // Use ViewHighlightManager for view highlighting
         highlightManager = ViewHighlightManager(configuration: highlightConfiguration)
         highlightManager?.highlight(view: selectedView, in: self.view, touchPoint: point)
 
@@ -182,7 +180,6 @@ class CircularMenuViewController: UIViewController {
 
     func touchEnded() {
         if let button = highlightedButton, let action = button.menuItem?.action {
-            // Dismiss menu first, then execute action
             dismissMenu {
                 action()
             }
@@ -264,7 +261,6 @@ class CircularMenuViewController: UIViewController {
 
                 let x = centerPoint.x + menuRadius * cos(angle)
                 let y = centerPoint.y + menuRadius * sin(angle)
-//                print("Button \(i): isLeft=\(isLeftSide), angle=\(angle), x=\(x), y=\(y)")
 
                 positions.append(adjustPositionForScreenBounds(CGPoint(x: x, y: y)))
             }
@@ -278,21 +274,8 @@ class CircularMenuViewController: UIViewController {
         let centerY = bounds.height / 2
 
         let leftBoundary = centerX * CircularMenuConstants.PositionRatios.leftBoundaryRatio
-//        let rightBoundary = centerX * CircularMenuConstants.PositionRatios.rightBoundaryRatio
         let topBoundary = centerY * CircularMenuConstants.PositionRatios.topBoundaryRatio
-//        let bottomBoundary = centerY * CircularMenuConstants.PositionRatios.bottomBoundaryRatio
 
-//        if point.x < leftBoundary {
-//            if point.y < topBoundary { return 0 }
-//            else if point.y > bottomBoundary { return -CGFloat.pi }
-//            else { return -CGFloat.pi / 4 }
-//        } else if point.x > rightBoundary {
-//            if point.y < topBoundary { return CGFloat.pi / 2 }
-//            else if point.y > bottomBoundary { return CGFloat.pi }
-//            else { return 3 * CGFloat.pi / 4 }
-//        } else {
-//            if point.y < centerY { return CGFloat.pi / 4 }
-//            else { return -3 * CGFloat.pi / 4 }
 //        }
         
         if point.y > topBoundary {
@@ -353,12 +336,10 @@ class CircularMenuViewController: UIViewController {
                 button.transform = CGAffineTransform(scaleX: CircularMenuConstants.Animation.initialScale, y: CircularMenuConstants.Animation.initialScale)
             }
         }) { [weak self] _ in
-            // Dismiss highlight using ViewHighlightManager
             self?.highlightManager?.dismiss(animated: false) {
                 self?.dismiss(animated: false) {
                     // dismiss 완료 후 CircularMenuManager에 알림
                     CircularMenuManager.shared.resetMenuState()
-                    // Execute completion handler
                     completion?()
                 }
             }

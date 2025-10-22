@@ -15,26 +15,20 @@ enum CircleTabBarConstants {
     }
 
     enum Dimensions {
-        // Tab Bar
         static let tabBarHeight: CGFloat = 66
         static let hostingControllerHeight: CGFloat = 58
 
-        // Icon
         static let iconSize: CGFloat = 24
 
-        // Background & Mask
         static let floatingBackgroundSize: CGFloat = 40
         static let maskSize: CGFloat = 48
 
-        // Spacing
         static let iconSpacing: CGFloat = 4
 
-        // Padding
         static let horizontalPadding: CGFloat = 16
         static let topPadding: CGFloat = 8
         static let bottomPadding: CGFloat = 24
 
-        // Layout Calculations
         static let screenInset: CGFloat = 32
         static let buttonHalfWidth: CGFloat = 12
         static let buttonY: CGFloat = 20

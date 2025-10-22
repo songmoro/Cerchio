@@ -75,7 +75,6 @@ class BaseRepository<T: Object>: BaseRepositoryType {
 
     func delete(_ model: T) -> Observable<Void> {
         return performWriteTransaction {
-            // Check if object is still valid before deletion
             guard !model.isInvalidated else {
                 throw RepositoryError.objectAlreadyDeleted
             }

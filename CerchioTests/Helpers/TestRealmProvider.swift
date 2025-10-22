@@ -106,11 +106,9 @@ final class TestRealmProvider {
     @MainActor
     static func createTestBookRepository(realm: Realm? = nil) throws -> BookRepository {
         if let realm = realm {
-            // Use provided Realm by setting it as the default configuration
             let config = realm.configuration
             Realm.Configuration.defaultConfiguration = config
         } else {
-            // Create new in-memory configuration
             Realm.Configuration.defaultConfiguration = createInMemoryConfiguration()
         }
 
@@ -162,10 +160,8 @@ final class TestRealmProvider {
     /// - Returns: ServiceFactory configured for testing
     @MainActor
     static func createTestServiceFactory() -> ServiceFactory {
-        // Set default configuration to in-memory
         Realm.Configuration.defaultConfiguration = createInMemoryConfiguration()
 
-        // Create test dependencies with a mock network client
         let mockNetworkClient = MockNetworkClient()
         let dependencies = DefaultServiceDependencies(networkClient: mockNetworkClient)
 

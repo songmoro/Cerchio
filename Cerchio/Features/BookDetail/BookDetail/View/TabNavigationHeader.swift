@@ -60,7 +60,6 @@ final class TabNavigationHeader: UICollectionReusableView, IsIdentifiable {
     private func setupViews() {
         backgroundColor = .systemBackground
 
-        // Create tab buttons
         tabs.forEach { tab in
             let button = createTabButton(title: tab.title, section: tab.section)
             tabButtons.append(button)
@@ -142,7 +141,6 @@ final class TabNavigationHeader: UICollectionReusableView, IsIdentifiable {
     private func updateButtonStates(selectedIndex: Int) {
         tabButtons.enumerated().forEach { idx, button in
             button.isSelected = idx == selectedIndex
-            // Configuration update handler will automatically handle styling
         }
     }
 
@@ -178,7 +176,6 @@ final class TabNavigationHeader: UICollectionReusableView, IsIdentifiable {
 
     override func layoutSubviews() {
         super.layoutSubviews()
-        // Update indicator position on layout changes (e.g., rotation)
         let index = indexForSection(currentSelectedTab)
         moveIndicator(to: index, animated: false)
     }

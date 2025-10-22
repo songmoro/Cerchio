@@ -115,7 +115,6 @@ final class BookDetailPerformanceTests: XCTestCase {
             XCTMemoryMetric()
         ]
 
-        // When
         measure(metrics: metrics) {
             let expectation = expectation(description: "Load 100 photos")
 
@@ -182,7 +181,6 @@ final class BookDetailPerformanceTests: XCTestCase {
             XCTMemoryMetric()
         ]
 
-        // When
         measure(metrics: metrics) {
             let expectation = expectation(description: "Load quotes")
 
@@ -211,7 +209,6 @@ final class BookDetailPerformanceTests: XCTestCase {
             XCTClockMetric()
         ]
 
-        // When
         measure(metrics: metrics) {
             let expectation = expectation(description: "Load 1000 quotes")
 
@@ -278,7 +275,6 @@ final class BookDetailPerformanceTests: XCTestCase {
     // MARK: - Photo Save Performance
 
     func testPerformance_Saving10PhotosSequentially() throws {
-        // Given
         let bookId = "save-test"
         let images = (0..<10).map { _ in createDummyImage() }
 

@@ -57,11 +57,9 @@ final class CameraViewController: UIViewController {
     private func setupUI() {
         view.backgroundColor = .black
 
-        // Preview View
         previewView.backgroundColor = .black
         view.addSubview(previewView)
 
-        // Capture Button
         captureButton.backgroundColor = .white
         captureButton.layer.cornerRadius = 35
         captureButton.layer.borderWidth = 3
@@ -69,18 +67,12 @@ final class CameraViewController: UIViewController {
         captureButton.addTarget(self, action: #selector(capturePhoto), for: .touchUpInside)
         view.addSubview(captureButton)
 
-        // Cancel Button
         cancelButton.setTitle(String(localized: .actionCancel), for: .normal)
         cancelButton.setTitleColor(.white, for: .normal)
         cancelButton.titleLabel?.font = .systemFont(ofSize: 16, weight: .medium)
         cancelButton.addTarget(self, action: #selector(cancelTapped), for: .touchUpInside)
         view.addSubview(cancelButton)
 
-        // Flash Button
-//        flashButton.setImage(UIImage(systemName: "bolt.slash"), for: .normal)
-//        flashButton.tintColor = .white
-//        flashButton.addTarget(self, action: #selector(flashTapped), for: .touchUpInside)
-//        view.addSubview(flashButton)
 
         setupConstraints()
     }
@@ -91,19 +83,16 @@ final class CameraViewController: UIViewController {
         cancelButton.translatesAutoresizingMaskIntoConstraints = false
 
         NSLayoutConstraint.activate([
-            // Preview View
             previewView.topAnchor.constraint(equalTo: view.topAnchor),
             previewView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             previewView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             previewView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -100),
 
-            // Capture Button
             captureButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             captureButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -20),
             captureButton.widthAnchor.constraint(equalToConstant: 70),
             captureButton.heightAnchor.constraint(equalToConstant: 70),
 
-            // Cancel Button
             cancelButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
             cancelButton.centerYAnchor.constraint(equalTo: captureButton.centerYAnchor)
         ])
@@ -158,7 +147,6 @@ final class CameraViewController: UIViewController {
     @objc private func capturePhoto() {
         let settings = AVCapturePhotoSettings(format: [AVVideoCodecKey: AVVideoCodecType.jpeg])
 
-        // Flash settings
         if currentDevice.hasTorch && currentDevice.hasFlash {
             settings.flashMode = isFlashOn ? .on : .off
         }

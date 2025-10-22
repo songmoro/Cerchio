@@ -49,17 +49,13 @@ struct DefaultServiceDependencies: ServiceDependencies {
 // MARK: - Service Error Handling
 extension ServiceProtocol {
     func handleError<T>(_ error: Error) -> Observable<T> {
-        // Log error
         print("Service Error: \(error)")
 
-        // Transform specific errors if needed
         if let networkError = error as? NetworkError {
             switch networkError {
             case .unauthorized:
-                // Handle unauthorized access (e.g., redirect to login)
                 break
             case .rateLimited:
-                // Handle rate limiting (e.g., retry after delay)
                 break
             default:
                 break

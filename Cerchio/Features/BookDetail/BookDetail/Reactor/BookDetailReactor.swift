@@ -24,16 +24,13 @@ final class BookDetailReactor: Reactor {
         case loadReadingStatistics
         case loadReadingChartData(ReadingStatisticsPeriod)
 
-        // Photo actions
         case loadPhotos
         case savePhoto(UIImage)
         case deletePhoto(String)
 
-        // Tag actions
         case loadTags
         case saveTags([String])
 
-        // Quote actions
         case loadQuotes
         case deleteQuote(String, Date)
     }
@@ -50,12 +47,10 @@ final class BookDetailReactor: Reactor {
         case setReadingStatistics(ReadingStatistics)
         case setReadingChartData(ReadingChartData)
 
-        // Data loading
         case setPhotos([PhotoItem])
         case setQuotes([QuoteItem])
         case setTags([TagItem])
 
-        // Data change notifications
         case photoSaved
         case photoDeleted
         case tagsSaved
@@ -109,12 +104,10 @@ final class BookDetailReactor: Reactor {
         var readingStatistics: ReadingStatistics?
         var readingChartData: ReadingChartData?
 
-        // Data
         var photos: [PhotoItem] = []
         var quotes: [QuoteItem] = []
         var tags: [TagItem] = []
 
-        // Data change flags for UI refresh
         var shouldRefreshPhotos: Bool = false
         var shouldRefreshTags: Bool = false
     }
@@ -151,15 +144,8 @@ final class BookDetailReactor: Reactor {
                     }
                 }
 
-//        case .updateReadingProgress(let currentPage):
         case .updateReadingProgress(_):
-//            let progress = ReadingProgress(
-//                bookId: currentState.book.id.stringValue,
-//                currentPage: currentPage,
-//                totalPages: currentState.bookDetail?.totalPages ?? 0,
-//                startDate: currentState.readingProgress?.startDate
 //            )
-//            return Observable.just(.setReadingProgress(progress))
             return .empty()
 
         case .updateReadingInfo(let totalPages, let startDate, let endDate):
@@ -377,10 +363,8 @@ final class BookDetailReactor: Reactor {
                 return Observable.empty()
             }
 
-            // Delete local file
             _ = ImageStorageManager.shared.deleteImage(atPath: photo.localImagePath)
 
-            // Delete from repository
             let photoRepository = service.serviceFactory.createPhotoRepository()
             return photoRepository.deletePhoto(photo)
                 .map { _ in Mutation.photoDeleted }
@@ -393,7 +377,6 @@ final class BookDetailReactor: Reactor {
             let bookId = String(describing: currentState.book.id)
             let tagRepository = service.serviceFactory.createTagRepository()
 
-            // Delete existing tags, then save new ones
             return tagRepository.deleteTags(for: bookId)
                 .flatMap { _ -> Observable<Mutation> in
                     guard !tags.isEmpty else {
@@ -443,7 +426,6 @@ final class BookDetailReactor: Reactor {
     func reduce(state: State, mutation: Mutation) -> State {
         var newState = state
 
-        // Reset refresh flags
         newState.shouldRefreshPhotos = false
         newState.shouldRefreshTags = false
 
@@ -490,7 +472,6 @@ final class BookDetailReactor: Reactor {
         case .setTags(let tags):
             newState.tags = tags
             print(" BookDetailReactor.reduce - setTags: \(tags.map { $0.tagName })")
-            // Update bookDetail with new tags
             if let bookDetail = newState.bookDetail {
                 let tagNames = tags.map { $0.tagName }
                 print(" Updating bookDetail with tags: \(tagNames)")

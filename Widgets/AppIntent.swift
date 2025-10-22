@@ -7,5 +7,3 @@
 
 import WidgetKit
 import AppIntents
-
-// Not used in this project, but required by Widget Extension template

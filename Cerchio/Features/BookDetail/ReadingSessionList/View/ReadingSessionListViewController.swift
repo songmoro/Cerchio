@@ -80,14 +80,12 @@ final class ReadingSessionListViewController: ListViewBaseViewController<Reading
     }
 
     private func setupBackButton() {
-        // Remove back button text, only show the chevron
         navigationController?.navigationBar.topItem?.backBarButtonItem = UIBarButtonItem(title: "", style: .plain, target: nil, action: nil)
     }
 
     // MARK: - Binding
 
     override func bind(reactor: ReadingSessionListReactor) {
-        // State -> View
         reactor.state
             .map { $0.sessions }
             .distinctUntilChanged()
@@ -237,7 +235,6 @@ final class ReadingSessionCell: UITableViewCell {
     // MARK: - Configuration
 
     func configure(with session: ReadingSession) {
-        // Date formatting
         let dateFormatter = DateFormatter()
         dateFormatter.dateFormat = "yyyy년 M월 d일 a h:mm"
         dateFormatter.locale = Locale(identifier: "ko_KR")
@@ -257,7 +254,6 @@ final class ReadingSessionCell: UITableViewCell {
             durationLabel.text = String(format: "%d초", seconds)
         }
 
-        // Target formatting
         targetLabel.text = "목표: \(session.targetMinutes)분"
     }
 

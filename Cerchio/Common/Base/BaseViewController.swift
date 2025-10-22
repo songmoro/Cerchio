@@ -37,7 +37,6 @@ class BaseViewController<T: Reactor>: UIViewController, BaseViewControllerType, 
 
     private var isFinishing = false
 
-    // ReactorKit View Protocol Implementation
     var reactor: T? {
         didSet {
             guard let reactor = reactor else { return }

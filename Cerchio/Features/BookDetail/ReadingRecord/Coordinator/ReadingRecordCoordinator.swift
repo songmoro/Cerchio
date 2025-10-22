@@ -83,7 +83,6 @@ final class ReadingRecordCoordinator: BaseCoordinator {
                     .take(1)
                     .subscribe(onNext: { [weak self] in
                         guard let self = self else { return }
-                        // Find and remove the timer coordinator
                         if let coordinator = self.childCoordinators.first(where: { $0 is ReadingTimerCoordinator }) {
                             self.removeChildCoordinator(coordinator)
                         }

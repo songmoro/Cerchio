@@ -37,7 +37,6 @@ class SnapshotBottomSheet: UIView {
     
     // MARK: - Initialization
     init(sourceView: UIView, sheetHeight: CGFloat) {
-        // Create snapshot from source view
         let snapshot = sourceView.snapshotView(afterScreenUpdates: true) ?? UIView()
         snapshot.backgroundColor = .systemBackground
         snapshot.frame.size = sourceView.bounds.size
@@ -155,7 +154,6 @@ class SnapshotBottomSheet: UIView {
         self.frame = window.bounds
         window.addSubview(self)
         
-        // Initial position (off-screen)
         containerView.transform = CGAffineTransform(translationX: 0, y: sheetHeight)
         snapshotContainer.transform = CGAffineTransform(translationX: 0, y: sheetHeight)
         

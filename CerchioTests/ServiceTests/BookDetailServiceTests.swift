@@ -30,7 +30,6 @@ struct BookDetailServiceTests {
 
     @Test("사진 메타데이터 로드")
     func loadPhotos() async throws {
-        // Given
         let realm = try await MainActor.run { try Realm() }
         let bookId = "test-book"
         let photos = [
@@ -47,29 +46,23 @@ struct BookDetailServiceTests {
 
         let service = BookDetailService(serviceFactory: TestRealmProvider.createTestServiceFactory())
 
-        // When
         let loadedPhotos = try await service.loadPhotos(bookId: bookId).toAsync()
 
-        // Then
         #expect(loadedPhotos.count == 3)
         #expect(loadedPhotos[0].localImagePath == "/path1.jpg")
     }
 
     @Test("존재하지 않는 책의 사진 조회")
     func loadPhotosForNonExistentBook() async throws {
-        // Given
         let service = BookDetailService(serviceFactory: TestRealmProvider.createTestServiceFactory())
 
-        // When
         let photos = try await service.loadPhotos(bookId: "nonexistent").toAsync()
 
-        // Then
         #expect(photos.isEmpty)
     }
 
     @Test("사진 정렬 확인 (최신순)")
     func photosOrderedByCreatedAt() async throws {
-        // Given
         let realm = try await MainActor.run { try Realm() }
         let bookId = "test-book"
 
@@ -86,7 +79,6 @@ struct BookDetailServiceTests {
         let serviceFactory = TestRealmProvider.createTestServiceFactory()
         let service = BookDetailService(serviceFactory: serviceFactory)
 
-        // When
         let photos = try await service.loadPhotos(bookId: bookId).toAsync()
 
         // Then: 최신 사진이 먼저 나와야 함 (descending)
@@ -99,7 +91,6 @@ struct BookDetailServiceTests {
 
     @Test("인용구 로드")
     func loadQuotes() async throws {
-        // Given
         let realm = try await MainActor.run { try Realm() }
         let bookId = "test-book"
         let quotes = [
@@ -117,10 +108,8 @@ struct BookDetailServiceTests {
         let serviceFactory = TestRealmProvider.createTestServiceFactory()
         let service = BookDetailService(serviceFactory: serviceFactory)
 
-        // When
         let loadedQuotes = try await service.loadQuotes(bookId: bookId).toAsync()
 
-        // Then
         #expect(loadedQuotes.count == 3)
         #expect(loadedQuotes[0].quote == "첫 번째 인용구")
         #expect(loadedQuotes[0].pageNumber == 10)
@@ -128,7 +117,6 @@ struct BookDetailServiceTests {
 
     @Test("인용구 정렬 확인 (최신순)")
     func quotesOrderedByCreatedAt() async throws {
-        // Given
         let realm = try await MainActor.run { try Realm() }
         let bookId = "test-book"
 
@@ -145,7 +133,6 @@ struct BookDetailServiceTests {
         let serviceFactory = TestRealmProvider.createTestServiceFactory()
         let service = BookDetailService(serviceFactory: serviceFactory)
 
-        // When
         let quotes = try await service.loadQuotes(bookId: bookId).toAsync()
 
         // Then: 최신 인용구가 먼저
@@ -158,7 +145,6 @@ struct BookDetailServiceTests {
 
     @Test("태그 로드")
     func loadTags() async throws {
-        // Given
         let realm = try await MainActor.run { try Realm() }
         let bookId = "test-book"
         let tags = [
@@ -176,10 +162,8 @@ struct BookDetailServiceTests {
         let serviceFactory = TestRealmProvider.createTestServiceFactory()
         let service = BookDetailService(serviceFactory: serviceFactory)
 
-        // When
         let loadedTags = try await service.loadTags(bookId: bookId).toAsync()
 
-        // Then
         #expect(loadedTags.count == 3)
         #expect(loadedTags.map { $0.tagName }.contains("소설"))
         #expect(loadedTags.map { $0.tagName }.contains("추리"))
@@ -207,7 +191,6 @@ struct BookDetailServiceTests {
         // When: 병렬 로딩
         let images = await service.loadImagesInBackground(from: imagePaths)
 
-        // Then
         #expect(images.count == 5)
 
         // 원본 순서 유지 확인
@@ -216,7 +199,6 @@ struct BookDetailServiceTests {
             #expect(image.size.height == 600)
         }
 
-        // Cleanup
         for path in imagePaths {
             _ = ImageStorageManager.shared.deleteImage(atPath: path)
         }
@@ -224,7 +206,6 @@ struct BookDetailServiceTests {
 
     @Test("이미지 로딩 순서 유지")
     func imageLoadingOrderPreserved() async throws {
-        // Given
         var imagePaths: [String] = []
         let colors: [UIColor] = [.red, .green, .blue]
 
@@ -245,7 +226,6 @@ struct BookDetailServiceTests {
         // Then: 순서가 유지되어야 함
         #expect(images.count == 3)
 
-        // Cleanup
         for path in imagePaths {
             _ = ImageStorageManager.shared.deleteImage(atPath: path)
         }
@@ -263,7 +243,6 @@ struct BookDetailServiceTests {
         let serviceFactory = TestRealmProvider.createTestServiceFactory()
         let service = BookDetailService(serviceFactory: serviceFactory)
 
-        // When
         let images = await service.loadImagesInBackground(from: invalidPaths)
 
         // Then: 로드 실패한 이미지는 제외되어야 함
@@ -274,7 +253,6 @@ struct BookDetailServiceTests {
 
     @Test("사진 저장")
     func savePhoto() async throws {
-        // Given
         let realm = try await MainActor.run { try Realm() }
         let bookId = "save-test"
         let image = createDummyImage()
@@ -282,7 +260,6 @@ struct BookDetailServiceTests {
         let serviceFactory = TestRealmProvider.createTestServiceFactory()
         let service = BookDetailService(serviceFactory: serviceFactory)
 
-        // When
         let savedPhoto = try await service.savePhoto(image, bookId: bookId).toAsync()
 
         // Then: Realm에 저장되었는지 확인
@@ -294,13 +271,11 @@ struct BookDetailServiceTests {
         let loadedImage = ImageStorageManager.shared.loadImage(fromPath: savedPhoto.localImagePath)
         #expect(loadedImage != nil)
 
-        // Cleanup
         _ = ImageStorageManager.shared.deleteImage(atPath: savedPhoto.localImagePath)
     }
 
     @Test("여러 사진 연속 저장")
     func saveMultiplePhotos() async throws {
-        // Given
         let realm = try await MainActor.run { try Realm() }
         let bookId = "multi-save-test"
         let images = (0..<3).map { _ in createDummyImage() }
@@ -310,17 +285,14 @@ struct BookDetailServiceTests {
 
         var savedPaths: [String] = []
 
-        // When
         for image in images {
             let photo = try await service.savePhoto(image, bookId: bookId).toAsync()
             savedPaths.append(photo.localImagePath)
         }
 
-        // Then
         let photos = realm.objects(RealmPhoto.self).filter("bookId == %@", bookId)
         #expect(photos.count == 3)
 
-        // Cleanup
         for path in savedPaths {
             _ = ImageStorageManager.shared.deleteImage(atPath: path)
         }
@@ -360,7 +332,6 @@ struct BookDetailServiceTests {
 
         let (loadedQuotes, loadedTags) = try await (quotesResult, tagsResult)
 
-        // Then
         #expect(loadedQuotes.count == 2)
         #expect(loadedTags.count == 2)
     }

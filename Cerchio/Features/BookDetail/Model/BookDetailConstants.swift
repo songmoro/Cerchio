@@ -27,7 +27,6 @@ enum BookDetailConstants {
         static let coverWidthMultiplier: CGFloat = 0.3
         static let aspectRatio: CGFloat = 4.0/3.0
 
-        // New BookInfo cell design
         static let bookInfoCellHeight: CGFloat = 500
         static let backgroundImageHeightMultiplier: CGFloat = 0.5 // Half screen
         static let coverImageWidth: CGFloat = 120
@@ -46,7 +45,6 @@ enum BookDetailConstants {
         static let dateRangeFontSize: CGFloat = 14
         static let tagFontSize: CGFloat = 12
 
-        // New BookInfo cell typography
         static let bookInfoTitleFontSize: CGFloat = 17
         static let bookInfoSubtitleFontSize: CGFloat = 14
         static let bookInfoSubtitleAlpha: CGFloat = 0.8
@@ -58,7 +56,6 @@ enum BookDetailConstants {
         static let radius: CGFloat = 4
         static let opacity: Float = 0.1
 
-        // Cover image shadow
         static let coverShadowOffset = CGSize(width: 0, height: 8)
         static let coverShadowRadius: CGFloat = 16
         static let coverShadowOpacity: Float = 0.3

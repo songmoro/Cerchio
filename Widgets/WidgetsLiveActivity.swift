@@ -14,7 +14,6 @@ import Combine
 struct ReadingTimerLiveActivity: Widget {
     var body: some WidgetConfiguration {
         ActivityConfiguration(for: ReadingTimerAttributes.self) { context in
-            // Lock screen/banner UI
             ReadingTimerLockScreenView(context: context)
                 .activityBackgroundTint(Color("BookBackground"))
                 .activitySystemActionForegroundColor(Color("ForestGreen"))
@@ -32,8 +31,6 @@ struct ReadingTimerLiveActivity: Widget {
                             .font(.body)
                             .foregroundColor(Color("BookBackground"))
                             .lineLimit(1)
-                        //                        ProgressView(value: context.state.progress)
-                        //                            .tint(Color("BookBackground"))
                     }
                 }
             } compactLeading: {

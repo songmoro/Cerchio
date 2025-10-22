@@ -19,7 +19,6 @@ final class TimerActivityManager {
     private var isStarted = false
     private let disposeBag = DisposeBag()
 
-    // Event relays
     private let dismissedRelay = PublishRelay<Void>()
     private let staleRelay = PublishRelay<Void>()
     private let endedRelay = PublishRelay<Void>()
@@ -274,7 +273,6 @@ final class TimerActivityManager {
 
     @available(iOS 16.2, *)
     private func setupMonitoring() {
-        // Dismissed
         liveActivityManager.activityDismissed
             .subscribe(onNext: { [weak self] in
                 self?.isStarted = false
@@ -291,7 +289,6 @@ final class TimerActivityManager {
             })
             .disposed(by: disposeBag)
 
-        // Ended
         liveActivityManager.activityEnded
             .subscribe(onNext: { [weak self] in
                 self?.isStarted = false

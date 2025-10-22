@@ -174,14 +174,12 @@ extension TagFilterViewController: UITableViewDelegate {
         tableView.deselectRow(at: indexPath, animated: true)
 
         if indexPath.section == 0 {
-            // Favorite filter toggle
             isFavoriteFilterEnabled.toggle()
             tableView.reloadRows(at: [indexPath], with: .automatic)
         } else {
             // 태그가 없으면 아무 동작 안 함
             guard !availableTags.isEmpty else { return }
 
-            // Tag filter toggle
             let tag = availableTags[indexPath.row]
 
             if selectedTags.contains(tag) {

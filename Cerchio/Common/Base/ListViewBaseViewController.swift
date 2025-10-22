@@ -121,11 +121,9 @@ class ListViewBaseViewController<R: Reactor>: BaseViewController<R> {
 
     /// Called when add button is tapped
     open func addButtonTapped() {
-        // Override in subclass
     }
 
     /// Called when edit mode changes
     open func editModeDidChange(_ isEditMode: Bool) {
-        // Override in subclass to handle edit mode changes
     }
 }

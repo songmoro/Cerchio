@@ -31,23 +31,18 @@ open class FullScreenNestedScrollViewController: NestedScrollViewController {
     open override func viewDidLoad() {
         super.viewDidLoad()
 
-        // Allow content to extend under navigation bar
         extendedLayoutIncludesOpaqueBars = true
 
-        // Disable automatic content inset adjustment to allow content to start from top
         mainScrollView.contentInsetAdjustmentBehavior = .never
 
-        // Setup navigation bar background view
         setupNavigationBarBackgroundView()
 
-        // Setup logo background view for overscroll
         setupLogoBackgroundView()
     }
 
     open override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
 
-        // Restore navigation bar appearance every time view appears
         setupTransparentNavigationBar()
         navigationController?.navigationBar.tintColor = .bookBackground
     }
@@ -79,28 +74,10 @@ open class FullScreenNestedScrollViewController: NestedScrollViewController {
     }
 
     private func setupLogoBackgroundView() {
-//        logoBackgroundView = UIImageView()
-//        logoBackgroundView.image = UIImage(named: "ClearLogo")
-//        logoBackgroundView.contentMode = .scaleAspectFit
-//        logoBackgroundView.alpha = 0.15
 //
-//        mainScrollView.backgroundColor = .clear
-//        view.insertSubview(logoBackgroundView, at: 0)
 //
-//        // Get reference to infoView from parent class
-//        guard let infoView = mainScrollView.subviews.first(where: { $0 is UIStackView })?.subviews.first else {
-//            return
 //        }
 
-        // Logo stretches between status bar top and info view top
-        // Size is 1:1 aspect ratio based on available height
-//        logoBackgroundView.snp.makeConstraints { make in
-//            make.centerX.equalToSuperview()
-//            make.size.equalTo(48)
-//            make.bottom.equalTo(infoView.snp.top).offset(-12).priority(.low)
-//            make.top.equalTo(view.safeAreaLayoutGuide.snp.top)
-//            make.bottom.equalTo(infoView.snp.top).priority(.low)
-//            make.width.equalTo(logoBackgroundView.snp.height) // 1:1 aspect ratio
 //        }
     }
 

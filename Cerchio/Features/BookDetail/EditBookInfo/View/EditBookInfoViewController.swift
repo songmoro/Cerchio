@@ -168,7 +168,6 @@ final class EditBookInfoViewController: BaseViewController<EditBookInfoReactor> 
     // MARK: - Binding
 
     override func bind(reactor: EditBookInfoReactor) {
-        // Action
         navigationItem.leftBarButtonItem?.rx.tap
             .do(onNext: { HapticFeedbackManager.shared.impact() })
             .subscribe(onNext: { [weak self] in
@@ -209,7 +208,6 @@ final class EditBookInfoViewController: BaseViewController<EditBookInfoReactor> 
             })
             .disposed(by: disposeBag)
 
-        // State
         reactor.state
             .map { $0.book }
             .take(1)

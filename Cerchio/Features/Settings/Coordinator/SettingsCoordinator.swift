@@ -24,7 +24,6 @@ final class SettingsCoordinator: BaseCoordinator, Coordinatable {
 
     private var dependencies: SettingsDependencies!
 
-    // Callback for navigation to Library
     var onNavigateToLibrary: (() -> Void)?
 
     override func start() {

@@ -38,7 +38,6 @@ struct LibraryState {
     var filteredBooks: [Book] {
         var result = books
 
-        // Apply search filter
         if !searchQuery.isEmpty {
             result = result.filter { book in
                 book.title.localizedCaseInsensitiveContains(searchQuery) ||
@@ -46,14 +45,12 @@ struct LibraryState {
             }
         }
 
-        // Apply category filter
         if let filter = filter {
             result = result.filter { book in
                 filter.matches(book: book)
             }
         }
 
-        // Apply sorting
         return result.sorted(by: sortOption.comparator)
     }
 }

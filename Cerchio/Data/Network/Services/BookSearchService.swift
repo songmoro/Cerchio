@@ -44,7 +44,6 @@ final class BookSearchService: BaseService<BookSearchService.Dependencies>, Book
         let networkRequest = BookSearchNetworkRequest(searchRequest: request)
 
         return Observable.create { observer in
-            // Validate request before sending
             do {
                 try networkRequest.validate()
             } catch {
@@ -52,7 +51,6 @@ final class BookSearchService: BaseService<BookSearchService.Dependencies>, Book
                 return Disposables.create()
             }
 
-            // Execute network request
             let disposable = self.networkClient
                 .execute(networkRequest)
                 .subscribe(
@@ -95,13 +93,11 @@ final class BookSearchService: BaseService<BookSearchService.Dependencies>, Book
     }
 
     private func mapServerError(statusCode: Int, message: String?) -> BookSearchError {
-        // Try to parse error response
         if let messageData = message?.data(using: .utf8),
            let errorResponse = try? JSONDecoder().decode(APIErrorResponse.self, from: messageData) {
             return BookSearchError.fromErrorCode(errorResponse.errorCode)
         }
 
-        // Fallback to status code mapping
         switch statusCode {
         case 400:
             return .incorrectQuery

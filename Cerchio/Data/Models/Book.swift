@@ -30,7 +30,6 @@ class RealmBook: Object {
     @Persisted var startDate: Date?
     @Persisted var endDate: Date?
 
-    // Custom book info (overrides original data when set)
     @Persisted var customTitle: String?
     @Persisted var customAuthor: String?
     @Persisted var customCoverImagePath: String?
@@ -80,7 +79,6 @@ nonisolated struct Book: Hashable, Codable {
     let priceAsInt: Int?
     let createAt: Date
 
-    // Extended properties for feature models
     let genre: String?
     let totalPages: Int?
     let startDate: Date?
@@ -92,7 +90,6 @@ nonisolated struct Book: Hashable, Codable {
     let category: BookCategory?
     let rating: Int?
 
-    // Custom book info
     let customTitle: String?
     let customAuthor: String?
     let customCoverImagePath: String?
@@ -107,7 +104,6 @@ nonisolated struct Book: Hashable, Codable {
         return _cleanTitle
     }
 
-    // CodingKeys for Codable
     enum CodingKeys: String, CodingKey {
         case id, title, link, image, author, isbn, publisher, bookDescription, cleanDescription
         case pubdate, discount, formattedPubDate, formattedPrice, priceAsInt, createAt
@@ -179,7 +175,6 @@ nonisolated struct Book: Hashable, Codable {
         self.customCoverImagePath = customCoverImagePath
     }
 
-    // Computed properties for display (uses custom data if available)
     var displayTitle: String {
         return customTitle ?? title
     }

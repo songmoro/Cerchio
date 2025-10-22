@@ -130,7 +130,6 @@ final class AnimatedTextHostingView: UIView {
     var font: Font
     var color: Color
 
-    // Rx support
     var rx_text: Binder<String> {
         return Binder(self) { view, text in
             view.text = text
@@ -188,7 +187,6 @@ final class CustomSlideTextHostingView: UIView {
     var font: Font
     var color: Color
 
-    // Rx support
     var rx_text: Binder<String> {
         return Binder(self) { view, text in
             view.text = text

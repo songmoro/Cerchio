@@ -33,30 +33,23 @@ class ViewHighlightManager {
         self.containerView = containerView
         self.originalView = view
 
-        // Create snapshot
         guard let snapshot = view.snapshotView(afterScreenUpdates: true) else { return }
         highlightedSnapshotView = snapshot
         
-        // Hide original view if configured
         if configuration.hideOriginalView {
             view.alpha = 0
         }
 
-        // Calculate frame in container view coordinates
         guard let superview = view.superview else { return }
         let frameInContainer = superview.convert(view.frame, to: containerView)
 
-        // Apply scale to frame
         let scaledFrame = calculateScaledFrame(originalFrame: frameInContainer)
         snapshot.frame = scaledFrame
 
-        // Apply corner radius
         let cornerRadius: CGFloat
         if let configuredRadius = configuration.cornerRadius {
-            // Use configured corner radius
             cornerRadius = configuredRadius * configuration.cornerRadiusMultiplier
         } else if view.layer.cornerRadius > 0 {
-            // Use original view's corner radius
             cornerRadius = view.layer.cornerRadius * configuration.cornerRadiusMultiplier
         } else {
             cornerRadius = 0
@@ -67,19 +60,15 @@ class ViewHighlightManager {
             snapshot.layer.masksToBounds = true
         }
 
-        // Apply shadow
         applyShadow(to: snapshot)
 
-        // Calculate and apply transform
         let screenCenter = CGPoint(x: containerView.bounds.midX, y: containerView.bounds.midY)
         let viewCenter = CGPoint(x: frameInContainer.midX, y: frameInContainer.midY)
         let transform = calculateTransform(viewCenter: viewCenter, screenCenter: screenCenter)
         snapshot.transform = transform
 
-        // Add to container
         containerView.addSubview(snapshot)
 
-        // Animate in if needed
         animateHighlight()
     }
 
@@ -111,7 +100,6 @@ class ViewHighlightManager {
     // MARK: - Private Methods
 
     private func calculateScaledFrame(originalFrame: CGRect) -> CGRect {
-        // Get scale multiplier from effect
         let scaleMultiplier = configuration.effect.scaleMultiplier
 
         let scaledWidth = originalFrame.width * scaleMultiplier
@@ -134,7 +122,6 @@ class ViewHighlightManager {
     }
 
     private func calculateContextualTiltAngle(viewCenter: CGPoint, screenCenter: CGPoint) -> CGFloat {
-        // Tilt left if on left side, right if on right side
         return viewCenter.x < screenCenter.x
             ? CircularMenuConstants.Angles.tiltAngleLeft
             : CircularMenuConstants.Angles.tiltAngleRight
@@ -151,16 +138,12 @@ class ViewHighlightManager {
     private func animateHighlight() {
         guard highlightedSnapshotView != nil else { return }
 
-        // Optional: Add initial state and animate in
-        // Currently the snapshot is already in final state
-        // You can add fade-in or other entrance animations here if needed
     }
 
     private func cleanup() {
         highlightedSnapshotView?.removeFromSuperview()
         highlightedSnapshotView = nil
 
-        // Restore original view
         originalView?.alpha = 1
 
         originalView = nil

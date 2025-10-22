@@ -8,7 +8,6 @@
 import WidgetKit
 import SwiftUI
 
-// Empty placeholder widget - not used in this project
 struct Widgets: Widget {
     let kind: String = "Widgets"
 

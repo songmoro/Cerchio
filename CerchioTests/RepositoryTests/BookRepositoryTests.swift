@@ -22,7 +22,6 @@ struct BookRepositoryTests {
     // MARK: - Setup
 
     init() {
-        // Set up in-memory Realm configuration
         Realm.Configuration.defaultConfiguration = TestRealmProvider.createInMemoryConfiguration()
     }
 
@@ -30,7 +29,6 @@ struct BookRepositoryTests {
 
     @Test("책 저장 및 조회")
     func saveAndGetBook() async throws {
-        // Given
         let repository = try BookRepository()
         let mockBook = RealmBook(
             title: "테스트 도서",
@@ -60,7 +58,6 @@ struct BookRepositoryTests {
 
     @Test("ISBN으로 책 조회")
     func getBookByISBN() async throws {
-        // Given
         let repository = try BookRepository()
         let book = Book(
             title: "Swift 프로그래밍",
@@ -72,10 +69,8 @@ struct BookRepositoryTests {
 
         _ = try await repository.saveBookStruct(book).toAsync()
 
-        // When
         let fetchedBook = try await repository.getBookByISBN("9781234567890").toAsync()
 
-        // Then
         #expect(fetchedBook != nil)
         #expect(fetchedBook?.title == "Swift 프로그래밍")
         #expect(fetchedBook?.author == "Apple")
@@ -83,7 +78,6 @@ struct BookRepositoryTests {
 
     @Test("ISBN으로 책 존재 여부 확인")
     func bookExistsByISBN() async throws {
-        // Given
         let repository = try BookRepository()
         let book = Book(
             title: "존재하는 책",
@@ -94,7 +88,6 @@ struct BookRepositoryTests {
 
         _ = try await repository.saveBookStruct(book).toAsync()
 
-        // When & Then
         let exists = try await repository.bookExistsByISBN("1111111111111").toAsync()
         #expect(exists == true)
 
@@ -104,7 +97,6 @@ struct BookRepositoryTests {
 
     @Test("책 업데이트")
     func updateBook() async throws {
-        // Given
         let repository = try BookRepository()
         let book = Book(
             title: "원본 제목",
@@ -129,7 +121,6 @@ struct BookRepositoryTests {
 
         let result = try await repository.saveBookStruct(updatedBook).toAsync()
 
-        // Then
         #expect(result.title == "수정된 제목")
         #expect(result.author == "수정된 작가")
         #expect(result.totalPages == 500)
@@ -140,7 +131,6 @@ struct BookRepositoryTests {
 
     @Test("즐겨찾기 토글")
     func toggleFavorite() async throws {
-        // Given
         let repository = try BookRepository()
         let book = Book(
             title: "즐겨찾기 테스트",
@@ -164,7 +154,6 @@ struct BookRepositoryTests {
 
     @Test("즐겨찾기 목록 조회")
     func getFavoriteBooks() async throws {
-        // Given
         let repository = try BookRepository()
 
         let book1 = Book(title: "Book 1", image: "img1", author: "A1", isbn: "111", isFavorite: true)
@@ -175,10 +164,8 @@ struct BookRepositoryTests {
         _ = try await repository.saveBookStruct(book2).toAsync()
         _ = try await repository.saveBookStruct(book3).toAsync()
 
-        // When
         let favorites = try await repository.getFavoriteBooks().toAsync()
 
-        // Then
         #expect(favorites.count == 2)
         #expect(favorites.allSatisfy { $0.isFavorite })
     }
@@ -187,7 +174,6 @@ struct BookRepositoryTests {
 
     @Test("책 삭제")
     func deleteBookByISBN() async throws {
-        // Given
         let repository = try BookRepository()
         let book = Book(
             title: "삭제될 책",
@@ -198,17 +184,14 @@ struct BookRepositoryTests {
 
         _ = try await repository.saveBookStruct(book).toAsync()
 
-        // When
         try await repository.deleteBookByISBN("1234567890123").toAsync()
 
-        // Then
         let deletedBook = try await repository.getBookByISBN("1234567890123").toAsync()
         #expect(deletedBook == nil)
     }
 
     @Test("책 삭제 시 관련 데이터 cascade 삭제")
     func deleteBookWithRelatedData() async throws {
-        // Given
         let realm = try await MainActor.run { try Realm() }
         let repository = try BookRepository()
 
@@ -263,7 +246,6 @@ struct BookRepositoryTests {
 
     @Test("여러 책 동시 삭제")
     func deleteMultipleBooksByISBNs() async throws {
-        // Given
         let repository = try BookRepository()
         let isbns = ["111", "222", "333"]
 
@@ -277,10 +259,8 @@ struct BookRepositoryTests {
             _ = try await repository.saveBookStruct(book).toAsync()
         }
 
-        // When
         try await repository.deleteBooksByISBNs(isbns).toAsync()
 
-        // Then
         for isbn in isbns {
             let book = try await repository.getBookByISBN(isbn).toAsync()
             #expect(book == nil)
@@ -291,7 +271,6 @@ struct BookRepositoryTests {
 
     @Test("모든 책 조회")
     func getAllBooks() async throws {
-        // Given
         let repository = try BookRepository()
 
         for i in 0..<5 {
@@ -304,10 +283,8 @@ struct BookRepositoryTests {
             _ = try await repository.saveBookStruct(book).toAsync()
         }
 
-        // When
         let books = try await repository.getAllBooksAsStruct().toAsync()
 
-        // Then
         #expect(books.count == 5)
     }
 
@@ -315,7 +292,6 @@ struct BookRepositoryTests {
 
     @Test("존재하지 않는 책 삭제 시 에러 없이 처리")
     func deleteNonExistentBook() async throws {
-        // Given
         let repository = try BookRepository()
 
         // When & Then: 에러 없이 완료되어야 함
@@ -324,13 +300,10 @@ struct BookRepositoryTests {
 
     @Test("잘못된 ISBN 형식으로 조회")
     func getBookWithInvalidISBN() async throws {
-        // Given
         let repository = try BookRepository()
 
-        // When
         let book = try await repository.getBookByISBN("").toAsync()
 
-        // Then
         #expect(book == nil)
     }
 }
@@ -353,12 +326,9 @@ extension Observable {
                         continuation.resume(throwing: error)
                     },
                     onCompleted: {
-                        // If no value was emitted, this shouldn't be reached
-                        // due to take(1)
                     }
                 )
 
-            // Clean up if task is cancelled
             _ = disposable
         }
     }

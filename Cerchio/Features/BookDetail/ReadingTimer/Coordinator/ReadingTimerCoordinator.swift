@@ -158,10 +158,8 @@ extension ReadingTimerCoordinator: UIImagePickerControllerDelegate, UINavigation
             return
         }
 
-        // Save photo
         let photoRepository = serviceFactory.createPhotoRepository()
 
-        // Save image locally with unique name
         let imageName = UUID().uuidString
         if let imagePath = ImageStorageManager.shared.saveImage(selectedImage, withName: imageName) {
             let realmPhoto = RealmPhoto(

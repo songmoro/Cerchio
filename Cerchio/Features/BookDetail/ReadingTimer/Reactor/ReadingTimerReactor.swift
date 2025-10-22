@@ -87,10 +87,8 @@ final class ReadingTimerReactor: Reactor {
     private let service: ReadingTimerService
     private let disposeBag = DisposeBag()
 
-    // Timer tick
     private var timerDisposable: Disposable?
 
-    // Analytics tracking
     private var sessionStartDate: Date?
     private var pauseCount: Int = 0
     private var totalPauseDuration: TimeInterval = 0

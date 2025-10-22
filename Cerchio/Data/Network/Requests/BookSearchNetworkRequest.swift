@@ -78,26 +78,22 @@ struct BookSearchNetworkRequest: NetworkRequest {
 extension BookSearchNetworkRequest {
 
     func validate() throws {
-        // Query validation
         guard !searchRequest.query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
             throw BookSearchError.incorrectQuery
         }
 
-        // Display validation
         if let display = searchRequest.display {
             guard display >= BookSearchConstants.minDisplay && display <= BookSearchConstants.maxDisplay else {
                 throw BookSearchError.invalidDisplayValue
             }
         }
 
-        // Start validation
         if let start = searchRequest.start {
             guard start >= BookSearchConstants.minStart && start <= BookSearchConstants.maxStart else {
                 throw BookSearchError.invalidStartValue
             }
         }
 
-        // API Key validation
         guard !APIKey.XNaverClientId.isEmpty && !APIKey.XNaverClientSecret.isEmpty else {
             throw BookSearchError.incorrectQuery
         }

@@ -14,8 +14,6 @@ import SnapKit
 final class ReadingRecordViewController: BaseViewController<ReadingRecordReactor> {
     // MARK: - UI Components
     private let titleLabel = TransitionAnimatedLabel()
-//    private let timerPickerView = TimerPickerView()
-//    private let timerPickerView = ImageTimerPickerView(maskImageName: "ClearLogo")
     private let timerPickerView = SVGTimerPickerView(maskImageName: "ClearLogo", svgFileName: "ScaledClearLogo")
     private let startButton = UIButton(type: .system)
 
@@ -90,8 +88,6 @@ final class ReadingRecordViewController: BaseViewController<ReadingRecordReactor
     }
 
     override func bind(reactor: ReadingRecordReactor) {
-        // Action
 
-        // State
     }
 }

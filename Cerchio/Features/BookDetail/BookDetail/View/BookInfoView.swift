@@ -17,7 +17,6 @@ final class BookInfoView: UIView {
 
     // MARK: - UI Components
 
-    // Background layers
     private let backgroundImageView: UIImageView = {
         let imageView = UIImageView()
         imageView.contentMode = .scaleAspectFill
@@ -201,14 +200,11 @@ final class BookInfoView: UIView {
 
         setupTags(bookDetail.tags)
 
-        // Check for custom cover image first
         if let customCoverPath = bookDetail.book.customCoverImagePath,
            let customImage = ImageStorageManager.shared.loadImage(fromPath: customCoverPath) {
-            // Use custom local cover image
             backgroundImageView.image = customImage
             coverImageView.image = customImage
         } else if let url = URL(string: bookDetail.book.image) {
-            // Use original remote cover image
             backgroundImageView.kf.setImage(
                 with: url,
                 placeholder: nil,
@@ -231,7 +227,6 @@ final class BookInfoView: UIView {
             coverImageView.image = nil
             coverImageView.backgroundColor = .systemGray4
 
-            // Override colors for dark background
             titleLabel.textColor = .white
             authorLabel.textColor = UIColor.white.withAlphaComponent(BookDetailConstants.Typography.bookInfoSubtitleAlpha)
         }

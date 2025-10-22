@@ -73,17 +73,14 @@ protocol DependencyAssemblyProtocol {
 // MARK: - Network Assembly
 struct NetworkAssembly: DependencyAssemblyProtocol {
     func assemble(container: DependencyContainerProtocol) {
-        // Register NetworkClient
         container.register(NetworkClientProtocol.self) {
             URLSessionNetworkClient()
         }
 
-        // Register ServiceDependencies
         container.register(ServiceDependencies.self) {
             DefaultServiceDependencies()
         }
 
-        // Register ServiceFactory
         container.register(ServiceFactory.self) { [container] in
             let dependencies: ServiceDependencies = container.resolve(ServiceDependencies.self)
             return ServiceFactory(dependencies: dependencies)

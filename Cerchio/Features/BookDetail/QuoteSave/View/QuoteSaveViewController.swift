@@ -27,7 +27,6 @@ final class QuoteSaveViewController: UIViewController {
     private var quoteRepository: QuoteRepositoryProtocol?
     private let disposeBag = DisposeBag()
 
-    // Edit mode properties
     private var isEditMode: Bool = false
     private var editingQuoteId: String?
 
@@ -79,7 +78,6 @@ final class QuoteSaveViewController: UIViewController {
         }
     }
 
-    // Preloaded data for edit mode
     private var preloadedQuote: String?
     private var preloadedPageNumber: Int?
 
@@ -319,7 +317,6 @@ final class QuoteSaveViewController: UIViewController {
     }
 
     @objc private func keyboardWillShow(_ notification: Notification) {
-//        let keyboardHeight = keyboardFrame.height
 
         // 텍스트뷰 높이 조정
         textView.snp.remakeConstraints {

@@ -18,7 +18,6 @@ final class QuoteShareViewController: BaseViewController<QuoteShareReactor> {
 
     private var settingsViewController: QuoteShareSettingsViewController?
 
-    // Navigation buttons
     private let dismissButton = UIBarButtonItem(
         image: UIImage(systemName: "chevron.left"),
         style: .plain,
@@ -42,7 +41,6 @@ final class QuoteShareViewController: BaseViewController<QuoteShareReactor> {
 
     private let contentView = UIView()
 
-    // Preview Container (will be exported as image)
     private let previewContainer: UIView = {
         let view = UIView()
         view.backgroundColor = .white
@@ -147,7 +145,6 @@ final class QuoteShareViewController: BaseViewController<QuoteShareReactor> {
         scrollView.addSubview(contentView)
         contentView.addSubview(previewContainer)
 
-        // Preview container subviews
         previewContainer.addSubview(backgroundImageView)
         backgroundImageView.addSubview(blurEffectView)
         previewContainer.addSubview(blurColorView)
@@ -252,14 +249,11 @@ final class QuoteShareViewController: BaseViewController<QuoteShareReactor> {
     }
 
     private func configureContent(with quoteData: QuoteShareData) {
-        // Configure book info
         loadBookCoverImage(from: quoteData)
         updateBookInfo(title: quoteData.bookTitle, author: quoteData.bookAuthor)
 
-        // Configure quote
         quoteLabel.text = "\"\(quoteData.quote)\""
 
-        // Configure metadata
         updateMetadata(pageNumber: quoteData.pageNumber, date: quoteData.date)
     }
 
@@ -268,7 +262,6 @@ final class QuoteShareViewController: BaseViewController<QuoteShareReactor> {
     }
 
     private func updateMetadata(pageNumber: Int?, date: Date) {
-        // Page number
         if let pageNumber = pageNumber {
             pageLabel.text = "p.\(pageNumber)"
             pageLabel.isHidden = false
@@ -276,7 +269,6 @@ final class QuoteShareViewController: BaseViewController<QuoteShareReactor> {
             pageLabel.isHidden = true
         }
 
-        // Date
         let dateFormatter = DateFormatter()
         dateFormatter.dateStyle = .medium
         dateFormatter.timeStyle = .none
@@ -284,14 +276,12 @@ final class QuoteShareViewController: BaseViewController<QuoteShareReactor> {
     }
 
     private func loadBookCoverImage(from quoteData: QuoteShareData) {
-        // Use pre-loaded image if available
         if let coverImage = quoteData.bookCoverImage {
             bookCoverImageView.image = coverImage
             backgroundImageView.image = coverImage
             return
         }
 
-        // Load from URL
         guard let urlString = quoteData.bookCoverImageURL,
               let url = URL(string: urlString) else { return }
 
@@ -309,7 +299,6 @@ final class QuoteShareViewController: BaseViewController<QuoteShareReactor> {
 
     // MARK: - Binding
     override func bind(reactor: QuoteShareReactor) {
-        // Action
         dismissButton.rx.tap
             .do(onNext: { HapticFeedbackManager.shared.impact() })
             .map { Reactor.Action.dismissTapped }
@@ -322,7 +311,6 @@ final class QuoteShareViewController: BaseViewController<QuoteShareReactor> {
             .bind(to: reactor.action)
             .disposed(by: disposeBag)
 
-        // State - Initial setup
         reactor.state.map { $0.quoteData }
             .take(1)
             .asDriver(onErrorJustReturn: reactor.currentState.quoteData)
@@ -339,7 +327,6 @@ final class QuoteShareViewController: BaseViewController<QuoteShareReactor> {
             })
             .disposed(by: disposeBag)
 
-        // State - Background config changes
         reactor.state.map { $0.backgroundConfig }
             .distinctUntilChanged { $0.isEnabled == $1.isEnabled }
             .skip(1)
@@ -349,7 +336,6 @@ final class QuoteShareViewController: BaseViewController<QuoteShareReactor> {
             })
             .disposed(by: disposeBag)
 
-        // Blur
         let blurConfig = reactor.state.map { ($0.backgroundConfig.isBlurEnabled, $0.backgroundConfig.blurIntensity) }
         blurConfig
             .distinctUntilChanged { prev, next in prev.0 == next.0 && prev.1 == next.1 }
@@ -360,7 +346,6 @@ final class QuoteShareViewController: BaseViewController<QuoteShareReactor> {
             })
             .disposed(by: disposeBag)
 
-        // Opacity
         let opacityConfig = reactor.state.map { ($0.backgroundConfig.isOpacityEnabled, $0.backgroundConfig.imageOpacity) }
         opacityConfig
             .distinctUntilChanged { prev, next in prev.0 == next.0 && prev.1 == next.1 }
@@ -371,7 +356,6 @@ final class QuoteShareViewController: BaseViewController<QuoteShareReactor> {
             })
             .disposed(by: disposeBag)
 
-        // Scale
         let scaleConfig = reactor.state.map { ($0.backgroundConfig.isScaleEnabled, $0.backgroundConfig.imageScale) }
         scaleConfig
             .distinctUntilChanged { prev, next in prev.0 == next.0 && prev.1 == next.1 }
@@ -382,7 +366,6 @@ final class QuoteShareViewController: BaseViewController<QuoteShareReactor> {
             })
             .disposed(by: disposeBag)
 
-        // Blur Color
         let blurColorConfig = reactor.state.map { ($0.backgroundConfig.isBlurColorEnabled, $0.backgroundConfig.blurColor, $0.backgroundConfig.blurColorOpacity) }
         blurColorConfig
             .distinctUntilChanged { prev, next in prev.0 == next.0 && prev.1 == next.1 && prev.2 == next.2 }
@@ -393,7 +376,6 @@ final class QuoteShareViewController: BaseViewController<QuoteShareReactor> {
             })
             .disposed(by: disposeBag)
 
-        // Metadata Visibility
         let metadataConfig = reactor.state.map { ($0.backgroundConfig.showBookInfo, $0.backgroundConfig.showPageNumber, $0.backgroundConfig.showDate) }
         metadataConfig
             .distinctUntilChanged { prev, next in prev.0 == next.0 && prev.1 == next.1 && prev.2 == next.2 }
@@ -404,7 +386,6 @@ final class QuoteShareViewController: BaseViewController<QuoteShareReactor> {
             })
             .disposed(by: disposeBag)
 
-        // State - Export image
         reactor.state.map { $0.shouldExportImage }
             .distinctUntilChanged()
             .filter { $0 }
@@ -414,7 +395,6 @@ final class QuoteShareViewController: BaseViewController<QuoteShareReactor> {
             })
             .disposed(by: disposeBag)
 
-        // State - Dismiss
         reactor.state.map { $0.shouldDismiss }
             .distinctUntilChanged()
             .filter { $0 }
@@ -438,7 +418,6 @@ final class QuoteShareViewController: BaseViewController<QuoteShareReactor> {
 
         UIView.animate(withDuration: 0.3) {
             if isEnabled {
-                // Use UIBlurEffect for real-time preview
                 let blurStyle: UIBlurEffect.Style
                 if intensity < 0.33 {
                     blurStyle = .extraLight
@@ -501,20 +480,9 @@ final class QuoteShareViewController: BaseViewController<QuoteShareReactor> {
     }
 
 //    // MARK: - Old blur implementation (commented out)
-//    private func applyBlurEffect() {
-//        guard let reactor = reactor,
-//              reactor.currentState.backgroundConfig.isEnabled,
-//              let originalImage = reactor.currentState.quoteData.bookCoverImage else { return }
 //
-//        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-//            guard let self = self,
-//                  let reactor = self.reactor else { return }
 //
-//            let blurEffect = BlurImageEffect(intensity: reactor.currentState.backgroundConfig.blurIntensity)
-//            let blurredImage = blurEffect.apply(to: originalImage)
 //
-//            DispatchQueue.main.async {
-//                self.backgroundImageView.image = blurredImage
 //            }
 //        }
 //    }
@@ -522,7 +490,6 @@ final class QuoteShareViewController: BaseViewController<QuoteShareReactor> {
     private func exportImage() {
         guard let reactor = reactor else { return }
 
-        // Show loading indicator
         let loadingAlert = UIAlertController(title: nil, message: String(localized: .`quote_share.generating_image`), preferredStyle: .alert)
         let loadingIndicator = UIActivityIndicatorView(style: .medium)
         loadingIndicator.translatesAutoresizingMaskIntoConstraints = false
@@ -532,29 +499,23 @@ final class QuoteShareViewController: BaseViewController<QuoteShareReactor> {
         loadingIndicator.bottomAnchor.constraint(equalTo: loadingAlert.view.bottomAnchor, constant: -20).isActive = true
         present(loadingAlert, animated: true)
 
-        // Capture image on main thread (UI operations must be on main thread)
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
             guard let self = self else { return }
 
-            // Capture the current view hierarchy as-is
-            // UIVisualEffectView will be captured correctly with drawHierarchy
             let renderer = UIGraphicsImageRenderer(bounds: self.previewContainer.bounds)
             let capturedImage = renderer.image { context in
                 self.previewContainer.drawHierarchy(in: self.previewContainer.bounds, afterScreenUpdates: true)
             }
 
-            // Save to photo library only
             UIImageWriteToSavedPhotosAlbum(capturedImage, self, #selector(self.image(_:didFinishSavingWithError:contextInfo:)), nil)
         }
     }
 
     @objc private func image(_ image: UIImage, didFinishSavingWithError error: Error?, contextInfo: UnsafeRawPointer) {
-        // Dismiss loading alert first
         dismiss(animated: true) { [weak self] in
             guard let self = self else { return }
 
             if let error = error {
-                // Show error alert
                 let errorAlert = UIAlertController(
                     title: String(localized: .`quote_share.save_failed.title`),
                     message: error.localizedDescription,
@@ -563,14 +524,12 @@ final class QuoteShareViewController: BaseViewController<QuoteShareReactor> {
                 errorAlert.addAction(UIAlertAction(title: String(localized: .`action.confirm`), style: .default))
                 self.present(errorAlert, animated: true)
             } else {
-                // Show success alert
                 let successAlert = UIAlertController(
                     title: String(localized: .`quote_share.save_success.title`),
                     message: String(localized: .`quote_share.save_success.message`),
                     preferredStyle: .alert
                 )
                 successAlert.addAction(UIAlertAction(title: String(localized: .`action.confirm`), style: .default) { [weak self] _ in
-                    // Dismiss the quote share screen after successful save
                     self?.navigationEvents.accept(.close)
                 })
                 self.present(successAlert, animated: true)

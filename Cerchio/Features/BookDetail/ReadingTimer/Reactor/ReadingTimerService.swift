@@ -15,7 +15,6 @@ final class ReadingTimerService {
 
     // MARK: - Properties
 
-    // Core managers
     let stateManager: TimerStateManager
     let activityManager: TimerActivityManager
     private let lifecycleManager: TimerLifecycleManager
@@ -24,7 +23,6 @@ final class ReadingTimerService {
     private let sessionManager: TimerSessionManager
     private let sessionRepository: ReadingSessionRepositoryProtocol
 
-    // UseCases
     private let startUseCase: TimerStartUseCase
     private let pauseUseCase: TimerPauseUseCase
     private let resumeUseCase: TimerResumeUseCase
@@ -34,7 +32,6 @@ final class ReadingTimerService {
     private let foregroundUseCase: TimerForegroundUseCase
     private let restoreUseCase: TimerRestoreUseCase
 
-    // Session info
     private let sessionId: String
     private let bookId: String
     private let bookTitle: String
@@ -58,7 +55,6 @@ final class ReadingTimerService {
         self.sessionStartTime = sessionStartTime
         self.sessionRepository = sessionRepository
 
-        // Initialize managers
         self.stateManager = TimerStateManager(targetMinutes: targetMinutes)
         self.lifecycleManager = TimerLifecycleManager(
             targetSeconds: targetMinutes * 60
@@ -68,7 +64,6 @@ final class ReadingTimerService {
         self.activityManager = TimerActivityManager()
         self.sessionManager = TimerSessionManager.shared
 
-        // Initialize UseCases
         self.startUseCase = TimerStartUseCase(
             validationService: validationService,
             notificationManager: notificationManager,

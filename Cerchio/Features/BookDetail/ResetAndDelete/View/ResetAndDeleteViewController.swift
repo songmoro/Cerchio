@@ -67,7 +67,6 @@ final class ResetAndDeleteViewController: BaseViewController<ResetAndDeleteReact
 
     override func bind(reactor: ResetAndDeleteReactor) {
 
-        // State
         reactor.state
             .map { $0.isResetSuccess }
             .distinctUntilChanged()

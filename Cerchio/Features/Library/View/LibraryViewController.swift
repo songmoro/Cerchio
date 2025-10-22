@@ -21,10 +21,8 @@ final class LibraryViewController: BaseViewController<LibraryReactor> {
     private var dataSource: DataSource!
     private let refreshControl = UIRefreshControl()
 
-    // Book selection handler
     var bookSelectionHandler: ((Book) -> Void)?
 
-    // Edit mode properties
     private var isEditMode = false
     private var selectedISBNs: Set<String> = []
     private var editButton: UIBarButtonItem!
@@ -33,13 +31,11 @@ final class LibraryViewController: BaseViewController<LibraryReactor> {
     private var selectAllButton: UIBarButtonItem!
     private var deleteButton: UIBarButtonItem!
 
-    // Repository
     private var bookRepository: BookRepositoryProtocol?
     private var tagRepository: TagRepositoryProtocol?
     private var quoteRepository: QuoteRepositoryProtocol?
     private var photoRepository: PhotoRepositoryProtocol?
 
-    // Temp storage for photo capture
     private var tempBookForPhoto: Book?
 
     nonisolated enum Section: CaseIterable {
@@ -74,7 +70,6 @@ final class LibraryViewController: BaseViewController<LibraryReactor> {
 
         navigationController?.navigationBar.tintColor = .forestGreen
 
-        // Remove navigation bar bottom line
         let appearance = UINavigationBarAppearance()
         appearance.configureWithOpaqueBackground()
         appearance.backgroundColor = .systemBackground
@@ -174,12 +169,10 @@ final class LibraryViewController: BaseViewController<LibraryReactor> {
     }
 
     override func bind(reactor: LibraryReactor) {
-        // Action
         Observable.just(LibraryReactor.Action.loadBooks)
             .bind(to: reactor.action)
             .disposed(by: disposeBag)
 
-        // Refresh Control
         refreshControl.rx.controlEvent(.valueChanged)
             .map { LibraryReactor.Action.loadBooks }
             .bind(to: reactor.action)
@@ -229,11 +222,9 @@ final class LibraryViewController: BaseViewController<LibraryReactor> {
             })
             .disposed(by: disposeBag)
 
-        // State - Display Books (filtered or all)
         reactor.state
             .map { $0.displayBooks }
             .distinctUntilChanged { oldBooks, newBooks in
-                // Compare by book ISBNs, count, and isFavorite to detect changes
                 guard let oldBooks = oldBooks, let newBooks = newBooks else {
                     return oldBooks == nil && newBooks == nil
                 }
@@ -259,7 +250,6 @@ final class LibraryViewController: BaseViewController<LibraryReactor> {
             })
             .disposed(by: disposeBag)
 
-        // State - Active Filters (for navigation title)
         reactor.state
             .map { ($0.activeFilters, $0.isFavoriteFilterEnabled) }
             .distinctUntilChanged { lhs, rhs in
@@ -721,7 +711,6 @@ final class LibraryViewController: BaseViewController<LibraryReactor> {
         guard let reactor = reactor,
               let bookRepository = bookRepository else { return }
 
-        // Copy selected ISBNs and current filters before clearing
         let isbnsToDelete = Array(selectedISBNs)
         let currentFilters = reactor.currentState.activeFilters
         let isFavoriteEnabled = reactor.currentState.isFavoriteFilterEnabled
@@ -731,7 +720,6 @@ final class LibraryViewController: BaseViewController<LibraryReactor> {
         // 먼저 편집 모드를 종료하고 UI 업데이트 (무효화된 객체 참조 방지)
         exitEditMode()
 
-        // Use ISBN-based deletion to avoid working with invalidated objects
         bookRepository.deleteBooksByISBNs(isbnsToDelete)
             .observe(on: MainScheduler.instance)
             .subscribe(

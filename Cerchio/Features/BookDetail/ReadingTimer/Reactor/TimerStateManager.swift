@@ -27,17 +27,14 @@ final class TimerStateManager {
     private let targetEndTimeRelay = BehaviorRelay<Date?>(value: nil)
     private let pausedAtRelay = BehaviorRelay<Date?>(value: nil)
 
-    // Public observables
     var state: Observable<TimerState> { stateRelay.asObservable() }
     var targetEndTime: Observable<Date?> { targetEndTimeRelay.asObservable() }
     var pausedAt: Observable<Date?> { pausedAtRelay.asObservable() }
 
-    // Current values
     var currentState: TimerState { stateRelay.value }
     var currentTargetEndTime: Date? { targetEndTimeRelay.value }
     var currentPausedAt: Date? { pausedAtRelay.value }
 
-    // Target
     private let targetMinutes: Int
     var targetSeconds: Int { targetMinutes * 60 }
 

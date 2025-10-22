@@ -12,11 +12,9 @@ import RxSwift
 final class ReadingRecordReactor: Reactor {
 
     enum Action {
-        // TODO: Add actions
     }
 
     enum Mutation {
-        // TODO: Add mutations
     }
 
     struct State {

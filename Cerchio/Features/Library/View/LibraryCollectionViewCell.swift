@@ -87,17 +87,13 @@ final class LibraryCollectionViewCell: UICollectionViewCell, IsIdentifiable {
         titleLabel.text = item.cleanTitle
         authorLabel.text = item.author
 
-        // Set random neutral pastel background color
-        backgroundContainerView.backgroundColor = .randomNeutralPastel()
+        backgroundContainerView.backgroundColor = .randomBookColor()
 
-        // Check for custom cover image first
         if let customCoverPath = item.customCoverImagePath,
            let customImage = ImageStorageManager.shared.loadImage(fromPath: customCoverPath) {
-            // Use custom local cover image
             coverImageView.image = customImage
             loadingIndicator.stopAnimating()
         } else if let url = URL(string: item.image) {
-            // Use original remote cover image
             loadingIndicator.startAnimating()
 
             coverImageView.kf.setImage(
@@ -122,7 +118,6 @@ final class LibraryCollectionViewCell: UICollectionViewCell, IsIdentifiable {
         coverImageView.image = nil
         loadingIndicator.stopAnimating()
 
-        // Border 초기화
         layer.borderWidth = 0
         layer.borderColor = UIColor.clear.cgColor
     }

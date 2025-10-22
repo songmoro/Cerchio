@@ -16,7 +16,6 @@ final class BookInfoHeaderView: UICollectionReusableView, IsIdentifiable {
 
     // MARK: - UI Components
 
-    // Background layers
     private let backgroundImageView: UIImageView = {
         let imageView = UIImageView()
         imageView.contentMode = .scaleAspectFill
@@ -223,7 +222,6 @@ final class BookInfoHeaderView: UICollectionReusableView, IsIdentifiable {
             coverImageView.image = nil
             coverImageView.backgroundColor = .systemGray4
 
-            // Override colors for dark background
             titleLabel.textColor = .white
             authorLabel.textColor = UIColor.white.withAlphaComponent(BookDetailConstants.Typography.bookInfoSubtitleAlpha)
         }
@@ -318,7 +316,6 @@ extension UIImage {
                       format: .RGBA8,
                       colorSpace: nil)
 
-        // Calculate brightness (weighted average of RGB)
         let brightness = (0.299 * CGFloat(bitmap[0]) + 0.587 * CGFloat(bitmap[1]) + 0.114 * CGFloat(bitmap[2])) / 255.0
 
         return brightness

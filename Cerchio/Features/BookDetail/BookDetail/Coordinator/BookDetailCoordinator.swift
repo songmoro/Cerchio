@@ -82,7 +82,6 @@ final class BookDetailCoordinator: BaseCoordinator, Coordinatable {
     private func setupNavigationItems(for viewController: UIViewController, reactor: BookDetailReactor) {
         guard let bookDetailVC = viewController as? BookDetailViewController else { return }
 
-        // Navigation bar appearance - transparent to show background
         let appearance = UINavigationBarAppearance()
         appearance.configureWithTransparentBackground()
         appearance.shadowColor = nil
@@ -118,14 +117,7 @@ final class BookDetailCoordinator: BaseCoordinator, Coordinatable {
         bookDetailVC.setDeleteButton(deleteButton)
 
         // 타이틀이 제거되었으므로 타이틀 업데이트 구독 제거
-        // reactor.state
-        //     .map { $0.book.cleanTitle }
-        //     .distinctUntilChanged()
-        //     .observe(on: MainScheduler.instance)
-        //     .subscribe(onNext: { [weak viewController] title in
-        //         viewController?.navigationItem.title = title
         //     })
-        //     .disposed(by: disposeBag)
 
         // 즐겨찾기 상태 변경 감지
         reactor.state
@@ -250,7 +242,6 @@ final class BookDetailCoordinator: BaseCoordinator, Coordinatable {
             cameraVC.delegate = self
             cameraVC.modalPresentationStyle = .fullScreen
 
-            // Store completion for later use
             self?.photoCompletionHandler = completion
 
             self?.navigationController.present(cameraVC, animated: true)
@@ -356,7 +347,6 @@ final class BookDetailCoordinator: BaseCoordinator, Coordinatable {
                 switch result {
                 case .recordSaved(let content):
                     print(" Reading record saved: \(content)")
-                    // Trigger statistics reload
                     self?.currentReactor?.action.onNext(.loadReadingStatistics)
                     reloadHandler?()
                 case .cancelled:

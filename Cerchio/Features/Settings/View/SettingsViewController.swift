@@ -95,9 +95,7 @@ final class SettingsViewController: BaseViewController<SettingsReactor> {
     }
 
     override func bind(reactor: SettingsReactor) {
-        // Action
 
-        // State
         reactor.state
             .map { $0.isResetting }
             .distinctUntilChanged()
@@ -248,7 +246,6 @@ extension SettingsViewController: UITableViewDelegate {
                 }
             }
         case .info:
-            // No action for info rows
             break
         case .data:
             if let rowType = DataRow(rawValue: indexPath.row) {

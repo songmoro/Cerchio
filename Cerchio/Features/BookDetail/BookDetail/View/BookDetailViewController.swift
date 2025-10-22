@@ -65,12 +65,10 @@ final class BookDetailViewController: FullScreenNestedScrollViewController, View
             }
         }
 
-        // Sections visible in tab navigation (excludes action sections)
         static var visibleSections: [Section] {
             [.readingRecords, .savedQuotes, .photoPages, .settings]
         }
 
-        // All sections for layout purposes
         static var allCases: [Section] {
             [.readingRecords, .savedQuotes, .addQuoteAction, .photoPages, .addPhotoAction, .settings]
         }
@@ -156,7 +154,6 @@ final class BookDetailViewController: FullScreenNestedScrollViewController, View
     }
 
     private func setupBackButton() {
-        // Remove back button text, only show the chevron
         navigationController?.navigationBar.topItem?.backBarButtonItem = UIBarButtonItem(title: "", style: .plain, target: nil, action: nil)
     }
 
@@ -179,25 +176,21 @@ final class BookDetailViewController: FullScreenNestedScrollViewController, View
             $0.bottom.equalTo(view.safeAreaLayoutGuide).inset(20)
         }
 
-        // Add circular menu on tap
         let menuItems: [CircularMenuItemProtocol] = [
             CircularMenuItem(name: String(localized: .circularMenuBookDetailReadingRecord), image: UIImage(systemName: "book.fill")) { [weak self] in
                 HapticFeedbackManager.shared.selection()
-                // Dismiss menu first, then show reading record entry
                 self?.dismissPresentedMenuAndExecute {
                     self?.showReadingRecordEntry()
                 }
             },
             CircularMenuItem(name: String(localized: .circularMenuBookDetailSaveQuote), image: UIImage(systemName: "quote.bubble.fill")) { [weak self] in
                 HapticFeedbackManager.shared.selection()
-                // Dismiss menu first, then show quote entry
                 self?.dismissPresentedMenuAndExecute {
                     self?.showQuoteEntry()
                 }
             },
             CircularMenuItem(name: String(localized: .circularMenuBookDetailTakePhoto), image: UIImage(systemName: "camera.fill")) { [weak self] in
                 HapticFeedbackManager.shared.selection()
-                // Dismiss menu first, then show photo capture
                 self?.dismissPresentedMenuAndExecute {
                     self?.showPhotoCapture()
                 }
@@ -277,14 +270,12 @@ final class BookDetailViewController: FullScreenNestedScrollViewController, View
     func bind(reactor: BookDetailReactor) {
         // MARK: - Actions
 
-        // Initial load
         Observable.just(BookDetailReactor.Action.loadBookDetail)
             .bind(to: reactor.action)
             .disposed(by: disposeBag)
 
         // MARK: - State Bindings
 
-        // BookDetail
         reactor.state
             .map { $0.bookDetail }
             .compactMap { $0 }
@@ -297,7 +288,6 @@ final class BookDetailViewController: FullScreenNestedScrollViewController, View
             })
             .disposed(by: disposeBag)
 
-        // Trigger data loading when bookDetail is set
         reactor.state
             .map { $0.bookDetail }
             .compactMap { $0 }
@@ -315,7 +305,6 @@ final class BookDetailViewController: FullScreenNestedScrollViewController, View
             })
             .disposed(by: disposeBag)
 
-        // Reading Statistics
         reactor.state
             .map { $0.readingStatistics }
             .distinctUntilChanged()
@@ -325,7 +314,6 @@ final class BookDetailViewController: FullScreenNestedScrollViewController, View
             })
             .disposed(by: disposeBag)
 
-        // Reading Chart Data
         reactor.state
             .map { $0.readingChartData }
             .compactMap { $0 }
@@ -337,7 +325,6 @@ final class BookDetailViewController: FullScreenNestedScrollViewController, View
             })
             .disposed(by: disposeBag)
 
-        // Photos
         reactor.state
             .map { $0.photos }
             .distinctUntilChanged()
@@ -347,7 +334,6 @@ final class BookDetailViewController: FullScreenNestedScrollViewController, View
             })
             .disposed(by: disposeBag)
 
-        // Quotes
         reactor.state
             .map { $0.quotes }
             .distinctUntilChanged()
@@ -357,7 +343,6 @@ final class BookDetailViewController: FullScreenNestedScrollViewController, View
             })
             .disposed(by: disposeBag)
 
-        // Tags
         reactor.state
             .map { $0.tags }
             .distinctUntilChanged()
@@ -367,7 +352,6 @@ final class BookDetailViewController: FullScreenNestedScrollViewController, View
             })
             .disposed(by: disposeBag)
 
-        // Error
         reactor.state
             .map { $0.error }
             .compactMap { $0 }
@@ -378,7 +362,6 @@ final class BookDetailViewController: FullScreenNestedScrollViewController, View
             })
             .disposed(by: disposeBag)
 
-        // Favorite status
         reactor.state
             .map { $0.isFavorite }
             .distinctUntilChanged()
@@ -388,7 +371,6 @@ final class BookDetailViewController: FullScreenNestedScrollViewController, View
             })
             .disposed(by: disposeBag)
 
-        // Refresh flags
         reactor.state
             .map { $0.shouldRefreshPhotos }
             .distinctUntilChanged()
@@ -445,14 +427,12 @@ final class BookDetailViewController: FullScreenNestedScrollViewController, View
     override func setupCustomContent() {
         collectionView.delegate = self
 
-        // Register cells
         collectionView.register(ReadingStatisticsCell.self)
         collectionView.register(AddActionCell.self)
         collectionView.register(SavedQuoteCell.self)
         collectionView.register(PhotoItemCell.self)
         collectionView.register(SettingsItemCell.self)
 
-        // Register headers
         collectionView.register(
             CommonSectionHeader.self,
             forSupplementaryViewOfKind: UICollectionView.elementKindSectionHeader,
@@ -694,7 +674,6 @@ extension BookDetailViewController {
 
             let section = snapshot.sectionIdentifiers[indexPath.section]
 
-            // No header for action sections
             if section == .addQuoteAction || section == .addPhotoAction {
                 return nil
             }
@@ -727,7 +706,6 @@ extension BookDetailViewController {
                 }
 
             case .addQuoteAction:
-                // Already handled above, but included for exhaustiveness
                 return nil
 
             case .photoPages:
@@ -741,7 +719,6 @@ extension BookDetailViewController {
                 }
 
             case .addPhotoAction:
-                // Already handled above, but included for exhaustiveness
                 return nil
 
             case .settings:
@@ -763,12 +740,9 @@ extension BookDetailViewController {
 
         var snapshot = dataSource.snapshot()
 
-        // Initialize sections if empty
         if snapshot.sectionIdentifiers.isEmpty {
-            // Add main sections (always visible with headers)
             snapshot.appendSections([.readingRecords, .savedQuotes, .photoPages, .settings])
 
-            // Settings items (always shown)
             let settingsItems: [Item] = [
                 .settingsItem(.editBookInfo),
                 .settingsItem(.editReadingInfo)
@@ -795,8 +769,6 @@ extension BookDetailViewController {
             snapshot.deleteItems(existingItems)
         }
 
-        // Always show chart when statistics exist, even if chartData points are empty
-        // This provides better UX by showing empty chart instead of empty state
         if let statistics = statistics {
             snapshot.appendItems([.readingStatistics(statistics)], toSection: .readingRecords)
         }
@@ -811,15 +783,11 @@ extension BookDetailViewController {
 
         guard snapshot.sectionIdentifiers.contains(.photoPages) else { return }
 
-        // Clear existing items in photoPages section
         let existingItems = snapshot.itemIdentifiers(inSection: .photoPages)
         snapshot.deleteItems(existingItems)
 
         if photos.isEmpty {
-            // photoPages section remains empty (header only)
-            // Add addPhotoAction section
             if !snapshot.sectionIdentifiers.contains(.addPhotoAction) {
-                // Insert addPhotoAction after photoPages
                 if let settingsIndex = snapshot.sectionIdentifiers.firstIndex(of: .settings) {
                     snapshot.insertSections([.addPhotoAction], beforeSection: .settings)
                 } else {
@@ -827,18 +795,15 @@ extension BookDetailViewController {
                 }
             }
 
-            // Clear and add item to addPhotoAction section
             if snapshot.sectionIdentifiers.contains(.addPhotoAction) {
                 let existingActionItems = snapshot.itemIdentifiers(inSection: .addPhotoAction)
                 snapshot.deleteItems(existingActionItems)
                 snapshot.appendItems([.addPhotoAction], toSection: .addPhotoAction)
             }
         } else {
-            // Add photo items to photoPages section
             let photoItems = photos.map { Item.photoItem($0.id, $0.image) }
             snapshot.appendItems(photoItems, toSection: .photoPages)
 
-            // Remove addPhotoAction section if exists
             if snapshot.sectionIdentifiers.contains(.addPhotoAction) {
                 let existingActionItems = snapshot.itemIdentifiers(inSection: .addPhotoAction)
                 snapshot.deleteItems(existingActionItems)
@@ -857,15 +822,11 @@ extension BookDetailViewController {
 
         guard snapshot.sectionIdentifiers.contains(.savedQuotes) else { return }
 
-        // Clear existing items in savedQuotes section
         let existingItems = snapshot.itemIdentifiers(inSection: .savedQuotes)
         snapshot.deleteItems(existingItems)
 
         if quotes.isEmpty {
-            // savedQuotes section remains empty (header only)
-            // Add addQuoteAction section
             if !snapshot.sectionIdentifiers.contains(.addQuoteAction) {
-                // Insert addQuoteAction after savedQuotes
                 if let photoIndex = snapshot.sectionIdentifiers.firstIndex(of: .photoPages) {
                     snapshot.insertSections([.addQuoteAction], beforeSection: .photoPages)
                 } else {
@@ -873,18 +834,15 @@ extension BookDetailViewController {
                 }
             }
 
-            // Clear and add item to addQuoteAction section
             if snapshot.sectionIdentifiers.contains(.addQuoteAction) {
                 let existingActionItems = snapshot.itemIdentifiers(inSection: .addQuoteAction)
                 snapshot.deleteItems(existingActionItems)
                 snapshot.appendItems([.addQuoteAction], toSection: .addQuoteAction)
             }
         } else {
-            // Add quote items to savedQuotes section
             let quoteItems = quotes.map { Item.savedQuote($0.quote, $0.pageNumber, $0.createdAt) }
             snapshot.appendItems(quoteItems, toSection: .savedQuotes)
 
-            // Remove addQuoteAction section if exists
             if snapshot.sectionIdentifiers.contains(.addQuoteAction) {
                 let existingActionItems = snapshot.itemIdentifiers(inSection: .addQuoteAction)
                 snapshot.deleteItems(existingActionItems)
@@ -923,8 +881,6 @@ extension BookDetailViewController {
                 }
             )
         } else {
-            // Chart data is now available, refresh the reading statistics UI
-            // This will add the chart cell with statistics (even if empty)
             updateReadingStatisticsUI(reactor?.currentState.readingStatistics)
         }
     }
@@ -934,13 +890,11 @@ extension BookDetailViewController {
 extension BookDetailViewController {
     // MARK: - Helper Methods
     func dismissPresentedMenuAndExecute(_ action: @escaping () -> Void) {
-        // Find the presented CircularMenuViewController and dismiss it
         if let presentedVC = presentedViewController {
             presentedVC.dismiss(animated: true) {
                 action()
             }
         } else {
-            // If no menu is presented, execute action immediately
             action()
         }
     }
@@ -984,7 +938,6 @@ extension BookDetailViewController {
 
         currentPeriodDate = newDate
         // TODO: 날짜를 포함한 차트 데이터 로드 로직 구현 필요
-        // reactor?.action.onNext(.loadReadingChartData(period: currentStatisticsPeriod, date: newDate))
         reactor?.action.onNext(.loadReadingChartData(currentStatisticsPeriod))
     }
 

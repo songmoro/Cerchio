@@ -99,7 +99,6 @@ final class LibraryPerformanceTests: XCTestCase {
             XCTMemoryMetric()
         ]
 
-        // When & Then
         measure(metrics: metrics) {
             let expectation = expectation(description: "Load 1000 books")
 

@@ -136,29 +136,21 @@ open class NestedScrollViewController: UIViewController {
     /// Override this to register your custom cells and configure data source
     /// Called after the collection view is set up
     open func setupCustomContent() {
-        // Subclasses should override this to:
-        // 1. Register cells
-        // 2. Configure data source
-        // 3. Apply initial snapshot
     }
 
     /// Override this to respond to sticky tab state changes
     /// Called when the tab transitions between sticky and normal mode
     /// - Parameter isSticky: true if tab is now sticky, false if it returned to normal position
     open func tabStickyStateDidChange(isSticky: Bool) {
-        // Subclasses can override this to react to sticky state changes
     }
 
     // MARK: - Base UI Setup
 
     private func setupBaseUI() {
-        // Create info view
         infoView = createInfoView()
 
-        // Create sticky tab view
         stickyTabView = createStickyTabView()
 
-        // Main scroll view
         mainScrollView = UIScrollView()
         mainScrollView.backgroundColor = .systemBackground
         mainScrollView.showsVerticalScrollIndicator = true
@@ -169,7 +161,6 @@ open class NestedScrollViewController: UIViewController {
             make.edges.equalToSuperview()
         }
 
-        // Content stack view
         contentStackView = UIStackView()
         contentStackView.axis = .vertical
         contentStackView.spacing = 0
@@ -180,39 +171,32 @@ open class NestedScrollViewController: UIViewController {
             make.width.equalTo(mainScrollView)
         }
 
-        // Sticky tab container
         stickyTabContainer = UIView()
         stickyTabContainer.backgroundColor = .clear
 
-        // Add components to stack view
         contentStackView.addArrangedSubview(infoView)
         contentStackView.addArrangedSubview(stickyTabContainer)
 
-        // Info view height
         infoView.snp.makeConstraints { make in
             infoViewHeightConstraint = make.height.equalTo(infoViewHeight).constraint
         }
 
-        // Sticky tab container height
         stickyTabContainer.snp.makeConstraints { make in
             make.height.equalTo(tabHeight)
         }
 
-        // Add sticky tab view to container (initial position)
         stickyTabContainer.addSubview(stickyTabView)
         stickyTabView.snp.makeConstraints { make in
             make.edges.equalToSuperview()
             make.height.equalTo(tabHeight)
         }
 
-        // Collection view
         collectionView = UICollectionView(frame: .zero, collectionViewLayout: createCollectionViewLayout())
         collectionView.backgroundColor = .clear
         collectionView.isScrollEnabled = false
 
         contentStackView.addArrangedSubview(collectionView)
 
-        // CollectionView height
         collectionView.snp.makeConstraints { make in
             collectionViewHeightConstraint = make.height.equalTo(100).constraint
         }
@@ -242,7 +226,6 @@ open class NestedScrollViewController: UIViewController {
             isTabSticky = shouldBeSticky
 
             if shouldBeSticky {
-                // Sticky mode: attach to top of main view
                 stickyTabView.removeFromSuperview()
                 view.addSubview(stickyTabView)
 
@@ -252,7 +235,6 @@ open class NestedScrollViewController: UIViewController {
                     make.height.equalTo(tabHeight)
                 }
             } else {
-                // Normal mode: return to container
                 stickyTabView.removeFromSuperview()
                 stickyTabContainer.addSubview(stickyTabView)
 
@@ -264,7 +246,6 @@ open class NestedScrollViewController: UIViewController {
 
             view.layoutIfNeeded()
 
-            // Notify subclasses of sticky state change
             tabStickyStateDidChange(isSticky: shouldBeSticky)
         }
     }
@@ -282,7 +263,6 @@ open class NestedScrollViewController: UIViewController {
         ) else { return }
 
         let headerY = headerAttributes.frame.origin.y
-        // Adjust scroll position to show section header above sticky tab
         let absoluteY = infoViewHeight + headerY - stickyThresholdOffset
 
         mainScrollView.setContentOffset(CGPoint(x: 0, y: absoluteY), animated: true)

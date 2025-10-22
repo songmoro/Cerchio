@@ -182,7 +182,6 @@ final class ReadingTimerViewController: BaseViewController<ReadingTimerReactor> 
     }
 
     override func bind(reactor: ReadingTimerReactor) {
-        // Action
         Observable.just(())
             .do(onNext: { _ in
                 // 타이머 화면 진입 시 항상 배지 제거
@@ -213,7 +212,6 @@ final class ReadingTimerViewController: BaseViewController<ReadingTimerReactor> 
             })
             .disposed(by: disposeBag)
 
-        // Background/Foreground handling
         NotificationCenter.default.rx.notification(UIApplication.didEnterBackgroundNotification)
             .map { _ in Reactor.Action.enterBackground }
             .bind(to: reactor.action)
@@ -228,7 +226,6 @@ final class ReadingTimerViewController: BaseViewController<ReadingTimerReactor> 
             .bind(to: reactor.action)
             .disposed(by: disposeBag)
 
-        // State
 
         reactor.state.map { $0.elapsedTimeString }
             .distinctUntilChanged()

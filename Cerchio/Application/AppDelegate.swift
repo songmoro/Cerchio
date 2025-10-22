@@ -27,7 +27,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     private func configureRealm() {
         // 스키마 버전: (major * 1000) + (minor * 100) + build
-        // v1.2 build 2 = 1000 + 200 + 2 = 1202
         let schemaVersion: UInt64 = 1201
 
         let config = Realm.Configuration(

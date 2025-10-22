@@ -53,24 +53,20 @@ final class TimerPickerView: UIView {
     private func setupUI() {
         backgroundColor = .clear
 
-        // Tick marks layer
         tickMarksLayer.fillColor = UIColor.clear.cgColor
         tickMarksLayer.strokeColor = tickColor.cgColor
         layer.addSublayer(tickMarksLayer)
 
-        // Gauge layer (filled area from center)
         gaugeLayer.fillColor = gaugeColor.cgColor
         gaugeLayer.strokeColor = UIColor.clear.cgColor
         layer.addSublayer(gaugeLayer)
 
-        // Handle view
         handleView.backgroundColor = .systemBackground
         handleView.layer.cornerRadius = handleSize / 2
         handleView.layer.borderWidth = 3
         handleView.layer.borderColor = gaugeColor.cgColor
         addSubview(handleView)
 
-        // Time labels for 5-minute intervals
         createTimeLabels()
     }
 
@@ -112,7 +108,6 @@ final class TimerPickerView: UIView {
             let tickLength: CGFloat = isMajorTick ? 15 : 8
             let _: CGFloat = isMajorTick ? 2 : 1
 
-            // Ticks pointing outward
             let startRadius = radius
             let endRadius = radius + tickLength
 
@@ -192,13 +187,11 @@ final class TimerPickerView: UIView {
         let dy = location.y - center.y
         var angle = atan2(dy, dx)
 
-        // Convert to 0-2π range starting from top (12 o'clock)
         angle = angle + .pi / 2
         if angle < 0 {
             angle += 2 * .pi
         }
 
-        // Convert angle to minutes (1-60)
         var minutes = Int(round((angle / (2 * .pi)) * 60))
         if minutes == 0 {
             minutes = 60
@@ -212,14 +205,11 @@ final class TimerPickerView: UIView {
         }
 
         if gesture.state == .ended {
-            // Snap to nearest minute if needed
         }
     }
 
     // MARK: - Helper Methods
     private func angleForMinute(_ minute: Int) -> CGFloat {
-        // 0 minutes = -π/2 (12 o'clock position)
-        // 60 minutes = 3π/2 (back to 12 o'clock)
         let normalized = CGFloat(minute) / 60.0
         return normalized * 2 * .pi - .pi / 2
     }

@@ -54,7 +54,6 @@ final class LibraryCoordinator: BaseCoordinator, Coordinatable {
         libraryViewController.setQuoteRepository(quoteRepository)
         libraryViewController.setPhotoRepository(photoRepository)
 
-        // Book selection handler
         libraryViewController.bookSelectionHandler = { [weak self] book in
             self?.showBookDetail(book)
         }

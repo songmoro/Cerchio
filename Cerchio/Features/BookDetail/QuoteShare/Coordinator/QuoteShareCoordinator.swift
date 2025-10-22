@@ -44,7 +44,6 @@ final class QuoteShareCoordinator: BaseCoordinator {
         let quoteShareVC = QuoteShareViewController()
         quoteShareVC.reactor = reactor
 
-        // Navigation event binding
         quoteShareVC.navigationEvents
             .subscribe(onNext: { [weak self] event in
                 switch event {
@@ -56,7 +55,6 @@ final class QuoteShareCoordinator: BaseCoordinator {
             })
             .disposed(by: disposeBag)
 
-        // Image export binding
         quoteShareVC.imageExported
             .subscribe(onNext: { [weak self] image in
                 self?.finish(with: .imageExported(image))

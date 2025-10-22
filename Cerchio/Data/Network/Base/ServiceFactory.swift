@@ -187,7 +187,6 @@ enum Environment {
     /// Returns the current environment based on build configuration
     static var current: Environment {
         #if DEBUG
-        // Check bundle identifier to distinguish Development from Debug
         if let bundleId = Bundle.main.bundleIdentifier, bundleId.contains(".dev") {
             return .development
         }
@@ -242,17 +241,14 @@ struct TestingServiceDependencies: ServiceDependencies {
 // MARK: - Mock Network Client for Testing
 final class MockNetworkClient: NetworkClientProtocol {
     func execute<T: NetworkRequest>(_ request: T) -> Observable<T.Response> {
-        // Mock implementation for testing
         return Observable.error(NetworkError.networkError(NSError(domain: "Mock", code: NetworkConstants.ErrorCode.mockImplementation, userInfo: [NSLocalizedDescriptionKey: "Mock implementation"])))
     }
 
     func execute<T: NetworkRequest>(_ request: T) -> Observable<APIResponse<T.Response>> {
-        // Mock implementation for testing
         return Observable.error(NetworkError.networkError(NSError(domain: "Mock", code: NetworkConstants.ErrorCode.mockImplementation, userInfo: [NSLocalizedDescriptionKey: "Mock implementation"])))
     }
 
     func executePaginated<T: NetworkRequest>(_ request: T) -> Observable<PaginatedResponse<T.Response>> {
-        // Mock implementation for testing
         return Observable.error(NetworkError.networkError(NSError(domain: "Mock", code: NetworkConstants.ErrorCode.mockImplementation, userInfo: [NSLocalizedDescriptionKey: "Mock implementation"])))
     }
 }

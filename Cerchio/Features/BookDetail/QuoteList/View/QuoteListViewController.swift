@@ -52,7 +52,6 @@ final class QuoteListViewController: ListViewBaseViewController<QuoteListReactor
     }
 
     private func setupBackButton() {
-        // Remove back button text, only show the chevron
         navigationController?.navigationBar.topItem?.backBarButtonItem = UIBarButtonItem(title: "", style: .plain, target: nil, action: nil)
     }
 
@@ -104,12 +103,10 @@ final class QuoteListViewController: ListViewBaseViewController<QuoteListReactor
     }
 
     override func bind(reactor: QuoteListReactor) {
-        // Action
         Observable.just(QuoteListReactor.Action.loadQuotes)
             .bind(to: reactor.action)
             .disposed(by: disposeBag)
 
-        // State - Quotes (use Driver for UI updates)
         reactor.state
             .map { $0.quotes }
             .distinctUntilChanged()
@@ -119,7 +116,6 @@ final class QuoteListViewController: ListViewBaseViewController<QuoteListReactor
             })
             .disposed(by: disposeBag)
 
-        // State - Loading
         reactor.state
             .map { $0.isLoading }
             .distinctUntilChanged()

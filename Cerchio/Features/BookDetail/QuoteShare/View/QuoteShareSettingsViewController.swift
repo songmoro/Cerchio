@@ -281,7 +281,6 @@ extension QuoteShareSettingsViewController: UITableViewDataSource {
             return 1
         case .effects:
             if !config.isEnabled { return 0 }
-            // Each effect has toggle + slider, blur color has toggle + color picker + slider
             var count = 0
             for effect in EffectRow.allCases {
                 count += 1 // toggle
@@ -351,16 +350,13 @@ extension QuoteShareSettingsViewController: UITableViewDelegate {
         case .background:
             return 44
         case .effects:
-            // Calculate which row type this is
             var currentRow = 0
             for effect in EffectRow.allCases {
-                // Toggle row
                 if currentRow == indexPath.row {
                     return 44
                 }
                 currentRow += 1
 
-                // Color picker for blurColor
                 if effect == .blurColor {
                     if currentRow == indexPath.row {
                         return 44
@@ -368,7 +364,6 @@ extension QuoteShareSettingsViewController: UITableViewDelegate {
                     currentRow += 1
                 }
 
-                // Slider row
                 if currentRow == indexPath.row {
                     return 60
                 }
@@ -384,10 +379,8 @@ extension QuoteShareSettingsViewController: UITableViewDelegate {
 // MARK: - Helper Methods
 extension QuoteShareSettingsViewController {
     private func configureEffectCell(for indexPath: IndexPath, in tableView: UITableView) -> UITableViewCell {
-        // Calculate which effect and row type based on row index
         var currentRow = 0
         for effect in EffectRow.allCases {
-            // Toggle row
             if currentRow == indexPath.row {
                 let cell = tableView.dequeueReusableCell(withIdentifier: SwitchCell.identifier, for: indexPath) as! SwitchCell
                 let isOn = getEffectEnabled(effect)
@@ -399,7 +392,6 @@ extension QuoteShareSettingsViewController {
             }
             currentRow += 1
 
-            // For blurColor, add color picker before slider
             if effect == .blurColor {
                 if currentRow == indexPath.row {
                     let cell = tableView.dequeueReusableCell(withIdentifier: ColorPickerCell.identifier, for: indexPath) as! ColorPickerCell
@@ -412,7 +404,6 @@ extension QuoteShareSettingsViewController {
                 currentRow += 1
             }
 
-            // Slider row
             if currentRow == indexPath.row {
                 let cell = tableView.dequeueReusableCell(withIdentifier: SliderCell.identifier, for: indexPath) as! SliderCell
                 let value = getEffectValue(effect)
@@ -643,7 +634,6 @@ class SliderCell: UITableViewCell {
         let value = slider.value
         updateValueLabel(value)
 
-        // Animate the change
         UIView.animate(withDuration: 0.1) {
             self.valueLabel.transform = CGAffineTransform(scaleX: 1.1, y: 1.1)
         } completion: { _ in

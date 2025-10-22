@@ -60,7 +60,6 @@ final class QuoteSaveCoordinator: BaseCoordinator {
         let quoteRepository = dependencies.serviceFactory.createQuoteRepository()
         quoteSaveVC.setQuoteRepository(quoteRepository)
 
-        // Rx event binding
         quoteSaveVC.events
             .subscribe(onNext: { [weak self] event in
                 switch event {

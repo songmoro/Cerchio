@@ -183,7 +183,6 @@ extension XCTestCase {
             backgroundColor.setFill()
             context.fill(CGRect(origin: .zero, size: size))
 
-            // Add some text to make it unique
             let text = "\(Int(size.width))x\(Int(size.height))" as NSString
             let attributes: [NSAttributedString.Key: Any] = [
                 .font: UIFont.systemFont(ofSize: 24),
@@ -210,7 +209,6 @@ extension XCTestCase {
 
     /// Cleans up all test images
     func cleanupAllTestImages() {
-        // Delete all test images that start with "test_"
         let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
         let imagesPath = documentsPath.appendingPathComponent("BookPhotos", isDirectory: true)
 

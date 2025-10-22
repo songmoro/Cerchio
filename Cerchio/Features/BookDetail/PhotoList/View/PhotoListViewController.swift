@@ -33,7 +33,6 @@ final class PhotoListViewController: ListViewBaseViewController<PhotoListReactor
     private var photoImages: [String: UIImage] = [:]  // photoId -> UIImage
     private let imageQueue = DispatchQueue(label: "com.cerchio.photoList.imageQueue", attributes: .concurrent)
 
-    // Navigation bar buttons (for edit mode)
     private var cancelButton: UIBarButtonItem!
     private var selectAllButton: UIBarButtonItem!
     private var deleteButton: UIBarButtonItem!
@@ -78,7 +77,6 @@ final class PhotoListViewController: ListViewBaseViewController<PhotoListReactor
     }
 
     private func setupBackButton() {
-        // Remove back button text, only show the chevron
         navigationController?.navigationBar.topItem?.backBarButtonItem = UIBarButtonItem(title: "", style: .plain, target: nil, action: nil)
     }
 
@@ -270,12 +268,10 @@ final class PhotoListViewController: ListViewBaseViewController<PhotoListReactor
     }
 
     override func bind(reactor: PhotoListReactor) {
-        // Action
         Observable.just(PhotoListReactor.Action.loadPhotos)
             .bind(to: reactor.action)
             .disposed(by: disposeBag)
 
-        // State - Photos (use Driver for UI updates)
         reactor.state
             .map { $0.photos }
             .distinctUntilChanged()
@@ -285,7 +281,6 @@ final class PhotoListViewController: ListViewBaseViewController<PhotoListReactor
             })
             .disposed(by: disposeBag)
 
-        // State - Loading
         reactor.state
             .map { $0.isLoading }
             .distinctUntilChanged()
