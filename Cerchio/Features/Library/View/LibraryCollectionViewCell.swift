@@ -88,7 +88,7 @@ final class LibraryCollectionViewCell: UICollectionViewCell, IsIdentifiable {
         authorLabel.text = item.author
 
         // 기본 배경색 설정
-        backgroundContainerView.backgroundColor = .randomBookColor()
+        backgroundContainerView.backgroundColor = .clear
 
         if let customCoverPath = item.customCoverImagePath,
            let customImage = ImageStorageManager.shared.loadImage(fromPath: customCoverPath) {
