@@ -291,6 +291,11 @@ final class BookRepository: BaseRepository<RealmBook>, BookRepositoryProtocol {
                 throw NSError(domain: "BookRepository", code: -1, userInfo: [NSLocalizedDescriptionKey: "Book not found"])
             }
 
+            // 커스텀 커버 이미지 파일 삭제
+            if let customCoverImagePath = book.customCoverImagePath {
+                ImageStorageManager.shared.deleteImage(atPath: customCoverImagePath)
+            }
+
             book.customTitle = nil
             book.customAuthor = nil
             book.customCoverImagePath = nil
