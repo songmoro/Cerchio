@@ -69,17 +69,18 @@ final class ReadingRecordsSectionHeader: UICollectionReusableView, IsIdentifiabl
 
     private func setupConstraints() {
         titleLabel.snp.makeConstraints {
-            $0.top.leading.equalToSuperview()
+            $0.top.equalToSuperview()
+            $0.leading.equalToSuperview().inset(12)
         }
 
         viewAllButton.snp.makeConstraints {
             $0.centerY.equalTo(titleLabel)
-            $0.trailing.equalToSuperview()
+            $0.trailing.equalToSuperview().inset(12)
         }
 
         segmentedControl.snp.makeConstraints {
             $0.top.equalTo(titleLabel.snp.bottom).offset(12)
-            $0.horizontalEdges.equalToSuperview()
+            $0.horizontalEdges.equalToSuperview().inset(12)
             $0.bottom.equalToSuperview().inset(8)
         }
     }
@@ -112,11 +113,13 @@ final class ReadingRecordsSectionHeader: UICollectionReusableView, IsIdentifiabl
         // 기록이 없을 때는 titleLabel이 bottom 제약을 가지도록 조정
         if !hasRecords {
             titleLabel.snp.remakeConstraints {
-                $0.top.bottom.leading.equalToSuperview()
+                $0.top.bottom.equalToSuperview()
+                $0.leading.equalToSuperview().inset(12)
             }
         } else {
             titleLabel.snp.remakeConstraints {
-                $0.top.leading.equalToSuperview()
+                $0.top.equalToSuperview()
+                $0.leading.equalToSuperview().inset(12)
             }
         }
     }

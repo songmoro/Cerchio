@@ -61,7 +61,7 @@ final class SettingsItemCell: UICollectionViewCell, IsIdentifiable {
 
     private func setupConstraints() {
         iconImageView.snp.makeConstraints {
-            $0.leading.equalToSuperview() //.inset(16)
+            $0.leading.equalToSuperview().inset(12)
             $0.centerY.equalToSuperview()
             $0.size.equalTo(24)
         }
@@ -72,7 +72,7 @@ final class SettingsItemCell: UICollectionViewCell, IsIdentifiable {
         }
 
         chevronImageView.snp.makeConstraints {
-            $0.trailing.equalToSuperview() //.inset(16)
+            $0.trailing.equalToSuperview().inset(12)
             $0.centerY.equalToSuperview()
             $0.width.equalTo(8)
             $0.height.equalTo(13)
@@ -80,7 +80,8 @@ final class SettingsItemCell: UICollectionViewCell, IsIdentifiable {
 
         separatorView.snp.makeConstraints {
             $0.leading.equalTo(titleLabel)
-            $0.trailing.bottom.equalToSuperview()
+            $0.trailing.equalToSuperview().inset(12)
+            $0.bottom.equalToSuperview()
             $0.height.equalTo(0.5)
         }
     }

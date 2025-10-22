@@ -31,7 +31,8 @@ final class ReadingStatisticsCell: UICollectionViewCell, IsIdentifiable {
         contentView.addSubview(statisticsView)
 
         statisticsView.snp.makeConstraints {
-            $0.edges.equalToSuperview()
+            $0.verticalEdges.equalToSuperview()
+            $0.horizontalEdges.equalToSuperview().inset(12)
         }
     }
 

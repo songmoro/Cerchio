@@ -63,7 +63,7 @@ final class LibraryCollectionViewCell: UICollectionViewCell, IsIdentifiable {
         }
 
         coverImageView.snp.makeConstraints {
-            $0.edges.equalToSuperview()
+            $0.edges.equalToSuperview().inset(16)
         }
 
         loadingIndicator.snp.makeConstraints {

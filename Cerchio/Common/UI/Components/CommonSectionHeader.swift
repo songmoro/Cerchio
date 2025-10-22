@@ -73,12 +73,12 @@ final class CommonSectionHeader: UICollectionReusableView, IsIdentifiable {
 
     private func setupConstraints() {
         titleLabel.snp.makeConstraints {
-            $0.leading.equalToSuperview()
+            $0.leading.equalToSuperview().inset(12)
             $0.top.bottom.equalToSuperview().inset(16)
         }
 
         actionButton.snp.makeConstraints {
-            $0.trailing.equalToSuperview()
+            $0.trailing.equalToSuperview().inset(12)
             $0.centerY.equalTo(titleLabel)
         }
     }
