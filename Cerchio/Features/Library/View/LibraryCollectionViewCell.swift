@@ -63,7 +63,7 @@ final class LibraryCollectionViewCell: UICollectionViewCell, IsIdentifiable {
         }
 
         coverImageView.snp.makeConstraints {
-            $0.edges.equalToSuperview().inset(LibraryConstants.Layout.backgroundImagePadding)
+            $0.edges.equalToSuperview()
         }
 
         loadingIndicator.snp.makeConstraints {
@@ -71,7 +71,7 @@ final class LibraryCollectionViewCell: UICollectionViewCell, IsIdentifiable {
         }
 
         titleLabel.snp.makeConstraints {
-            $0.top.equalTo(backgroundContainerView.snp.bottom).offset(LibraryConstants.Layout.stackOffset)
+            $0.top.equalTo(backgroundContainerView.snp.bottom).offset(LibraryConstants.Layout.stackOffset + 4)
             $0.horizontalEdges.equalToSuperview().inset(LibraryConstants.Layout.cellInset)
         }
 
