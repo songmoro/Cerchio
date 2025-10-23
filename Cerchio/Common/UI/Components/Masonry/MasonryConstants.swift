@@ -9,7 +9,6 @@ import Foundation
 
 enum MasonryConstants {
 
-    // MARK: - Layout
     enum Layout {
         static let numberOfColumns: Int = 2
         static let cellPadding: CGFloat = 0

@@ -13,8 +13,6 @@ import SnapKit
 
 final class SettingsViewController: BaseViewController<SettingsReactor> {
 
-    // MARK: - Properties
-
     private let tableView = UITableView(frame: .zero, style: .insetGrouped)
 
     private enum Section: Int, CaseIterable {
@@ -74,8 +72,6 @@ final class SettingsViewController: BaseViewController<SettingsReactor> {
         }
     }
 
-    // MARK: - Setup
-
     override func setupUI() {
         super.setupUI()
 
@@ -105,7 +101,6 @@ final class SettingsViewController: BaseViewController<SettingsReactor> {
             })
             .disposed(by: disposeBag)
 
-        // 리셋 완료 상태 감지
         reactor.state
             .map { $0.resetCompleted }
             .distinctUntilChanged()
@@ -117,8 +112,6 @@ final class SettingsViewController: BaseViewController<SettingsReactor> {
             .disposed(by: disposeBag)
     }
 
-    // MARK: - Private Methods
-
     private func handleResetState(_ isResetting: Bool) {
         if isResetting {
             showLoadingIndicator()
@@ -128,11 +121,9 @@ final class SettingsViewController: BaseViewController<SettingsReactor> {
     }
 
     private func showLoadingIndicator() {
-        // TODO: 로딩 인디케이터 표시
     }
 
     private func hideLoadingIndicator() {
-        // TODO: 로딩 인디케이터 숨김
     }
 
     private func showResetConfirmationAlert() {
@@ -159,12 +150,9 @@ final class SettingsViewController: BaseViewController<SettingsReactor> {
     }
 
     private func handleResetCompleted() {
-        // 리셋 완료 알림 전송 (SceneDelegate에서 AppCoordinator 재시작)
         NotificationCenter.default.post(name: .dataDidReset, object: nil)
     }
 }
-
-// MARK: - UITableViewDataSource
 
 extension SettingsViewController: UITableViewDataSource {
     func numberOfSections(in tableView: UITableView) -> Int {
@@ -227,8 +215,6 @@ extension SettingsViewController: UITableViewDataSource {
         return sectionType.title
     }
 }
-
-// MARK: - UITableViewDelegate
 
 extension SettingsViewController: UITableViewDelegate {
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {

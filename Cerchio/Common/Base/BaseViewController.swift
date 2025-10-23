@@ -11,12 +11,10 @@ import RxSwift
 import RxCocoa
 import FirebaseAnalytics
 
-// MARK: - Navigation Event Emittable Protocol
 protocol NavigationEventEmittable {
     var navigationEvents: PublishRelay<NavigationEvent> { get }
 }
 
-// MARK: - Base View Controller Protocol
 protocol BaseViewControllerType: UIViewController, NavigationEventEmittable {
     associatedtype ReactorType: Reactor
 
@@ -27,7 +25,6 @@ protocol BaseViewControllerType: UIViewController, NavigationEventEmittable {
     func bind(reactor: ReactorType)
 }
 
-// MARK: - Base View Controller
 class BaseViewController<T: Reactor>: UIViewController, BaseViewControllerType, View {
     typealias ReactorType = T
 
@@ -41,11 +38,9 @@ class BaseViewController<T: Reactor>: UIViewController, BaseViewControllerType, 
         didSet {
             guard let reactor = reactor else { return }
 
-            // 뷰가 로드된 후에만 bind 호출
             if isViewLoaded {
                 self.bind(reactor: reactor)
             } else {
-                // 뷰가 아직 로드되지 않았다면 viewDidLoad에서 호출하도록 플래그 설정
                 shouldBindAfterViewDidLoad = true
             }
         }
@@ -58,7 +53,6 @@ class BaseViewController<T: Reactor>: UIViewController, BaseViewControllerType, 
         setupUI()
         bindNavigationEvents()
 
-        // reactor가 이미 설정되어 있다면 bind 호출
         if shouldBindAfterViewDidLoad, let reactor = reactor {
             self.bind(reactor: reactor)
             shouldBindAfterViewDidLoad = false
@@ -85,7 +79,6 @@ class BaseViewController<T: Reactor>: UIViewController, BaseViewControllerType, 
         }
     }
 
-    // MARK: - Abstract Methods
     func setupUI() {
         view.backgroundColor = .white
         setupNavigationBarAppearance()
@@ -96,22 +89,15 @@ class BaseViewController<T: Reactor>: UIViewController, BaseViewControllerType, 
 
         let appearance = UINavigationBarAppearance()
         appearance.configureWithOpaqueBackground()
-        appearance.backgroundColor = .clear
+        appearance.backgroundColor = .white
         appearance.titleTextAttributes = [.foregroundColor: UIColor.forestGreen]
         appearance.largeTitleTextAttributes = [.foregroundColor: UIColor.forestGreen]
 
         let navigationBar = navigationController.navigationBar
+        navigationBar.standardAppearance = appearance
+        navigationBar.scrollEdgeAppearance = appearance
         navigationBar.compactAppearance = appearance
-        
-        if #available(iOS 15.0, *) {
-            let appearance = UINavigationBarAppearance()
-            appearance.backgroundColor = .white
-            appearance.titleTextAttributes = [.foregroundColor: UIColor.forestGreen]
-            appearance.largeTitleTextAttributes = [.foregroundColor: UIColor.forestGreen]
-            navigationBar.scrollEdgeAppearance = appearance
-            navigationBar.compactScrollEdgeAppearance = appearance
-            navigationBar.standardAppearance = appearance
-        }
+        navigationBar.compactScrollEdgeAppearance = appearance
         navigationBar.tintColor = .forestGreen
     }
 
@@ -119,7 +105,6 @@ class BaseViewController<T: Reactor>: UIViewController, BaseViewControllerType, 
         fatalError("Must be overridden")
     }
 
-    // MARK: - Navigation Events
     private func bindNavigationEvents() {
         navigationEvents
             .subscribe(onNext: { [weak self] event in
@@ -139,7 +124,6 @@ class BaseViewController<T: Reactor>: UIViewController, BaseViewControllerType, 
         navigationEvents.accept(event)
     }
 
-    // MARK: - Analytics
     private func logScreenView() {
         let screenName = String(describing: type(of: self))
             .replacingOccurrences(of: "ViewController", with: "")
@@ -151,6 +135,5 @@ class BaseViewController<T: Reactor>: UIViewController, BaseViewControllerType, 
     }
 
     deinit {
-        print("\(String(describing: type(of: self))) deinit")
     }
 }

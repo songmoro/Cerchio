@@ -58,7 +58,6 @@ class LongPressGestureHandler: NSObject {
 
         switch gesture.state {
         case .began:
-            // 실제 터치한 위치를 사용 (타겟 뷰 내에서의 터치 위치)
             let touchLocationInTarget = gesture.location(in: targetView)
             let touchLocationInPresentingView = targetView.convert(touchLocationInTarget, to: presentingVC.view)
 
@@ -104,7 +103,6 @@ class TapGestureHandler: NSObject {
     @objc func handleGesture(_ gesture: UITapGestureRecognizer) {
         guard let presentingVC = presentingViewController else { return }
 
-        // 실제 터치한 위치를 사용 (타겟 뷰 내에서의 터치 위치)
         let touchLocationInTarget = gesture.location(in: targetView)
         let touchLocationInPresentingView = targetView.convert(touchLocationInTarget, to: presentingVC.view)
 

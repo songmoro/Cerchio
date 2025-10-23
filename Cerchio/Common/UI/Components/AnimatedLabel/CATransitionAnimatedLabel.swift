@@ -7,7 +7,6 @@
 
 import UIKit
 
-/// CATransition을 사용한 세밀한 텍스트 애니메이션
 final class CATransitionAnimatedLabel: UILabel {
 
     enum TransitionType {
@@ -64,7 +63,6 @@ final class CATransitionAnimatedLabel: UILabel {
         layer.add(transition, forKey: "textChange")
     }
 
-    /// 텍스트를 애니메이션과 함께 설정
     func setText(_ newText: String?, animated: Bool = true) {
         if animated {
             let transition = CATransition()

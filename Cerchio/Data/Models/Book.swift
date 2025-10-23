@@ -94,12 +94,10 @@ nonisolated struct Book: Hashable, Codable {
     let customAuthor: String?
     let customCoverImagePath: String?
 
-    // Computed property: customTitle이 nil이 아니면 customTitle, 그렇지 않으면 원본 cleanTitle
     var cleanTitle: String {
         return customTitle ?? _cleanTitle
     }
 
-    // 원본 cleanTitle (placeholder용)
     var originalCleanTitle: String {
         return _cleanTitle
     }
@@ -188,10 +186,7 @@ nonisolated struct Book: Hashable, Codable {
     }
 }
 
-// MARK: - RealmBook Extensions
-
 extension RealmBook {
-    /// Converts RealmBook to Book model
     func toBook() -> Book {
         return Book(
             id: String(describing: id),
@@ -227,10 +222,7 @@ extension RealmBook {
     }
 }
 
-// MARK: - Book Extensions
-
 extension Book {
-    /// Converts Book to RealmBook model
     func toRealmBook() -> RealmBook {
         return RealmBook(
             title: title,

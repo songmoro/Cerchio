@@ -8,12 +8,7 @@
 import Foundation
 import RxSwift
 
-/// 독서 타이머의 모든 비즈니스 로직을 통합하는 서비스
-/// - 각 UseCase를 조합하여 타이머의 전체 플로우 관리
-/// - Reactor는 이 서비스를 통해 간단하게 비즈니스 로직 호출
 final class ReadingTimerService {
-
-    // MARK: - Properties
 
     let stateManager: TimerStateManager
     let activityManager: TimerActivityManager
@@ -37,8 +32,6 @@ final class ReadingTimerService {
     private let bookTitle: String
     private let targetMinutes: Int
     private var sessionStartTime: Date
-
-    // MARK: - Initialization
 
     init(
         sessionId: String,
@@ -121,9 +114,6 @@ final class ReadingTimerService {
         )
     }
 
-    // MARK: - UseCase Execution
-
-    /// 타이머 시작
     func start() -> Observable<TimerStartUseCase.StartResult> {
         return startUseCase.execute(
             sessionId: sessionId,
@@ -132,12 +122,10 @@ final class ReadingTimerService {
             targetMinutes: targetMinutes
         )
         .do(onNext: { [weak self] result in
-            // 실제로 타이머가 시작된 시점의 시간으로 업데이트
             self?.sessionStartTime = result.startTime
         })
     }
 
-    /// 일시정지
     func pause() -> Observable<Void> {
         return pauseUseCase.execute(
             sessionId: sessionId,
@@ -148,7 +136,6 @@ final class ReadingTimerService {
         )
     }
 
-    /// 재개
     func resume() -> Observable<Void> {
         return resumeUseCase.execute(
             sessionId: sessionId,
@@ -159,7 +146,6 @@ final class ReadingTimerService {
         )
     }
 
-    /// 정지 및 저장
     func stop(realmSession: RealmReadingSession?) -> Observable<Void> {
         return stopUseCase.execute(
             sessionId: sessionId,
@@ -167,7 +153,6 @@ final class ReadingTimerService {
         )
     }
 
-    /// 1초 틱
     func tick() -> Observable<Bool> {
         return tickUseCase.execute(
             sessionId: sessionId,
@@ -178,7 +163,6 @@ final class ReadingTimerService {
         )
     }
 
-    /// 백그라운드 진입
     func enterBackground() -> Observable<Void> {
         return backgroundUseCase.execute(
             sessionId: sessionId,
@@ -189,7 +173,6 @@ final class ReadingTimerService {
         )
     }
 
-    /// 포그라운드 복귀
     func enterForeground() -> Observable<TimerForegroundUseCase.ForegroundResult> {
         return foregroundUseCase.execute(
             sessionId: sessionId,
@@ -200,7 +183,6 @@ final class ReadingTimerService {
         )
     }
 
-    /// 세션 복원
     func restore(session: TimerSessionManager.ActiveSession) -> Observable<TimerRestoreUseCase.RestoreResult> {
         return restoreUseCase.execute(
             session: session,
@@ -208,14 +190,10 @@ final class ReadingTimerService {
         )
     }
 
-    // MARK: - Validation
-
-    /// 중복 세션 확인
     func checkDuplicateSession() -> TimerSessionManager.ActiveSession? {
         return validationService.checkDuplicateSession()
     }
 
-    /// 기존 세션 종료 후 새로 시작
     func terminateExistingAndStart() -> Observable<TimerStartUseCase.StartResult> {
         sessionManager.clearActiveSession()
         if #available(iOS 16.2, *) {
@@ -224,9 +202,6 @@ final class ReadingTimerService {
         return start()
     }
 
-    // MARK: - Session Management
-
-    /// Realm 세션 생성
     func createRealmSession() -> Observable<RealmReadingSession> {
         let session = RealmReadingSession(
             id: sessionId,
@@ -236,17 +211,11 @@ final class ReadingTimerService {
             status: .inProgress
         )
 
-        print("[ReadingTimerService]  Creating Realm session: \(sessionId)")
-
         return sessionRepository.saveSession(session)
             .do(onNext: { savedSession in
-                print("[ReadingTimerService]  Realm session created: \(savedSession.id)")
             })
     }
 
-    // MARK: - Activity Monitoring
-
-    /// Live Activity 이벤트 구독
     var activityDismissed: Observable<Void> {
         activityManager.activityDismissed
     }

@@ -5,7 +5,6 @@
 //  Created by 송재훈 on 10/1/25.
 //
 
-// MARK: - 일반 다국어 텍스트
 enum Localized: String {
     case `action.add`
     case `action.cancel`
@@ -76,7 +75,6 @@ enum Localized: String {
     case `reset_delete.delete_book_confirm_title`
     case `reset_delete.delete_book_confirm_message`
 
-    // MARK: - Circular Menu Items
     case `circular_menu.book_detail.reading_record`
     case `circular_menu.book_detail.save_quote`
     case `circular_menu.book_detail.take_photo`
@@ -89,7 +87,6 @@ enum Localized: String {
     case `circular_menu.book_detail.remove_favorite`
     case `circular_menu.book_detail.add_favorite`
 
-    // MARK: - Alert Messages
     case `alert.delete_quote.title`
     case `alert.delete_quote.message`
     case `alert.delete_book.title`
@@ -114,13 +111,11 @@ enum Localized: String {
     case `alert.library.delete_failed.title`
     case `alert.library.delete_failed.message`
 
-    // MARK: - Empty States
     case `empty_state.book_detail.no_reading_records`
     case `empty_state.book_detail.no_saved_quotes`
     case `empty_state.book_detail.no_photos`
     case `empty_state.library.no_books`
 
-    // MARK: - Settings
     case `settings.section.general`
     case `settings.section.data`
     case `settings.section.contact`
@@ -138,14 +133,11 @@ enum Localized: String {
     case `settings.alert.language_changed.title`
     case `settings.alert.language_changed.message`
 
-    // MARK: - Additional Book Detail
     case `book_detail.reading_records`
 
-    // MARK: - Additional Actions
     case `action.select_all`
     case `action.deselect_all`
 
-    // MARK: - Reading Timer
     case `reading_timer.title`
     case `reading_timer.remaining_time`
     case `reading_timer.start`
@@ -171,7 +163,6 @@ enum Localized: String {
     case `reading_timer.continue_reading`
     case `reading_timer.exit_without_saving`
 
-    // MARK: - Search
     case `search.placeholder`
     case `search.book_saved.title`
     case `search.book_saved.message`
@@ -180,7 +171,6 @@ enum Localized: String {
     case `search.empty_state.enter_query`
     case `search.empty_state.no_results`
 
-    // MARK: - Reading Info Edit
     case `reading_info_edit.title`
     case `reading_info_edit.total_pages`
     case `reading_info_edit.pages_placeholder`
@@ -197,7 +187,6 @@ enum Localized: String {
     case `reading_info_edit.end_date_cleared.title`
     case `reading_info_edit.end_date_cleared.message`
 
-    // MARK: - Quote Share
     case `quote_share.title`
     case `quote_share.generating_image`
     case `quote_share.save_failed.title`

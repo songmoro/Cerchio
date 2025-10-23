@@ -14,7 +14,7 @@ final class ReadingSessionListReactor: Reactor {
 
     enum Action {
         case loadSessions
-        case deleteSession(String) // session ID
+        case deleteSession(String)
     }
 
     enum Mutation {
@@ -47,7 +47,6 @@ final class ReadingSessionListReactor: Reactor {
                 Observable.just(.setLoading(true)),
                 service.loadReadingSessions(for: currentState.bookId)
                     .map { realmSessions in
-                        // RealmReadingSession을 ReadingSession DTO로 변환
                         let sessions = realmSessions.map { $0.toReadingSession() }
                         return Mutation.setSessions(sessions)
                     }
@@ -88,8 +87,6 @@ final class ReadingSessionListReactor: Reactor {
         return newState
     }
 
-    // MARK: - Private Methods
-
     private func deleteSessionFromRealm(_ sessionId: String) -> Observable<Void> {
         return Observable.create { observer in
             do {
@@ -98,7 +95,6 @@ final class ReadingSessionListReactor: Reactor {
                     try realm.write {
                         realm.delete(session)
                     }
-                    print(" Session deleted: \(sessionId)")
                     observer.onNext(())
                     observer.onCompleted()
                 } else {

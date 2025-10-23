@@ -18,18 +18,12 @@ enum ReadingStatisticsPeriod: Int, Hashable {
 
 final class ReadingStatisticsView: UIView {
 
-    // MARK: - UI Components
-
     private var hostingController: UIHostingController<ReadingChartView>?
-
-    // MARK: - Properties
 
     private var chartData: ReadingChartData?
     private var currentPeriod: ReadingStatisticsPeriod = .today
     var onPeriodChanged: ((ReadingStatisticsPeriod) -> Void)?
     var onSwipe: ((ReadingChartView.SwipeDirection) -> Void)?
-
-    // MARK: - Initialization
 
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -40,13 +34,9 @@ final class ReadingStatisticsView: UIView {
         fatalError("init(coder:) has not been implemented")
     }
 
-    // MARK: - Setup
-
     private func setupUI() {
         backgroundColor = .clear
     }
-
-    // MARK: - Configuration
 
     func configure(with chartData: ReadingChartData) {
         self.chartData = chartData

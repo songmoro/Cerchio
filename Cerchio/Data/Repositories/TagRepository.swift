@@ -20,7 +20,6 @@ protocol TagRepositoryProtocol {
 
 final class TagRepository: BaseRepository<RealmTag>, TagRepositoryProtocol {
 
-    // MARK: - TagRepositoryProtocol
     func getAllTags() -> Observable<[RealmTag]> {
         return fetch()
     }

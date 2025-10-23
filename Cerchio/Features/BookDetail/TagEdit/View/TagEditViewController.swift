@@ -11,13 +11,11 @@ import RxSwift
 import RxCocoa
 
 final class TagEditViewController: UIViewController {
-    // MARK: - Properties
     private let disposeBag = DisposeBag()
     private var currentTags: Set<String> = []
     private var allAvailableTags: [String] = []
     var onTagsSaved: (([String]) -> Void)?
 
-    // MARK: - UI Components
     private let textField: UITextField = {
         let field = UITextField()
         field.placeholder = "예: #판타지 #과학"
@@ -61,7 +59,6 @@ final class TagEditViewController: UIViewController {
         return label
     }()
 
-    // MARK: - Lifecycle
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
@@ -74,7 +71,6 @@ final class TagEditViewController: UIViewController {
         textField.becomeFirstResponder()
     }
 
-    // MARK: - Setup
     private func setupUI() {
         view.backgroundColor = .systemBackground
 
@@ -137,7 +133,6 @@ final class TagEditViewController: UIViewController {
         tableView.delegate = self
         tableView.dataSource = self
 
-        // 테이블뷰 터치 시 키보드 숨김
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(dismissKeyboard))
         tapGesture.cancelsTouchesInView = false
         tableView.addGestureRecognizer(tapGesture)
@@ -147,12 +142,10 @@ final class TagEditViewController: UIViewController {
         textField.resignFirstResponder()
     }
 
-    // MARK: - Public Methods
     func configure(currentTags: [String], allTags: [String]) {
         self.currentTags = Set(currentTags)
         self.allAvailableTags = Array(Set(allTags)).sorted()
 
-        // 현재 태그를 텍스트 필드에 표시
         let tagText = currentTags.map { "#\($0)" }.joined(separator: " ")
         textField.text = tagText
 
@@ -160,7 +153,6 @@ final class TagEditViewController: UIViewController {
         tableView.reloadData()
     }
 
-    // MARK: - Actions
     @objc private func cancelTapped() {
         dismiss(animated: true)
     }
@@ -186,7 +178,6 @@ final class TagEditViewController: UIViewController {
     }
 }
 
-// MARK: - UITableViewDataSource
 extension TagEditViewController: UITableViewDataSource {
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return allAvailableTags.count
@@ -205,7 +196,6 @@ extension TagEditViewController: UITableViewDataSource {
     }
 }
 
-// MARK: - UITableViewDelegate
 extension TagEditViewController: UITableViewDelegate {
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         tableView.deselectRow(at: indexPath, animated: true)
@@ -218,7 +208,6 @@ extension TagEditViewController: UITableViewDelegate {
             currentTags.insert(tag)
         }
 
-        // 텍스트 필드 업데이트
         let tagText = Array(currentTags).sorted().map { "#\($0)" }.joined(separator: " ")
         textField.text = tagText
 
@@ -226,7 +215,6 @@ extension TagEditViewController: UITableViewDelegate {
     }
 }
 
-// MARK: - TagSuggestionCell
 final class TagSuggestionCell: UITableViewCell {
     static let identifier = "TagSuggestionCell"
 

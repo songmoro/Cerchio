@@ -9,7 +9,6 @@ import UIKit
 import SnapKit
 
 final class SettingsItemCell: UICollectionViewCell, IsIdentifiable {
-    // MARK: - UI Components
     private let iconImageView: UIImageView = {
         let imageView = UIImageView()
         imageView.contentMode = .scaleAspectFit
@@ -38,7 +37,6 @@ final class SettingsItemCell: UICollectionViewCell, IsIdentifiable {
         return view
     }()
 
-    // MARK: - Initialization
     override init(frame: CGRect) {
         super.init(frame: frame)
         setupViews()
@@ -49,7 +47,6 @@ final class SettingsItemCell: UICollectionViewCell, IsIdentifiable {
         fatalError("init(coder:) has not been implemented")
     }
 
-    // MARK: - Setup
     private func setupViews() {
         backgroundColor = .systemBackground
 
@@ -86,7 +83,6 @@ final class SettingsItemCell: UICollectionViewCell, IsIdentifiable {
         }
     }
 
-    // MARK: - Configuration
     func configure(icon: UIImage?, title: String) {
         iconImageView.image = icon
         titleLabel.text = title

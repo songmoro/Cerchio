@@ -9,10 +9,7 @@ import Foundation
 import RxSwift
 import RxRelay
 
-/// Live Activity 관리 전담 클래스
 final class TimerActivityManager {
-
-    // MARK: - Properties
 
     @available(iOS 16.2, *)
     private var liveActivityManager: LiveActivityManager { LiveActivityManager.shared }
@@ -27,15 +24,11 @@ final class TimerActivityManager {
     var activityStale: Observable<Void> { staleRelay.asObservable() }
     var activityEnded: Observable<Void> { endedRelay.asObservable() }
 
-    // MARK: - Initialization
-
     init() {
         if #available(iOS 16.2, *) {
             setupMonitoring()
         }
     }
-
-    // MARK: - Start/Stop
 
     @available(iOS 16.2, *)
     func start(
@@ -45,14 +38,8 @@ final class TimerActivityManager {
         targetEndTime: Date
     ) -> Observable<Void> {
         guard !isStarted else {
-            print("[TimerActivity]  Already started")
             return .just(())
         }
-
-        print("[TimerActivity]  Starting Live Activity")
-        print("  - bookTitle: \(bookTitle)")
-        print("  - targetMinutes: \(targetMinutes)")
-        print("  - targetEndTime: \(targetEndTime)")
 
         return liveActivityManager.startActivity(
             bookTitle: bookTitle,
@@ -62,7 +49,6 @@ final class TimerActivityManager {
         )
         .do(onNext: { [weak self] in
             self?.isStarted = true
-            print("[TimerActivity]  Started successfully")
         }, onError: { error in
             print("[TimerActivity]  Failed to start: \(error)")
         })
@@ -71,22 +57,17 @@ final class TimerActivityManager {
     @available(iOS 16.2, *)
     func end(immediate: Bool = false) -> Observable<Void> {
         guard isStarted else {
-            print("[TimerActivity]  Not started")
             return .just(())
         }
 
-        print("[TimerActivity]  Ending Live Activity (immediate: \(immediate))")
         return liveActivityManager.endActivity(immediate: immediate)
             .do(onNext: { [weak self] in
                 self?.isStarted = false
-                print("[TimerActivity]  Ended successfully")
             }, onError: { [weak self] error in
                 self?.isStarted = false
                 print("[TimerActivity]  Failed to end: \(error)")
             })
     }
-
-    // MARK: - Update
 
     @available(iOS 16.2, *)
     func update(
@@ -95,30 +76,22 @@ final class TimerActivityManager {
         targetSeconds: Int
     ) -> Observable<Void> {
         guard isStarted else {
-            print("[TimerActivity]  Cannot update (not started)")
             return .just(())
         }
 
         let isPaused = pausedAt != nil
-        print("[TimerActivity] \(isPaused ? " PAUSED" : " RESUMED")")
-        print("  - targetEndTime: \(targetEndTime)")
-        print("  - pausedAt: \(pausedAt?.description ?? "nil")")
 
-        // targetEndTime 기반에서 timerStartTime 기반으로 변환
         let timerStartTime: Date?
         let pausedElapsedSeconds: Int
 
         if let pausedTime = pausedAt {
-            // 일시정지 상태
             timerStartTime = nil
             let remaining = max(0, Int(targetEndTime.timeIntervalSince(pausedTime)))
             pausedElapsedSeconds = targetSeconds - remaining
         } else {
-            // 실행 중
             let remaining = max(0, Int(targetEndTime.timeIntervalSince(Date())))
             pausedElapsedSeconds = targetSeconds - remaining
 
-            // timerStartTime = 현재 - 이미 경과한 시간
             timerStartTime = Date().addingTimeInterval(-TimeInterval(pausedElapsedSeconds))
         }
 
@@ -143,7 +116,6 @@ final class TimerActivityManager {
         pausedAt: Date?,
         targetSeconds: Int
     ) -> Observable<Void> {
-        print("[TimerActivity]  Restarting Live Activity")
 
         return start(
             bookTitle: bookTitle,
@@ -154,20 +126,15 @@ final class TimerActivityManager {
         .flatMap { [weak self] _ -> Observable<Void> in
             guard let self = self else { return .empty() }
 
-            print("[TimerActivity]  Restarted - updating state...")
-
-            // targetEndTime 기반에서 timerStartTime 기반으로 변환
             let timerStartTime: Date?
             let pausedElapsedSeconds: Int
             let isPaused = pausedAt != nil
 
             if let pausedTime = pausedAt {
-                // 일시정지 상태
                 timerStartTime = nil
                 let remaining = max(0, Int(targetEndTime.timeIntervalSince(pausedTime)))
                 pausedElapsedSeconds = targetSeconds - remaining
             } else {
-                // 실행 중
                 let remaining = max(0, Int(targetEndTime.timeIntervalSince(Date())))
                 pausedElapsedSeconds = targetSeconds - remaining
                 timerStartTime = Date().addingTimeInterval(-TimeInterval(pausedElapsedSeconds))
@@ -181,7 +148,6 @@ final class TimerActivityManager {
             )
         }
         .do(onNext: {
-            print("[TimerActivity]  Restarted and synced")
         }, onError: { error in
             print("[TimerActivity]  Restart failed: \(error)")
         })
@@ -199,7 +165,6 @@ final class TimerActivityManager {
         let activeActivities = liveActivityManager.getActiveActivities()
 
         if activeActivities.isEmpty {
-            print("[TimerActivity]  No active activity - creating new one")
 
             return start(
                 bookTitle: bookTitle,
@@ -210,7 +175,6 @@ final class TimerActivityManager {
             .flatMap { [weak self] _ -> Observable<Void> in
                 guard let self = self else { return .empty() }
 
-                // targetEndTime 기반에서 timerStartTime 기반으로 변환
                 let timerStartTime: Date?
                 let pausedElapsedSeconds: Int
                 let isPaused = pausedAt != nil
@@ -234,15 +198,10 @@ final class TimerActivityManager {
             }
         }
 
-        print("[TimerActivity]  Syncing existing activity")
-
-        // 기존 액티비티를 LiveActivityManager에 복원
         liveActivityManager.restoreActivity(activeActivities.first!)
 
-        // 기존 액티비티가 있으므로 시작 상태로 설정
         isStarted = true
 
-        // targetEndTime 기반에서 timerStartTime 기반으로 변환
         let timerStartTime: Date?
         let pausedElapsedSeconds: Int
         let isPaused = pausedAt != nil
@@ -265,11 +224,8 @@ final class TimerActivityManager {
         )
         .do(onNext: { [weak self] in
             self?.isStarted = true
-            print("[TimerActivity]  Synced successfully")
         })
     }
-
-    // MARK: - Monitoring
 
     @available(iOS 16.2, *)
     private func setupMonitoring() {
@@ -277,15 +233,12 @@ final class TimerActivityManager {
             .subscribe(onNext: { [weak self] in
                 self?.isStarted = false
                 self?.dismissedRelay.accept(())
-                print("[TimerActivity]  User dismissed activity")
             })
             .disposed(by: disposeBag)
 
-        // Stale (8시간 제한)
         liveActivityManager.activityStale
             .subscribe(onNext: { [weak self] in
                 self?.staleRelay.accept(())
-                print("[TimerActivity]  Activity became stale")
             })
             .disposed(by: disposeBag)
 
@@ -293,12 +246,9 @@ final class TimerActivityManager {
             .subscribe(onNext: { [weak self] in
                 self?.isStarted = false
                 self?.endedRelay.accept(())
-                print("[TimerActivity]  Activity ended")
             })
             .disposed(by: disposeBag)
     }
-
-    // MARK: - State
 
     var hasActiveActivity: Bool {
         isStarted

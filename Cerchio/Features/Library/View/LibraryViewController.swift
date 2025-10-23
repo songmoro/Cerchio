@@ -36,8 +36,6 @@ final class LibraryViewController: BaseViewController<LibraryReactor> {
     private var quoteRepository: QuoteRepositoryProtocol?
     private var photoRepository: PhotoRepositoryProtocol?
 
-    private var tempBookForPhoto: Book?
-
     nonisolated enum Section: CaseIterable {
         case book
     }
@@ -73,24 +71,20 @@ final class LibraryViewController: BaseViewController<LibraryReactor> {
         let appearance = UINavigationBarAppearance()
         appearance.configureWithOpaqueBackground()
         appearance.backgroundColor = .systemBackground
-        appearance.shadowColor = nil // Remove bottom line
+        appearance.shadowColor = nil
         navigationController?.navigationBar.standardAppearance = appearance
         navigationController?.navigationBar.scrollEdgeAppearance = appearance
 
-        // 편집 모드였다면 기본 모드로 복귀
         if isEditMode {
             exitEditMode()
         }
 
-        // 화면이 다시 나타날 때마다 데이터 새로고침
         reactor?.action.onNext(.loadBooks)
     }
 
-    // MARK: - Public Methods
     func setEditButton(_ button: UIBarButtonItem) {
         editButton = button
 
-        // Rx 바인딩
         editButton.rx.tap
             .do(onNext: { HapticFeedbackManager.shared.impact() })
             .subscribe(onNext: { [weak self] in
@@ -102,7 +96,6 @@ final class LibraryViewController: BaseViewController<LibraryReactor> {
     func setFilterButton(_ button: UIBarButtonItem) {
         filterButton = button
 
-        // Rx 바인딩
         filterButton.rx.tap
             .do(onNext: { HapticFeedbackManager.shared.impact() })
             .subscribe(onNext: { [weak self] in
@@ -110,7 +103,6 @@ final class LibraryViewController: BaseViewController<LibraryReactor> {
             })
             .disposed(by: disposeBag)
 
-        // 편집 모드 버튼들 생성
         cancelButton = UIBarButtonItem(
             title: String(localized: .actionCancel),
             style: .plain,
@@ -178,7 +170,6 @@ final class LibraryViewController: BaseViewController<LibraryReactor> {
             .bind(to: reactor.action)
             .disposed(by: disposeBag)
 
-        // Collection View Selection - 일반 모드
         collectionView.rx.itemSelected(dataSource)
             .filter { [weak self] _ in self?.isEditMode == false }
             .subscribe(onNext: { [weak self] selectedBook in
@@ -186,19 +177,16 @@ final class LibraryViewController: BaseViewController<LibraryReactor> {
             })
             .disposed(by: disposeBag)
 
-        // Collection View Selection - 편집 모드
         collectionView.rx.itemSelected(dataSource)
             .filter { [weak self] _ in self?.isEditMode == true }
             .subscribe(onNext: { [weak self] selectedBook in
                 guard let self = self else { return }
 
-                // 이미 선택된 경우 deselect 처리 (다음 이벤트에서 처리됨)
                 if self.selectedISBNs.contains(selectedBook.isbn) {
                     if let indexPath = self.dataSource.indexPath(for: selectedBook) {
                         self.collectionView.deselectItem(at: indexPath, animated: true)
                     }
                 } else {
-                    // 새로 선택된 경우
                     self.selectedISBNs.insert(selectedBook.isbn)
                     if let indexPath = self.dataSource.indexPath(for: selectedBook) {
                         self.updateCellSelection(at: indexPath, isSelected: true)
@@ -208,7 +196,6 @@ final class LibraryViewController: BaseViewController<LibraryReactor> {
             })
             .disposed(by: disposeBag)
 
-        // Collection View Deselection - 편집 모드
         collectionView.rx.itemDeselected(dataSource)
             .filter { [weak self] _ in self?.isEditMode == true }
             .subscribe(onNext: { [weak self] deselectedBook in
@@ -230,12 +217,10 @@ final class LibraryViewController: BaseViewController<LibraryReactor> {
                 }
                 guard oldBooks.count == newBooks.count else { return false }
 
-                // ISBN 순서 비교
                 let oldISBNs = oldBooks.map { $0.isbn }
                 let newISBNs = newBooks.map { $0.isbn }
                 guard oldISBNs == newISBNs else { return false }
 
-                // isFavorite 상태 비교 (ISBN 순서가 같을 때만)
                 for (oldBook, newBook) in zip(oldBooks, newBooks) {
                     if oldBook.isFavorite != newBook.isFavorite {
                         return false
@@ -275,7 +260,6 @@ final class LibraryViewController: BaseViewController<LibraryReactor> {
             })
             .disposed(by: disposeBag)
 
-        // Cell will display - 편집 모드에서 선택된 셀 border 복원
         collectionView.rx.willDisplayCell(dataSource)
             .filter { [weak self] _ in self?.isEditMode == true }
             .subscribe(onNext: { [weak self] (cell, book, indexPath) in
@@ -295,7 +279,6 @@ final class LibraryViewController: BaseViewController<LibraryReactor> {
         dataSource = DataSource(collectionView: collectionView) { [weak self] collectionView, indexPath, item in
             let cell = collectionView.dequeueReusableCell(LibraryCollectionViewCell.self, for: indexPath)
 
-            // indexPath.item이 짝수면 왼쪽 컬럼, 홀수면 오른쪽 컬럼
             let isLeftColumn = indexPath.item % 2 == 0
             cell.configure(with: item, isLeftColumn: isLeftColumn)
 
@@ -305,7 +288,6 @@ final class LibraryViewController: BaseViewController<LibraryReactor> {
 
         collectionView.dataSource = dataSource
 
-        // 기본 섹션 설정
         setupInitialSnapshot()
     }
 
@@ -317,32 +299,22 @@ final class LibraryViewController: BaseViewController<LibraryReactor> {
 
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
-        // 뷰의 레이아웃이 완료된 후 컬렉션 뷰 레이아웃 업데이트
         collectionView.collectionViewLayout.invalidateLayout()
     }
     
     private func setupLongPressGesture(for cell: LibraryCollectionViewCell, with book: Book, at indexPath: IndexPath) {
-        // 편집 모드에서는 롱 프레스 제스처 비활성화
         guard !isEditMode else {
-            // 편집 모드에서는 기존 롱 프레스 제스처 제거
             removeLongPressGesture(from: cell)
             return
         }
 
-        // 기존 롱 프레스 제스처 제거 (셀 재사용 시 중복 방지)
         removeLongPressGesture(from: cell)
 
-        // 셀이 화면에 완전히 표시된 후에 제스처 추가
         DispatchQueue.main.async { [weak self, weak cell] in
             guard let self = self, let cell = cell else { return }
 
             let menuItems = self.createMenuItems(for: book, at: indexPath)
 
-            // 하이라이트 효과 설정 (필요시 커스터마이즈 가능)
-            // 예시:
-            // - .withContextualRotation() - 기본값: 1.2배 확대 + 화면 위치에 따른 회전
-            // - ViewHighlightConfiguration(effect: .scale(1.5), ...) - 1.5배 확대만
-            // - ViewHighlightConfiguration(effect: .combined([.scale(1.3), .rotation(degrees: 10)]), ...) - 1.3배 확대 + 10도 회전
             let highlightConfig = ViewHighlightConfiguration.withContextualRotation()
 
             CircularMenuManager.shared.addLongPressMenu(
@@ -357,7 +329,6 @@ final class LibraryViewController: BaseViewController<LibraryReactor> {
     }
 
     private func removeLongPressGesture(from cell: LibraryCollectionViewCell) {
-        // 롱 프레스 제스처만 선택적으로 제거
         if let gestureRecognizers = cell.gestureRecognizers {
             for gesture in gestureRecognizers {
                 if gesture is UILongPressGestureRecognizer {
@@ -368,31 +339,25 @@ final class LibraryViewController: BaseViewController<LibraryReactor> {
     }
     
     private func createMenuItems(for book: Book, at indexPath: IndexPath) -> [CircularMenuItem] {
-        // 최신 즐겨찾기 상태를 실시간으로 가져오기
         let isFavorite = getCurrentFavoriteState(for: book)
 
         let menuItems: [CircularMenuItem] = [
-            // 1. 사진 찍기
             CircularMenuItem(name: String(localized: .circularMenuLibraryTakePhoto), image: UIImage(systemName: "camera")) { [weak self] in
                 HapticFeedbackManager.shared.selection()
                 self?.capturePhoto(for: book)
             },
-            // 2. 문장 저장
             CircularMenuItem(name: String(localized: .circularMenuBookDetailSaveQuote), image: UIImage(systemName: "quote.bubble")) { [weak self] in
                 HapticFeedbackManager.shared.selection()
                 self?.saveQuote(for: book)
             },
-            // 3. 즐겨찾기
             CircularMenuItem(name: isFavorite ? String(localized: .circularMenuBookDetailRemoveFavorite) : String(localized: .circularMenuBookDetailAddFavorite), image: UIImage(systemName: isFavorite ? "heart.fill" : "heart")) { [weak self] in
                 HapticFeedbackManager.shared.selection()
                 self?.toggleFavorite(book)
             },
-            // 4. 삭제
             CircularMenuItem(name: String(localized: .circularMenuCommonDelete), image: UIImage(systemName: "trash")) { [weak self] in
                 HapticFeedbackManager.shared.selection()
                 self?.deleteBook(book, at: indexPath)
             },
-            // 5. 수정 (도서 정보 수정)
             CircularMenuItem(name: String(localized: .circularMenuCommonEdit), image: UIImage(systemName: "pencil")) { [weak self] in
                 HapticFeedbackManager.shared.selection()
                 self?.editBookInfo(for: book)
@@ -403,7 +368,6 @@ final class LibraryViewController: BaseViewController<LibraryReactor> {
     }
 
     private func getCurrentFavoriteState(for book: Book) -> Bool {
-        // Reactor의 최신 상태에서 해당 책의 즐겨찾기 상태를 가져옴
         guard let reactor = reactor,
               let books = reactor.currentState.displayBooks,
               let currentBook = books.first(where: { $0.isbn == book.isbn }) else {
@@ -412,38 +376,26 @@ final class LibraryViewController: BaseViewController<LibraryReactor> {
         return currentBook.isFavorite
     }
 
-    // MARK: - Menu Actions
-
-    // 1. 사진 찍기
     private func capturePhoto(for book: Book) {
-        // Book 정보를 저장해두기 위해 임시로 저장
-        self.tempBookForPhoto = book
+        guard let coordinator = coordinator as? LibraryCoordinator else { return }
 
-        let imagePicker = UIImagePickerController()
-        imagePicker.delegate = self
-        imagePicker.sourceType = .camera
-        imagePicker.allowsEditing = false
-
-        self.present(imagePicker, animated: true)
+        coordinator.showPhotoCapture(for: book) { [weak self] image, book in
+            self?.savePhotoToRealm(image: image, for: book)
+        }
     }
 
-    // 2. 문장 저장
     private func saveQuote(for book: Book) {
         showQuoteInputAlert(for: book)
     }
 
-    // 3. 즐겨찾기 토글
     private func toggleFavorite(_ book: Book) {
         guard let bookRepository = bookRepository else { return }
 
-        // book.id는 이미 ObjectId의 문자열 표현이므로 그대로 사용
         let bookId = book.id
 
         bookRepository.toggleFavorite(bookId: bookId)
             .observe(on: MainScheduler.instance)
             .subscribe(onNext: { [weak self] isFavorite in
-                print(" Favorite toggled for '\(book.cleanTitle)': \(isFavorite)")
-                // 데이터 새로고침
                 self?.reactor?.action.onNext(.loadBooks)
             }, onError: { error in
                 print(" Failed to toggle favorite: \(error.localizedDescription)")
@@ -451,12 +403,10 @@ final class LibraryViewController: BaseViewController<LibraryReactor> {
             .disposed(by: disposeBag)
     }
 
-    // 5. 도서 정보 수정
     private func editBookInfo(for book: Book) {
         showReadingInfoEdit(for: book)
     }
 
-    // 4. 삭제
     private func deleteBook(_ book: Book, at indexPath: IndexPath) {
         showDeleteConfirmation(for: book, at: indexPath)
     }
@@ -478,8 +428,6 @@ final class LibraryViewController: BaseViewController<LibraryReactor> {
             bookRepository.deleteBooksByISBNs([book.isbn])
                 .observe(on: MainScheduler.instance)
                 .subscribe(onNext: { [weak self] _ in
-                    print(" Book deleted: \(book.cleanTitle)")
-                    // 데이터 새로고침
                     self?.reactor?.action.onNext(.loadBooks)
                 }, onError: { error in
                     print(" Failed to delete book: \(error.localizedDescription)")
@@ -493,39 +441,28 @@ final class LibraryViewController: BaseViewController<LibraryReactor> {
     private func updateData(books: [Book]?) {
         guard let dataSource = dataSource, let books = books else { return }
 
-        // 항상 새 스냅샷 생성
-        // Book이 Hashable이므로 DiffableDataSource가 자동으로 변경 감지
         var snapshot = Snapshot()
         snapshot.appendSections([.book])
         snapshot.appendItems(books, toSection: .book)
 
-        // animatingDifferences: true로 부드러운 애니메이션 적용
-        // DiffableDataSource가 Book의 해시값 변경을 감지하여 해당 셀만 업데이트
         dataSource.apply(snapshot, animatingDifferences: true)
     }
 
     private func handleLoadingState(_ isLoading: Bool) {
         if isLoading {
-            // TODO: 로딩 인디케이터 표시
-            print("Loading books...")
         } else {
-            // TODO: 로딩 인디케이터 숨기기
-            print("Loading completed")
         }
     }
 
-    // MARK: - Navigation Title Update
     private func updateNavigationTitle(with filters: [String], isFavoriteEnabled: Bool) {
         guard let tabBarController = tabBarController else { return }
 
         var titleComponents: [String] = []
 
-        // 즐겨찾기 필터가 활성화된 경우
         if isFavoriteEnabled {
             titleComponents.append("♥")
         }
 
-        // 태그 필터가 활성화된 경우
         if !filters.isEmpty {
             let tagText = filters.map { "#\($0)" }.joined(separator: " ")
             titleComponents.append(tagText)
@@ -538,20 +475,16 @@ final class LibraryViewController: BaseViewController<LibraryReactor> {
         }
     }
 
-    // MARK: - Edit Mode Actions
     private func filterButtonTapped() {
         guard let tagRepository = tagRepository else { return }
 
-        // 모든 태그 로드
         tagRepository.getAllTags()
             .observe(on: MainScheduler.instance)
             .subscribe(onNext: { [weak self] allTags in
                 guard let self = self else { return }
 
-                // 중복 제거하여 고유한 태그 이름 목록 생성
                 let uniqueTags = Array(Set(allTags.map { $0.tagName })).sorted()
 
-                // 태그가 없어도 즐겨찾기 필터링을 위해 필터 화면 표시
                 self.presentTagFilterView(with: uniqueTags)
             }, onError: { error in
                 print("Failed to load tags: \(error.localizedDescription)")
@@ -569,10 +502,8 @@ final class LibraryViewController: BaseViewController<LibraryReactor> {
             guard let self = self, let reactor = self.reactor else { return }
 
             if selectedTags.isEmpty && !favoriteOnly {
-                // 필터 초기화
                 reactor.action.onNext(.clearFilters)
             } else {
-                // 필터 적용
                 reactor.action.onNext(.applyTagFilters(selectedTags, favoriteOnly: favoriteOnly))
             }
         }
@@ -582,12 +513,10 @@ final class LibraryViewController: BaseViewController<LibraryReactor> {
     }
 
     private func editButtonTapped() {
-        // 편집 모드 진입
         enterEditMode()
     }
 
     private func enterEditMode() {
-        // 필터가 활성화되어 있으면 먼저 해제
         if let reactor = reactor,
            (!reactor.currentState.activeFilters.isEmpty || reactor.currentState.isFavoriteFilterEnabled) {
             reactor.action.onNext(.clearFilters)
@@ -596,7 +525,6 @@ final class LibraryViewController: BaseViewController<LibraryReactor> {
         isEditMode = true
         selectedISBNs.removeAll()
 
-        // 햅틱 피드백
         HapticFeedbackManager.shared.impact()
 
         updateNavigationBarForEditMode()
@@ -607,19 +535,16 @@ final class LibraryViewController: BaseViewController<LibraryReactor> {
         isEditMode = false
         selectedISBNs.removeAll()
 
-        // 햅틱 피드백
         HapticFeedbackManager.shared.impact()
 
         updateNavigationBarForEditMode()
         updateCollectionViewForEditMode()
 
-        // 모든 셀의 선택 상태 및 border 해제
         for indexPath in collectionView.indexPathsForSelectedItems ?? [] {
             collectionView.deselectItem(at: indexPath, animated: true)
             updateCellSelection(at: indexPath, isSelected: false)
         }
 
-        // 모든 가시 셀의 border 제거 (선택되지 않았지만 border가 있을 수 있는 셀 포함)
         for cell in collectionView.visibleCells {
             cell.layer.borderWidth = 0
             cell.layer.borderColor = UIColor.clear.cgColor
@@ -630,25 +555,20 @@ final class LibraryViewController: BaseViewController<LibraryReactor> {
         guard let tabBarController = tabBarController else { return }
 
         if isEditMode {
-            // 편집 모드
             if selectedISBNs.isEmpty {
-                // 선택된 책이 없으면: [취소] [전체 선택]
                 tabBarController.navigationItem.leftBarButtonItem = cancelButton
                 tabBarController.navigationItem.rightBarButtonItems = [selectAllButton]
             } else {
-                // 선택된 책이 있으면: [취소] [삭제]
                 tabBarController.navigationItem.leftBarButtonItem = cancelButton
                 tabBarController.navigationItem.rightBarButtonItems = [deleteButton]
             }
         } else {
-            // 일반 모드: [편집] [필터]
             tabBarController.navigationItem.leftBarButtonItem = nil
             tabBarController.navigationItem.rightBarButtonItems = [editButton, filterButton]
         }
     }
 
     private func cancelButtonTapped() {
-        // 편집 모드 종료
         exitEditMode()
     }
 
@@ -656,7 +576,6 @@ final class LibraryViewController: BaseViewController<LibraryReactor> {
         guard let reactor = reactor,
               let books = reactor.currentState.displayBooks else { return }
 
-        // 모든 책 선택
         for (index, book) in books.enumerated() {
             selectedISBNs.insert(book.isbn)
             let indexPath = IndexPath(item: index, section: 0)
@@ -672,7 +591,6 @@ final class LibraryViewController: BaseViewController<LibraryReactor> {
     }
 
     private func updateCollectionViewForEditMode() {
-        // 편집 모드에 따라 컬렉션 뷰 상태 업데이트
         collectionView.reloadData()
     }
 
@@ -717,7 +635,6 @@ final class LibraryViewController: BaseViewController<LibraryReactor> {
 
         guard !isbnsToDelete.isEmpty else { return }
 
-        // 먼저 편집 모드를 종료하고 UI 업데이트 (무효화된 객체 참조 방지)
         exitEditMode()
 
         bookRepository.deleteBooksByISBNs(isbnsToDelete)
@@ -726,10 +643,8 @@ final class LibraryViewController: BaseViewController<LibraryReactor> {
                 onNext: { [weak self] _ in
                     guard let self = self, let reactor = self.reactor else { return }
 
-                    // 데이터 새로고침
                     reactor.action.onNext(.loadBooks)
 
-                    // 필터가 활성화되어 있었다면 다시 적용
                     if !currentFilters.isEmpty || isFavoriteEnabled {
                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                             reactor.action.onNext(.applyTagFilters(currentFilters, favoriteOnly: isFavoriteEnabled))
@@ -739,7 +654,6 @@ final class LibraryViewController: BaseViewController<LibraryReactor> {
                 onError: { [weak self] error in
                     print("Failed to delete books: \(error.localizedDescription)")
                     self?.showDeleteErrorAlert()
-                    // 삭제 실패 시 데이터 새로고침하여 일관성 유지
                     reactor.action.onNext(.loadBooks)
                 }
             )
@@ -757,7 +671,6 @@ final class LibraryViewController: BaseViewController<LibraryReactor> {
     }
 }
 
-// MARK: - Quote Input
 extension LibraryViewController {
     private func showQuoteInputAlert(for book: Book) {
         let alert = UIAlertController(
@@ -789,7 +702,6 @@ extension LibraryViewController {
 
     private func saveQuoteToRealm(quote: String, pageNumber: Int?, for book: Book) {
         guard let quoteRepository = quoteRepository else {
-            print(" QuoteRepository not available")
             return
         }
 
@@ -806,8 +718,6 @@ extension LibraryViewController {
             .subscribe(
                 onNext: { [weak self] savedQuote in
                     guard self != nil else { return }
-                    print(" Quote saved: \(quote), page: \(pageNumber ?? 0) for book: \(book.cleanTitle)")
-                    // 필요시 UI 업데이트
                 },
                 onError: { error in
                     print(" Failed to save quote: \(error.localizedDescription)")
@@ -815,41 +725,19 @@ extension LibraryViewController {
             )
             .disposed(by: disposeBag)
     }
-}
-
-// MARK: - Photo Capture
-extension LibraryViewController: UIImagePickerControllerDelegate, UINavigationControllerDelegate {
-    func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
-        picker.dismiss(animated: true)
-
-        guard let image = info[.originalImage] as? UIImage,
-              let book = tempBookForPhoto else { return }
-
-        savePhotoToRealm(image: image, for: book)
-        tempBookForPhoto = nil
-    }
-
-    func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
-        picker.dismiss(animated: true)
-        tempBookForPhoto = nil
-    }
 
     private func savePhotoToRealm(image: UIImage, for book: Book) {
         guard let photoRepository = photoRepository else {
-            print(" PhotoRepository not available")
             return
         }
 
         let bookId = String(describing: book.id)
 
-        // 이미지를 로컬에 저장
         let imageName = ImageStorageManager.shared.generateUniqueImageName(for: bookId)
         guard let localPath = ImageStorageManager.shared.saveImage(image, withName: imageName) else {
-            print(" Failed to save image locally")
             return
         }
 
-        // Realm에 사진 메타데이터 저장
         let realmPhoto = RealmPhoto(
             bookId: bookId,
             localImagePath: localPath
@@ -860,13 +748,10 @@ extension LibraryViewController: UIImagePickerControllerDelegate, UINavigationCo
             .subscribe(
                 onNext: { [weak self] savedPhoto in
                     guard self != nil else { return }
-                    print(" Photo saved for book: \(book.cleanTitle)")
-                    // 필요시 UI 업데이트
                 },
                 onError: { [weak self] error in
                     guard self != nil else { return }
                     print(" Failed to save photo: \(error.localizedDescription)")
-                    // 저장 실패 시 로컬 이미지 삭제
                     _ = ImageStorageManager.shared.deleteImage(atPath: localPath)
                 }
             )
@@ -874,7 +759,6 @@ extension LibraryViewController: UIImagePickerControllerDelegate, UINavigationCo
     }
 }
 
-// MARK: - Reading Info Edit
 extension LibraryViewController {
     private func showReadingInfoEdit(for book: Book) {
         let readingInfoEditVC = ReadingInfoEditViewController()
@@ -926,7 +810,6 @@ extension LibraryViewController {
         bookRepository.saveBookStruct(updatedBook)
             .observe(on: MainScheduler.instance)
             .subscribe(onNext: { [weak self] _ in
-                print(" Book reading info updated")
                 self?.reactor?.action.onNext(.loadBooks)
             }, onError: { error in
                 print(" Failed to update book reading info: \(error.localizedDescription)")
@@ -944,40 +827,32 @@ extension LibraryViewController: MasonryLayoutProtocol {
 
         let book = books[indexPath.item]
 
-        // 셀 너비 계산 (2 컬럼 레이아웃)
         let numberOfColumns: CGFloat = CGFloat(MasonryConstants.Layout.numberOfColumns)
         let contentWidth = collectionView.bounds.width
         let columnWidth = contentWidth / numberOfColumns
 
-        // MasonryLayout에서 적용하는 패딩 (좌우 대칭)
         let isLeftColumn = indexPath.item % 2 == 0
-        let masonryLeftPadding: CGFloat = isLeftColumn ? 8 : 2  // MasonryLayout의 leftInset과 동일
-        let masonryRightPadding: CGFloat = isLeftColumn ? 2 : 8  // MasonryLayout의 rightInset과 동일
+        let masonryLeftPadding: CGFloat = isLeftColumn ? 8 : 2
+        let masonryRightPadding: CGFloat = isLeftColumn ? 2 : 8
 
-        // 셀 내부 cellInset
         let cellInset = LibraryConstants.Layout.cellInset
 
-        // 실제 콘텐츠 사용 가능 너비
         let availableWidth = columnWidth - masonryLeftPadding - masonryRightPadding - (cellInset * 2)
 
-        // 백그라운드 뷰 높이 (정사각형)
         let backgroundHeight = availableWidth
 
-        // 타이틀 레이블 높이 동적 계산
         let titleHeight = calculateLabelHeight(
             text: book.cleanTitle,
             font: .custom(weight: .semiBold, size: LibraryConstants.Typography.titleFontSize),
             width: availableWidth
         )
 
-        // 저자 레이블 높이 동적 계산
         let authorHeight = calculateLabelHeight(
             text: book.author,
             font: .custom(weight: .regular, size: LibraryConstants.Typography.authorFontSize),
             width: availableWidth
         ) * 2
 
-        // 총 높이 = 백그라운드 + 간격 + 타이틀 + 간격 + 저자 + 하단 여백
         let totalHeight = backgroundHeight
             + LibraryConstants.Layout.stackOffset
             + titleHeight
@@ -992,7 +867,7 @@ extension LibraryViewController: MasonryLayoutProtocol {
         let label = UILabel()
         label.font = font
         label.text = text
-        label.numberOfLines = 0 // 무제한 줄 수
+        label.numberOfLines = 0
 
         let size = label.sizeThatFits(CGSize(width: width, height: .greatestFiniteMagnitude))
         return ceil(size.height)

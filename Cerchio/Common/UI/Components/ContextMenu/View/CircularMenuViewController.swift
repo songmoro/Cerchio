@@ -18,7 +18,6 @@ class CircularMenuViewController: UIViewController {
     private var highlightManager: ViewHighlightManager?
     var highlightConfiguration: ViewHighlightConfiguration = .withContextualRotation()
 
-    // 롱 프레스 시작 위치 저장 (레이블 위치 결정용)
     private var initialTouchPosition: CGPoint = .zero
 
     var buttonSize: CGFloat = CircularMenuConstants.Layout.buttonSize
@@ -46,7 +45,7 @@ class CircularMenuViewController: UIViewController {
 
     func showMenu(at point: CGPoint, selectedView: UIView, items: [CircularMenuItemProtocol]) {
         centerPoint = point
-        initialTouchPosition = point // 롱 프레스 시작 위치 저장
+        initialTouchPosition = point
         menuItems = items
 
         highlightManager = ViewHighlightManager(configuration: highlightConfiguration)
@@ -99,7 +98,6 @@ class CircularMenuViewController: UIViewController {
         let screenBounds = view.bounds
         let screenCenter = CGPoint(x: screenBounds.midX, y: screenBounds.midY)
 
-        // 롱 프레스 시작 위치를 기준으로 레이블 위치 결정
         let isInitialTouchOnLeft = initialTouchPosition.x < screenCenter.x
 
         if isInitialTouchOnLeft {
@@ -276,7 +274,6 @@ class CircularMenuViewController: UIViewController {
         let leftBoundary = centerX * CircularMenuConstants.PositionRatios.leftBoundaryRatio
         let topBoundary = centerY * CircularMenuConstants.PositionRatios.topBoundaryRatio
 
-//        }
         
         if point.y > topBoundary {
             return -CGFloat.pi / 2
@@ -338,7 +335,6 @@ class CircularMenuViewController: UIViewController {
         }) { [weak self] _ in
             self?.highlightManager?.dismiss(animated: false) {
                 self?.dismiss(animated: false) {
-                    // dismiss 완료 후 CircularMenuManager에 알림
                     CircularMenuManager.shared.resetMenuState()
                     completion?()
                 }

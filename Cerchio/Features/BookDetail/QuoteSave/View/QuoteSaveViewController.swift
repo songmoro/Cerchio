@@ -13,7 +13,6 @@ import RxCocoa
 import FirebaseAnalytics
 
 final class QuoteSaveViewController: UIViewController {
-    // MARK: - Events
     enum Event {
         case quoteSaved(String)
         case cancelled
@@ -22,7 +21,6 @@ final class QuoteSaveViewController: UIViewController {
     private let eventRelay = PublishRelay<Event>()
     var events: Observable<Event> { eventRelay.asObservable() }
 
-    // MARK: - Properties
     private let bookId: String
     private var quoteRepository: QuoteRepositoryProtocol?
     private let disposeBag = DisposeBag()
@@ -30,7 +28,6 @@ final class QuoteSaveViewController: UIViewController {
     private var isEditMode: Bool = false
     private var editingQuoteId: String?
 
-    // MARK: - UI Components
     private let textView: InsetTextView = {
         let textView = InsetTextView()
         textView.font = .custom(weight: .regular, size: 16)
@@ -63,16 +60,12 @@ final class QuoteSaveViewController: UIViewController {
         return label
     }()
 
-    // MARK: - Initialization
     init(bookId: String, existingQuote: String? = nil, existingPageNumber: Int? = nil) {
         self.bookId = bookId
         super.init(nibName: nil, bundle: nil)
 
-        // 기존 문장이 있으면 편집 모드로 설정
         if let existingQuote = existingQuote {
             self.isEditMode = true
-            // Note: editingQuoteId는 나중에 repository에서 조회하여 설정
-            // 여기서는 UI만 미리 설정
             self.preloadedQuote = existingQuote
             self.preloadedPageNumber = existingPageNumber
         }
@@ -89,7 +82,6 @@ final class QuoteSaveViewController: UIViewController {
         isEditMode = true
         editingQuoteId = quoteId
 
-        // 뷰가 로드된 후에 설정
         loadViewIfNeeded()
         textView.text = quote
         pageNumberTextField.text = pageNumber.map { String($0) }
@@ -100,7 +92,6 @@ final class QuoteSaveViewController: UIViewController {
         fatalError("init(coder:) has not been implemented")
     }
 
-    // MARK: - Lifecycle
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
@@ -108,7 +99,6 @@ final class QuoteSaveViewController: UIViewController {
         setupKeyboardHandling()
         setupModalBehavior()
 
-        // Preloaded 데이터가 있으면 설정
         if let preloadedQuote = preloadedQuote {
             textView.text = preloadedQuote
             if let pageNumber = preloadedPageNumber {
@@ -116,21 +106,17 @@ final class QuoteSaveViewController: UIViewController {
             }
             updateSaveButtonState()
 
-            // 편집 모드에서는 quoteId 찾기
             loadEditingQuoteId(quote: preloadedQuote)
         }
 
-        // 자동으로 텍스트뷰에 포커스
         textView.becomeFirstResponder()
     }
 
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
-        // 확실하게 modal presentation 설정
         isModalInPresentation = true
     }
 
-    // MARK: - Setup
     private func setupUI() {
         view.backgroundColor = .systemBackground
 
@@ -146,7 +132,7 @@ final class QuoteSaveViewController: UIViewController {
         textView.snp.makeConstraints {
             $0.top.equalTo(view.safeAreaLayoutGuide).offset(16)
             $0.horizontalEdges.equalToSuperview().inset(16)
-            $0.height.equalToSuperview().multipliedBy(0.5) // 화면 높이의 반절
+            $0.height.equalToSuperview().multipliedBy(0.5)
         }
 
         pageLabel.snp.makeConstraints {
@@ -168,7 +154,6 @@ final class QuoteSaveViewController: UIViewController {
     private func setupNavigationBar() {
         navigationItem.title = isEditMode ? "문장 수정" : String(localized: .quoteSaveTitle)
 
-        // 취소 버튼
         let cancelButton = UIBarButtonItem(
             title: String(localized: .actionCancel),
             style: .plain,
@@ -178,7 +163,6 @@ final class QuoteSaveViewController: UIViewController {
         cancelButton.tintColor = .forestGreen
         navigationItem.leftBarButtonItem = cancelButton
 
-        // 저장 버튼
         let saveButton = UIBarButtonItem(
             title: String(localized: .actionSave),
             style: .done,
@@ -188,13 +172,11 @@ final class QuoteSaveViewController: UIViewController {
         saveButton.tintColor = .forestGreen
         navigationItem.rightBarButtonItem = saveButton
 
-        // 네비게이션 바 스타일 설정
         setupNavigationBarAppearance()
         updateSaveButtonState()
     }
 
     private func setupNavigationBarAppearance() {
-        // 바텀 시트에 적합한 네비게이션 바 스타일
         guard let navigationBar = navigationController?.navigationBar else { return }
 
         let appearance = UINavigationBarAppearance()
@@ -211,12 +193,10 @@ final class QuoteSaveViewController: UIViewController {
     }
 
     private func setupKeyboardHandling() {
-        // 키보드 숨기기 제스처
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(dismissKeyboard))
         tapGesture.cancelsTouchesInView = false
         view.addGestureRecognizer(tapGesture)
 
-        // 키보드 알림
         NotificationCenter.default.addObserver(
             self,
             selector: #selector(keyboardWillShow),
@@ -233,14 +213,11 @@ final class QuoteSaveViewController: UIViewController {
     }
 
     private func setupModalBehavior() {
-        // 모달이 취소/저장 버튼으로만 dismiss되도록 설정
         isModalInPresentation = true
 
-        // Navigation controller의 modal presentation도 설정
         navigationController?.isModalInPresentation = true
     }
 
-    // MARK: - Actions
     @objc private func cancelTapped() {
         if !textView.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
             showDiscardConfirmation()
@@ -256,7 +233,6 @@ final class QuoteSaveViewController: UIViewController {
         let pageNumber = Int(pageNumberTextField.text ?? "")
 
         if isEditMode, let quoteId = editingQuoteId {
-            // 수정 모드: 기존 문장 업데이트
             Analytics.logEvent("quote_updated", parameters: [
                 "book_id": bookId,
                 "has_page_number": pageNumber != nil
@@ -264,7 +240,6 @@ final class QuoteSaveViewController: UIViewController {
 
             updateExistingQuote(quoteId: quoteId, newQuote: quote, newPageNumber: pageNumber)
         } else {
-            // 새로 저장
             Analytics.logEvent("quote_saved", parameters: [
                 "book_id": bookId,
                 "has_page_number": pageNumber != nil
@@ -296,7 +271,6 @@ final class QuoteSaveViewController: UIViewController {
             let realm = try Realm()
             guard let objectId = try? ObjectId(string: quoteId),
                   let realmQuote = realm.object(ofType: RealmQuote.self, forPrimaryKey: objectId) else {
-                print("Quote not found for update")
                 return
             }
 
@@ -318,11 +292,10 @@ final class QuoteSaveViewController: UIViewController {
 
     @objc private func keyboardWillShow(_ notification: Notification) {
 
-        // 텍스트뷰 높이 조정
         textView.snp.remakeConstraints {
             $0.top.equalTo(view.safeAreaLayoutGuide).offset(16)
             $0.horizontalEdges.equalToSuperview().inset(16)
-            $0.height.equalToSuperview().multipliedBy(0.4) // 키보드가 올라올 때 조금 작게
+            $0.height.equalToSuperview().multipliedBy(0.4)
         }
 
         UIView.animate(withDuration: 0.3) {
@@ -331,7 +304,6 @@ final class QuoteSaveViewController: UIViewController {
     }
 
     @objc private func keyboardWillHide(_ notification: Notification) {
-        // 텍스트뷰 높이 복원
         textView.snp.remakeConstraints {
             $0.top.equalTo(view.safeAreaLayoutGuide).offset(16)
             $0.horizontalEdges.equalToSuperview().inset(16)
@@ -343,21 +315,17 @@ final class QuoteSaveViewController: UIViewController {
         }
     }
 
-    // MARK: - Helper Methods
     private func updateSaveButtonState() {
         let hasText = !textView.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
         navigationItem.rightBarButtonItem?.isEnabled = hasText
 
-        // 텍스트가 있으면 더욱 확실하게 modal dismiss 방지
         updateModalPresentationState()
     }
 
     private func updateModalPresentationState() {
-        // 항상 modal presentation 유지
         isModalInPresentation = true
         navigationController?.isModalInPresentation = true
     }
-
 
     private func showDiscardConfirmation() {
         let alert = UIAlertController(
@@ -366,10 +334,8 @@ final class QuoteSaveViewController: UIViewController {
             preferredStyle: .alert
         )
 
-        // 1. 계속 작성 (취소 스타일 - 기본 액션)
         alert.addAction(UIAlertAction(title: String(localized: .quoteSaveContinueEditing), style: .cancel))
 
-        // 2. 삭제 (파괴적 스타일)
         alert.addAction(UIAlertAction(title: String(localized: .quoteSaveDiscard), style: .destructive) { [weak self] _ in
             self?.eventRelay.accept(.cancelled)
         })
@@ -389,14 +355,12 @@ final class QuoteSaveViewController: UIViewController {
         present(alert, animated: true)
     }
 
-    // MARK: - Edit Mode
     private func loadEditingQuoteId(quote: String) {
         guard let quoteRepository = quoteRepository else { return }
 
         quoteRepository.getQuotes(for: bookId)
             .take(1)
             .subscribe(onNext: { [weak self] quotes in
-                // Realm Results를 Array로 변환하여 검색
                 let quotesArray = Array(quotes)
                 if let matchingQuote = quotesArray.first(where: { $0.quote == quote }) {
                     self?.editingQuoteId = String(describing: matchingQuote.id)
@@ -407,13 +371,11 @@ final class QuoteSaveViewController: UIViewController {
             .disposed(by: disposeBag)
     }
 
-    // MARK: - Deinit
     deinit {
         NotificationCenter.default.removeObserver(self)
     }
 }
 
-// MARK: - UITextViewDelegate
 extension QuoteSaveViewController: UITextViewDelegate {
     func textViewDidChange(_ textView: UITextView) {
         updateSaveButtonState()

@@ -17,7 +17,6 @@ enum LibraryNavigationEvent: NavigationEventProtocol {
     case showSettings
 }
 
-// MARK: - Library Dependencies
 struct LibraryDependencies {
     let serviceFactory: ServiceFactory
 }
@@ -26,6 +25,8 @@ final class LibraryCoordinator: BaseCoordinator, Coordinatable {
     typealias Dependencies = LibraryDependencies
 
     private var dependencies: LibraryDependencies!
+    private var photoCompletionHandler: ((UIImage, Book) -> Void)?
+    private var currentBook: Book?
 
     override func start() {
         fatalError("Use start(with dependencies:) instead")
@@ -40,7 +41,6 @@ final class LibraryCoordinator: BaseCoordinator, Coordinatable {
     private func showLibraryViewController() {
         let libraryViewController = LibraryViewController()
 
-        // Repository 주입
         let bookRepository = dependencies.serviceFactory.createBookRepository()
         let tagRepository = dependencies.serviceFactory.createTagRepository()
         let quoteRepository = dependencies.serviceFactory.createQuoteRepository()
@@ -80,8 +80,6 @@ final class LibraryCoordinator: BaseCoordinator, Coordinatable {
         }
     }
 
-    // MARK: - Navigation Methods
-
     func showBookDetail(_ book: Book) {
         let bookDetailDependencies = BookDetailDependencies(
             serviceFactory: dependencies.serviceFactory,
@@ -93,17 +91,48 @@ final class LibraryCoordinator: BaseCoordinator, Coordinatable {
     }
 
     func showAddBook() {
-        // TODO: AddBookCoordinator 구현 시 추가
-        print("Show add book")
     }
 
     func showSearch() {
-        // TODO: SearchCoordinator 구현 시 추가
-        print("Show search")
     }
 
     func showSettings() {
-        // TODO: SettingsCoordinator 구현 시 추가
-        print("Show settings")
+    }
+
+    func showPhotoCapture(for book: Book, completion: @escaping (UIImage, Book) -> Void) {
+        guard let topViewController = navigationController.topViewController else { return }
+
+        CameraPermissionManager.shared.handleCameraPermission(from: topViewController) { [weak self] granted in
+            guard granted else {
+                return
+            }
+
+            let cameraVC = CameraViewController()
+            cameraVC.delegate = self
+            cameraVC.modalPresentationStyle = .fullScreen
+
+            self?.photoCompletionHandler = completion
+            self?.currentBook = book
+
+            self?.navigationController.present(cameraVC, animated: true)
+        }
+    }
+}
+
+extension LibraryCoordinator: CameraViewControllerDelegate {
+    func cameraViewController(_ controller: CameraViewController, didCapturePhoto image: UIImage) {
+        controller.dismiss(animated: true) { [weak self] in
+            guard let self = self, let book = self.currentBook else { return }
+            self.photoCompletionHandler?(image, book)
+            self.photoCompletionHandler = nil
+            self.currentBook = nil
+        }
+    }
+
+    func cameraViewControllerDidCancel(_ controller: CameraViewController) {
+        controller.dismiss(animated: true) { [weak self] in
+            self?.photoCompletionHandler = nil
+            self?.currentBook = nil
+        }
     }
 }

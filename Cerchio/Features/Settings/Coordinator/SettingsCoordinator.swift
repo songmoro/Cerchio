@@ -14,7 +14,6 @@ enum SettingsNavigationEvent: NavigationEventProtocol {
     case navigateToLibrary
 }
 
-// MARK: - Settings Dependencies
 struct SettingsDependencies {
     let serviceFactory: ServiceFactory
 }
@@ -39,14 +38,12 @@ final class SettingsCoordinator: BaseCoordinator, Coordinatable {
     private func showSettingsViewController() {
         let settingsViewController = SettingsViewController()
 
-        // Repository 주입
         let bookRepository = dependencies.serviceFactory.createBookRepository()
         let settingsReactor = SettingsReactor(bookRepository: bookRepository)
 
         settingsViewController.coordinator = self
         settingsViewController.reactor = settingsReactor
 
-        // Reset 완료 시 서재로 이동
         settingsReactor.state
             .map { $0.resetCompleted }
             .distinctUntilChanged()
@@ -89,8 +86,6 @@ final class SettingsCoordinator: BaseCoordinator, Coordinatable {
             navigateToLibrary()
         }
     }
-
-    // MARK: - Navigation Methods
 
     func navigateToLibrary() {
         onNavigateToLibrary?()

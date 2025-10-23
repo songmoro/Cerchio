@@ -8,10 +8,7 @@
 import UIKit
 import SnapKit
 
-/// Generic tab navigation view for NestedScrollViewController
-/// Supports any tab configuration with title and associated value
 final class TabNavigationView<TabValue: Hashable>: UIView {
-    // MARK: - UI Components
     private let stackView: UIStackView = {
         let stack = UIStackView()
         stack.axis = .horizontal
@@ -36,12 +33,10 @@ final class TabNavigationView<TabValue: Hashable>: UIView {
     private var tabButtons: [UIButton] = []
     private var indicatorLeadingConstraint: Constraint?
 
-    // MARK: - Properties
     var onTabSelected: ((TabValue) -> Void)?
     private var currentSelectedTab: TabValue?
     private var tabs: [(title: String, value: TabValue)] = []
 
-    // MARK: - Initialization
     init(tabs: [(title: String, value: TabValue)]) {
         self.tabs = tabs
         super.init(frame: .zero)
@@ -57,7 +52,6 @@ final class TabNavigationView<TabValue: Hashable>: UIView {
         fatalError("init(coder:) has not been implemented")
     }
 
-    // MARK: - Setup
     private func setupViews() {
         backgroundColor = .systemBackground
 
@@ -103,8 +97,7 @@ final class TabNavigationView<TabValue: Hashable>: UIView {
         button.tag = index
         button.addTarget(self, action: #selector(tabButtonTapped(_:)), for: .touchUpInside)
 
-        button.configurationUpdateHandler = { [weak self] button in
-            guard let self = self else { return }
+        button.configurationUpdateHandler = { _ in
             var config = button.configuration
             config?.baseForegroundColor = button.isSelected ? .label : .secondaryLabel
 
@@ -126,7 +119,6 @@ final class TabNavigationView<TabValue: Hashable>: UIView {
         return button
     }
 
-    // MARK: - Actions
     @objc private func tabButtonTapped(_ sender: UIButton) {
         guard sender.tag < tabs.count else { return }
         let tabValue = tabs[sender.tag].value
@@ -134,7 +126,6 @@ final class TabNavigationView<TabValue: Hashable>: UIView {
         onTabSelected?(tabValue)
     }
 
-    // MARK: - Public Methods
     func selectTab(value: TabValue, animated: Bool) {
         guard currentSelectedTab != value else { return }
         currentSelectedTab = value
@@ -144,7 +135,6 @@ final class TabNavigationView<TabValue: Hashable>: UIView {
         moveIndicator(to: index, animated: animated)
     }
 
-    // MARK: - Private Methods
     private func updateButtonStates(selectedIndex: Int) {
         tabButtons.enumerated().forEach { idx, button in
             button.isSelected = idx == selectedIndex

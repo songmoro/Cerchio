@@ -9,7 +9,6 @@ import UIKit
 import SnapKit
 
 final class CommonSectionHeader: UICollectionReusableView, IsIdentifiable {
-    // MARK: - Layout
     static func layoutSize() -> NSCollectionLayoutSize {
         return NSCollectionLayoutSize(
             widthDimension: .fractionalWidth(1.0),
@@ -25,7 +24,6 @@ final class CommonSectionHeader: UICollectionReusableView, IsIdentifiable {
         )
     }
 
-    // MARK: - UI Components
     private let titleLabel = UILabel()
     private let actionButton: UIButton = {
         var config = UIButton.Configuration.plain()
@@ -45,10 +43,8 @@ final class CommonSectionHeader: UICollectionReusableView, IsIdentifiable {
         return button
     }()
 
-    // MARK: - Properties
     var onActionTapped: (() -> Void)?
 
-    // MARK: - Initialization
     override init(frame: CGRect) {
         super.init(frame: frame)
         setupViews()
@@ -59,7 +55,6 @@ final class CommonSectionHeader: UICollectionReusableView, IsIdentifiable {
         fatalError("init(coder:) has not been implemented")
     }
 
-    // MARK: - Setup
     private func setupViews() {
         backgroundColor = .clear
 
@@ -83,7 +78,6 @@ final class CommonSectionHeader: UICollectionReusableView, IsIdentifiable {
         }
     }
 
-    // MARK: - Configuration
     func configure(title: String, actionTitle: String? = nil) {
         titleLabel.text = title
 
@@ -95,7 +89,6 @@ final class CommonSectionHeader: UICollectionReusableView, IsIdentifiable {
         }
     }
 
-    // MARK: - Actions
     @objc private func actionButtonTapped() {
         HapticFeedbackManager.shared.impact()
         onActionTapped?()

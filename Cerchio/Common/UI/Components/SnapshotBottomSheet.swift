@@ -9,14 +9,12 @@ import UIKit
 import SnapKit
 
 class SnapshotBottomSheet: UIView {
-    // MARK: - Properties
     var onDismiss: (() -> Void)?
 
     private(set) var cellSnapshot: UIView
     private let sheetHeight: CGFloat
     private var initialContainerOffset: CGFloat = 0
     
-    // MARK: - UI Components
     private let dimmingView: UIView = {
         let view = UIView()
         view.backgroundColor = UIColor.black.withAlphaComponent(0.3)
@@ -35,7 +33,6 @@ class SnapshotBottomSheet: UIView {
     
     private let snapshotContainer = UIView()
     
-    // MARK: - Initialization
     init(sourceView: UIView, sheetHeight: CGFloat) {
         let snapshot = sourceView.snapshotView(afterScreenUpdates: true) ?? UIView()
         snapshot.backgroundColor = .systemBackground
@@ -58,7 +55,6 @@ class SnapshotBottomSheet: UIView {
         fatalError("init(coder:) has not been implemented")
     }
     
-    // MARK: - Setup
     private func setupUI() {
         addSubview(dimmingView)
         addSubview(containerView)
@@ -101,7 +97,6 @@ class SnapshotBottomSheet: UIView {
         snapshotContainer.addGestureRecognizer(snapshotPanGesture)
     }
     
-    // MARK: - Actions
     @objc private func handleDimmingTap() {
         dismiss {
             self.onDismiss?()
@@ -150,7 +145,6 @@ class SnapshotBottomSheet: UIView {
         }
     }
     
-    // MARK: - Presentation
     func show(in window: UIWindow) {
         self.frame = window.bounds
         window.addSubview(self)

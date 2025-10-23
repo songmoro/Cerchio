@@ -14,7 +14,7 @@ import FirebaseAnalytics
 final class PhotoListReactor: Reactor {
     enum Action {
         case loadPhotos
-        case deletePhoto(String) // ID로 삭제
+        case deletePhoto(String)
     }
 
     enum Mutation {

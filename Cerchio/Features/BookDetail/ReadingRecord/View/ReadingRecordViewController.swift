@@ -12,15 +12,12 @@ import RxCocoa
 import SnapKit
 
 final class ReadingRecordViewController: BaseViewController<ReadingRecordReactor> {
-    // MARK: - UI Components
     private let titleLabel = TransitionAnimatedLabel()
     private let timerPickerView = SVGTimerPickerView(maskImageName: "ClearLogo", svgFileName: "ScaledClearLogo")
     private let startButton = UIButton(type: .system)
 
-    // MARK: - Properties
     var onStartTimer: ((Int) -> Void)?
 
-    // MARK: - Lifecycle
     override func setupUI() {
         super.setupUI()
         view.backgroundColor = .systemBackground
@@ -44,7 +41,6 @@ final class ReadingRecordViewController: BaseViewController<ReadingRecordReactor
     private func setupTimerPicker() {
         timerPickerView.onTimeChanged = { [weak self] minutes in
             self?.titleLabel.text = String(argumentLocalized: .`timer.minutes_format`, args: [minutes])
-            print("Selected minutes: \(minutes)")
         }
         titleLabel.text = String(argumentLocalized: .`timer.minutes_format`, args: [timerPickerView.selectedMinutes])
         view.addSubview(timerPickerView)

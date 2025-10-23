@@ -10,7 +10,6 @@ import SnapKit
 import Kingfisher
 
 final class SearchResultTableViewCell: UITableViewCell, IsIdentifiable {
-    // MARK: - UI Components
     private let bookImageView: UIImageView = {
         let imageView = UIImageView()
         imageView.contentMode = .scaleAspectFill
@@ -54,11 +53,9 @@ final class SearchResultTableViewCell: UITableViewCell, IsIdentifiable {
         return stackView
     }()
 
-    // MARK: - Properties
     private var addBookHandler: ((Book) -> Void)?
     private var currentBook: Book?
 
-    // MARK: - Initialization
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
         setupUI()
@@ -68,7 +65,6 @@ final class SearchResultTableViewCell: UITableViewCell, IsIdentifiable {
         fatalError("init(coder:) has not been implemented")
     }
 
-    // MARK: - Setup
     private func setupUI() {
         selectionStyle = .none
         backgroundColor = .systemBackground
@@ -85,15 +81,13 @@ final class SearchResultTableViewCell: UITableViewCell, IsIdentifiable {
     }
 
     private func setupConstraints() {
-        // 이미지 뷰 (가로 너비의 1/4 정도)
         bookImageView.snp.makeConstraints {
             $0.leading.equalToSuperview().inset(SearchResultConstants.Layout.cellHorizontalInset)
             $0.top.bottom.equalToSuperview().inset(SearchResultConstants.Layout.cellVerticalInset)
-            $0.width.equalTo(SearchResultConstants.Layout.imageWidth) // 고정 크기
-            $0.height.equalTo(SearchResultConstants.Layout.imageHeight) // 4:3 비율보다 세로로 긴 책 모양
+            $0.width.equalTo(SearchResultConstants.Layout.imageWidth)
+            $0.height.equalTo(SearchResultConstants.Layout.imageHeight)
         }
 
-        // 담기 버튼 (세로 중심)
         addButton.snp.makeConstraints {
             $0.trailing.equalToSuperview().inset(SearchResultConstants.Layout.cellHorizontalInset)
             $0.centerY.equalToSuperview()
@@ -101,7 +95,6 @@ final class SearchResultTableViewCell: UITableViewCell, IsIdentifiable {
             $0.height.equalTo(SearchResultConstants.Layout.buttonHeight)
         }
 
-        // 정보 스택뷰 (이미지와 버튼 사이)
         infoStackView.snp.makeConstraints {
             $0.leading.equalTo(bookImageView.snp.trailing).offset(SearchResultConstants.Layout.contentSpacing)
             $0.trailing.equalTo(addButton.snp.leading).offset(-SearchResultConstants.Layout.contentSpacing)
@@ -118,7 +111,6 @@ final class SearchResultTableViewCell: UITableViewCell, IsIdentifiable {
         HapticFeedbackManager.shared.impact()
         addBookHandler?(book)
 
-        // 버튼 애니메이션
         UIView.animate(withDuration: SearchResultConstants.Animation.buttonAnimationDuration, animations: {
             self.addButton.transform = CGAffineTransform(scaleX: SearchResultConstants.Animation.buttonScaleDown, y: SearchResultConstants.Animation.buttonScaleDown)
         }) { _ in
@@ -128,7 +120,6 @@ final class SearchResultTableViewCell: UITableViewCell, IsIdentifiable {
         }
     }
 
-    // MARK: - Configuration
     func configure(with book: Book, addHandler: @escaping (Book) -> Void) {
         currentBook = book
         addBookHandler = addHandler
@@ -136,7 +127,6 @@ final class SearchResultTableViewCell: UITableViewCell, IsIdentifiable {
         titleLabel.text = book.title
         authorLabel.text = book.author
 
-        // Kingfisher로 이미지 로드
         if let imageURL = URL(string: book.image) {
             bookImageView.kf.setImage(
                 with: imageURL,
@@ -152,7 +142,6 @@ final class SearchResultTableViewCell: UITableViewCell, IsIdentifiable {
         }
     }
 
-    // MARK: - Prepare for Reuse
     override func prepareForReuse() {
         super.prepareForReuse()
         bookImageView.kf.cancelDownloadTask()

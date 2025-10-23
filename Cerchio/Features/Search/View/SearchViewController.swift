@@ -15,10 +15,8 @@ final class SearchViewController: BaseViewController<SearchReactor> {
     private typealias DataSource = UITableViewDiffableDataSource<Section, Book>
     private typealias Snapshot = NSDiffableDataSourceSnapshot<Section, Book>
 
-    // MARK: - Callbacks
     var onBookSaved: ((Book) -> Void)?
 
-    // MARK: - UI Components
     private let searchBar: UISearchBar = {
         let searchBar = UISearchBar()
         searchBar.placeholder = String(localized: .`search.placeholder`)
@@ -55,14 +53,12 @@ final class SearchViewController: BaseViewController<SearchReactor> {
         return indicator
     }()
 
-    // MARK: - Properties
     private var dataSource: DataSource!
 
     nonisolated enum Section: CaseIterable, Hashable, Sendable {
         case results
     }
 
-    // MARK: - Lifecycle
     override func setupUI() {
         super.setupUI()
 
@@ -76,7 +72,6 @@ final class SearchViewController: BaseViewController<SearchReactor> {
 
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        // 탭 전환 시 검색 결과의 도서 존재 여부 갱신
         reactor?.action.onNext(.refresh)
     }
 
@@ -114,7 +109,6 @@ final class SearchViewController: BaseViewController<SearchReactor> {
             })
             .disposed(by: disposeBag)
 
-        // Error 상태 처리 (중복 책 등)
         reactor.state
             .map { $0.error }
             .distinctUntilChanged()
@@ -125,7 +119,6 @@ final class SearchViewController: BaseViewController<SearchReactor> {
             })
             .disposed(by: disposeBag)
 
-        // 저장된 책 상태 관찰 - 저장 완료 시 상세 화면으로 이동
         reactor.state
             .map { $0.lastSavedBook }
             .distinctUntilChanged { $0?.isbn == $1?.isbn }
@@ -137,7 +130,6 @@ final class SearchViewController: BaseViewController<SearchReactor> {
             .disposed(by: disposeBag)
     }
 
-    // MARK: - Setup Methods
     private func setupSearchBar() {
         view.addSubview(searchBar)
         searchBar.showsCancelButton = true
@@ -196,14 +188,12 @@ final class SearchViewController: BaseViewController<SearchReactor> {
         searchBar.resignFirstResponder()
     }
 
-    // MARK: - DataSource Configuration
     private func configureDataSource() {
         dataSource = DataSource(tableView: tableView) { [weak self] (tableView: UITableView, indexPath: IndexPath, book: Book) -> UITableViewCell? in
             let cell = tableView.dequeueReusableCell(withIdentifier: SearchResultTableViewCell.identifier, for: indexPath) as! SearchResultTableViewCell
             cell.configure(with: book) { [weak self] selectedBook in
                 guard let self = self else { return }
 
-                // 책 저장 (저장 완료 후 lastSavedBook이 업데이트되고, bind의 구독이 알림을 처리)
                 self.reactor?.action.onNext(.addBookToLibrary(selectedBook))
             }
             return cell
@@ -212,7 +202,6 @@ final class SearchViewController: BaseViewController<SearchReactor> {
         tableView.dataSource = dataSource
     }
 
-    // MARK: - Alert
     private func showNavigationConfirmAlert(for book: Book) {
         let alert = UIAlertController(
             title: String(localized: .`search.book_saved.title`),
@@ -245,7 +234,6 @@ final class SearchViewController: BaseViewController<SearchReactor> {
         present(alert, animated: true)
     }
 
-    // MARK: - UI Updates
     private func updateUI(for searchState: SearchState) {
         switch searchState {
         case .initial:
@@ -291,22 +279,18 @@ final class SearchViewController: BaseViewController<SearchReactor> {
     }
 }
 
-
-// MARK: - UISearchBarDelegate
 extension SearchViewController: UISearchBarDelegate {
     func searchBarCancelButtonClicked(_ searchBar: UISearchBar) {
         searchBar.resignFirstResponder()
     }
 }
 
-// MARK: - UITableViewDelegate
 extension SearchViewController: UITableViewDelegate {
     func scrollViewDidScroll(_ scrollView: UIScrollView) {
         let offsetY = scrollView.contentOffset.y
         let contentHeight = scrollView.contentSize.height
         let frameHeight = scrollView.frame.size.height
 
-        // 하단에서 100pt 이내로 스크롤 시 다음 페이지 로드
         if offsetY > contentHeight - frameHeight - 100 {
             reactor?.action.onNext(.loadMore)
         }

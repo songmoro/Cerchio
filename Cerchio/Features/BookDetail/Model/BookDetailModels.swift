@@ -7,18 +7,16 @@
 
 import Foundation
 
-// MARK: - BookDetail Action
 enum BookDetailAction {
-    case loadBookDetail(String) // book ID
+    case loadBookDetail(String)
     case updateReadingStatus(ReadingStatus)
-    case updateProgress(Int) // page number
+    case updateProgress(Int)
     case addNote(BookNote)
     case updateRating(Int)
     case toggleFavorite
     case shareBook
 }
 
-// MARK: - BookDetail Mutation
 enum BookDetailMutation {
     case setBook(Book?)
     case setLoading(Bool)
@@ -27,12 +25,11 @@ enum BookDetailMutation {
     case setProgress(Int)
     case addNote(BookNote)
     case updateNote(BookNote)
-    case removeNote(String) // note ID
+    case removeNote(String)
     case setRating(Int)
     case setFavorite(Bool)
 }
 
-// MARK: - BookDetail State
 struct BookDetailState {
     var book: Book?
     var isLoading: Bool = false
@@ -50,7 +47,6 @@ struct BookDetailState {
     }
 }
 
-// MARK: - Book Note
 struct BookNote: Identifiable, Codable {
     let id: String
     let bookId: String
@@ -79,7 +75,6 @@ struct BookNote: Identifiable, Codable {
     }
 }
 
-// MARK: - Reading Progress
 struct ReadingProgress: Codable {
     let bookId: String
     let currentPage: Int
@@ -107,11 +102,10 @@ struct ReadingProgress: Codable {
     }
 }
 
-// MARK: - Book Review
 struct BookReview: Identifiable, Codable {
     let id: String
     let bookId: String
-    let rating: Int // 1-5
+    let rating: Int
     let title: String?
     let content: String
     let isPublic: Bool
@@ -136,7 +130,6 @@ struct BookReview: Identifiable, Codable {
     }
 }
 
-// MARK: - Book Highlight
 struct BookHighlight: Identifiable, Codable {
     let id: String
     let bookId: String
@@ -166,7 +159,6 @@ struct BookHighlight: Identifiable, Codable {
     }
 }
 
-// MARK: - Highlight Color
 enum HighlightColor: String, CaseIterable, Codable {
     case yellow = "yellow"
     case green = "green"

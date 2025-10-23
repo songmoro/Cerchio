@@ -38,12 +38,10 @@ final class QuoteListCoordinator: BaseCoordinator {
         let viewController = QuoteListViewController()
         viewController.reactor = reactor
 
-        // 추가 버튼 액션
         viewController.onAddQuoteTapped = { [weak self] in
             self?.showQuoteEntry()
         }
 
-        // 문장 수정 액션
         viewController.onQuoteEditTapped = { [weak self] quote in
             self?.showQuoteEdit(quote: quote)
         }
@@ -56,7 +54,6 @@ final class QuoteListCoordinator: BaseCoordinator {
         super.finish()
     }
 
-    // MARK: - Navigation
     private func showQuoteEntry() {
         let quoteSaveCoordinator = QuoteSaveCoordinator(
             navigationController: navigationController,
@@ -72,14 +69,12 @@ final class QuoteListCoordinator: BaseCoordinator {
             .subscribe(onNext: { [weak self] result in
                 switch result {
                 case .quoteSaved:
-                    print(" Quote saved")
                     self?.resultRelay.accept(.quotesUpdated)
-                    // QuoteListViewController의 reactor에 reload 트리거
                     if let quoteListVC = self?.navigationController.topViewController as? QuoteListViewController {
                         quoteListVC.reactor?.action.onNext(.loadQuotes)
                     }
                 case .cancelled:
-                    print("Quote save cancelled")
+                    break
                 }
                 self?.removeChildCoordinator(quoteSaveCoordinator)
             })
@@ -98,12 +93,10 @@ final class QuoteListCoordinator: BaseCoordinator {
         quoteSaveVC.events
             .subscribe(onNext: { [weak self] event in
                 switch event {
-                case .quoteSaved(let savedQuote):
+                case .quoteSaved:
                     quoteSaveVC.dismiss(animated: true) { [weak self] in
-                        print(" Quote updated: \(savedQuote)")
                         self?.resultRelay.accept(.quotesUpdated)
 
-                        // QuoteListViewController 새로고침
                         if let quoteListVC = self?.navigationController.topViewController as? QuoteListViewController {
                             quoteListVC.reactor?.action.onNext(.loadQuotes)
                         }

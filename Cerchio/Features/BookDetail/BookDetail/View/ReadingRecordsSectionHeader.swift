@@ -9,7 +9,6 @@ import UIKit
 import SnapKit
 
 final class ReadingRecordsSectionHeader: UICollectionReusableView, IsIdentifiable {
-    // MARK: - UI Components
     private let titleLabel = UILabel()
 
     private let viewAllButton: UIButton = {
@@ -37,11 +36,9 @@ final class ReadingRecordsSectionHeader: UICollectionReusableView, IsIdentifiabl
         return control
     }()
 
-    // MARK: - Properties
     var onViewAllTapped: (() -> Void)?
     var onPeriodChanged: ((ReadingStatisticsPeriod) -> Void)?
 
-    // MARK: - Initialization
     override init(frame: CGRect) {
         super.init(frame: frame)
         setupViews()
@@ -52,7 +49,6 @@ final class ReadingRecordsSectionHeader: UICollectionReusableView, IsIdentifiabl
         fatalError("init(coder:) has not been implemented")
     }
 
-    // MARK: - Setup
     private func setupViews() {
         backgroundColor = .clear
 
@@ -85,7 +81,6 @@ final class ReadingRecordsSectionHeader: UICollectionReusableView, IsIdentifiabl
         }
     }
 
-    // MARK: - Actions
     @objc private func viewAllButtonTapped() {
         HapticFeedbackManager.shared.impact()
         onViewAllTapped?()
@@ -97,7 +92,6 @@ final class ReadingRecordsSectionHeader: UICollectionReusableView, IsIdentifiabl
         onPeriodChanged?(period)
     }
 
-    // MARK: - Configuration
     func configure(title: String, actionTitle: String? = nil, hasRecords: Bool) {
         titleLabel.text = title
 
@@ -110,7 +104,6 @@ final class ReadingRecordsSectionHeader: UICollectionReusableView, IsIdentifiabl
 
         segmentedControl.isHidden = !hasRecords
 
-        // 기록이 없을 때는 titleLabel이 bottom 제약을 가지도록 조정
         if !hasRecords {
             titleLabel.snp.remakeConstraints {
                 $0.top.bottom.equalToSuperview()

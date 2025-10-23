@@ -7,10 +7,8 @@
 
 import Foundation
 
-// MARK: - Reading Statistics
-
 nonisolated struct ReadingStatistics: Hashable {
-    let totalTime: Int // 초 단위
+    let totalTime: Int
     let totalSessions: Int
     let todayTime: Int
     let todaySessions: Int
@@ -23,22 +21,18 @@ nonisolated struct ReadingStatistics: Hashable {
         totalSessions == 0
     }
 
-    // 전체 시간 포맷 (시간:분)
     var totalTimeFormatted: String {
         formatTime(totalTime)
     }
 
-    // 오늘 시간 포맷
     var todayTimeFormatted: String {
         formatTime(todayTime)
     }
 
-    // 이번 주 시간 포맷
     var weekTimeFormatted: String {
         formatTime(weekTime)
     }
 
-    // 이번 달 시간 포맷
     var monthTimeFormatted: String {
         formatTime(monthTime)
     }
@@ -67,8 +61,6 @@ nonisolated struct ReadingStatistics: Hashable {
         )
     }
 }
-
-// MARK: - Period Statistics
 
 struct PeriodStatistics: Hashable {
     let period: String

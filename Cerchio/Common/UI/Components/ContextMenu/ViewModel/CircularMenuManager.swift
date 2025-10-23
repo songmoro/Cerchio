@@ -21,9 +21,7 @@ class CircularMenuManager {
         highlightConfiguration: ViewHighlightConfiguration = .withContextualRotation(),
         customization: ((CircularMenuViewController) -> Void)? = nil
     ) {
-        // 이미 메뉴가 표시 중이면 무시
         guard !isMenuPresented else {
-            print("Menu is already presented, ignoring new menu request")
             return
         }
 
@@ -84,23 +82,19 @@ class CircularMenuManager {
         view.setAssociatedTapHandler(gestureHandler)
     }
 
-    // MARK: - Touch handling (Long Press 전용)
     func updateTouchLocation(_ location: CGPoint) {
         currentMenuViewController?.updateTouchLocation(location)
     }
 
     func touchEnded() {
         currentMenuViewController?.touchEnded()
-        // touchEnded는 메뉴를 dismiss하므로, dismissMenu의 completion에서 resetMenuState 호출됨
     }
 
     func touchCancelled() {
         currentMenuViewController?.touchCancelled()
-        // touchCancelled도 메뉴를 dismiss하므로, dismissMenu의 completion에서 resetMenuState 호출됨
     }
 
     func resetMenuState() {
-        // dismiss completion에서 호출되므로 즉시 리셋
         currentMenuViewController = nil
         isMenuPresented = false
     }

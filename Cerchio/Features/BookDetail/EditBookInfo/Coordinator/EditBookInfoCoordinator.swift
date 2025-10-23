@@ -22,7 +22,6 @@ final class EditBookInfoCoordinator: BaseCoordinator {
         let serviceFactory: ServiceFactory
     }
 
-    // MARK: - Properties
     private let dependencies: Dependencies
     private let resultRelay = PublishRelay<Result>()
 
@@ -30,33 +29,26 @@ final class EditBookInfoCoordinator: BaseCoordinator {
         resultRelay.asObservable()
     }
 
-    // MARK: - Initialization
     init(navigationController: UINavigationController, dependencies: Dependencies) {
         self.dependencies = dependencies
         super.init(navigationController: navigationController)
     }
 
-    // MARK: - BaseCoordinator
     override func start() {
         showEditBookInfo()
     }
 
-    // MARK: - Private Methods
     private func showEditBookInfo() {
         let viewController = EditBookInfoViewController()
         let bookRepository = dependencies.serviceFactory.createBookRepository()
         let reactor = EditBookInfoReactor(book: dependencies.book, bookRepository: bookRepository)
         viewController.reactor = reactor
 
-        // onDismiss 콜백 설정
         viewController.onDismiss = { [weak self, weak reactor] isSaved in
             if isSaved {
-                // 저장 성공 시 업데이트된 Book을 전달
                 if let updatedBook = reactor?.currentState.updatedBook {
                     self?.resultRelay.accept(.bookInfoUpdated(updatedBook))
                 } else {
-                    // fallback: updatedBook이 없으면 취소로 처리
-                    print("No updated book found after save")
                     self?.resultRelay.accept(.cancelled)
                 }
             } else {
@@ -64,7 +56,6 @@ final class EditBookInfoCoordinator: BaseCoordinator {
             }
         }
 
-        // onChangeCover 콜백 설정
         viewController.onChangeCover = { [weak self, weak viewController] in
             self?.showImagePicker(from: viewController)
         }
@@ -88,7 +79,6 @@ final class EditBookInfoCoordinator: BaseCoordinator {
     }
 }
 
-// MARK: - PHPickerViewControllerDelegate
 extension EditBookInfoCoordinator: PHPickerViewControllerDelegate {
     func picker(_ picker: PHPickerViewController, didFinishPicking results: [PHPickerResult]) {
         picker.dismiss(animated: true)
@@ -104,14 +94,11 @@ extension EditBookInfoCoordinator: PHPickerViewControllerDelegate {
                 return
             }
 
-            // 이미지 저장
             let imageName = ImageStorageManager.shared.generateUniqueImageName(for: self.dependencies.book.id)
             guard let imagePath = ImageStorageManager.shared.saveImage(image, withName: imageName) else {
-                print("Failed to save custom cover image")
                 return
             }
 
-            // 메인 스레드에서 UI 업데이트
             DispatchQueue.main.async {
                 if let editVC = picker.presentingViewController as? UINavigationController,
                    let viewController = editVC.viewControllers.first as? EditBookInfoViewController {

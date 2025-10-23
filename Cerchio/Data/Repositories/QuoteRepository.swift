@@ -19,7 +19,6 @@ protocol QuoteRepositoryProtocol {
 
 final class QuoteRepository: BaseRepository<RealmQuote>, QuoteRepositoryProtocol {
 
-    // MARK: - QuoteRepositoryProtocol
     func getAllQuotes() -> Observable<[RealmQuote]> {
         return fetch()
     }

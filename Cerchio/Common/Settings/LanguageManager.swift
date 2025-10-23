@@ -26,7 +26,6 @@ enum AppLanguage: String, CaseIterable {
     }
 }
 
-// Realm 모델
 class RealmAppSettings: Object {
     @Persisted(primaryKey: true) var id: String = "appSettings"
     @Persisted var languageCode: String = "ko"
@@ -52,7 +51,7 @@ final class LanguageManager {
         } catch {
             print("Failed to load language from Realm: \(error)")
         }
-        return .korean // 기본값
+        return .korean
     }
 
     func setLanguage(_ language: AppLanguage) {
@@ -63,11 +62,9 @@ final class LanguageManager {
                 realm.add(settings, update: .modified)
             }
 
-            // AppleLanguages 설정
             UserDefaults.standard.set([language.rawValue], forKey: "AppleLanguages")
             UserDefaults.standard.synchronize()
 
-            // Bundle 재설정을 위한 notification
             NotificationCenter.default.post(name: .languageChanged, object: nil)
         } catch {
             print("Failed to save language to Realm: \(error)")

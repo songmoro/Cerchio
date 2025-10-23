@@ -8,8 +8,6 @@
 import Foundation
 import RealmSwift
 
-// MARK: - Domain Model
-
 nonisolated struct ReadingSession: Hashable, Sendable {
     let id: String
     let bookId: String
@@ -27,8 +25,6 @@ nonisolated struct ReadingSession: Hashable, Sendable {
         case cancelled
     }
 }
-
-// MARK: - Drawing Data Models
 
 nonisolated struct DrawingData: Hashable, Codable, Sendable {
     let generatorType: String
@@ -94,8 +90,6 @@ nonisolated struct AnimationTiming: Hashable, Codable, Sendable {
     let easing: String
 }
 
-// MARK: - Realm Model
-
 final class RealmReadingSession: Object {
     @Persisted(primaryKey: true) var id: String
     @Persisted var bookId: String
@@ -153,8 +147,6 @@ final class RealmReadingSession: Object {
         )
     }
 }
-
-// MARK: - Extensions
 
 extension ReadingSession {
     func toRealmReadingSession() -> RealmReadingSession {

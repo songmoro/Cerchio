@@ -8,23 +8,12 @@
 import Foundation
 import RxSwift
 
-/// 유즈케이스: 타이머 정지 및 세션 저장
-/// 1. 최소 시간 검증 (1분 미만이면 저장 안함)
-/// 2. 타이머 틱 중지
-/// 3. 알림 취소
-/// 4. Live Activity 종료
-/// 5. 세션 완료 처리 (Drawing 데이터 생성)
-/// 6. 활성 세션 클리어
 final class TimerStopUseCase {
-
-    // MARK: - Types
 
     enum StopError: Error {
         case sessionTooShort(elapsedSeconds: Int, minimumSeconds: Int)
         case noSession
     }
-
-    // MARK: - Properties
 
     private let stateManager: TimerStateManager
     private let validationService: TimerValidationService
@@ -32,8 +21,6 @@ final class TimerStopUseCase {
     private let activityManager: TimerActivityManager
     private let sessionManager: TimerSessionManager
     private let sessionRepository: ReadingSessionRepositoryProtocol
-
-    // MARK: - Initialization
 
     init(
         stateManager: TimerStateManager,
@@ -51,22 +38,16 @@ final class TimerStopUseCase {
         self.sessionRepository = sessionRepository
     }
 
-    // MARK: - Execute
-
     func execute(
         sessionId: String,
         realmSession: RealmReadingSession?
     ) -> Observable<Void> {
-        print("[TimerStopUseCase]  Stopping timer")
-        print("  - elapsed: \(stateManager.currentElapsedSeconds)s")
 
-        // 1. 최소 시간 검증
         let minimumSeconds = 58
         guard validationService.canSaveSession(
             elapsedSeconds: stateManager.currentElapsedSeconds,
             minimumSeconds: minimumSeconds
         ) else {
-            print("[TimerStopUseCase]  Session too short")
             return .error(StopError.sessionTooShort(
                 elapsedSeconds: stateManager.currentElapsedSeconds,
                 minimumSeconds: minimumSeconds
@@ -74,40 +55,32 @@ final class TimerStopUseCase {
         }
 
         guard let session = realmSession else {
-            print("[TimerStopUseCase]  No session to complete")
             return .error(StopError.noSession)
         }
 
-        // 2. 알림 취소 (전달된 알림 포함)
         _ = notificationManager.cancel().subscribe()
 
-        // 3. Live Activity 즉시 종료 (완료 상태 표시 후 제거)
         if #available(iOS 16.2, *) {
             _ = activityManager.end(immediate: false).subscribe()
         }
 
-        // 4. 활성 세션 클리어
         sessionManager.clearActiveSession()
 
-        // 5. 세션 완료 처리
         let elapsedSeconds = stateManager.currentElapsedSeconds
 
         return sessionRepository.completeSession(
             sessionId: session.id,
             endTime: Date(),
             elapsedSeconds: elapsedSeconds,
-            drawingData: nil  // Drawing 기능 비활성화
+            drawingData: nil
         )
         .do(onNext: { [weak self] _ in
             self?.stateManager.setState(.completed)
-            print("[TimerStopUseCase]  Session completed and saved (duration: \(elapsedSeconds)s)")
         }, onError: { error in
             print("[TimerStopUseCase]  Failed to complete session: \(error)")
         })
         .map { _ in () }
     }
-
-    // MARK: - Drawing Data
 
     private func generateDrawingData() -> DrawingData {
         let seed = Int.random(in: 0...Int.max)
@@ -176,8 +149,6 @@ final class TimerStopUseCase {
         return commands
     }
 }
-
-// MARK: - Seeded Random Generator
 
 struct SeededRandomGenerator {
     private var state: UInt64

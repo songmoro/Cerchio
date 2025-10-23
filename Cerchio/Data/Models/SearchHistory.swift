@@ -8,7 +8,6 @@
 import Foundation
 import RealmSwift
 
-// MARK: - Realm Model
 final class RealmSearchHistory: Object {
     @Persisted(primaryKey: true) var id: ObjectId
     @Persisted var keyword: String
@@ -21,7 +20,6 @@ final class RealmSearchHistory: Object {
     }
 }
 
-// MARK: - Domain Model
 struct SearchHistory: Hashable, Sendable {
     let id: String
     let keyword: String
@@ -34,7 +32,6 @@ struct SearchHistory: Hashable, Sendable {
     }
 }
 
-// MARK: - Conversion Extensions
 extension RealmSearchHistory {
     func toSearchHistory() -> SearchHistory {
         return SearchHistory(

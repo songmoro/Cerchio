@@ -7,7 +7,6 @@
 
 import UIKit
 
-/// 커스텀 인셋과 플레이스홀더를 가진 UITextView
 final class InsetTextView: UITextView {
     var textInsets: UIEdgeInsets = UIEdgeInsets(top: 16, left: 16, bottom: 16, right: 16) {
         didSet {
@@ -86,7 +85,6 @@ final class InsetTextView: UITextView {
         super.layoutSubviews()
         textContainerInset = textInsets
 
-        // 플레이스홀더 위치를 textContainerInset과 lineFragmentPadding에 맞춤
         let x = textInsets.left + textContainer.lineFragmentPadding
         let y = textInsets.top
         let width = bounds.width - textInsets.left - textInsets.right - (textContainer.lineFragmentPadding * 2)

@@ -19,7 +19,6 @@ final class QuoteShareCoordinator: BaseCoordinator {
         case cancelled
     }
 
-    // MARK: - Properties
     private let dependencies: Dependencies
     private let resultRelay = PublishRelay<Result>()
 
@@ -27,18 +26,15 @@ final class QuoteShareCoordinator: BaseCoordinator {
         return resultRelay.asObservable()
     }
 
-    // MARK: - Initialization
     init(navigationController: UINavigationController, dependencies: Dependencies) {
         self.dependencies = dependencies
         super.init(navigationController: navigationController)
     }
 
-    // MARK: - Coordinator
     override func start() {
         showQuoteShare()
     }
 
-    // MARK: - Navigation
     private func showQuoteShare() {
         let reactor = QuoteShareReactor(quoteData: dependencies.quoteData)
         let quoteShareVC = QuoteShareViewController()

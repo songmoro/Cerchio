@@ -8,8 +8,6 @@
 import Foundation
 import RealmSwift
 
-// MARK: - Quote Struct (for UI)
-
 nonisolated struct Quote: Hashable, Sendable {
     let id: String
     let bookId: String
@@ -27,8 +25,6 @@ nonisolated struct Quote: Hashable, Sendable {
         self.createdAt = createdAt
     }
 }
-
-// MARK: - RealmQuote Model
 
 class RealmQuote: Object {
     @Persisted(primaryKey: true) var id: ObjectId

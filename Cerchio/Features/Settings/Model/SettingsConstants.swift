@@ -34,8 +34,6 @@ enum SettingsConstants {
         static let confirmAction = String(localized: .actionConfirm)
     }
 
-    // MARK: - App Info
-
     static var appVersion: String {
         guard let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String else {
             return "Unknown"

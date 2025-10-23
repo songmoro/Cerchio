@@ -15,25 +15,20 @@ final class QuoteListViewController: ListViewBaseViewController<QuoteListReactor
     private typealias DataSource = UITableViewDiffableDataSource<Section, Quote>
     private typealias Snapshot = NSDiffableDataSourceSnapshot<Section, Quote>
 
-    // MARK: - UI Components
     private let tableView = UITableView(frame: .zero, style: .insetGrouped)
     private var dataSource: DataSource!
 
-    // MARK: - Properties
     var onAddQuoteTapped: (() -> Void)?
     var onQuoteEditTapped: ((Quote) -> Void)?
 
-    // MARK: - Override Properties
     override var viewTitle: String {
         return String(localized: .bookDetailSavedQuotes)
     }
 
-    // MARK: - Section Type
     nonisolated enum Section: CaseIterable {
         case quotes
     }
 
-    // MARK: - Override Methods
     override func addButtonTapped() {
         onAddQuoteTapped?()
     }
@@ -42,7 +37,6 @@ final class QuoteListViewController: ListViewBaseViewController<QuoteListReactor
         tableView.setEditing(isEditMode, animated: true)
     }
 
-    // MARK: - Setup
     override func setupUI() {
         super.setupUI()
         setupBackButton()
@@ -98,7 +92,6 @@ final class QuoteListViewController: ListViewBaseViewController<QuoteListReactor
             return cell
         }
 
-        // 스와이프 삭제
         tableView.delegate = self
     }
 
@@ -121,7 +114,6 @@ final class QuoteListViewController: ListViewBaseViewController<QuoteListReactor
             .distinctUntilChanged()
             .asDriver(onErrorJustReturn: false)
             .drive(onNext: { isLoading in
-                print("Loading: \(isLoading)")
             })
             .disposed(by: disposeBag)
     }
@@ -135,7 +127,6 @@ final class QuoteListViewController: ListViewBaseViewController<QuoteListReactor
 
 }
 
-// MARK: - UITableViewDelegate
 extension QuoteListViewController: UITableViewDelegate {
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         tableView.deselectRow(at: indexPath, animated: true)
@@ -167,7 +158,7 @@ extension QuoteListViewController: UITableViewDelegate {
     }
 
     private func tableView(_ tableView: UITableView, canMoveRowAt indexPath: IndexPath) -> Bool {
-        return false // 순서 변경은 비활성화
+        return false
     }
 
     private func deleteQuote(_ quote: Quote) {

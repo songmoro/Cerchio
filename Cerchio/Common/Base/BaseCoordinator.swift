@@ -9,7 +9,6 @@ import UIKit
 import RxSwift
 import RxCocoa
 
-// MARK: - Coordinator Protocol
 protocol Coordinator: AnyObject {
     var childCoordinators: [Coordinator] { get set }
     var navigationController: UINavigationController { get set }
@@ -19,7 +18,6 @@ protocol Coordinator: AnyObject {
     func finish()
 }
 
-// MARK: - Coordinatable Protocol
 protocol Coordinatable: AnyObject {
     associatedtype Dependencies
     func start(with dependencies: Dependencies)
@@ -29,7 +27,6 @@ extension Coordinatable where Dependencies == Void {
     func start() { start(with: ()) }
 }
 
-// MARK: - Navigation Event Protocol
 protocol NavigationEventProtocol {}
 
 enum NavigationEvent: NavigationEventProtocol {
@@ -38,7 +35,6 @@ enum NavigationEvent: NavigationEventProtocol {
     case finished
 }
 
-// MARK: - Base Coordinator
 class BaseCoordinator: NSObject, Coordinator {
     var childCoordinators: [Coordinator] = []
     var navigationController: UINavigationController
@@ -76,7 +72,6 @@ class BaseCoordinator: NSObject, Coordinator {
         childCoordinators.removeAll()
     }
 
-    // MARK: - Navigation Helpers
     func push(_ viewController: UIViewController, animated: Bool = true) {
         navigationController.pushViewController(viewController, animated: animated)
     }
@@ -93,7 +88,6 @@ class BaseCoordinator: NSObject, Coordinator {
         navigationController.dismiss(animated: animated)
     }
 
-    // MARK: - Coordinator Helpers
     func presentCoordinator(_ coordinator: BaseCoordinator, animated: Bool = true) {
         let presentedNav = UINavigationController()
         coordinator.navigationController = presentedNav
@@ -103,6 +97,5 @@ class BaseCoordinator: NSObject, Coordinator {
     }
 
     deinit {
-        print("\(String(describing: type(of: self))) deinit")
     }
 }

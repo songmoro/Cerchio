@@ -8,8 +8,6 @@
 import Foundation
 import RealmSwift
 
-// MARK: - Log Level
-
 enum LogLevel: String, Codable, Sendable {
     case debug = "DEBUG"
     case info = "INFO"
@@ -25,8 +23,6 @@ enum LogLevel: String, Codable, Sendable {
         }
     }
 }
-
-// MARK: - Domain Model
 
 nonisolated struct DebugLog: Hashable, Sendable {
     let id: String
@@ -61,8 +57,6 @@ nonisolated struct DebugLog: Hashable, Sendable {
         self.metadata = metadata
     }
 }
-
-// MARK: - Realm Model
 
 final class RealmDebugLog: Object {
     @Persisted(primaryKey: true) var id: String
@@ -124,8 +118,6 @@ final class RealmDebugLog: Object {
         )
     }
 }
-
-// MARK: - Extensions
 
 extension DebugLog {
     func toRealmDebugLog() -> RealmDebugLog {

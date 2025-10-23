@@ -8,8 +8,6 @@
 import Foundation
 import RealmSwift
 
-// MARK: - RealmTag Model
-
 class RealmTag: Object {
     @Persisted(primaryKey: true) var id: ObjectId
     @Persisted var bookId: String
@@ -36,8 +34,6 @@ class RealmTag: Object {
         )
     }
 }
-
-// MARK: - Tag Struct (for UI)
 
 nonisolated struct Tag: Hashable, Sendable {
     let id: String

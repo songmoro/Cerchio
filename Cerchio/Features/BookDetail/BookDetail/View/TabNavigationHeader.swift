@@ -9,7 +9,6 @@ import UIKit
 import SnapKit
 
 final class TabNavigationHeader: UICollectionReusableView, IsIdentifiable {
-    // MARK: - UI Components
     private let stackView: UIStackView = {
         let stack = UIStackView()
         stack.axis = .horizontal
@@ -34,7 +33,6 @@ final class TabNavigationHeader: UICollectionReusableView, IsIdentifiable {
     private var tabButtons: [UIButton] = []
     private var indicatorLeadingConstraint: Constraint?
 
-    // MARK: - Properties
     var onTabSelected: ((BookDetailViewController.Section) -> Void)?
     private var currentSelectedTab: BookDetailViewController.Section = .readingRecords
 
@@ -45,7 +43,6 @@ final class TabNavigationHeader: UICollectionReusableView, IsIdentifiable {
         ("설정", .settings)
     ]
 
-    // MARK: - Initialization
     override init(frame: CGRect) {
         super.init(frame: frame)
         setupViews()
@@ -56,7 +53,6 @@ final class TabNavigationHeader: UICollectionReusableView, IsIdentifiable {
         fatalError("init(coder:) has not been implemented")
     }
 
-    // MARK: - Setup
     private func setupViews() {
         backgroundColor = .systemBackground
 
@@ -102,8 +98,7 @@ final class TabNavigationHeader: UICollectionReusableView, IsIdentifiable {
         button.tag = indexForSection(section)
         button.addTarget(self, action: #selector(tabButtonTapped(_:)), for: .touchUpInside)
 
-        button.configurationUpdateHandler = { [weak self] button in
-            guard let self = self else { return }
+        button.configurationUpdateHandler = { _ in
             var config = button.configuration
             config?.baseForegroundColor = button.isSelected ? .label : .secondaryLabel
 
@@ -119,7 +114,6 @@ final class TabNavigationHeader: UICollectionReusableView, IsIdentifiable {
         return button
     }
 
-    // MARK: - Actions
     @objc private func tabButtonTapped(_ sender: UIButton) {
         HapticFeedbackManager.shared.selection()
         let section = sectionForIndex(sender.tag)
@@ -127,7 +121,6 @@ final class TabNavigationHeader: UICollectionReusableView, IsIdentifiable {
         onTabSelected?(section)
     }
 
-    // MARK: - Public Methods
     func selectTab(section: BookDetailViewController.Section, animated: Bool) {
         guard currentSelectedTab != section else { return }
         currentSelectedTab = section
@@ -137,7 +130,6 @@ final class TabNavigationHeader: UICollectionReusableView, IsIdentifiable {
         moveIndicator(to: index, animated: animated)
     }
 
-    // MARK: - Private Methods
     private func updateButtonStates(selectedIndex: Int) {
         tabButtons.enumerated().forEach { idx, button in
             button.isSelected = idx == selectedIndex

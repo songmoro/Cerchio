@@ -9,7 +9,6 @@ import Foundation
 
 enum SearchResultConstants {
 
-    // MARK: - Layout
     enum Layout {
         static let cornerRadius: CGFloat = 8
         static let cellHorizontalInset: CGFloat = 16
@@ -24,7 +23,6 @@ enum SearchResultConstants {
         static let rowHeight: CGFloat = 100
     }
 
-    // MARK: - Typography
     enum Typography {
         static let titleFontSize: CGFloat = 16
         static let authorFontSize: CGFloat = 14
@@ -33,7 +31,6 @@ enum SearchResultConstants {
         static let authorNumberOfLines: Int = 1
     }
 
-    // MARK: - Animation
     enum Animation {
         static let buttonAnimationDuration: TimeInterval = 0.1
         static let buttonScaleDown: CGFloat = 0.95

@@ -10,11 +10,7 @@ import SnapKit
 
 final class ReadingStatisticsCell: UICollectionViewCell, IsIdentifiable {
 
-    // MARK: - UI Components
-
     private let statisticsView = ReadingStatisticsView()
-
-    // MARK: - Initialization
 
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -25,8 +21,6 @@ final class ReadingStatisticsCell: UICollectionViewCell, IsIdentifiable {
         fatalError("init(coder:) has not been implemented")
     }
 
-    // MARK: - Setup
-
     private func setupUI() {
         contentView.addSubview(statisticsView)
 
@@ -35,8 +29,6 @@ final class ReadingStatisticsCell: UICollectionViewCell, IsIdentifiable {
             $0.horizontalEdges.equalToSuperview().inset(12)
         }
     }
-
-    // MARK: - Configuration
 
     func configure(with chartData: ReadingChartData, onPeriodChanged: ((ReadingStatisticsPeriod) -> Void)? = nil, onSwipe: ((ReadingChartView.SwipeDirection) -> Void)? = nil) {
         statisticsView.onPeriodChanged = onPeriodChanged

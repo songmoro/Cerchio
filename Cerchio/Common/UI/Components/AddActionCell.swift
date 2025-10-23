@@ -10,15 +10,12 @@ import SnapKit
 import RxSwift
 
 final class AddActionCell: UICollectionViewCell, IsIdentifiable {
-    // MARK: - UI Components
     private let iconImageView = UIImageView()
     private let titleLabel = UILabel()
     private let containerView = UIView()
 
-    // MARK: - Properties
     var onTapped: (() -> Void)?
 
-    // MARK: - Initialization
     override init(frame: CGRect) {
         super.init(frame: frame)
         setupViews()
@@ -30,7 +27,6 @@ final class AddActionCell: UICollectionViewCell, IsIdentifiable {
         fatalError("init(coder:) has not been implemented")
     }
 
-    // MARK: - Setup
     private func setupViews() {
         contentView.backgroundColor = .clear
 
@@ -77,11 +73,9 @@ final class AddActionCell: UICollectionViewCell, IsIdentifiable {
         containerView.isUserInteractionEnabled = true
     }
 
-    // MARK: - Actions
     @objc private func handleTap() {
         HapticFeedbackManager.shared.impact()
 
-        // 탭 애니메이션
         UIView.animate(withDuration: 0.1, animations: {
             self.containerView.transform = CGAffineTransform(scaleX: 0.95, y: 0.95)
         }) { _ in
@@ -93,7 +87,6 @@ final class AddActionCell: UICollectionViewCell, IsIdentifiable {
         onTapped?()
     }
 
-    // MARK: - Configuration
     func configure(icon: UIImage?, title: String, action: @escaping () -> Void) {
         iconImageView.image = icon
         titleLabel.text = title

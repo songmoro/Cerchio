@@ -10,14 +10,12 @@ import SnapKit
 
 final class SVGTimerPickerView: UIView {
 
-    // MARK: - UI Components
     private let imageMaskLayer = CALayer()
     private let gaugeLayer = CAShapeLayer()
     private let tickMarksLayer = CAShapeLayer()
     private let handleView = UIView()
     private var timeLabels: [UILabel] = []
 
-    // MARK: - Properties
     var selectedMinutes: Int = 25 {
         didSet {
             updateUI()
@@ -31,7 +29,6 @@ final class SVGTimerPickerView: UIView {
     private let maxMinutes = 60
     private let impactFeedback = UIImpactFeedbackGenerator(style: .light)
 
-    // MARK: - Constants
     private let gaugeColor: UIColor
     private let tickColor: UIColor
     private let radius: CGFloat
@@ -40,7 +37,6 @@ final class SVGTimerPickerView: UIView {
     private var boundaryPath: UIBezierPath?
     private var normalizedBoundaryPath: UIBezierPath?
 
-    // MARK: - Initialization
     init(
         maskImage: UIImage? = nil,
         maskImageName: String? = nil,
@@ -55,7 +51,6 @@ final class SVGTimerPickerView: UIView {
 
         super.init(frame: frame)
 
-        // SVG 파일에서 경계 경로 로드
         if let svgFile = svgFileName {
             self.boundaryPath = UIBezierPath(svgFileName: svgFile)
         }
@@ -69,7 +64,6 @@ final class SVGTimerPickerView: UIView {
         fatalError("init(coder:) has not been implemented")
     }
 
-    // MARK: - Setup
     private func setupUI(maskImage: UIImage?, maskImageName: String?) {
         backgroundColor = .clear
 
@@ -137,7 +131,6 @@ final class SVGTimerPickerView: UIView {
         updateUI()
     }
 
-    // MARK: - Path Normalization
     private func normalizePath(_ path: UIBezierPath, to radius: CGFloat) -> UIBezierPath {
         let pathBounds = path.bounds
         let center = CGPoint(x: bounds.midX, y: bounds.midY)
@@ -155,7 +148,6 @@ final class SVGTimerPickerView: UIView {
         return normalizedPath
     }
 
-    // MARK: - Drawing
     private func drawTickMarks() {
         let center = CGPoint(x: bounds.midX, y: bounds.midY)
         let path = UIBezierPath()
@@ -226,41 +218,29 @@ final class SVGTimerPickerView: UIView {
     private func updateHandle() {
         let handleCenter: CGPoint
         if let path = normalizedBoundaryPath {
-            // 라디안 기반 계산으로 정확한 각도 매핑
-            // angleForMinute와 동일한 방식 사용
             let angle = angleForMinute(selectedMinutes)
 
-            // 라디안을 0-1 범위의 progress로 변환
-            // -π/2 (12시) ~ 3π/2 (12시로 복귀) → 0 ~ 1
-            let normalizedAngle = angle + .pi / 2  // 0부터 시작하도록 조정
+            let normalizedAngle = angle + .pi / 2
             let progress = normalizedAngle / (2 * .pi)
-
-            print("Minutes: \(selectedMinutes), Angle: \(angle * 180 / .pi)°, Progress: \(progress * 100)%")
 
             handleCenter = path.point(at: progress)
         } else {
-            // Fallback: 원형
             let center = CGPoint(x: bounds.midX, y: bounds.midY)
             let angle = angleForMinute(selectedMinutes)
             handleCenter = pointOnCircle(center: center, radius: radius, angle: angle)
         }
 
-        // 15분 단위일 때 축 정렬 보정
         var adjustedCenter = handleCenter
         let center = CGPoint(x: bounds.midX, y: bounds.midY)
 
         switch selectedMinutes {
         case 15:
-            // 3시 방향 (오른쪽) - y축을 중심에 고정
             adjustedCenter.y = center.y
         case 30:
-            // 6시 방향 (아래) - x축을 중심에 고정
             adjustedCenter.x = center.x
         case 45:
-            // 9시 방향 (왼쪽) - y축을 중심에 고정
             adjustedCenter.y = center.y
         case 60:
-            // 12시 방향 (위) - x축을 중심에 고정
             adjustedCenter.x = center.x
         default:
             break
@@ -274,7 +254,6 @@ final class SVGTimerPickerView: UIView {
         )
     }
 
-    // MARK: - Gesture Handling
     @objc private func handlePan(_ gesture: UIPanGestureRecognizer) {
         let location = gesture.location(in: self)
         let center = CGPoint(x: bounds.midX, y: bounds.midY)
@@ -304,7 +283,6 @@ final class SVGTimerPickerView: UIView {
         }
     }
 
-    // MARK: - Helper Methods
     private func angleForMinute(_ minute: Int) -> CGFloat {
         let normalized = CGFloat(minute) / 60.0
         return normalized * 2 * .pi - .pi / 2

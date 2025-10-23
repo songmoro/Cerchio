@@ -7,13 +7,10 @@
 
 import UIKit
 
-/// Protocol for image effects that can be applied to quote share backgrounds
 protocol ImageEffectProtocol {
-    /// Apply effect to an image
     func apply(to image: UIImage) -> UIImage?
 }
 
-/// Blur effect for images
 struct BlurImageEffect: ImageEffectProtocol {
     let intensity: CGFloat
 
@@ -22,7 +19,7 @@ struct BlurImageEffect: ImageEffectProtocol {
 
         let blurFilter = CIFilter(name: "CIGaussianBlur")
         blurFilter?.setValue(ciImage, forKey: kCIInputImageKey)
-        blurFilter?.setValue(intensity * 20, forKey: kCIInputRadiusKey) // 0-20 radius
+        blurFilter?.setValue(intensity * 20, forKey: kCIInputRadiusKey)
 
         guard let outputImage = blurFilter?.outputImage else { return nil }
 
@@ -33,9 +30,8 @@ struct BlurImageEffect: ImageEffectProtocol {
     }
 }
 
-/// Brightness adjustment effect
 struct BrightnessImageEffect: ImageEffectProtocol {
-    let brightness: CGFloat // -1.0 to 1.0
+    let brightness: CGFloat
 
     func apply(to image: UIImage) -> UIImage? {
         guard let ciImage = CIImage(image: image) else { return nil }

@@ -8,22 +8,12 @@
 import Foundation
 import RxSwift
 
-/// 유즈케이스: 타이머 재개
-/// 1. 일시정지 시간 계산하여 종료 시간 연장
-/// 2. 타이머 틱 재시작
-/// 3. 알림 재스케줄
-/// 4. Live Activity 업데이트
-/// 5. 세션 저장
 final class TimerResumeUseCase {
-
-    // MARK: - Properties
 
     private let stateManager: TimerStateManager
     private let notificationManager: TimerNotificationManager
     private let activityManager: TimerActivityManager
     private let sessionManager: TimerSessionManager
-
-    // MARK: - Initialization
 
     init(
         stateManager: TimerStateManager,
@@ -37,8 +27,6 @@ final class TimerResumeUseCase {
         self.sessionManager = sessionManager
     }
 
-    // MARK: - Execute
-
     func execute(
         sessionId: String,
         bookId: String,
@@ -48,25 +36,16 @@ final class TimerResumeUseCase {
     ) -> Observable<Void> {
         guard let targetEndTime = stateManager.currentTargetEndTime,
               let pausedAt = stateManager.currentPausedAt else {
-            print("[TimerResumeUseCase]  No pause info")
             return .error(NSError(domain: "TimerResumeUseCase", code: -1))
         }
 
-        print("[TimerResumeUseCase]  Resuming timer")
-
-        // 1. 일시정지 시간 계산하여 종료 시간 연장
         let pauseDuration = Date().timeIntervalSince(pausedAt)
         let newTargetEndTime = targetEndTime.addingTimeInterval(pauseDuration)
 
-        print("  - pauseDuration: \(pauseDuration)s")
-        print("  - newTargetEndTime: \(newTargetEndTime)")
-
-        // 2. 상태 업데이트
         stateManager.setState(.running)
         stateManager.setTargetEndTime(newTargetEndTime)
         stateManager.setPausedAt(nil)
 
-        // 3. 알림 재스케줄
         _ = notificationManager.reschedule(
             targetEndTime: newTargetEndTime,
             sessionId: sessionId,
@@ -74,7 +53,6 @@ final class TimerResumeUseCase {
         )
         .subscribe()
 
-        // 4. Live Activity 업데이트
         if #available(iOS 16.2, *) {
             _ = activityManager.update(
                 targetEndTime: newTargetEndTime,
@@ -84,7 +62,6 @@ final class TimerResumeUseCase {
             .subscribe()
         }
 
-        // 5. 세션 저장
         sessionManager.saveActiveSession(
             sessionId: sessionId,
             bookId: bookId,
@@ -96,7 +73,6 @@ final class TimerResumeUseCase {
             activityId: nil
         )
 
-        print("[TimerResumeUseCase]  Timer resumed successfully")
         return .just(())
     }
 }

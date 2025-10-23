@@ -35,7 +35,6 @@ protocol BookRepositoryProtocol {
 
 final class BookRepository: BaseRepository<RealmBook>, BookRepositoryProtocol {
 
-    // MARK: - BookRepositoryProtocol
     func getAllBooks() -> Observable<[RealmBook]> {
         return fetch()
     }
@@ -61,24 +60,20 @@ final class BookRepository: BaseRepository<RealmBook>, BookRepositoryProtocol {
         return performWriteTransaction {
             for book in books {
                 guard !book.isInvalidated else {
-                    continue // Skip already deleted books
+                    continue
                 }
 
                 let bookId = String(describing: book.id)
 
-                // 관련된 인용구들 삭제
                 let quotesToDelete = self.realm.objects(RealmQuote.self).filter("bookId == %@", bookId)
                 self.realm.delete(quotesToDelete)
 
-                // 관련된 사진들 삭제
                 let photosToDelete = self.realm.objects(RealmPhoto.self).filter("bookId == %@", bookId)
                 self.realm.delete(photosToDelete)
 
-                // 관련된 태그들 삭제
                 let tagsToDelete = self.realm.objects(RealmTag.self).filter("bookId == %@", bookId)
                 self.realm.delete(tagsToDelete)
 
-                // 책 삭제
                 self.realm.delete(book)
             }
             return ()
@@ -95,26 +90,20 @@ final class BookRepository: BaseRepository<RealmBook>, BookRepositoryProtocol {
 
                 let bookIdString = String(describing: bookId)
 
-                // 관련된 인용구들 삭제
                 let quotesToDelete = self.realm.objects(RealmQuote.self).filter("bookId == %@", bookIdString)
                 self.realm.delete(quotesToDelete)
 
-                // 관련된 사진들 삭제
                 let photosToDelete = self.realm.objects(RealmPhoto.self).filter("bookId == %@", bookIdString)
                 self.realm.delete(photosToDelete)
 
-                // 관련된 태그들 삭제
                 let tagsToDelete = self.realm.objects(RealmTag.self).filter("bookId == %@", bookIdString)
                 self.realm.delete(tagsToDelete)
 
-                // 책 삭제
                 self.realm.delete(book)
             }
             return ()
         }
     }
-
-    // MARK: - Book Struct-based Methods
 
     func getAllBooksAsStruct() -> Observable<[Book]> {
         return getAllBooks()
@@ -147,12 +136,8 @@ final class BookRepository: BaseRepository<RealmBook>, BookRepositoryProtocol {
 
     func saveBookStruct(_ book: Book) -> Observable<Book> {
         return performWriteTransaction {
-            // Book의 id로 기존 RealmBook 찾기
             if let objectId = try? ObjectId(string: book.id),
                let existingBook = self.realm.object(ofType: RealmBook.self, forPrimaryKey: objectId) {
-                // 기존 책 업데이트
-                print(" Updating existing book - Before: startDate=\(String(describing: existingBook.startDate)), endDate=\(String(describing: existingBook.endDate))")
-                print(" New values: startDate=\(String(describing: book.startDate)), endDate=\(String(describing: book.endDate))")
 
                 existingBook.title = book.title
                 existingBook.link = book.link
@@ -173,10 +158,8 @@ final class BookRepository: BaseRepository<RealmBook>, BookRepositoryProtocol {
                 existingBook.startDate = book.startDate
                 existingBook.endDate = book.endDate
 
-                print(" After update: startDate=\(String(describing: existingBook.startDate)), endDate=\(String(describing: existingBook.endDate))")
                 return existingBook.toBook()
             } else {
-                // 새 책 생성
                 let realmBook = book.toRealmBook()
                 self.realm.add(realmBook)
                 return realmBook.toBook()
@@ -193,19 +176,15 @@ final class BookRepository: BaseRepository<RealmBook>, BookRepositoryProtocol {
 
             let bookIdString = String(describing: book.id)
 
-            // 관련된 인용구들 삭제
             let quotesToDelete = self.realm.objects(RealmQuote.self).filter("bookId == %@", bookIdString)
             self.realm.delete(quotesToDelete)
 
-            // 관련된 사진들 삭제
             let photosToDelete = self.realm.objects(RealmPhoto.self).filter("bookId == %@", bookIdString)
             self.realm.delete(photosToDelete)
 
-            // 관련된 태그들 삭제
             let tagsToDelete = self.realm.objects(RealmTag.self).filter("bookId == %@", bookIdString)
             self.realm.delete(tagsToDelete)
 
-            // 책 삭제
             self.realm.delete(book)
             return ()
         }
@@ -221,26 +200,20 @@ final class BookRepository: BaseRepository<RealmBook>, BookRepositoryProtocol {
 
                 let bookIdString = String(describing: book.id)
 
-                // 관련된 인용구들 삭제
                 let quotesToDelete = self.realm.objects(RealmQuote.self).filter("bookId == %@", bookIdString)
                 self.realm.delete(quotesToDelete)
 
-                // 관련된 사진들 삭제
                 let photosToDelete = self.realm.objects(RealmPhoto.self).filter("bookId == %@", bookIdString)
                 self.realm.delete(photosToDelete)
 
-                // 관련된 태그들 삭제
                 let tagsToDelete = self.realm.objects(RealmTag.self).filter("bookId == %@", bookIdString)
                 self.realm.delete(tagsToDelete)
 
-                // 책 삭제
                 self.realm.delete(book)
             }
             return ()
         }
     }
-
-    // MARK: - Favorite Methods
 
     func toggleFavorite(bookId: String) -> Observable<Bool> {
         return performWriteTransaction {
@@ -264,8 +237,6 @@ final class BookRepository: BaseRepository<RealmBook>, BookRepositoryProtocol {
             return Disposables.create()
         }
     }
-
-    // MARK: - Custom Book Info Methods
 
     func updateBookCustomInfo(bookId: String, customTitle: String, customAuthor: String, customCoverImagePath: String?) -> Observable<Void> {
         return performWriteTransaction {
@@ -291,9 +262,8 @@ final class BookRepository: BaseRepository<RealmBook>, BookRepositoryProtocol {
                 throw NSError(domain: "BookRepository", code: -1, userInfo: [NSLocalizedDescriptionKey: "Book not found"])
             }
 
-            // 커스텀 커버 이미지 파일 삭제
             if let customCoverImagePath = book.customCoverImagePath {
-                ImageStorageManager.shared.deleteImage(atPath: customCoverImagePath)
+                _ = ImageStorageManager.shared.deleteImage(atPath: customCoverImagePath)
             }
 
             book.customTitle = nil
@@ -304,23 +274,17 @@ final class BookRepository: BaseRepository<RealmBook>, BookRepositoryProtocol {
         }
     }
 
-    // MARK: - Data Management
-
     func deleteAllData() -> Observable<Void> {
         return performWriteTransaction {
-            // 모든 태그 삭제
             let allTags = self.realm.objects(RealmTag.self)
             self.realm.delete(allTags)
 
-            // 모든 인용구 삭제
             let allQuotes = self.realm.objects(RealmQuote.self)
             self.realm.delete(allQuotes)
 
-            // 모든 사진 삭제
             let allPhotos = self.realm.objects(RealmPhoto.self)
             self.realm.delete(allPhotos)
 
-            // 모든 책 삭제
             let allBooks = self.realm.objects(RealmBook.self)
             self.realm.delete(allBooks)
 

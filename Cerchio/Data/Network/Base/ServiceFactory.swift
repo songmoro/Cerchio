@@ -8,7 +8,6 @@
 import Foundation
 import RxSwift
 
-// MARK: - Service Factory Protocol
 protocol ServiceFactoryProtocol {
     associatedtype Dependencies
 
@@ -17,7 +16,6 @@ protocol ServiceFactoryProtocol {
     init(dependencies: Dependencies)
 }
 
-// MARK: - Base Service Factory
 class BaseServiceFactory<Dependencies>: ServiceFactoryProtocol {
     let dependencies: Dependencies
 
@@ -26,10 +24,8 @@ class BaseServiceFactory<Dependencies>: ServiceFactoryProtocol {
     }
 }
 
-// MARK: - Main Service Factory
 final class ServiceFactory: BaseServiceFactory<ServiceDependencies> {
 
-    // MARK: - Service Cache
     private var serviceCache: [String: Any] = [:]
     private let cacheQueue = DispatchQueue(label: "serviceFactory.cache", attributes: .concurrent)
 
@@ -37,7 +33,6 @@ final class ServiceFactory: BaseServiceFactory<ServiceDependencies> {
         super.init(dependencies: dependencies)
     }
 
-    // MARK: - Generic Service Creation
     func createService<T: ServiceProtocol>(_ serviceType: T.Type) -> T where T.Dependencies == ServiceDependencies {
         let key = String(describing: serviceType)
 
@@ -56,22 +51,15 @@ final class ServiceFactory: BaseServiceFactory<ServiceDependencies> {
         }
     }
 
-    // MARK: - Service Creation Methods
-
-    /// Creates a BookSearchService instance
     func createBookSearchService() -> BookSearchServiceProtocol {
         let serviceDependencies = BookSearchService.Dependencies(networkClient: dependencies.networkClient)
         return BookSearchService(dependencies: serviceDependencies)
     }
 
-    /// Creates a Mock BookSearchService instance for testing
     func createMockBookSearchService(scenario: MockBookSearchService.MockScenario = .success) -> BookSearchServiceProtocol {
         return MockBookSearchService(scenario: scenario)
     }
 
-    // MARK: - Repository Creation Methods
-
-    /// Creates a BookRepository instance
     func createBookRepository() -> BookRepositoryProtocol {
         do {
             return try BookRepository()
@@ -80,7 +68,6 @@ final class ServiceFactory: BaseServiceFactory<ServiceDependencies> {
         }
     }
 
-    /// Creates a QuoteRepository instance
     func createQuoteRepository() -> QuoteRepositoryProtocol {
         do {
             return try QuoteRepository()
@@ -89,7 +76,6 @@ final class ServiceFactory: BaseServiceFactory<ServiceDependencies> {
         }
     }
 
-    /// Creates a PhotoRepository instance
     func createPhotoRepository() -> PhotoRepositoryProtocol {
         do {
             return try PhotoRepository()
@@ -98,7 +84,6 @@ final class ServiceFactory: BaseServiceFactory<ServiceDependencies> {
         }
     }
 
-    /// Creates a TagRepository instance
     func createTagRepository() -> TagRepositoryProtocol {
         do {
             return try TagRepository()
@@ -107,7 +92,6 @@ final class ServiceFactory: BaseServiceFactory<ServiceDependencies> {
         }
     }
 
-    /// Creates a SearchHistoryRepository instance
     func createSearchHistoryRepository() -> SearchHistoryRepositoryProtocol {
         do {
             return try SearchHistoryRepository()
@@ -116,7 +100,6 @@ final class ServiceFactory: BaseServiceFactory<ServiceDependencies> {
         }
     }
 
-    /// Creates a ReadingRecordRepository instance
     func createReadingRecordRepository() -> ReadingRecordRepositoryProtocol {
         do {
             return try ReadingRecordRepository()
@@ -125,7 +108,6 @@ final class ServiceFactory: BaseServiceFactory<ServiceDependencies> {
         }
     }
 
-    /// Creates a ReadingSessionRepository instance
     func createReadingSessionRepository() -> ReadingSessionRepositoryProtocol {
         do {
             return try ReadingSessionRepository()
@@ -134,7 +116,6 @@ final class ServiceFactory: BaseServiceFactory<ServiceDependencies> {
         }
     }
 
-    /// Creates a DebugLogRepository instance
     func createDebugLogRepository() -> DebugLogRepositoryProtocol {
         do {
             return try DebugLogRepository()
@@ -143,7 +124,6 @@ final class ServiceFactory: BaseServiceFactory<ServiceDependencies> {
         }
     }
 
-    // MARK: - Cache Management
     func clearServiceCache() {
         cacheQueue.async(flags: .barrier) {
             self.serviceCache.removeAll()
@@ -158,13 +138,11 @@ final class ServiceFactory: BaseServiceFactory<ServiceDependencies> {
     }
 }
 
-// MARK: - Factory Builder Protocol
 protocol FactoryBuilderProtocol {
     static func build() -> ServiceFactory
     static func buildWithCustomDependencies(_ dependencies: ServiceDependencies) -> ServiceFactory
 }
 
-// MARK: - Factory Builder Implementation
 extension ServiceFactory: FactoryBuilderProtocol {
     static func build() -> ServiceFactory {
         return ServiceFactory(dependencies: DefaultServiceDependencies())
@@ -175,16 +153,12 @@ extension ServiceFactory: FactoryBuilderProtocol {
     }
 }
 
-
-
-// MARK: - Environment-based Factory
 enum Environment {
     case development
     case staging
     case production
     case testing
 
-    /// Returns the current environment based on build configuration
     static var current: Environment {
         #if DEBUG
         if let bundleId = Bundle.main.bundleIdentifier, bundleId.contains(".dev") {
@@ -215,13 +189,11 @@ extension ServiceFactory {
         return ServiceFactory(dependencies: dependencies)
     }
 
-    /// Builds ServiceFactory for current environment
     static func buildForCurrentEnvironment() -> ServiceFactory {
         return build(for: .current)
     }
 }
 
-// MARK: - Environment-specific Dependencies
 struct DevelopmentServiceDependencies: ServiceDependencies {
     let networkClient: NetworkClientProtocol = URLSessionNetworkClient()
 }
@@ -238,7 +210,6 @@ struct TestingServiceDependencies: ServiceDependencies {
     let networkClient: NetworkClientProtocol = MockNetworkClient()
 }
 
-// MARK: - Mock Network Client for Testing
 final class MockNetworkClient: NetworkClientProtocol {
     func execute<T: NetworkRequest>(_ request: T) -> Observable<T.Response> {
         return Observable.error(NetworkError.networkError(NSError(domain: "Mock", code: NetworkConstants.ErrorCode.mockImplementation, userInfo: [NSLocalizedDescriptionKey: "Mock implementation"])))

@@ -87,7 +87,6 @@ final class LibraryCollectionViewCell: UICollectionViewCell, IsIdentifiable {
         titleLabel.text = item.cleanTitle
         authorLabel.text = item.author
 
-        // 기본 배경색 설정
         backgroundContainerView.backgroundColor = .clear
 
         if let customCoverPath = item.customCoverImagePath,
@@ -95,7 +94,6 @@ final class LibraryCollectionViewCell: UICollectionViewCell, IsIdentifiable {
             coverImageView.image = customImage
             loadingIndicator.stopAnimating()
 
-            // 커스텀 이미지의 주 색상 추출
             extractAndApplyDominantColor(from: customImage)
         } else if let url = URL(string: item.image) {
             loadingIndicator.startAnimating()
@@ -110,7 +108,6 @@ final class LibraryCollectionViewCell: UICollectionViewCell, IsIdentifiable {
                 guard let self = self else { return }
                 self.loadingIndicator.stopAnimating()
 
-                // 다운로드된 이미지의 주 색상 추출
                 if case .success(let imageResult) = result {
                     self.extractAndApplyDominantColor(from: imageResult.image)
                 }
@@ -133,7 +130,6 @@ final class LibraryCollectionViewCell: UICollectionViewCell, IsIdentifiable {
             }
         }
     }
-
 
     override func prepareForReuse() {
         super.prepareForReuse()

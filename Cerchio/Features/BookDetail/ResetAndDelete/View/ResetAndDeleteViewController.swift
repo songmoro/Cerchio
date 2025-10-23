@@ -12,8 +12,6 @@ import RxCocoa
 
 final class ResetAndDeleteViewController: BaseViewController<ResetAndDeleteReactor> {
 
-    // MARK: - UI Components
-
     private let tableView: UITableView = {
         let tableView = UITableView(frame: .zero, style: .insetGrouped)
         tableView.register(UITableViewCell.self, forCellReuseIdentifier: "Cell")
@@ -46,8 +44,6 @@ final class ResetAndDeleteViewController: BaseViewController<ResetAndDeleteReact
         }
     }
 
-    // MARK: - Setup
-
     override func setupUI() {
         super.setupUI()
 
@@ -62,8 +58,6 @@ final class ResetAndDeleteViewController: BaseViewController<ResetAndDeleteReact
 
         tableView.delegate = self
     }
-
-    // MARK: - Binding
 
     override func bind(reactor: ResetAndDeleteReactor) {
 
@@ -83,9 +77,7 @@ final class ResetAndDeleteViewController: BaseViewController<ResetAndDeleteReact
             .filter { $0 }
             .asDriver(onErrorJustReturn: false)
             .drive(onNext: { [weak self] _ in
-                // 도서 삭제 성공 시 도서 상세 화면까지 닫기
                 if let navigationController = self?.navigationController {
-                    // BookDetailViewController까지 pop
                     let viewControllers = navigationController.viewControllers
                     if let bookDetailIndex = viewControllers.firstIndex(where: { $0 is BookDetailViewController }),
                        bookDetailIndex > 0 {
@@ -98,8 +90,6 @@ final class ResetAndDeleteViewController: BaseViewController<ResetAndDeleteReact
             })
             .disposed(by: disposeBag)
     }
-
-    // MARK: - Helper Methods
 
     private func showResetBookInfoConfirmation() {
         let alert = UIAlertController(
@@ -146,8 +136,6 @@ final class ResetAndDeleteViewController: BaseViewController<ResetAndDeleteReact
         present(alert, animated: true)
     }
 }
-
-// MARK: - UITableViewDelegate
 
 extension ResetAndDeleteViewController: UITableViewDelegate {
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
