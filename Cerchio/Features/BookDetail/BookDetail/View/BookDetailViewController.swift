@@ -402,7 +402,9 @@ final class BookDetailViewController: FullScreenNestedScrollViewController, View
     }
 
     private func handleTabSelection(_ section: Section) {
-        scrollToSection(section.rawValue)
+        guard let snapshot = dataSource?.snapshot(),
+              let sectionIndex = snapshot.indexOfSection(section) else { return }
+        scrollToSection(sectionIndex)
     }
 
     override func setupCustomContent() {
@@ -494,8 +496,8 @@ extension BookDetailViewController {
 
         let section = NSCollectionLayoutSection(group: group)
         section.interGroupSpacing = 4
-        section.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 12, bottom: 24, trailing: 0)
-        section.orthogonalScrollingBehavior = .continuous
+        section.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 0, bottom: 24, trailing: 0)
+        section.orthogonalScrollingBehavior = .continuousGroupLeadingBoundary
         section.boundarySupplementaryItems = [CommonSectionHeader.createBoundarySupplementaryItem()]
 
         return section
