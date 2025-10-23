@@ -253,17 +253,41 @@ final class BookDetailService {
         var hourlyData: [Int: [(startMinute: Int, endMinute: Int)]] = [:]
 
         for session in filteredSessions {
-            let hour = calendar.component(.hour, from: session.startTime)
-            let minute = calendar.component(.minute, from: session.startTime)
-            let durationMinutes = session.durationSeconds / 60
-
-            let startMinute = minute
-            let endMinute = min(minute + durationMinutes, 60)
-
-            if hourlyData[hour] == nil {
-                hourlyData[hour] = []
+            let sessionStart = session.startTime
+            guard let sessionEnd = calendar.date(byAdding: .second, value: session.durationSeconds, to: sessionStart) else {
+                continue
             }
-            hourlyData[hour]?.append((startMinute, endMinute))
+
+            let startHour = calendar.component(.hour, from: sessionStart)
+            let endHour = calendar.component(.hour, from: sessionEnd)
+
+            for hour in startHour...endHour {
+                var components = calendar.dateComponents([.year, .month, .day], from: sessionStart)
+                components.hour = hour
+                components.minute = 0
+                components.second = 0
+
+                guard let hourStart = calendar.date(from: components),
+                      let hourEnd = calendar.date(byAdding: .hour, value: 1, to: hourStart) else {
+                    continue
+                }
+
+                let effectiveStart = max(sessionStart, hourStart)
+                let effectiveEnd = min(sessionEnd, hourEnd)
+
+                let startMinute = calendar.component(.minute, from: effectiveStart)
+                let endMinute: Int
+                if effectiveEnd == hourEnd {
+                    endMinute = 60
+                } else {
+                    endMinute = calendar.component(.minute, from: effectiveEnd)
+                }
+
+                if hourlyData[hour] == nil {
+                    hourlyData[hour] = []
+                }
+                hourlyData[hour]?.append((startMinute, endMinute))
+            }
         }
 
         var dataPoints: [ReadingChartData.DataPoint] = []
