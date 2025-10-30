@@ -49,6 +49,7 @@ final class ReadingInfoEditViewController: UIViewController {
         picker.datePickerMode = .date
         picker.preferredDatePickerStyle = .inline
         picker.maximumDate = Date()
+        picker.tintColor = .forestGreen
         picker.addTarget(self, action: #selector(startDateChanged), for: .valueChanged)
         return picker
     }()
@@ -86,6 +87,8 @@ final class ReadingInfoEditViewController: UIViewController {
             String(localized: .`reading_info_edit.reading_status.completed`)
         ])
         control.selectedSegmentIndex = 0
+        control.selectedSegmentTintColor = .forestGreen
+        control.setTitleTextAttributes([.foregroundColor: UIColor.white], for: .selected)
         return control
     }()
 
@@ -94,6 +97,7 @@ final class ReadingInfoEditViewController: UIViewController {
         picker.datePickerMode = .date
         picker.preferredDatePickerStyle = .inline
         picker.maximumDate = Date()
+        picker.tintColor = .forestGreen
         picker.addTarget(self, action: #selector(endDateChanged), for: .valueChanged)
         return picker
     }()
@@ -217,6 +221,15 @@ final class ReadingInfoEditViewController: UIViewController {
 
     private func setupNavigationBar() {
         title = String(localized: .`reading_info_edit.title`)
+
+        let appearance = UINavigationBarAppearance()
+        appearance.configureWithOpaqueBackground()
+        appearance.backgroundColor = .white
+        appearance.titleTextAttributes = [.foregroundColor: UIColor.forestGreen]
+
+        navigationController?.navigationBar.standardAppearance = appearance
+        navigationController?.navigationBar.scrollEdgeAppearance = appearance
+        navigationController?.navigationBar.tintColor = .forestGreen
 
         let cancelButton = UIBarButtonItem(
             title: String(localized: .`action.cancel`),
