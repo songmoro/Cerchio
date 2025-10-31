@@ -93,6 +93,7 @@ final class TabBarCoordinator: BaseCoordinator, Coordinatable {
         )
 
         searchViewController.reactor = searchReactor
+        searchViewController.configure(searchHistoryRepository: searchHistoryRepository)
         searchViewController.tabBarItem = UITabBarItem(
             title: AppConstants.TabBar.Titles.search,
             image: UIImage(systemName: AppConstants.TabBar.SystemImages.search),

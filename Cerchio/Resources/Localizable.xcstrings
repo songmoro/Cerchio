@@ -2918,6 +2918,114 @@
         }
       }
     },
+    "search.history.title" : {
+      "comment" : "Recent search history title",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recent Searches"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "최근 검색"
+          }
+        }
+      }
+    },
+    "search.history.empty" : {
+      "comment" : "Empty search history message",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No search history"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "검색 기록이 없습니다"
+          }
+        }
+      }
+    },
+    "search.history.edit_title" : {
+      "comment" : "Search history edit screen title",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Edit Search History"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "검색 기록 편집"
+          }
+        }
+      }
+    },
+    "search.history.delete_all" : {
+      "comment" : "Delete all search history button",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete All"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "전체 삭제"
+          }
+        }
+      }
+    },
+    "search.history.delete_all_confirmation.title" : {
+      "comment" : "Delete all confirmation alert title",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete All Search History"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "검색 기록 전체 삭제"
+          }
+        }
+      }
+    },
+    "search.history.delete_all_confirmation.message" : {
+      "comment" : "Delete all confirmation alert message",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Are you sure you want to delete all search history?"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "모든 검색 기록을 삭제하시겠습니까?"
+          }
+        }
+      }
+    },
     "search.placeholder" : {
       "comment" : "Search bar placeholder text",
       "extractionState" : "manual",

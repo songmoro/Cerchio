@@ -16,6 +16,7 @@ final class SearchViewController: BaseViewController<SearchReactor> {
     private typealias Snapshot = NSDiffableDataSourceSnapshot<Section, Book>
 
     var onBookSaved: ((Book) -> Void)?
+    private var searchHistoryRepository: SearchHistoryRepositoryProtocol?
 
     private let searchBar: UISearchBar = {
         let searchBar = UISearchBar()
@@ -23,6 +24,8 @@ final class SearchViewController: BaseViewController<SearchReactor> {
         searchBar.searchBarStyle = .minimal
         return searchBar
     }()
+
+    private let searchHistoryScrollView = SearchHistoryScrollView()
 
     private let tableView: UITableView = {
         let tableView = UITableView()
@@ -73,6 +76,7 @@ final class SearchViewController: BaseViewController<SearchReactor> {
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         reactor?.action.onNext(.refresh)
+        reactor?.action.onNext(.loadSearchHistory)
     }
 
     override func bind(reactor: SearchReactor) {
@@ -128,6 +132,50 @@ final class SearchViewController: BaseViewController<SearchReactor> {
                 self?.showNavigationConfirmAlert(for: savedBook)
             })
             .disposed(by: disposeBag)
+
+        reactor.state
+            .map { $0.searchHistory }
+            .distinctUntilChanged()
+            .observe(on: MainScheduler.instance)
+            .subscribe(onNext: { [weak self] history in
+                let keywords = history.map { $0.keyword }
+                self?.searchHistoryScrollView.updateHistory(keywords)
+            })
+            .disposed(by: disposeBag)
+
+        reactor.state
+            .map { $0.searchText }
+            .distinctUntilChanged()
+            .asDriver(onErrorJustReturn: "")
+            .drive(searchBar.rx.text)
+            .disposed(by: disposeBag)
+
+        searchHistoryScrollView.onHistorySelected = { [weak self] keyword in
+            self?.reactor?.action.onNext(.selectSearchHistory(keyword))
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                self?.reactor?.action.onNext(.searchButtonTapped)
+            }
+        }
+
+        searchHistoryScrollView.onEditTapped = { [weak self] in
+            self?.showHistoryEditScreen()
+        }
+    }
+
+    func configure(searchHistoryRepository: SearchHistoryRepositoryProtocol) {
+        self.searchHistoryRepository = searchHistoryRepository
+    }
+
+    private func showHistoryEditScreen() {
+        guard let repository = searchHistoryRepository else { return }
+
+        let editViewController = SearchHistoryEditViewController(searchHistoryRepository: repository)
+        editViewController.onHistoryUpdated = { [weak self] in
+            self?.reactor?.action.onNext(.loadSearchHistory)
+        }
+
+        let navigationController = UINavigationController(rootViewController: editViewController)
+        present(navigationController, animated: true)
     }
 
     private func setupSearchBar() {
@@ -159,17 +207,23 @@ final class SearchViewController: BaseViewController<SearchReactor> {
     }
 
     private func setupLayout() {
+        view.addSubview(searchHistoryScrollView)
         view.addSubview(tableView)
         view.addSubview(emptyStateView)
         view.addSubview(loadingIndicator)
 
-        tableView.snp.makeConstraints {
+        searchHistoryScrollView.snp.makeConstraints {
             $0.top.equalTo(searchBar.snp.bottom)
+            $0.horizontalEdges.equalToSuperview()
+        }
+
+        tableView.snp.makeConstraints {
+            $0.top.equalTo(searchHistoryScrollView.snp.bottom)
             $0.horizontalEdges.bottom.equalTo(view.safeAreaLayoutGuide)
         }
 
         emptyStateView.snp.makeConstraints {
-            $0.top.equalTo(searchBar.snp.bottom)
+            $0.top.equalTo(searchHistoryScrollView.snp.bottom)
             $0.horizontalEdges.bottom.equalTo(view.safeAreaLayoutGuide)
         }
 

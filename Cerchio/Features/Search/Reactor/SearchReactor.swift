@@ -18,6 +18,8 @@ final class SearchReactor: Reactor {
         case addBookToLibrary(Book)
         case loadMore
         case refresh
+        case loadSearchHistory
+        case selectSearchHistory(String)
     }
 
     enum Mutation {
@@ -32,6 +34,7 @@ final class SearchReactor: Reactor {
         case setHasMore(Bool)
         case setIsLoadingMore(Bool)
         case refreshSearchResults([Book], [BookSearchItem])
+        case setSearchHistory([RealmSearchHistory])
     }
 
     struct State {
@@ -44,6 +47,7 @@ final class SearchReactor: Reactor {
         var currentPage: Int = 1
         var hasMore: Bool = false
         var isLoadingMore: Bool = false
+        var searchHistory: [RealmSearchHistory] = []
     }
     
     let initialState = State()
@@ -80,7 +84,8 @@ final class SearchReactor: Reactor {
                 Observable.just(.setCurrentPage(1)),
                 saveSearchHistory(keyword: searchText),
                 performSearch(query: searchText, page: 1),
-                Observable.just(.setLoading(false))
+                Observable.just(.setLoading(false)),
+                reloadSearchHistory()
             ])
 
         case .loadMore:
@@ -163,6 +168,15 @@ final class SearchReactor: Reactor {
                         return Observable.just(.setError("원본 데이터를 찾을 수 없습니다."))
                     }
                 }
+
+        case .loadSearchHistory:
+            return searchHistoryRepository.getAllSearchHistory()
+                .take(10)
+                .map { history in .setSearchHistory(Array(history.prefix(10))) }
+                .catch { _ in Observable.just(.setSearchHistory([])) }
+
+        case .selectSearchHistory(let keyword):
+            return Observable.just(.setSearchText(keyword))
         }
     }
 
@@ -208,9 +222,36 @@ final class SearchReactor: Reactor {
         case .refreshSearchResults(let books, let items):
             newState.searchState = .results(books, items)
             newState.originalSearchItems = items
+
+        case .setSearchHistory(let history):
+            newState.searchHistory = deduplicateSearchHistory(history)
         }
 
         return newState
+    }
+
+    // MARK: - Helper Methods
+
+    private func deduplicateSearchHistory(_ history: [RealmSearchHistory]) -> [RealmSearchHistory] {
+        var seenKeywords: Set<String> = []
+        var uniqueHistory: [RealmSearchHistory] = []
+
+        for item in history {
+            let lowercasedKeyword = item.keyword.lowercased()
+            if !seenKeywords.contains(lowercasedKeyword) {
+                seenKeywords.insert(lowercasedKeyword)
+                uniqueHistory.append(item)
+            }
+        }
+
+        return uniqueHistory
+    }
+
+    private func reloadSearchHistory() -> Observable<Mutation> {
+        return searchHistoryRepository.getAllSearchHistory()
+            .take(10)
+            .map { history in .setSearchHistory(Array(history.prefix(10))) }
+            .catch { _ in Observable.just(.setSearchHistory([])) }
     }
 
     private func saveSearchHistory(keyword: String) -> Observable<Mutation> {

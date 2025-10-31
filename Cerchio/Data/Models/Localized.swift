@@ -167,6 +167,12 @@ enum Localized: String {
     case `search.book_saved.title`
     case `search.book_saved.message`
     case `search.navigate`
+    case `search.history.title`
+    case `search.history.empty`
+    case `search.history.edit_title`
+    case `search.history.delete_all`
+    case `search.history.delete_all_confirmation.title`
+    case `search.history.delete_all_confirmation.message`
     case `alert.notification`
     case `search.empty_state.enter_query`
     case `search.empty_state.no_results`
