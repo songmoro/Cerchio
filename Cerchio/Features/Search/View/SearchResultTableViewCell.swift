@@ -43,7 +43,7 @@ final class SearchResultTableViewCell: UITableViewCell, IsIdentifiable {
         label.textColor = .label
         label.numberOfLines = 1
         label.lineBreakMode = .byTruncatingTail
-        label.setContentCompressionResistancePriority(.required, for: .vertical)
+        label.setContentCompressionResistancePriority(.defaultHigh, for: .vertical)
         label.setContentHuggingPriority(.defaultLow, for: .vertical)
         return label
     }()
@@ -169,6 +169,7 @@ final class SearchResultTableViewCell: UITableViewCell, IsIdentifiable {
         HapticFeedbackManager.shared.selection()
 
         isExpanded.toggle()
+        authorLabel.numberOfLines = isExpanded ? 2 : 1
         descriptionLabel.numberOfLines = isExpanded ? 0 : 1
 
         let config = UIImage.SymbolConfiguration(pointSize: SearchResultConstants.Typography.expandButtonSize, weight: .medium)
@@ -210,6 +211,7 @@ final class SearchResultTableViewCell: UITableViewCell, IsIdentifiable {
         bookImageView.image = nil
         titleLabel.text = nil
         authorLabel.text = nil
+        authorLabel.numberOfLines = 1
         descriptionLabel.text = nil
         descriptionLabel.numberOfLines = 1
         isExpanded = false
