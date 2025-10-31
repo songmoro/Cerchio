@@ -16,18 +16,32 @@ final class SettingsViewController: BaseViewController<SettingsReactor> {
     private let tableView = UITableView(frame: .zero, style: .insetGrouped)
 
     private enum Section: Int, CaseIterable {
+        case general
         case contact
         case info
         case data
 
         var title: String? {
             switch self {
+            case .general:
+                return SettingsConstants.Strings.generalSectionTitle
             case .contact:
                 return SettingsConstants.Strings.contactSectionTitle
             case .info:
                 return SettingsConstants.Strings.infoSectionTitle
             case .data:
                 return SettingsConstants.Strings.dataSectionTitle
+            }
+        }
+    }
+
+    private enum GeneralRow: Int, CaseIterable {
+        case language
+
+        var title: String {
+            switch self {
+            case .language:
+                return SettingsConstants.Strings.languageRowTitle
             }
         }
     }
@@ -110,6 +124,15 @@ final class SettingsViewController: BaseViewController<SettingsReactor> {
                 self?.handleResetCompleted()
             })
             .disposed(by: disposeBag)
+
+        reactor.state
+            .map { $0.currentLanguage }
+            .distinctUntilChanged()
+            .observe(on: MainScheduler.instance)
+            .subscribe(onNext: { [weak self] _ in
+                self?.tableView.reloadData()
+            })
+            .disposed(by: disposeBag)
     }
 
     private func handleResetState(_ isResetting: Bool) {
@@ -152,6 +175,41 @@ final class SettingsViewController: BaseViewController<SettingsReactor> {
     private func handleResetCompleted() {
         NotificationCenter.default.post(name: .dataDidReset, object: nil)
     }
+
+    private func showLanguageSelectionAlert() {
+        let alert = UIAlertController(
+            title: SettingsConstants.Strings.languageSelectionTitle,
+            message: SettingsConstants.Strings.languageSelectionMessage,
+            preferredStyle: .actionSheet
+        )
+
+        for language in AppLanguage.allCases {
+            let action = UIAlertAction(title: language.displayName, style: .default) { [weak self] _ in
+                self?.changeLanguage(to: language)
+            }
+            alert.addAction(action)
+        }
+
+        let cancelAction = UIAlertAction(title: SettingsConstants.Strings.cancelAction, style: .cancel)
+        alert.addAction(cancelAction)
+
+        present(alert, animated: true)
+    }
+
+    private func changeLanguage(to language: AppLanguage) {
+        reactor?.action.onNext(.changeLanguage(language))
+
+        let alert = UIAlertController(
+            title: SettingsConstants.Strings.languageChangedTitle,
+            message: SettingsConstants.Strings.languageChangedMessage,
+            preferredStyle: .alert
+        )
+
+        let confirmAction = UIAlertAction(title: SettingsConstants.Strings.confirmAction, style: .default)
+
+        alert.addAction(confirmAction)
+        present(alert, animated: true)
+    }
 }
 
 extension SettingsViewController: UITableViewDataSource {
@@ -163,6 +221,8 @@ extension SettingsViewController: UITableViewDataSource {
         guard let sectionType = Section(rawValue: section) else { return 0 }
 
         switch sectionType {
+        case .general:
+            return GeneralRow.allCases.count
         case .contact:
             return ContactRow.allCases.count
         case .info:
@@ -178,6 +238,17 @@ extension SettingsViewController: UITableViewDataSource {
         }
 
         switch sectionType {
+        case .general:
+            let cell = UITableViewCell(style: .value1, reuseIdentifier: nil)
+            if let rowType = GeneralRow(rawValue: indexPath.row) {
+                cell.textLabel?.text = rowType.title
+                cell.textLabel?.textColor = .label
+                cell.detailTextLabel?.text = reactor?.currentState.currentLanguage.displayName
+                cell.detailTextLabel?.textColor = .secondaryLabel
+                cell.selectionStyle = .default
+                cell.accessoryType = .disclosureIndicator
+            }
+            return cell
         case .contact:
             let cell = tableView.dequeueReusableCell(withIdentifier: SettingsConstants.CellIdentifiers.defaultCell, for: indexPath)
             if let rowType = ContactRow(rawValue: indexPath.row) {
@@ -223,6 +294,13 @@ extension SettingsViewController: UITableViewDelegate {
         guard let sectionType = Section(rawValue: indexPath.section) else { return }
 
         switch sectionType {
+        case .general:
+            if let rowType = GeneralRow(rawValue: indexPath.row) {
+                switch rowType {
+                case .language:
+                    showLanguageSelectionAlert()
+                }
+            }
         case .contact:
             if let rowType = ContactRow(rawValue: indexPath.row) {
                 switch rowType {
