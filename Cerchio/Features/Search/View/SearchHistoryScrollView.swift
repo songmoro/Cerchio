@@ -52,12 +52,12 @@ final class SearchHistoryScrollView: UIView {
         }
 
         headerView.snp.makeConstraints {
-            $0.top.equalToSuperview()
+            $0.top.equalToSuperview().offset(4)
             $0.horizontalEdges.equalToSuperview()
         }
 
         scrollView.snp.makeConstraints {
-            $0.top.equalTo(headerView.snp.bottom)
+            $0.top.equalTo(headerView.snp.bottom).offset(-4)
             $0.horizontalEdges.equalToSuperview().inset(16)
             $0.bottom.equalToSuperview()
             $0.height.equalTo(44)
@@ -83,8 +83,8 @@ final class SearchHistoryScrollView: UIView {
             return
         }
 
-        // Calculate height: header (44) + scroll view (44) + spacing
-        let totalHeight: CGFloat = 88
+        // Calculate height: header (40) + scroll view (44) + minimal spacing
+        let totalHeight: CGFloat = 84
         heightConstraint?.update(offset: totalHeight)
 
         for keyword in keywords {

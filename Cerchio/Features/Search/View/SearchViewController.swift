@@ -192,7 +192,8 @@ final class SearchViewController: BaseViewController<SearchReactor> {
 
     private func setupTableView() {
         tableView.register(SearchResultTableViewCell.self, forCellReuseIdentifier: SearchResultTableViewCell.identifier)
-        tableView.rowHeight = SearchResultConstants.Layout.rowHeight
+        tableView.rowHeight = UITableView.automaticDimension
+        tableView.estimatedRowHeight = 120
         tableView.contentInset.bottom = 20
         tableView.verticalScrollIndicatorInsets = .init(top: 0, left: 0, bottom: 20, right: 0)
         tableView.delegate = self
@@ -245,11 +246,19 @@ final class SearchViewController: BaseViewController<SearchReactor> {
     private func configureDataSource() {
         dataSource = DataSource(tableView: tableView) { [weak self] (tableView: UITableView, indexPath: IndexPath, book: Book) -> UITableViewCell? in
             let cell = tableView.dequeueReusableCell(withIdentifier: SearchResultTableViewCell.identifier, for: indexPath) as! SearchResultTableViewCell
-            cell.configure(with: book) { [weak self] selectedBook in
-                guard let self = self else { return }
-
-                self.reactor?.action.onNext(.addBookToLibrary(selectedBook))
-            }
+            cell.configure(
+                with: book,
+                addHandler: { [weak self] selectedBook in
+                    guard let self = self else { return }
+                    self.reactor?.action.onNext(.addBookToLibrary(selectedBook))
+                },
+                onExpandToggled: { [weak tableView] in
+                    UIView.animate(withDuration: SearchResultConstants.Animation.expandAnimationDuration) {
+                        tableView?.beginUpdates()
+                        tableView?.endUpdates()
+                    }
+                }
+            )
             return cell
         }
 

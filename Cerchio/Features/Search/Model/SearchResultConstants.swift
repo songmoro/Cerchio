@@ -17,22 +17,26 @@ enum SearchResultConstants {
         static let imageHeight: CGFloat = 80
         static let buttonWidth: CGFloat = 60
         static let buttonHeight: CGFloat = 32
-        static let stackSpacing: CGFloat = 4
+        static let stackSpacing: CGFloat = 6
+        static let buttonStackSpacing: CGFloat = 8
         static let contentSpacing: CGFloat = 12
         static let emptyStateInset: CGFloat = 40
-        static let rowHeight: CGFloat = 100
+        static let expandButtonSize: CGFloat = 32
     }
 
     enum Typography {
         static let titleFontSize: CGFloat = 16
         static let authorFontSize: CGFloat = 14
+        static let descriptionFontSize: CGFloat = 13
         static let buttonFontSize: CGFloat = 14
+        static let expandButtonSize: CGFloat = 16
         static let titleNumberOfLines: Int = 2
         static let authorNumberOfLines: Int = 1
     }
 
     enum Animation {
         static let buttonAnimationDuration: TimeInterval = 0.1
+        static let expandAnimationDuration: TimeInterval = 0.25
         static let buttonScaleDown: CGFloat = 0.95
         static let mockSearchDelay: TimeInterval = 1.0
     }

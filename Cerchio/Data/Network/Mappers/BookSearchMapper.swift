@@ -11,10 +11,21 @@ struct BookSearchMapper {
 
     static func mapToBook(_ item: BookSearchItem) -> Book {
         return Book(
-            title: item.cleanTitle,
+            title: item.title,
+            cleanTitle: item.cleanTitle,
+            link: item.link,
             image: item.image,
             author: item.author,
             isbn: item.isbn,
+            publisher: item.publisher,
+            bookDescription: item.description,
+            cleanDescription: item.cleanDescription,
+            pubdate: item.pubdate,
+            discount: item.discount,
+            formattedPubDate: item.formattedPubDate,
+            formattedPrice: item.formattedPrice,
+            priceAsInt: item.priceAsInt,
+            createAt: Date(),
             genre: nil,
             totalPages: nil,
             isFavorite: false,
