@@ -34,7 +34,8 @@ final class SearchReactor: Reactor {
         case setHasMore(Bool)
         case setIsLoadingMore(Bool)
         case refreshSearchResults([Book], [BookSearchItem])
-        case setSearchHistory([RealmSearchHistory])
+        case setSearchHistory([String])
+        case setIsSearching(Bool)
     }
 
     struct State {
@@ -47,7 +48,8 @@ final class SearchReactor: Reactor {
         var currentPage: Int = 1
         var hasMore: Bool = false
         var isLoadingMore: Bool = false
-        var searchHistory: [RealmSearchHistory] = []
+        var searchHistory: [String] = []
+        var isSearching: Bool = false
     }
     
     let initialState = State()
@@ -68,6 +70,11 @@ final class SearchReactor: Reactor {
             return Observable.just(.setSearchText(text))
 
         case .searchButtonTapped:
+            // 이미 검색 중이면 무시
+            guard !currentState.isSearching else {
+                return Observable.empty()
+            }
+
             let searchText = currentState.searchText.trimmingCharacters(in: .whitespacesAndNewlines)
 
             guard !searchText.isEmpty else {
@@ -79,13 +86,15 @@ final class SearchReactor: Reactor {
             ])
 
             return Observable.concat([
+                Observable.just(.setIsSearching(true)),
                 Observable.just(.setLoading(true)),
                 Observable.just(.setSearchState(.searching)),
                 Observable.just(.setCurrentPage(1)),
                 saveSearchHistory(keyword: searchText),
+                reloadSearchHistory(),  // 검색 이력 먼저 갱신
                 performSearch(query: searchText, page: 1),
                 Observable.just(.setLoading(false)),
-                reloadSearchHistory()
+                Observable.just(.setIsSearching(false))
             ])
 
         case .loadMore:
@@ -172,7 +181,10 @@ final class SearchReactor: Reactor {
         case .loadSearchHistory:
             return searchHistoryRepository.getAllSearchHistory()
                 .take(10)
-                .map { history in .setSearchHistory(Array(history.prefix(10))) }
+                .map { history in
+                    let keywords = Array(history.prefix(10)).map { $0.keyword }
+                    return .setSearchHistory(keywords)
+                }
                 .catch { _ in Observable.just(.setSearchHistory([])) }
 
         case .selectSearchHistory(let keyword):
@@ -223,8 +235,11 @@ final class SearchReactor: Reactor {
             newState.searchState = .results(books, items)
             newState.originalSearchItems = items
 
-        case .setSearchHistory(let history):
-            newState.searchHistory = deduplicateSearchHistory(history)
+        case .setSearchHistory(let keywords):
+            newState.searchHistory = keywords
+
+        case .setIsSearching(let isSearching):
+            newState.isSearching = isSearching
         }
 
         return newState
@@ -232,25 +247,13 @@ final class SearchReactor: Reactor {
 
     // MARK: - Helper Methods
 
-    private func deduplicateSearchHistory(_ history: [RealmSearchHistory]) -> [RealmSearchHistory] {
-        var seenKeywords: Set<String> = []
-        var uniqueHistory: [RealmSearchHistory] = []
-
-        for item in history {
-            let lowercasedKeyword = item.keyword.lowercased()
-            if !seenKeywords.contains(lowercasedKeyword) {
-                seenKeywords.insert(lowercasedKeyword)
-                uniqueHistory.append(item)
-            }
-        }
-
-        return uniqueHistory
-    }
-
     private func reloadSearchHistory() -> Observable<Mutation> {
         return searchHistoryRepository.getAllSearchHistory()
             .take(10)
-            .map { history in .setSearchHistory(Array(history.prefix(10))) }
+            .map { history in
+                let keywords = Array(history.prefix(10)).map { $0.keyword }
+                return .setSearchHistory(keywords)
+            }
             .catch { _ in Observable.just(.setSearchHistory([])) }
     }
 

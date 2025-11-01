@@ -137,8 +137,7 @@ final class SearchViewController: BaseViewController<SearchReactor> {
             .map { $0.searchHistory }
             .distinctUntilChanged()
             .observe(on: MainScheduler.instance)
-            .subscribe(onNext: { [weak self] history in
-                let keywords = history.map { $0.keyword }
+            .subscribe(onNext: { [weak self] keywords in
                 self?.searchHistoryScrollView.updateHistory(keywords)
             })
             .disposed(by: disposeBag)
