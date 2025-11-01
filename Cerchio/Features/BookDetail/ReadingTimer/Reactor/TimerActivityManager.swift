@@ -89,7 +89,7 @@ final class TimerActivityManager {
             let remaining = max(0, Int(targetEndTime.timeIntervalSince(Date())))
             pausedElapsedSeconds = targetSeconds - remaining
 
-            timerStartTime = Date().addingTimeInterval(-TimeInterval(pausedElapsedSeconds))
+            timerStartTime = targetEndTime.addingTimeInterval(-TimeInterval(targetSeconds - pausedElapsedSeconds))
         }
 
         return Observable.create { [weak self] observer in
@@ -150,7 +150,7 @@ final class TimerActivityManager {
             } else {
                 let remaining = max(0, Int(targetEndTime.timeIntervalSince(Date())))
                 pausedElapsedSeconds = targetSeconds - remaining
-                timerStartTime = Date().addingTimeInterval(-TimeInterval(pausedElapsedSeconds))
+                timerStartTime = targetEndTime.addingTimeInterval(-TimeInterval(targetSeconds - pausedElapsedSeconds))
             }
 
             return Observable.create { observer in
@@ -252,7 +252,7 @@ final class TimerActivityManager {
         } else {
             let remaining = max(0, Int(targetEndTime.timeIntervalSince(Date())))
             pausedElapsedSeconds = targetSeconds - remaining
-            timerStartTime = Date().addingTimeInterval(-TimeInterval(pausedElapsedSeconds))
+            timerStartTime = targetEndTime.addingTimeInterval(-TimeInterval(targetSeconds - pausedElapsedSeconds))
         }
 
         return Observable.create { [weak self] observer in

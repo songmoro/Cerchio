@@ -75,7 +75,7 @@ final class LiveActivityManager {
 
                 let targetSeconds = targetMinutes * 60
                 let initialState = ReadingTimerAttributes.ContentState(
-                    timerStartTime: Date(),
+                    timerStartTime: sessionStartTime,
                     pausedElapsedSeconds: 0,
                     targetSeconds: targetSeconds,
                     isPaused: false,
