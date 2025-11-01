@@ -15,6 +15,7 @@ struct ReadingTimerAttributes: ActivityAttributes {
         var targetSeconds: Int
         var isPaused: Bool
         var isCompleted: Bool
+        var lastUpdateTime: Date  // UI 강제 갱신을 위한 타임스탬프
 
         var currentElapsedSeconds: Int {
             if isCompleted { return targetSeconds }

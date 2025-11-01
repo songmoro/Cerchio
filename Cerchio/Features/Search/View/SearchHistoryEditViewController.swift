@@ -11,7 +11,7 @@ import RxCocoa
 import SnapKit
 import RealmSwift
 
-nonisolated(unsafe) private enum Section: Hashable, Sendable {
+nonisolated private enum Section: Hashable, Sendable {
     case main
 }
 

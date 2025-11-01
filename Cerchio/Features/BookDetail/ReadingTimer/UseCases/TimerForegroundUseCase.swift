@@ -46,7 +46,10 @@ final class TimerForegroundUseCase {
 
         if stateManager.isCompleted() {
             if #available(iOS 16.2, *) {
-                _ = activityManager.end().subscribe()
+                return activityManager.end()
+                    .observe(on: MainScheduler.asyncInstance)
+                    .map { .completed }
+                    .catch { _ in .just(.completed) }
             }
             return .just(.completed)
         }
@@ -61,16 +64,30 @@ final class TimerForegroundUseCase {
         )
 
         if calc.isCompleted {
-            _ = notificationManager.cancel().subscribe()
+            let cancelNotification = notificationManager.cancel()
+                .observe(on: MainScheduler.asyncInstance)
+                .catch { _ in .just(()) }
+
+            let endActivity: Observable<Void>
             if #available(iOS 16.2, *) {
-                _ = activityManager.end().subscribe()
+                endActivity = activityManager.end()
+                    .observe(on: MainScheduler.asyncInstance)
+                    .catch { _ in .just(()) }
+            } else {
+                endActivity = .just(())
             }
-            sessionManager.clearActiveSession()
-            return .just(.completed)
+
+            return Observable.zip(cancelNotification, endActivity)
+                .observe(on: MainScheduler.asyncInstance)
+                .do(onNext: { [weak self] _ in
+                    self?.sessionManager.clearActiveSession()
+                })
+                .map { _ in .completed }
         }
 
+        let restartActivity: Observable<Void>
         if #available(iOS 16.2, *), !activityManager.hasActiveActivity {
-            _ = activityManager.restart(
+            restartActivity = activityManager.restart(
                 bookTitle: bookTitle,
                 targetMinutes: targetMinutes,
                 sessionStartTime: sessionStartTime,
@@ -78,22 +95,33 @@ final class TimerForegroundUseCase {
                 pausedAt: stateManager.currentPausedAt,
                 targetSeconds: stateManager.targetSeconds
             )
-            .subscribe()
+            .observe(on: MainScheduler.asyncInstance)
+            .catch { _ in .just(()) }
+        } else {
+            restartActivity = .just(())
         }
 
+        let updateActivity: Observable<Void>
         if #available(iOS 16.2, *) {
-            _ = activityManager.update(
+            updateActivity = activityManager.update(
                 targetEndTime: targetEndTime,
                 pausedAt: stateManager.currentPausedAt,
                 targetSeconds: stateManager.targetSeconds
             )
-            .subscribe()
+            .observe(on: MainScheduler.asyncInstance)
+            .catch { _ in .just(()) }
+        } else {
+            updateActivity = .just(())
         }
 
-        if stateManager.currentState == .paused {
-            return .just(.paused(remaining: calc.remaining))
-        }
-
-        return .just(.updated(remaining: calc.remaining))
+        return Observable.zip(restartActivity, updateActivity)
+            .observe(on: MainScheduler.asyncInstance)
+            .map { [weak self] _ in
+                guard let self = self else { return .completed }
+                if self.stateManager.currentState == .paused {
+                    return .paused(remaining: calc.remaining)
+                }
+                return .updated(remaining: calc.remaining)
+            }
     }
 }

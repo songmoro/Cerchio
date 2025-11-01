@@ -79,7 +79,8 @@ final class LiveActivityManager {
                     pausedElapsedSeconds: 0,
                     targetSeconds: targetSeconds,
                     isPaused: false,
-                    isCompleted: false
+                    isCompleted: false,
+                    lastUpdateTime: Date()
                 )
                 
                 let content = ActivityContent(
@@ -107,36 +108,29 @@ final class LiveActivityManager {
         }
     }
     
+    @MainActor
     func updateActivity(
         timerStartTime: Date?,
         pausedElapsedSeconds: Int,
         targetSeconds: Int,
         isPaused: Bool
-    ) -> Observable<Void> {
-        return Observable.create { [weak self] observer in
-            guard let activity = self?.currentActivity else {
-                observer.onError(LiveActivityError.noActiveActivity)
-                return Disposables.create()
-            }
-
-            let newState = ReadingTimerAttributes.ContentState(
-                timerStartTime: timerStartTime,
-                pausedElapsedSeconds: pausedElapsedSeconds,
-                targetSeconds: targetSeconds,
-                isPaused: isPaused,
-                isCompleted: false
-            )
-
-            let staleDate = timerStartTime?.addingTimeInterval(TimeInterval(targetSeconds - pausedElapsedSeconds))
-
-            Task {
-                await activity.update(.init(state: newState, staleDate: staleDate))
-                observer.onNext(())
-                observer.onCompleted()
-            }
-
-            return Disposables.create()
+    ) async throws {
+        guard let activity = currentActivity else {
+            throw LiveActivityError.noActiveActivity
         }
+
+        let newState = ReadingTimerAttributes.ContentState(
+            timerStartTime: timerStartTime,
+            pausedElapsedSeconds: pausedElapsedSeconds,
+            targetSeconds: targetSeconds,
+            isPaused: isPaused,
+            isCompleted: false,
+            lastUpdateTime: Date()
+        )
+
+        let staleDate = timerStartTime?.addingTimeInterval(TimeInterval(targetSeconds - pausedElapsedSeconds))
+
+        await activity.update(.init(state: newState, staleDate: staleDate))
     }
     
     func endAllActivities() -> Observable<Void> {
@@ -179,7 +173,8 @@ final class LiveActivityManager {
                         pausedElapsedSeconds: activity.content.state.targetSeconds,
                         targetSeconds: activity.content.state.targetSeconds,
                         isPaused: false,
-                        isCompleted: true
+                        isCompleted: true,
+                        lastUpdateTime: Date()
                     )
                     
                     await activity.end(

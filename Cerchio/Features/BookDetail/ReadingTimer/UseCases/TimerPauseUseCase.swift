@@ -43,15 +43,21 @@ final class TimerPauseUseCase {
         stateManager.setState(.paused)
         stateManager.setPausedAt(pauseTime)
 
-        _ = notificationManager.cancel().subscribe()
+        let cancelNotification = notificationManager.cancel()
+            .observe(on: MainScheduler.asyncInstance)
+            .asObservable()
+            .catch { _ in .just(()) }
 
+        let updateActivity: Observable<Void>
         if #available(iOS 16.2, *) {
-            _ = activityManager.update(
+            updateActivity = activityManager.update(
                 targetEndTime: targetEndTime,
                 pausedAt: pauseTime,
                 targetSeconds: stateManager.targetSeconds
             )
-            .subscribe()
+            .observe(on: MainScheduler.asyncInstance)
+        } else {
+            updateActivity = .just(())
         }
 
         sessionManager.saveActiveSession(
@@ -62,9 +68,12 @@ final class TimerPauseUseCase {
             startTime: sessionStartTime,
             targetEndTime: targetEndTime,
             pausedAt: pauseTime,
-            activityId: nil
+            activityId: nil,
+            pausedElapsedSeconds: stateManager.currentElapsedSeconds
         )
 
-        return .just(())
+        return Observable.zip(cancelNotification, updateActivity)
+            .observe(on: MainScheduler.asyncInstance)
+            .map { _ in () }
     }
 }

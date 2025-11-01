@@ -49,8 +49,6 @@ final class TimerActivityManager {
         )
         .do(onNext: { [weak self] in
             self?.isStarted = true
-        }, onError: { error in
-            print("[TimerActivity]  Failed to start: \(error)")
         })
     }
 
@@ -65,7 +63,6 @@ final class TimerActivityManager {
                 self?.isStarted = false
             }, onError: { [weak self] error in
                 self?.isStarted = false
-                print("[TimerActivity]  Failed to end: \(error)")
             })
     }
 
@@ -95,15 +92,31 @@ final class TimerActivityManager {
             timerStartTime = Date().addingTimeInterval(-TimeInterval(pausedElapsedSeconds))
         }
 
-        return liveActivityManager.updateActivity(
-            timerStartTime: timerStartTime,
-            pausedElapsedSeconds: pausedElapsedSeconds,
-            targetSeconds: targetSeconds,
-            isPaused: isPaused
-        )
-        .catch { error -> Observable<Void> in
-            print("[TimerActivity]  Update failed: \(error)")
-            return .just(())
+        return Observable.create { [weak self] observer in
+            guard let self = self else {
+                observer.onCompleted()
+                return Disposables.create()
+            }
+
+            let task = Task { @MainActor in
+                do {
+                    try await self.liveActivityManager.updateActivity(
+                        timerStartTime: timerStartTime,
+                        pausedElapsedSeconds: pausedElapsedSeconds,
+                        targetSeconds: targetSeconds,
+                        isPaused: isPaused
+                    )
+                    observer.onNext(())
+                    observer.onCompleted()
+                } catch {
+                    observer.onNext(())
+                    observer.onCompleted()
+                }
+            }
+
+            return Disposables.create {
+                task.cancel()
+            }
         }
     }
 
@@ -140,17 +153,28 @@ final class TimerActivityManager {
                 timerStartTime = Date().addingTimeInterval(-TimeInterval(pausedElapsedSeconds))
             }
 
-            return self.liveActivityManager.updateActivity(
-                timerStartTime: timerStartTime,
-                pausedElapsedSeconds: pausedElapsedSeconds,
-                targetSeconds: targetSeconds,
-                isPaused: isPaused
-            )
+            return Observable.create { observer in
+                let task = Task { @MainActor in
+                    do {
+                        try await self.liveActivityManager.updateActivity(
+                            timerStartTime: timerStartTime,
+                            pausedElapsedSeconds: pausedElapsedSeconds,
+                            targetSeconds: targetSeconds,
+                            isPaused: isPaused
+                        )
+                        observer.onNext(())
+                        observer.onCompleted()
+                    } catch {
+                        observer.onNext(())
+                        observer.onCompleted()
+                    }
+                }
+
+                return Disposables.create {
+                    task.cancel()
+                }
+            }
         }
-        .do(onNext: {
-        }, onError: { error in
-            print("[TimerActivity]  Restart failed: \(error)")
-        })
     }
 
     @available(iOS 16.2, *)
@@ -189,12 +213,27 @@ final class TimerActivityManager {
                     timerStartTime = Date().addingTimeInterval(-TimeInterval(pausedElapsedSeconds))
                 }
 
-                return self.liveActivityManager.updateActivity(
-                    timerStartTime: timerStartTime,
-                    pausedElapsedSeconds: pausedElapsedSeconds,
-                    targetSeconds: targetSeconds,
-                    isPaused: isPaused
-                )
+                return Observable.create { observer in
+                    let task = Task { @MainActor in
+                        do {
+                            try await self.liveActivityManager.updateActivity(
+                                timerStartTime: timerStartTime,
+                                pausedElapsedSeconds: pausedElapsedSeconds,
+                                targetSeconds: targetSeconds,
+                                isPaused: isPaused
+                            )
+                            observer.onNext(())
+                            observer.onCompleted()
+                        } catch {
+                            observer.onNext(())
+                            observer.onCompleted()
+                        }
+                    }
+
+                    return Disposables.create {
+                        task.cancel()
+                    }
+                }
             }
         }
 
@@ -216,15 +255,34 @@ final class TimerActivityManager {
             timerStartTime = Date().addingTimeInterval(-TimeInterval(pausedElapsedSeconds))
         }
 
-        return liveActivityManager.updateActivity(
-            timerStartTime: timerStartTime,
-            pausedElapsedSeconds: pausedElapsedSeconds,
-            targetSeconds: targetSeconds,
-            isPaused: isPaused
-        )
-        .do(onNext: { [weak self] in
-            self?.isStarted = true
-        })
+        return Observable.create { [weak self] observer in
+            guard let self = self else {
+                observer.onCompleted()
+                return Disposables.create()
+            }
+
+            let task = Task { @MainActor in
+                do {
+                    try await self.liveActivityManager.updateActivity(
+                        timerStartTime: timerStartTime,
+                        pausedElapsedSeconds: pausedElapsedSeconds,
+                        targetSeconds: targetSeconds,
+                        isPaused: isPaused
+                    )
+                    self.isStarted = true
+                    observer.onNext(())
+                    observer.onCompleted()
+                } catch {
+                    self.isStarted = true
+                    observer.onNext(())
+                    observer.onCompleted()
+                }
+            }
+
+            return Disposables.create {
+                task.cancel()
+            }
+        }
     }
 
     @available(iOS 16.2, *)

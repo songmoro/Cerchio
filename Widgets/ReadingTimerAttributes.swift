@@ -15,6 +15,7 @@ struct ReadingTimerAttributes: ActivityAttributes {
         var targetSeconds: Int
         var isPaused: Bool
         var isCompleted: Bool
+        var lastUpdateTime: Date  // UI 강제 갱신을 위한 타임스탬프
 
         // 현재 경과 시간 계산 (위젯에서 실시간으로 계산)
         var currentElapsedSeconds: Int {

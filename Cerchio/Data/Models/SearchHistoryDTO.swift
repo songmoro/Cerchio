@@ -8,7 +8,7 @@
 import Foundation
 import RealmSwift
 
-nonisolated(unsafe) struct SearchHistoryDTO: Hashable, Sendable {
+nonisolated struct SearchHistoryDTO: Hashable, Sendable {
     let id: String
     let keyword: String
 

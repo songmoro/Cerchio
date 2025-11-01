@@ -117,6 +117,8 @@ final class ReadingTimerReactor: Reactor {
             bookId: bookId,
             bookTitle: bookTitle
         )
+
+        setupDarwinNotificationObservers()
     }
 
     init(
@@ -165,6 +167,8 @@ final class ReadingTimerReactor: Reactor {
                 DebugLogger.shared.debug("세션 복구 에러, \(error)", category: "ReadingTimer")
             })
             .disposed(by: disposeBag)
+
+        setupDarwinNotificationObservers()
     }
 
     func mutate(action: Action) -> Observable<Mutation> {
@@ -415,6 +419,7 @@ final class ReadingTimerReactor: Reactor {
             }
 
             return service.enterForeground()
+                .observe(on: MainScheduler.asyncInstance)
                 .flatMap { [weak self] result -> Observable<Mutation> in
                     guard let self = self else { return .empty() }
 
@@ -547,6 +552,37 @@ final class ReadingTimerReactor: Reactor {
     private func stopTimerTick() {
         timerDisposable?.dispose()
         timerDisposable = nil
+    }
+
+    // MARK: - Darwin Notification Observers
+
+    private func setupDarwinNotificationObservers() {
+        // Pause 이벤트 구독
+        TimerSessionManager.shared.pauseEvent
+            .observe(on: MainScheduler.instance)
+            .subscribe(onNext: { [weak self] in
+                DebugLogger.shared.debug("Darwin Notification: Pause 수신", category: "ReadingTimer")
+                self?.action.onNext(.pauseTimer)
+            })
+            .disposed(by: disposeBag)
+
+        // Resume 이벤트 구독
+        TimerSessionManager.shared.resumeEvent
+            .observe(on: MainScheduler.instance)
+            .subscribe(onNext: { [weak self] in
+                DebugLogger.shared.debug("Darwin Notification: Resume 수신", category: "ReadingTimer")
+                self?.action.onNext(.resumeTimer)
+            })
+            .disposed(by: disposeBag)
+
+        // Cancel 이벤트 구독
+        TimerSessionManager.shared.cancelEvent
+            .observe(on: MainScheduler.instance)
+            .subscribe(onNext: { [weak self] in
+                DebugLogger.shared.debug("Darwin Notification: Cancel 수신", category: "ReadingTimer")
+                self?.action.onNext(.stopTimer)
+            })
+            .disposed(by: disposeBag)
     }
 
     deinit {

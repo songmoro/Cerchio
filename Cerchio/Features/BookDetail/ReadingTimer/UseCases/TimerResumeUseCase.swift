@@ -46,20 +46,25 @@ final class TimerResumeUseCase {
         stateManager.setTargetEndTime(newTargetEndTime)
         stateManager.setPausedAt(nil)
 
-        _ = notificationManager.reschedule(
+        let rescheduleNotification = notificationManager.reschedule(
             targetEndTime: newTargetEndTime,
             sessionId: sessionId,
             bookTitle: bookTitle
         )
-        .subscribe()
+        .observe(on: MainScheduler.asyncInstance)
+        .asObservable()
+        .catch { _ in .just(()) }
 
+        let updateActivity: Observable<Void>
         if #available(iOS 16.2, *) {
-            _ = activityManager.update(
+            updateActivity = activityManager.update(
                 targetEndTime: newTargetEndTime,
                 pausedAt: nil,
                 targetSeconds: stateManager.targetSeconds
             )
-            .subscribe()
+            .observe(on: MainScheduler.asyncInstance)
+        } else {
+            updateActivity = .just(())
         }
 
         sessionManager.saveActiveSession(
@@ -70,9 +75,12 @@ final class TimerResumeUseCase {
             startTime: sessionStartTime,
             targetEndTime: newTargetEndTime,
             pausedAt: nil,
-            activityId: nil
+            activityId: nil,
+            pausedElapsedSeconds: stateManager.currentElapsedSeconds
         )
 
-        return .just(())
+        return Observable.zip(rescheduleNotification, updateActivity)
+            .observe(on: MainScheduler.asyncInstance)
+            .map { _ in () }
     }
 }

@@ -8,8 +8,8 @@
 import ActivityKit
 import WidgetKit
 import SwiftUI
-import Combine
-import AppIntents
+
+// MARK: - Main Widget
 
 @available(iOS 16.2, *)
 struct ReadingTimerLiveActivity: Widget {
@@ -21,136 +21,92 @@ struct ReadingTimerLiveActivity: Widget {
         } dynamicIsland: { context in
             DynamicIsland {
                 DynamicIslandExpandedRegion(.center) {
-                    VStack(spacing: 12) {
-                        // 도서명
-                        Text(context.attributes.bookTitle)
-                            .font(.body)
-                            .foregroundColor(Color("BookBackground"))
-                            .lineLimit(1)
-
-                        // 남은 시간
-                        DynamicIslandRemainingView(context: context, useBookBackground: true, centerAligned: true)
-                    }
+                    DynamicIslandExpandedContentView(context: context)
                 }
             } compactLeading: {
-                // 로고 아이콘
-                if let uiImage = UIImage(named: "ClearLogo") {
-                    Image(uiImage: uiImage)
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: 16, height: 16)
-                } else {
-                    Image(systemName: "book.closed.fill")
-                        .foregroundColor(Color("BookBackground"))
-                }
+                DynamicIslandCompactLeadingView()
             } compactTrailing: {
-                // 남은 시간
-                DynamicIslandRemainingView(context: context, showLabel: false, alignment: .trailing)
+                DynamicIslandCompactTrailingView(context: context)
             } minimal: {
-                // 로고 아이콘
-                if let uiImage = UIImage(named: "ClearLogo") {
-                    Image(uiImage: uiImage)
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: 16, height: 16)
-                } else {
-                    Image(systemName: "book.closed.fill")
-                        .foregroundColor(Color("BookBackground"))
-                }
+                DynamicIslandMinimalView()
             }
             .keylineTint(Color("BookBackground"))
         }
     }
 }
 
-// MARK: - Dynamic Island Timer Views
+// MARK: - Common Components
 
 @available(iOS 16.1, *)
-struct DynamicIslandTimerView: View {
-    let context: ActivityViewContext<ReadingTimerAttributes>
-    let showLabel: Bool
-    let alignment: HorizontalAlignment
-    var useBookBackground: Bool = false
-    
+struct BookTitleHeaderView: View {
+    let title: String
+    let logoSize: CGFloat
+    let titleFont: Font
+    let titleColor: Color
+
     var body: some View {
-        VStack(alignment: alignment, spacing: 4) {
-            if showLabel && !isCompleted {
-                Text("경과")
-                    .font(.caption2)
-                    .foregroundColor(useBookBackground ? Color("BookBackground") : Color("ForestGreen"))
-            }
-            
-            if isCompleted {
-                // 완료
-                Text("완료")
-                    .font(showLabel ? .title3 : .caption2)
-                    .fontWeight(.bold)
-                    .foregroundColor(useBookBackground || !showLabel ? Color("BookBackground") : Color("ForestGreen"))
-            } else if let timerStart = context.state.timerStartTime, !context.state.isPaused {
-                // 실행 중: Text의 timer 스타일 사용
-                Text(timerStart, style: .timer)
-                    .font(showLabel ? .title3 : .caption2)
-                    .fontWeight(showLabel ? .bold : .medium)
-                    .foregroundColor(useBookBackground || !showLabel ? Color("BookBackground") : Color("ForestGreen"))
-                    .monospacedDigit()
-            } else {
-                // 일시정지: 정적 텍스트
-                Text(timeString(context.state.pausedElapsedSeconds))
-                    .font(showLabel ? .title3 : .caption2)
-                    .fontWeight(showLabel ? .bold : .medium)
-                    .foregroundColor(useBookBackground || !showLabel ? Color("BookBackground") : Color("ForestGreen"))
-                    .monospacedDigit()
-            }
+        HStack(spacing: 8) {
+            Image("ClearLogo")
+                .resizable()
+                .scaledToFit()
+                .frame(width: logoSize, height: logoSize)
+
+            Text(title)
+                .font(titleFont)
+                .foregroundColor(titleColor)
+                .lineLimit(1)
+
+            Spacer()
         }
-    }
-    
-    private var isCompleted: Bool {
-        context.state.isCompleted || context.state.currentElapsedSeconds >= context.state.targetSeconds
-    }
-    
-    private func timeString(_ seconds: Int) -> String {
-        let minutes = seconds / 60
-        let secs = seconds % 60
-        return String(format: "%02d:%02d", minutes, secs)
     }
 }
 
 @available(iOS 16.1, *)
-struct DynamicIslandRemainingView: View {
+struct RemainingTimeDisplayView: View {
     let context: ActivityViewContext<ReadingTimerAttributes>
-    var useBookBackground: Bool = false
-    var showLabel: Bool = true
-    var alignment: HorizontalAlignment = .trailing
-    var centerAligned: Bool = false
+    let font: Font
+    let foregroundColor: Color
+    let showCompletionEmoji: Bool
+
+    init(
+        context: ActivityViewContext<ReadingTimerAttributes>,
+        font: Font = .title2,
+        foregroundColor: Color = Color("ForestGreen"),
+        showCompletionEmoji: Bool = false
+    ) {
+        self.context = context
+        self.font = font
+        self.foregroundColor = foregroundColor
+        self.showCompletionEmoji = showCompletionEmoji
+    }
 
     var body: some View {
-        VStack(alignment: centerAligned ? .center : alignment, spacing: 4) {
-            if showLabel && !isCompleted {
-                Text("남은 시간")
-                    .font(centerAligned ? .caption : .caption2)
-                    .foregroundColor(useBookBackground ? Color("BookBackground") : Color("ForestGreen"))
-            }
-
-            if isCompleted {
-                // 완료
+        if isCompleted {
+            if showCompletionEmoji {
                 Text("🎉")
-                    .font(centerAligned ? .largeTitle : .title3)
-            } else if let timerStart = context.state.timerStartTime, !context.state.isPaused {
-                // 실행 중: 종료 시간까지 카운트다운
-                let endDate = timerStart.addingTimeInterval(TimeInterval(context.state.targetSeconds - context.state.pausedElapsedSeconds))
-                Text(endDate, style: .timer)
-                    .font(centerAligned ? .title : .title3)
-                    .fontWeight(.bold)
-                    .foregroundColor(useBookBackground ? Color("BookBackground") : Color("ForestGreen"))
-                    .monospacedDigit()
+                    .font(.largeTitle)
             } else {
-                // 일시정지: 정적 텍스트
-                Text(timeString(context.state.currentRemainingSeconds))
-                    .font(centerAligned ? .title : .title3)
+                Text("완료")
+                    .font(font)
                     .fontWeight(.bold)
-                    .foregroundColor(useBookBackground ? Color("BookBackground") : Color("ForestGreen"))
-                    .monospacedDigit()
+                    .foregroundColor(foregroundColor)
             }
+        } else if let timerStart = context.state.timerStartTime, !context.state.isPaused {
+            // 실행 중: 종료 시간까지 카운트다운
+            let endDate = timerStart.addingTimeInterval(TimeInterval(context.state.targetSeconds - context.state.pausedElapsedSeconds))
+            Text(endDate, style: .timer)
+                .multilineTextAlignment(.trailing)
+                .font(font)
+                .fontWeight(.bold)
+                .foregroundColor(foregroundColor)
+                .monospacedDigit()
+        } else {
+            // 일시정지: 정적 텍스트
+            Text(timeString(context.state.currentRemainingSeconds))
+                .font(font)
+                .fontWeight(.bold)
+                .foregroundColor(foregroundColor)
+                .monospacedDigit()
         }
     }
 
@@ -164,6 +120,80 @@ struct DynamicIslandRemainingView: View {
         return String(format: "%02d:%02d", minutes, secs)
     }
 }
+
+// MARK: - Dynamic Island Components
+
+@available(iOS 16.1, *)
+struct DynamicIslandExpandedContentView: View {
+    let context: ActivityViewContext<ReadingTimerAttributes>
+
+    var body: some View {
+        VStack(spacing: 12) {
+            // 도서명
+            Text(context.attributes.bookTitle)
+                .font(.body)
+                .foregroundColor(Color("BookBackground"))
+                .lineLimit(1)
+
+            // 남은 시간
+            VStack(spacing: 4) {
+                if !isCompleted {
+                    Text("남은 시간")
+                        .font(.caption)
+                        .foregroundColor(Color("BookBackground"))
+                }
+
+                RemainingTimeDisplayView(
+                    context: context,
+                    font: .title,
+                    foregroundColor: Color("BookBackground"),
+                    showCompletionEmoji: true
+                )
+            }
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
+    }
+
+    private var isCompleted: Bool {
+        context.state.isCompleted || context.state.currentElapsedSeconds >= context.state.targetSeconds
+    }
+}
+
+@available(iOS 16.1, *)
+struct DynamicIslandCompactLeadingView: View {
+    var body: some View {
+        Image("InvertedClearLogo")
+            .resizable()
+            .scaledToFit()
+            .frame(width: 24, height: 24)
+    }
+}
+
+@available(iOS 16.1, *)
+struct DynamicIslandCompactTrailingView: View {
+    let context: ActivityViewContext<ReadingTimerAttributes>
+
+    var body: some View {
+        RemainingTimeDisplayView(
+            context: context,
+            font: .caption2,
+            foregroundColor: Color("BookBackground")
+        )
+    }
+}
+
+@available(iOS 16.1, *)
+struct DynamicIslandMinimalView: View {
+    var body: some View {
+        Image("InvertedClearLogo")
+            .resizable()
+            .scaledToFit()
+            .frame(width: 24, height: 24)
+    }
+}
+
+// MARK: - Lock Screen
 
 @available(iOS 16.1, *)
 struct ReadingTimerLockScreenView: View {
@@ -172,24 +202,12 @@ struct ReadingTimerLockScreenView: View {
     var body: some View {
         VStack(spacing: 12) {
             // 로고 + 도서명
-            HStack(spacing: 8) {
-                if let uiImage = UIImage(named: "ClearLogo") {
-                    Image(uiImage: uiImage)
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: 24, height: 24)
-                } else {
-                    Image(systemName: "book.closed.fill")
-                        .font(.title3)
-                        .foregroundColor(Color("ForestGreen"))
-                }
-
-                Text(context.attributes.bookTitle)
-                    .font(.headline)
-                    .foregroundColor(Color("ForestGreen"))
-                    .lineLimit(1)
-                Spacer()
-            }
+            BookTitleHeaderView(
+                title: context.attributes.bookTitle,
+                logoSize: 32,
+                titleFont: .headline,
+                titleColor: Color("ForestGreen")
+            )
 
             if isCompleted {
                 // 완료 상태
@@ -206,69 +224,28 @@ struct ReadingTimerLockScreenView: View {
                     Spacer()
                 }
             } else {
-                // 진행 중: 남은 시간만 표시
-                HStack(spacing: 8) {
-                    Text("남은 시간")
-                        .font(.caption)
-                        .foregroundColor(Color("ForestGreen"))
-
-                    if let timerStart = context.state.timerStartTime, !context.state.isPaused {
-                        let endDate = timerStart.addingTimeInterval(TimeInterval(context.state.targetSeconds - context.state.pausedElapsedSeconds))
-                        Text(endDate, style: .timer)
-                            .font(.largeTitle)
-                            .fontWeight(.bold)
+                HStack {
+                    VStack(alignment: .leading) {
+                        Text("목표 시간")
+                            .font(.caption2)
                             .foregroundColor(Color("ForestGreen"))
-                            .monospacedDigit()
-                    } else {
-                        Text(timeString(context.state.currentRemainingSeconds))
-                            .font(.largeTitle)
+
+                        Text(timeString(context.state.targetSeconds))
+                            .font(.title2)
                             .fontWeight(.bold)
                             .foregroundColor(Color("ForestGreen"))
                             .monospacedDigit()
                     }
-                }
+                    VStack(alignment: .trailing) {
+                        Text("남은 시간")
+                            .font(.caption2)
+                            .foregroundColor(Color("ForestGreen"))
 
-                // 버튼 그룹 (iOS 17.0+만 표시)
-                if #available(iOS 17.0, *) {
-                    HStack(spacing: 12) {
-                        // 정지/재개 토글 버튼
-                        if context.state.isPaused {
-                            Button(intent: ResumeTimerIntent()) {
-                                Label("재개", systemImage: "play.fill")
-                                    .font(.callout)
-                                    .foregroundColor(Color("BookBackground"))
-                                    .padding(.horizontal, 16)
-                                    .padding(.vertical, 8)
-                                    .background(Color("ForestGreen"))
-                                    .cornerRadius(8)
-                            }
-                            .buttonStyle(.plain)
-                        } else {
-                            Button(intent: PauseTimerIntent()) {
-                                Label("정지", systemImage: "pause.fill")
-                                    .font(.callout)
-                                    .foregroundColor(Color("BookBackground"))
-                                    .padding(.horizontal, 16)
-                                    .padding(.vertical, 8)
-                                    .background(Color("ForestGreen"))
-                                    .cornerRadius(8)
-                            }
-                            .buttonStyle(.plain)
-                        }
-
-                        // 취소 버튼
-                        Button(intent: CancelTimerIntent()) {
-                            Label("취소", systemImage: "xmark")
-                                .font(.callout)
-                                .foregroundColor(Color("ForestGreen"))
-                                .padding(.horizontal, 16)
-                                .padding(.vertical, 8)
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 8)
-                                        .stroke(Color("ForestGreen"), lineWidth: 1.5)
-                                )
-                        }
-                        .buttonStyle(.plain)
+                        RemainingTimeDisplayView(
+                            context: context,
+                            font: .title2,
+                            foregroundColor: Color("ForestGreen")
+                        )
                     }
                 }
             }
@@ -302,17 +279,19 @@ extension ReadingTimerAttributes.ContentState {
             pausedElapsedSeconds: 0,
             targetSeconds: 1500,
             isPaused: false,
-            isCompleted: false
+            isCompleted: false,
+            lastUpdateTime: Date()
         )
     }
-    
+
     fileprivate static var almostComplete: ReadingTimerAttributes.ContentState {
         ReadingTimerAttributes.ContentState(
-            timerStartTime: Date(), //.addingTimeInterval(-1440),
+            timerStartTime: Date(),
             pausedElapsedSeconds: 0,
             targetSeconds: 1500,
             isPaused: false,
-            isCompleted: false
+            isCompleted: false,
+            lastUpdateTime: Date()
         )
     }
 }
