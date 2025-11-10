@@ -12,7 +12,6 @@ import RxCocoa
 import ReactorKit
 
 final class QuoteShareViewController: BaseViewController<QuoteShareReactor> {
-    // MARK: - Properties
     private let imageExportedRelay = PublishRelay<UIImage>()
     var imageExported: Observable<UIImage> { imageExportedRelay.asObservable() }
 
@@ -32,7 +31,6 @@ final class QuoteShareViewController: BaseViewController<QuoteShareReactor> {
         action: nil
     )
 
-    // MARK: - UI Components
     private let scrollView: UIScrollView = {
         let scrollView = UIScrollView()
         scrollView.backgroundColor = .systemBackground
@@ -129,14 +127,12 @@ final class QuoteShareViewController: BaseViewController<QuoteShareReactor> {
         return label
     }()
 
-    // MARK: - Lifecycle
     override func viewDidLoad() {
         super.viewDidLoad()
         title = String(localized: .`quote_share.title`)
         setupNavigationBar()
     }
 
-    // MARK: - Setup
     override func setupUI() {
         super.setupUI()
         view.backgroundColor = .systemBackground
@@ -297,7 +293,6 @@ final class QuoteShareViewController: BaseViewController<QuoteShareReactor> {
         }.resume()
     }
 
-    // MARK: - Binding
     override func bind(reactor: QuoteShareReactor) {
         dismissButton.rx.tap
             .do(onNext: { HapticFeedbackManager.shared.impact() })
@@ -405,7 +400,6 @@ final class QuoteShareViewController: BaseViewController<QuoteShareReactor> {
             .disposed(by: disposeBag)
     }
 
-    // MARK: - Private Methods
     private func updateBackgroundVisibility(_ isVisible: Bool) {
         UIView.animate(withDuration: 0.3) {
             self.backgroundImageView.alpha = isVisible ? 1.0 : 0.0
@@ -479,16 +473,8 @@ final class QuoteShareViewController: BaseViewController<QuoteShareReactor> {
         }
     }
 
-//    // MARK: - Old blur implementation (commented out)
-//
-//
-//
-//            }
-//        }
-//    }
-
     private func exportImage() {
-        guard let reactor = reactor else { return }
+        guard reactor != nil else { return }
 
         let loadingAlert = UIAlertController(title: nil, message: String(localized: .`quote_share.generating_image`), preferredStyle: .alert)
         let loadingIndicator = UIActivityIndicatorView(style: .medium)
@@ -538,7 +524,6 @@ final class QuoteShareViewController: BaseViewController<QuoteShareReactor> {
     }
 }
 
-// MARK: - QuoteShareSettingsDelegate
 extension QuoteShareViewController: QuoteShareSettingsDelegate {
     func settingsDidChangeBackground(isEnabled: Bool) {
         reactor?.action.onNext(.backgroundToggled(isEnabled))

@@ -7,7 +7,6 @@
 
 import Foundation
 
-// MARK: - Library Action
 enum LibraryAction {
     case loadBooks
     case refreshBooks
@@ -16,7 +15,6 @@ enum LibraryAction {
     case filterBooks(LibraryFilter)
 }
 
-// MARK: - Library Mutation
 enum LibraryMutation {
     case setBooks([Book])
     case setLoading(Bool)
@@ -26,7 +24,6 @@ enum LibraryMutation {
     case setFilter(LibraryFilter?)
 }
 
-// MARK: - Library State
 struct LibraryState {
     var books: [Book] = []
     var isLoading: Bool = false
@@ -55,7 +52,6 @@ struct LibraryState {
     }
 }
 
-// MARK: - Library Sort Options
 enum LibrarySortOption: String, CaseIterable {
     case title = "제목"
     case author = "작가"
@@ -80,7 +76,6 @@ enum LibrarySortOption: String, CaseIterable {
     }
 }
 
-// MARK: - Library Filter
 struct LibraryFilter {
     let readingStatus: ReadingStatus?
     let category: BookCategory?
@@ -123,7 +118,6 @@ struct LibraryFilter {
     }
 }
 
-// MARK: - Reading Status
 enum ReadingStatus: String, CaseIterable, Codable {
     case toRead = "읽을 예정"
     case reading = "읽는 중"
@@ -135,7 +129,6 @@ enum ReadingStatus: String, CaseIterable, Codable {
     }
 }
 
-// MARK: - Library Statistics
 struct LibraryStatistics {
     let totalBooks: Int
     let booksRead: Int

@@ -18,7 +18,6 @@ final class SceneDelegate: UIResponder, UIWindowSceneDelegate, UISceneDelegate {
         self.windowScene = windowScene
         startAppCoordinator()
 
-        // 데이터 리셋 알림 구독
         NotificationCenter.default.addObserver(
             self,
             selector: #selector(handleDataReset),
@@ -28,7 +27,6 @@ final class SceneDelegate: UIResponder, UIWindowSceneDelegate, UISceneDelegate {
     }
 
     func sceneDidDisconnect(_ scene: UIScene) {
-        // 앱 종료 시 Live Activity와 알림 정리
         cleanupTimerOnAppTermination()
 
         NotificationCenter.default.removeObserver(self)
@@ -38,11 +36,7 @@ final class SceneDelegate: UIResponder, UIWindowSceneDelegate, UISceneDelegate {
     }
 
     func sceneDidBecomeActive(_ scene: UIScene) {
-        // 앱 실행 시 배지 카운트 초기화
         UIApplication.shared.applicationIconBadgeNumber = 0
-
-        // 앱이 활성화될 때 활성 타이머 세션 확인 및 복원
-        checkAndRestoreActiveTimerSession()
     }
     
     func sceneWillEnterForeground(_ scene: UIScene) {
@@ -51,13 +45,10 @@ final class SceneDelegate: UIResponder, UIWindowSceneDelegate, UISceneDelegate {
     }
 
     func scene(_ scene: UIScene, openURLContexts URLContexts: Set<UIOpenURLContext>) {
-        // 위젯/알림에서 딥링크로 진입 시 처리
         guard let url = URLContexts.first?.url else { return }
         handleDeepLink(url)
     }
-
-    // MARK: - Private Methods
-
+    
     private func startAppCoordinator() {
         guard let windowScene = windowScene else { return }
 
@@ -69,30 +60,19 @@ final class SceneDelegate: UIResponder, UIWindowSceneDelegate, UISceneDelegate {
     }
 
     @objc private func handleDataReset() {
-        // 모든 데이터가 리셋되었으므로 AppCoordinator를 새로 시작
         DispatchQueue.main.async { [weak self] in
             self?.startAppCoordinator()
         }
     }
 
-    private func checkAndRestoreActiveTimerSession() {
-        // AppCoordinator가 이미 세션 복원을 처리하고 있으므로
-        // 여기서는 추가 처리 불필요
-        // AppCoordinator.start()에서 자동으로 체크됨
-    }
-
     private func handleDeepLink(_ url: URL) {
-        print("[SceneDelegate]  Handling deeplink: \(url.absoluteString)")
 
-        // 딥링크 스킴: cerchio://timer/{bookId}
         guard url.scheme == "cerchio" else {
-            print("[SceneDelegate]  Invalid scheme: \(url.scheme ?? "nil")")
             return
         }
 
         let pathComponents = url.pathComponents.filter { $0 != "/" }
         guard pathComponents.count >= 1 else {
-            print("[SceneDelegate]  Invalid path components")
             return
         }
 
@@ -100,37 +80,25 @@ final class SceneDelegate: UIResponder, UIWindowSceneDelegate, UISceneDelegate {
 
         switch action {
         case "timer":
-            // 타이머 화면으로 이동 (활성 세션이 있으면 AppCoordinator에서 자동 복원)
-            checkAndRestoreActiveTimerSession()
-
+            fallthrough
         default:
-            print("[SceneDelegate]  Unknown deeplink action: \(action)")
+            break
         }
     }
 
     private func cleanupTimerOnAppTermination() {
-        print("[SceneDelegate]  Cleaning up timer on app termination...")
-
-        // Live Activity 종료
         if #available(iOS 16.2, *) {
             _ = LiveActivityManager.shared.endActivity()
                 .subscribe(onNext: {
-                    print("[SceneDelegate]  Live Activity ended")
+                    
                 }, onError: { error in
                     print("[SceneDelegate]  Failed to end Live Activity: \(error)")
                 })
         }
 
-        // 알림 취소
         NotificationManager.shared.cancelTimerCompletionNotification()
-        print("[SceneDelegate]  Notifications cancelled")
-
-        // 세션은 UserDefaults에 유지 (복원용)
-        print("[SceneDelegate]  Timer session preserved for restoration")
     }
 }
-
-// MARK: - Notification Names
 
 extension Notification.Name {
     static let dataDidReset = Notification.Name("com.cerchio.dataDidReset")

@@ -9,13 +9,9 @@ import UIKit
 import SnapKit
 import Kingfisher
 
-/// Standalone UIView version of BookInfoHeaderView for use in NestedScrollViewController
 final class BookInfoView: UIView {
-    // MARK: - Callback
     var onTagsTapped: (() -> Void)?
     var onReadingInfoTapped: (() -> Void)?
-
-    // MARK: - UI Components
 
     private let backgroundImageView: UIImageView = {
         let imageView = UIImageView()
@@ -104,7 +100,6 @@ final class BookInfoView: UIView {
         return stackView
     }()
 
-    // MARK: - Initialization
     override init(frame: CGRect) {
         super.init(frame: frame)
         setupUI()
@@ -114,7 +109,6 @@ final class BookInfoView: UIView {
         fatalError("init(coder:) has not been implemented")
     }
 
-    // MARK: - Setup
     private func setupUI() {
         clipsToBounds = true
 
@@ -190,7 +184,6 @@ final class BookInfoView: UIView {
         }
     }
 
-    // MARK: - Configuration
     func configure(with bookDetail: BookDetail) {
         titleLabel.text = bookDetail.book.customTitle ?? bookDetail.book.cleanTitle
         authorLabel.text = bookDetail.book.author
@@ -281,7 +274,6 @@ final class BookInfoView: UIView {
     }
 }
 
-// MARK: - PaddingLabel
 private class PaddingLabel: UILabel {
     var padding = UIEdgeInsets.zero
 

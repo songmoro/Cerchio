@@ -95,15 +95,12 @@ final class LibraryReactor: Reactor {
             newState.books = books
 
         case .setFilteredBooks(let books):
-            // 빈 배열도 유효한 필터 결과로 처리 (필터 적용했지만 결과가 없는 경우)
             newState.filteredBooks = books
 
         case .clearFilteredBooks:
-            // 필터를 완전히 제거하여 모든 책 표시
             newState.filteredBooks = nil
 
         case .clearBooks:
-            // 데이터를 초기화하여 UI가 변경을 감지하도록 함
             newState.books = nil
             newState.filteredBooks = nil
 
@@ -137,28 +134,23 @@ final class LibraryReactor: Reactor {
             return Observable.just(.setFilteredBooks([]))
         }
 
-        // 즐겨찾기 필터만 활성화된 경우
         if tagNames.isEmpty && favoriteOnly {
             let favoriteBooks = allBooks.filter { $0.isFavorite }
             return Observable.just(.setFilteredBooks(favoriteBooks))
         }
 
-        // 태그 필터만 활성화된 경우
         if !tagNames.isEmpty && !favoriteOnly {
             return filterByTags(tagNames, books: allBooks)
         }
 
-        // 둘 다 활성화된 경우
         if !tagNames.isEmpty && favoriteOnly {
             return tagRepository.getAllTags()
                 .map { [weak self] allTags -> [Book] in
                     guard self != nil else { return [] }
 
-                    // 선택된 태그에 해당하는 bookId 추출
                     let filteredTags = allTags.filter { tagNames.contains($0.tagName) }
                     let bookIds = Set(filteredTags.map { $0.bookId })
 
-                    // bookId가 일치하고 즐겨찾기인 책들만 필터링
                     return allBooks.filter { book in
                         bookIds.contains(String(describing: book.id)) && book.isFavorite
                     }
@@ -170,18 +162,15 @@ final class LibraryReactor: Reactor {
                 }
         }
 
-        // 필터가 없는 경우
         return Observable.just(.setFilteredBooks([]))
     }
 
     private func filterByTags(_ tagNames: [String], books: [Book]) -> Observable<Mutation> {
         return tagRepository.getAllTags()
             .map { allTags -> [Book] in
-                // 선택된 태그에 해당하는 bookId 추출
                 let filteredTags = allTags.filter { tagNames.contains($0.tagName) }
                 let bookIds = Set(filteredTags.map { $0.bookId })
 
-                // bookId가 일치하는 책들 필터링
                 return books.filter { book in
                     bookIds.contains(String(describing: book.id))
                 }

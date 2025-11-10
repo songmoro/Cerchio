@@ -12,8 +12,6 @@ import RxCocoa
 
 final class ContactViewController: UIViewController {
 
-    // MARK: - 프로퍼티
-
     private let tableView = UITableView(frame: .zero, style: .insetGrouped)
     private let disposeBag = DisposeBag()
 
@@ -43,14 +41,10 @@ final class ContactViewController: UIViewController {
         }
     }
 
-    // MARK: - 생명주기
-
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
     }
-
-    // MARK: - 설정
 
     private func setupUI() {
         title = SettingsConstants.Strings.contactRowTitle
@@ -68,8 +62,6 @@ final class ContactViewController: UIViewController {
         }
     }
 
-    // MARK: - 내부 메서드
-
     private func openInstagram() {
         guard let urlString = instagramURL,
               let url = URL(string: urlString) else { return }
@@ -86,8 +78,6 @@ final class ContactViewController: UIViewController {
         UIApplication.shared.open(url)
     }
 }
-
-// MARK: - UITableViewDataSource
 
 extension ContactViewController: UITableViewDataSource {
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
@@ -120,8 +110,6 @@ extension ContactViewController: UITableViewDataSource {
         return cell
     }
 }
-
-// MARK: - UITableViewDelegate
 
 extension ContactViewController: UITableViewDelegate {
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {

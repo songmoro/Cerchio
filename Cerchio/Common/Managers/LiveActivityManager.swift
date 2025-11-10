@@ -11,37 +11,33 @@ import RxSwift
 
 @available(iOS 16.2, *)
 final class LiveActivityManager {
-
     static let shared = LiveActivityManager()
 
     private init() {}
 
     private var currentActivity: Activity<ReadingTimerAttributes>?
     private var activityStateObserver: Task<Void, Never>?
-
-    // Activity 상태 변화 알림
     private let activityDismissedSubject = PublishSubject<Void>()
+    private let activityStaleSubject = PublishSubject<Void>()
+    private let activityEndedSubject = PublishSubject<Void>()
+    
     var activityDismissed: Observable<Void> {
         activityDismissedSubject.asObservable()
     }
-
-    private let activityStaleSubject = PublishSubject<Void>()
+    
     var activityStale: Observable<Void> {
         activityStaleSubject.asObservable()
     }
-
-    private let activityEndedSubject = PublishSubject<Void>()
+    
     var activityEnded: Observable<Void> {
         activityEndedSubject.asObservable()
     }
-
-    // MARK: - Permission Check
-
+    
     func checkActivityAuthorizationStatus() -> Observable<Bool> {
         return Observable.create { observer in
             let authInfo = ActivityAuthorizationInfo()
             let isEnabled = authInfo.areActivitiesEnabled
-            print("[LiveActivity] Authorization check: \(isEnabled ? "Enabled" : "Disabled")")
+            
             observer.onNext(isEnabled)
             observer.onCompleted()
             return Disposables.create()
@@ -52,20 +48,11 @@ final class LiveActivityManager {
         return Activity<ReadingTimerAttributes>.activities
     }
 
-    /// 앱 재시작 후 기존 액티비티 복원
     func restoreActivity(_ activity: Activity<ReadingTimerAttributes>) {
-        print("[LiveActivity] Restoring existing activity")
-        print("  - activity.id: \(activity.id)")
-        print("  - activity.activityState: \(activity.activityState)")
-
         currentActivity = activity
         observeActivityState(activity)
-
-        print("[LiveActivity] Activity restored successfully")
     }
-
-    // MARK: - Start Activity
-
+    
     func startActivity(
         bookTitle: String,
         targetMinutes: Int,
@@ -74,10 +61,8 @@ final class LiveActivityManager {
     ) -> Observable<Void> {
         return Observable.create { [weak self] observer in
             let authInfo = ActivityAuthorizationInfo()
-            print("[LiveActivity] Authorization status: \(authInfo.areActivitiesEnabled)")
-
+            
             guard authInfo.areActivitiesEnabled else {
-                print("[LiveActivity] Activities are NOT enabled")
                 observer.onError(LiveActivityError.notEnabled)
                 return Disposables.create()
             }
@@ -90,19 +75,14 @@ final class LiveActivityManager {
 
                 let targetSeconds = targetMinutes * 60
                 let initialState = ReadingTimerAttributes.ContentState(
-                    timerStartTime: Date(),
+                    timerStartTime: sessionStartTime,
                     pausedElapsedSeconds: 0,
                     targetSeconds: targetSeconds,
                     isPaused: false,
-                    isCompleted: false
+                    isCompleted: false,
+                    lastUpdateTime: Date()
                 )
-
-                print("[LiveActivity] Requesting activity:")
-                print("  - bookTitle: \(bookTitle)")
-                print("  - targetMinutes: \(targetMinutes) (\(targetSeconds)s)")
-                print("  - targetEndTime: \(targetEndTime)")
-
-                // 타이머 종료 시간에 자동으로 닫히도록 설정
+                
                 let content = ActivityContent(
                     state: initialState,
                     staleDate: targetEndTime,
@@ -114,94 +94,58 @@ final class LiveActivityManager {
                     content: content,
                     pushType: nil
                 )
-
-                print("[LiveActivity] Activity started successfully!")
-                print("  - activity.id: \(activity.id)")
-                print("  - activity.activityState: \(activity.activityState)")
-
+                
                 self?.currentActivity = activity
-
-                // Activity 상태 변화 관찰
                 self?.observeActivityState(activity)
 
                 observer.onNext(())
                 observer.onCompleted()
             } catch {
-                print("[LiveActivity] Failed to start activity:")
-                print("  - error: \(error)")
-                print("  - error localized: \(error.localizedDescription)")
                 observer.onError(error)
             }
 
             return Disposables.create()
         }
     }
-
-    // MARK: - Update Activity
-
+    
+    @MainActor
     func updateActivity(
         timerStartTime: Date?,
         pausedElapsedSeconds: Int,
         targetSeconds: Int,
         isPaused: Bool
-    ) -> Observable<Void> {
-        return Observable.create { [weak self] observer in
-            guard let activity = self?.currentActivity else {
-                print("[LiveActivity] No active activity to update")
-                observer.onError(LiveActivityError.noActiveActivity)
-                return Disposables.create()
-            }
-
-            let newState = ReadingTimerAttributes.ContentState(
-                timerStartTime: timerStartTime,
-                pausedElapsedSeconds: pausedElapsedSeconds,
-                targetSeconds: targetSeconds,
-                isPaused: isPaused,
-                isCompleted: false
-            )
-
-            let staleDate = timerStartTime?.addingTimeInterval(TimeInterval(targetSeconds - pausedElapsedSeconds))
-
-            Task {
-                do {
-                    await activity.update(.init(state: newState, staleDate: staleDate))
-                    print("[LiveActivity] Updated: timerStartTime: \(String(describing: timerStartTime)), paused: \(isPaused)")
-                    observer.onNext(())
-                    observer.onCompleted()
-                } catch {
-                    print("[LiveActivity] Failed to update: \(error)")
-                    observer.onError(error)
-                }
-            }
-
-            return Disposables.create()
+    ) async throws {
+        guard let activity = currentActivity else {
+            throw LiveActivityError.noActiveActivity
         }
+
+        let newState = ReadingTimerAttributes.ContentState(
+            timerStartTime: timerStartTime,
+            pausedElapsedSeconds: pausedElapsedSeconds,
+            targetSeconds: targetSeconds,
+            isPaused: isPaused,
+            isCompleted: false,
+            lastUpdateTime: Date()
+        )
+
+        let staleDate = timerStartTime?.addingTimeInterval(TimeInterval(targetSeconds - pausedElapsedSeconds))
+
+        await activity.update(.init(state: newState, staleDate: staleDate))
     }
-
-    // MARK: - End Activity
-
-    /// 모든 활성 라이브 액티비티 강제 종료
+    
     func endAllActivities() -> Observable<Void> {
         return Observable.create { observer in
             let activities = Activity<ReadingTimerAttributes>.activities
 
             guard !activities.isEmpty else {
-                print("[LiveActivity] No active activities to end")
                 observer.onNext(())
                 observer.onCompleted()
                 return Disposables.create()
             }
-
-            print("[LiveActivity] Ending \(activities.count) active activities")
-
+            
             Task {
                 for activity in activities {
-                    do {
-                        await activity.end(nil, dismissalPolicy: .immediate)
-                        print("[LiveActivity] Ended activity: \(activity.id)")
-                    } catch {
-                        print("[LiveActivity] Failed to end activity \(activity.id): \(error)")
-                    }
+                    await activity.end(nil, dismissalPolicy: .immediate)
                 }
 
                 observer.onNext(())
@@ -215,81 +159,61 @@ final class LiveActivityManager {
     func endActivity(immediate: Bool = false) -> Observable<Void> {
         return Observable.create { [weak self] observer in
             guard let activity = self?.currentActivity else {
-                print("[LiveActivity] No active activity to end")
                 observer.onNext(())
                 observer.onCompleted()
                 return Disposables.create()
             }
 
             Task {
-                do {
-                    if immediate {
-                        // 즉시 제거 (완료 상태 표시 없이)
-                        await activity.end(nil, dismissalPolicy: .immediate)
-                        print("[LiveActivity] Activity dismissed immediately")
-                    } else {
-                        // 완료 상태로 업데이트 후 제거
-                        let completedState = ReadingTimerAttributes.ContentState(
-                            timerStartTime: nil,
-                            pausedElapsedSeconds: activity.content.state.targetSeconds,
-                            targetSeconds: activity.content.state.targetSeconds,
-                            isPaused: false,
-                            isCompleted: true
-                        )
-
-                        await activity.end(
-                            .init(state: completedState, staleDate: nil),
-                            dismissalPolicy: .immediate  // 즉시 제거로 변경
-                        )
-                        print("[LiveActivity] Activity ended with completion state")
-                    }
-
-                    self?.cleanupActivity()
-                    observer.onNext(())
-                    observer.onCompleted()
-                } catch {
-                    print("[LiveActivity] Failed to end activity: \(error)")
-                    self?.cleanupActivity()
-                    observer.onNext(())
-                    observer.onCompleted()
+                if immediate {
+                    await activity.end(nil, dismissalPolicy: .immediate)
+                } else {
+                    let completedState = ReadingTimerAttributes.ContentState(
+                        timerStartTime: nil,
+                        pausedElapsedSeconds: activity.content.state.targetSeconds,
+                        targetSeconds: activity.content.state.targetSeconds,
+                        isPaused: false,
+                        isCompleted: true,
+                        lastUpdateTime: Date()
+                    )
+                    
+                    await activity.end(
+                        .init(state: completedState, staleDate: nil),
+                        dismissalPolicy: .immediate
+                    )
                 }
+                
+                self?.cleanupActivity()
+                observer.onNext(())
+                observer.onCompleted()
             }
 
             return Disposables.create()
         }
     }
 
-    // MARK: - Activity State Observer
-
     private func observeActivityState(_ activity: Activity<ReadingTimerAttributes>) {
-        // 이전 관찰자 취소
         activityStateObserver?.cancel()
-
-        // 새 관찰자 시작
+        
         activityStateObserver = Task {
             for await state in activity.activityStateUpdates {
-                print("[LiveActivity] Activity state changed: \(state)")
-
                 switch state {
                 case .dismissed:
-                    print("[LiveActivity] User dismissed the Live Activity")
                     self.activityDismissedSubject.onNext(())
                     self.cleanupActivity()
 
                 case .ended:
-                    print("[LiveActivity] Activity ended")
                     self.activityEndedSubject.onNext(())
                     self.cleanupActivity()
 
                 case .stale:
-                    print("[LiveActivity] Activity became stale (8 hour limit reached)")
                     self.activityStaleSubject.onNext(())
-                    // stale 상태에서는 정리하지 않고 계속 유지 (새로 생성할 수 있음)
 
                 case .active:
-                    print("[LiveActivity] Activity is active")
                     break
 
+                case .pending:
+                    break
                 @unknown default:
                     break
                 }
@@ -298,13 +222,10 @@ final class LiveActivityManager {
     }
 
     private func cleanupActivity() {
-        print("[LiveActivity] Cleaning up activity")
         activityStateObserver?.cancel()
         activityStateObserver = nil
         currentActivity = nil
     }
-
-    // MARK: - Error
 
     enum LiveActivityError: Error {
         case notEnabled

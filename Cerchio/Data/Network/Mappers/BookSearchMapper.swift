@@ -7,29 +7,36 @@
 
 import Foundation
 
-// MARK: - Book Search Result Mapper
-
 struct BookSearchMapper {
 
-    /// Maps a BookSearchItem to a Book model
     static func mapToBook(_ item: BookSearchItem) -> Book {
         return Book(
-            title: item.cleanTitle,
+            title: item.title,
+            cleanTitle: item.cleanTitle,
+            link: item.link,
             image: item.image,
             author: item.author,
             isbn: item.isbn,
-            genre: nil, // Not provided by Naver API
-            totalPages: nil, // Not provided by Naver API
+            publisher: item.publisher,
+            bookDescription: item.description,
+            cleanDescription: item.cleanDescription,
+            pubdate: item.pubdate,
+            discount: item.discount,
+            formattedPubDate: item.formattedPubDate,
+            formattedPrice: item.formattedPrice,
+            priceAsInt: item.priceAsInt,
+            createAt: Date(),
+            genre: nil,
+            totalPages: nil,
             isFavorite: false,
             dateAdded: Date(),
             dateRead: nil,
             readingStatus: .toRead,
-            category: nil, // Not provided by Naver API
+            category: nil,
             rating: nil
         )
     }
 
-    /// Maps a BookSearchItem to a RealmBook model (preserves all network response data)
     static func mapToRealmBook(_ item: BookSearchItem) -> RealmBook {
         return RealmBook(
             title: item.title,
@@ -50,29 +57,23 @@ struct BookSearchMapper {
         )
     }
 
-    /// Maps an array of BookSearchItems to an array of Book models
     static func mapToBooks(_ items: [BookSearchItem]) -> [Book] {
         return items.map { mapToBook($0) }
     }
 
-    /// Maps an array of BookSearchItems to an array of RealmBook models
     static func mapToRealmBooks(_ items: [BookSearchItem]) -> [RealmBook] {
         return items.map { mapToRealmBook($0) }
     }
 
-    /// Maps BookSearchResponse to an array of Book models
     static func mapResponseToBooks(_ response: BookSearchResponse) -> [Book] {
         return mapToBooks(response.items)
     }
 
-    /// Maps BookSearchResponse to an array of RealmBook models
     static func mapResponseToRealmBooks(_ response: BookSearchResponse) -> [RealmBook] {
         return mapToRealmBooks(response.items)
     }
 
 }
-
-// MARK: - Search Result Wrapper
 
 struct BookSearchResult {
     let books: [Book]
@@ -90,38 +91,29 @@ struct BookSearchResult {
     }
 }
 
-// MARK: - Extensions
-
 extension BookSearchItem {
-    /// Converts BookSearchItem to Book model
     func toBook() -> Book {
         return BookSearchMapper.mapToBook(self)
     }
 
-    /// Converts BookSearchItem to RealmBook model (preserves all network response data)
     func toRealmBook() -> RealmBook {
         return BookSearchMapper.mapToRealmBook(self)
     }
 }
 
 extension BookSearchResponse {
-    /// Converts BookSearchResponse to an array of Book models
     func toBooks() -> [Book] {
         return BookSearchMapper.mapResponseToBooks(self)
     }
 
-    /// Converts BookSearchResponse to an array of RealmBook models
     func toRealmBooks() -> [RealmBook] {
         return BookSearchMapper.mapResponseToRealmBooks(self)
     }
 
-    /// Converts BookSearchResponse to BookSearchResult with pagination info
     func toBookSearchResult(pageSize: Int) -> BookSearchResult {
         return BookSearchResult(response: self, pageSize: pageSize)
     }
 }
-
-// MARK: - Search Metadata
 
 struct BookSearchMetadata {
     let query: String

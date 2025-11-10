@@ -10,11 +10,8 @@ import SnapKit
 import Kingfisher
 
 final class BookInfoHeaderView: UICollectionReusableView, IsIdentifiable {
-    // MARK: - Callback
     var onTagsTapped: (() -> Void)?
     var onReadingInfoTapped: (() -> Void)?
-
-    // MARK: - UI Components
 
     private let backgroundImageView: UIImageView = {
         let imageView = UIImageView()
@@ -103,7 +100,6 @@ final class BookInfoHeaderView: UICollectionReusableView, IsIdentifiable {
         return stackView
     }()
 
-    // MARK: - Initialization
     override init(frame: CGRect) {
         super.init(frame: frame)
         setupUI()
@@ -113,7 +109,6 @@ final class BookInfoHeaderView: UICollectionReusableView, IsIdentifiable {
         fatalError("init(coder:) has not been implemented")
     }
 
-    // MARK: - Setup
     private func setupUI() {
         clipsToBounds = true
 
@@ -189,7 +184,6 @@ final class BookInfoHeaderView: UICollectionReusableView, IsIdentifiable {
         }
     }
 
-    // MARK: - Configuration
     func configure(with bookDetail: BookDetail) {
         titleLabel.text = bookDetail.book.customTitle ?? bookDetail.book.cleanTitle
         authorLabel.text = bookDetail.book.author
@@ -276,7 +270,6 @@ final class BookInfoHeaderView: UICollectionReusableView, IsIdentifiable {
     }
 }
 
-// MARK: - PaddingLabel
 private class PaddingLabel: UILabel {
     var padding = UIEdgeInsets.zero
 
@@ -292,7 +285,6 @@ private class PaddingLabel: UILabel {
     }
 }
 
-// MARK: - UIImage Extension for Brightness
 extension UIImage {
     func averageBrightness() -> CGFloat {
         guard let inputImage = CIImage(image: self) else { return 0.5 }

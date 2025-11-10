@@ -31,7 +31,6 @@ final class AppCoordinator: BaseCoordinator {
     override func start() {
         showTabBar()
 
-        // TabBar가 표시된 후 세션 복원
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
             self?.checkAndRestoreActiveTimerSession()
         }
@@ -51,24 +50,17 @@ final class AppCoordinator: BaseCoordinator {
     }
 
     private func checkAndRestoreActiveTimerSession() {
-        print("[AppCoordinator]  Checking for active timer session...")
 
         let activeSession = TimerSessionManager.shared.getActiveSession()
         var hasActiveActivity = false
 
-        // 라이브 액티비티 체크
         if #available(iOS 16.2, *) {
             hasActiveActivity = !LiveActivityManager.shared.getActiveActivities().isEmpty
-            print("[AppCoordinator]  Active Live Activities: \(hasActiveActivity)")
         }
 
-        // 세션이 있으면 복원 (라이브 액티비티 유무와 관계없이)
         if let session = activeSession {
-            print("[AppCoordinator]  Found active session")
             cleanupInactiveNotifications(activeSessionId: session.sessionId)
 
-            // 경과 시간 체크하여 복원 또는 다이얼로그 표시
-            let targetSeconds = session.targetMinutes * 60
             let remaining: Int
 
             if let pausedAt = session.pausedAt {
@@ -80,8 +72,6 @@ final class AppCoordinator: BaseCoordinator {
             let isCompleted = remaining <= 0
 
             if isCompleted {
-                // 완료된 세션 - 모든 라이브 액티비티 정리 후 다이얼로그 표시
-                print("[AppCoordinator]  Session completed, cleaning up activities")
                 if #available(iOS 16.2, *) {
                     _ = LiveActivityManager.shared.endAllActivities()
                         .subscribe(onNext: { [weak self] in
@@ -91,20 +81,15 @@ final class AppCoordinator: BaseCoordinator {
                     showSessionRecoveryDialog(session)
                 }
             } else if hasActiveActivity {
-                // 진행 중 + 액티비티 있음 - 바로 복원
-                print("[AppCoordinator]  Restoring active session with Live Activity")
                 restoreSession(session, reason: "정상 복구")
             } else {
-                // 진행 중이지만 액티비티 없음 - 다이얼로그 표시
-                print("[AppCoordinator]  Session active but no Live Activity, showing dialog")
                 showSessionRecoveryDialog(session)
             }
+            
             return
         }
 
-        // 세션 없고 액티비티 있음 → 데이터 불일치 (모든 액티비티 정리)
         if hasActiveActivity {
-            print("[AppCoordinator]  Found Live Activity but no session (data mismatch)")
             if #available(iOS 16.2, *) {
                 _ = LiveActivityManager.shared.endAllActivities().subscribe()
             }
@@ -112,15 +97,13 @@ final class AppCoordinator: BaseCoordinator {
             return
         }
 
-        // 둘 다 없음 → 정상
-        print("[AppCoordinator]  No active timer session to restore")
         cleanupInactiveNotifications(activeSessionId: nil)
     }
 
     private func cleanupInactiveNotifications(activeSessionId: String?) {
         NotificationManager.shared.removeInactiveTimerNotifications(activeSessionId: activeSessionId)
             .subscribe(onNext: {
-                print("[AppCoordinator]  Inactive timer notifications cleaned up")
+                
             }, onError: { error in
                 print("[AppCoordinator]  Failed to cleanup notifications: \(error)")
             })
@@ -128,17 +111,11 @@ final class AppCoordinator: BaseCoordinator {
     }
 
     private func restoreSession(_ session: TimerSessionManager.ActiveSession, reason: String) {
-        print("[AppCoordinator]  Restoring session - \(reason)")
-        print("[AppCoordinator]   - sessionId: \(session.sessionId)")
-        print("[AppCoordinator]   - bookTitle: \(session.bookTitle)")
-        print("[AppCoordinator]   - targetEndTime: \(session.targetEndTime)")
-
         let bookRepository = dependencies.serviceFactory.createBookRepository()
         _ = bookRepository.getBook(by: session.bookId)
             .observe(on: MainScheduler.instance)
             .subscribe(onNext: { [weak self] realmBook in
                 guard let self = self, let realmBook = realmBook else {
-                    print("[AppCoordinator]  Failed to find book for session")
                     TimerSessionManager.shared.clearActiveSession()
                     return
                 }
@@ -152,26 +129,21 @@ final class AppCoordinator: BaseCoordinator {
     }
 
     private func showSessionRecoveryDialog(_ session: TimerSessionManager.ActiveSession) {
-        // 경과 시간 계산 (종료 시간 기준)
         let targetSeconds = session.targetMinutes * 60
         let remaining: Int
 
         if let pausedAt = session.pausedAt {
-            // 일시정지 상태: 일시정지 시점의 남은 시간
             remaining = max(0, Int(session.targetEndTime.timeIntervalSince(pausedAt)))
         } else {
-            // 실행 중: 현재 남은 시간
             remaining = max(0, Int(session.targetEndTime.timeIntervalSince(Date())))
         }
 
         let displayedElapsedSeconds = targetSeconds - remaining
-        print("[AppCoordinator] Session elapsed: \(displayedElapsedSeconds)s")
-
+        
         let minutes = displayedElapsedSeconds / 60
         let seconds = displayedElapsedSeconds % 60
         let timeString = String(format: "%02d:%02d", minutes, seconds)
 
-        // 최소 기록 시간 (58초 = 약 1분)
         let minimumSeconds = 58
         let canSave = displayedElapsedSeconds >= minimumSeconds
 
@@ -185,7 +157,6 @@ final class AppCoordinator: BaseCoordinator {
             self?.restoreSession(session, reason: "사용자 선택 - 계속 읽기")
         })
 
-        // 1분 이상인 경우만 저장 옵션 제공
         if canSave {
             alert.addAction(UIAlertAction(title: "기록하고 종료", style: .default) { [weak self] _ in
                 self?.saveAndTerminateSession(session)
@@ -202,23 +173,16 @@ final class AppCoordinator: BaseCoordinator {
     }
 
     private func saveAndTerminateSession(_ session: TimerSessionManager.ActiveSession) {
-        print("[AppCoordinator]  Saving and terminating session")
-
-        // TODO: ReadingRecord 생성 및 저장
         _ = dependencies.serviceFactory.createReadingSessionRepository()
 
-        // 임시로 세션만 정리
         TimerSessionManager.shared.clearActiveSession()
-        print("[AppCoordinator]  Session terminated")
     }
 
     private func navigateToTimerScreen(book: Book, session: TimerSessionManager.ActiveSession) {
-        // BookDetail Coordinator 생성
         let bookDetailCoordinator = BookDetailCoordinator(navigationController: navigationController)
         bookDetailCoordinator.setupDependencies(serviceFactory: dependencies.serviceFactory, book: book)
         addChildCoordinator(bookDetailCoordinator)
 
-        // BookDetail ViewController 생성
         let bookDetailViewController = BookDetailViewController()
         let bookRepository = dependencies.serviceFactory.createBookRepository()
         let service = BookDetailService(serviceFactory: dependencies.serviceFactory)
@@ -226,7 +190,6 @@ final class AppCoordinator: BaseCoordinator {
         bookDetailViewController.coordinator = bookDetailCoordinator
         bookDetailViewController.reactor = bookDetailReactor
 
-        // ReadingTimer Coordinator 생성 (세션 복원용)
         let timerCoordinator = ReadingTimerCoordinator(
             navigationController: navigationController,
             serviceFactory: dependencies.serviceFactory,
@@ -236,7 +199,6 @@ final class AppCoordinator: BaseCoordinator {
         )
         bookDetailCoordinator.addChildCoordinator(timerCoordinator)
 
-        // 타이머 완료 시 처리
         timerCoordinator.completion
             .take(1)
             .subscribe(onNext: { [weak bookDetailCoordinator] in
@@ -246,16 +208,12 @@ final class AppCoordinator: BaseCoordinator {
             })
             .disposed(by: disposeBag)
 
-        // 타이머 ViewController 생성
         let readingTimerViewController = timerCoordinator.createViewController()
 
-        // 스택에 한 번에 설정 (화면 전환 없음)
         navigationController.setViewControllers([
-            navigationController.viewControllers.first!, // TabBar
+            navigationController.viewControllers.first!,
             bookDetailViewController,
             readingTimerViewController
         ], animated: false)
-
-        print("[AppCoordinator]  Navigated to timer screen without transition")
     }
 }

@@ -19,7 +19,6 @@ protocol ReadingRecordRepositoryProtocol {
 
 final class ReadingRecordRepository: BaseRepository<RealmReadingRecord>, ReadingRecordRepositoryProtocol {
 
-    // MARK: - ReadingRecordRepositoryProtocol
     func getAllReadingRecords() -> Observable<[RealmReadingRecord]> {
         return fetch()
     }

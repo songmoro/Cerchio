@@ -7,6 +7,7 @@
 
 import UIKit
 import AVFoundation
+import SnapKit
 
 protocol CameraViewControllerDelegate: AnyObject {
     func cameraViewController(_ controller: CameraViewController, didCapturePhoto image: UIImage)
@@ -16,22 +17,18 @@ protocol CameraViewControllerDelegate: AnyObject {
 final class CameraViewController: UIViewController {
     weak var delegate: CameraViewControllerDelegate?
 
-    // MARK: - UI Components
     private let previewView = UIView()
     private let captureButton = UIButton()
     private let cancelButton = UIButton()
     private let flashButton = UIButton()
 
-    // MARK: - Camera Components
     private var captureSession: AVCaptureSession!
     private var stillImageOutput: AVCapturePhotoOutput!
     private var videoPreviewLayer: AVCaptureVideoPreviewLayer!
     private var currentDevice: AVCaptureDevice!
 
-    // MARK: - Properties
     private var isFlashOn = false
 
-    // MARK: - Lifecycle
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
@@ -53,7 +50,6 @@ final class CameraViewController: UIViewController {
         videoPreviewLayer?.frame = previewView.bounds
     }
 
-    // MARK: - Setup
     private func setupUI() {
         view.backgroundColor = .black
 
@@ -69,33 +65,41 @@ final class CameraViewController: UIViewController {
 
         cancelButton.setTitle(String(localized: .actionCancel), for: .normal)
         cancelButton.setTitleColor(.white, for: .normal)
-        cancelButton.titleLabel?.font = .systemFont(ofSize: 16, weight: .medium)
+        cancelButton.titleLabel?.font = .custom(weight: .medium, size: 16)
         cancelButton.addTarget(self, action: #selector(cancelTapped), for: .touchUpInside)
         view.addSubview(cancelButton)
 
+        let flashImageName = isFlashOn ? "bolt.fill" : "bolt.slash.fill"
+        flashButton.setImage(UIImage(systemName: flashImageName), for: .normal)
+        flashButton.tintColor = .white
+        flashButton.addTarget(self, action: #selector(flashTapped), for: .touchUpInside)
+        view.addSubview(flashButton)
 
         setupConstraints()
     }
 
     private func setupConstraints() {
-        previewView.translatesAutoresizingMaskIntoConstraints = false
-        captureButton.translatesAutoresizingMaskIntoConstraints = false
-        cancelButton.translatesAutoresizingMaskIntoConstraints = false
+        previewView.snp.makeConstraints {
+            $0.top.leading.trailing.equalToSuperview()
+            $0.bottom.equalTo(view.safeAreaLayoutGuide).offset(-100)
+        }
 
-        NSLayoutConstraint.activate([
-            previewView.topAnchor.constraint(equalTo: view.topAnchor),
-            previewView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            previewView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            previewView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -100),
+        captureButton.snp.makeConstraints {
+            $0.centerX.equalToSuperview()
+            $0.bottom.equalTo(view.safeAreaLayoutGuide).offset(-20)
+            $0.size.equalTo(70)
+        }
 
-            captureButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            captureButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -20),
-            captureButton.widthAnchor.constraint(equalToConstant: 70),
-            captureButton.heightAnchor.constraint(equalToConstant: 70),
+        cancelButton.snp.makeConstraints {
+            $0.leading.equalToSuperview().offset(20)
+            $0.centerY.equalTo(captureButton)
+        }
 
-            cancelButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
-            cancelButton.centerYAnchor.constraint(equalTo: captureButton.centerYAnchor)
-        ])
+        flashButton.snp.makeConstraints {
+            $0.trailing.equalToSuperview().offset(-20)
+            $0.centerY.equalTo(captureButton)
+            $0.size.equalTo(44)
+        }
     }
 
     private func setupCamera() {
@@ -103,7 +107,6 @@ final class CameraViewController: UIViewController {
         captureSession.sessionPreset = .photo
 
         guard let backCamera = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .back) else {
-            print(" Unable to access back camera")
             return
         }
 
@@ -130,7 +133,6 @@ final class CameraViewController: UIViewController {
         previewView.layer.addSublayer(videoPreviewLayer)
     }
 
-    // MARK: - Camera Control
     private func startRunning() {
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             self?.captureSession?.startRunning()
@@ -143,8 +145,9 @@ final class CameraViewController: UIViewController {
         }
     }
 
-    // MARK: - Actions
     @objc private func capturePhoto() {
+        HapticFeedbackManager.shared.impact()
+
         let settings = AVCapturePhotoSettings(format: [AVVideoCodecKey: AVVideoCodecType.jpeg])
 
         if currentDevice.hasTorch && currentDevice.hasFlash {
@@ -155,19 +158,21 @@ final class CameraViewController: UIViewController {
     }
 
     @objc private func cancelTapped() {
+        HapticFeedbackManager.shared.impact()
         delegate?.cameraViewControllerDidCancel(self)
     }
 
     @objc private func flashTapped() {
         guard currentDevice.hasTorch && currentDevice.hasFlash else { return }
 
+        HapticFeedbackManager.shared.selection()
         isFlashOn.toggle()
-        let imageName = isFlashOn ? "bolt" : "bolt.slash"
+
+        let imageName = isFlashOn ? "bolt.fill" : "bolt.slash.fill"
         flashButton.setImage(UIImage(systemName: imageName), for: .normal)
     }
 }
 
-// MARK: - AVCapturePhotoCaptureDelegate
 extension CameraViewController: AVCapturePhotoCaptureDelegate {
     func photoOutput(_ output: AVCapturePhotoOutput, didFinishProcessingPhoto photo: AVCapturePhoto, error: Error?) {
         guard error == nil else {
@@ -176,16 +181,13 @@ extension CameraViewController: AVCapturePhotoCaptureDelegate {
         }
 
         guard let imageData = photo.fileDataRepresentation() else {
-            print(" Unable to generate image data")
             return
         }
 
         guard let image = UIImage(data: imageData) else {
-            print(" Unable to generate image from data")
             return
         }
 
-        // 이미지 방향 수정
         let fixedImage = fixImageOrientation(image)
 
         DispatchQueue.main.async { [weak self] in

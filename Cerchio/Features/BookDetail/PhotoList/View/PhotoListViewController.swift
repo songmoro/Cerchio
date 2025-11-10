@@ -15,7 +15,6 @@ final class PhotoListViewController: ListViewBaseViewController<PhotoListReactor
     private typealias DataSource = UICollectionViewDiffableDataSource<Section, Photo>
     private typealias Snapshot = NSDiffableDataSourceSnapshot<Section, Photo>
 
-    // MARK: - UI Components
     private lazy var collectionView: UICollectionView = {
         let layout = createLayout()
         return UICollectionView(frame: .zero, collectionViewLayout: layout)
@@ -23,36 +22,30 @@ final class PhotoListViewController: ListViewBaseViewController<PhotoListReactor
 
     private var dataSource: DataSource!
 
-    // MARK: - Properties
     var onAddPhotoTapped: (() -> Void)?
     var onPhotosDeleted: (() -> Void)?
     private var selectedPhotoIds: Set<String> = []
     private var service: PhotoListService?
 
-    // MARK: - Image Storage
-    private var photoImages: [String: UIImage] = [:]  // photoId -> UIImage
+    private var photoImages: [String: UIImage] = [:]
     private let imageQueue = DispatchQueue(label: "com.cerchio.photoList.imageQueue", attributes: .concurrent)
 
     private var cancelButton: UIBarButtonItem!
     private var selectAllButton: UIBarButtonItem!
     private var deleteButton: UIBarButtonItem!
 
-    // MARK: - Override Properties
     override var viewTitle: String {
         return String(localized: .bookDetailPhotos)
     }
 
-    // MARK: - Section Type
     nonisolated enum Section: CaseIterable {
         case photos
     }
 
-    // MARK: - Public Methods
     func setService(_ service: PhotoListService) {
         self.service = service
     }
 
-    // MARK: - Override Methods
     override func addButtonTapped() {
         onAddPhotoTapped?()
     }
@@ -65,7 +58,6 @@ final class PhotoListViewController: ListViewBaseViewController<PhotoListReactor
         }
     }
 
-    // MARK: - Setup
     override func setupUI() {
         super.setupUI()
         setupBackButton()
@@ -83,9 +75,7 @@ final class PhotoListViewController: ListViewBaseViewController<PhotoListReactor
     override func viewDidDisappear(_ animated: Bool) {
         super.viewDidDisappear(animated)
 
-        // 화면을 완전히 벗어났을 때 (pop)
         if isMovingFromParent {
-            // 이미지 딕셔너리 정리
             imageQueue.async(flags: .barrier) { [weak self] in
                 self?.photoImages.removeAll()
             }
@@ -101,7 +91,7 @@ final class PhotoListViewController: ListViewBaseViewController<PhotoListReactor
 
         let groupSize = NSCollectionLayoutSize(
             widthDimension: .fractionalWidth(1.0),
-            heightDimension: .fractionalWidth(1/3) // 정사각형 (1:1 비율)
+            heightDimension: .fractionalWidth(1/3)
         )
         let group = NSCollectionLayoutGroup.horizontal(layoutSize: groupSize, subitems: [item])
         group.interItemSpacing = .fixed(2)
@@ -114,7 +104,6 @@ final class PhotoListViewController: ListViewBaseViewController<PhotoListReactor
     }
 
     private func setupEditModeButtons() {
-        // 취소 버튼
         cancelButton = UIBarButtonItem(
             title: String(localized: .actionCancel),
             style: .plain,
@@ -122,7 +111,6 @@ final class PhotoListViewController: ListViewBaseViewController<PhotoListReactor
             action: nil
         )
 
-        // 전체 선택 버튼
         selectAllButton = UIBarButtonItem(
             title: String(localized: .actionSelectAll),
             style: .plain,
@@ -130,7 +118,6 @@ final class PhotoListViewController: ListViewBaseViewController<PhotoListReactor
             action: nil
         )
 
-        // 삭제 버튼
         deleteButton = UIBarButtonItem(
             title: String(localized: .actionDelete),
             style: .plain,
@@ -139,7 +126,6 @@ final class PhotoListViewController: ListViewBaseViewController<PhotoListReactor
         )
         deleteButton.tintColor = .systemRed
 
-        // Rx 바인딩
         cancelButton.rx.tap
             .subscribe(onNext: { [weak self] in
                 self?.isEditMode = false
@@ -163,18 +149,14 @@ final class PhotoListViewController: ListViewBaseViewController<PhotoListReactor
 
     private func updateNavigationBar() {
         if isEditMode {
-            // 편집 모드
             if selectedPhotoIds.isEmpty {
-                // 선택된 사진이 없으면: [취소] [전체 선택]
                 navigationItem.leftBarButtonItem = cancelButton
                 navigationItem.rightBarButtonItems = [selectAllButton]
             } else {
-                // 선택된 사진이 있으면: [취소] [삭제]
                 navigationItem.leftBarButtonItem = cancelButton
                 navigationItem.rightBarButtonItems = [deleteButton]
             }
         } else {
-            // 일반 모드는 부모 클래스가 처리함
             navigationItem.leftBarButtonItem = nil
         }
     }
@@ -188,7 +170,6 @@ final class PhotoListViewController: ListViewBaseViewController<PhotoListReactor
     }
 
     private func setupRxBindings() {
-        // Collection View Selection - 일반 모드
         collectionView.rx.itemSelected(dataSource)
             .filter { [weak self] _ in self?.isEditMode == false }
             .do(onNext: { _ in HapticFeedbackManager.shared.impact() })
@@ -198,7 +179,6 @@ final class PhotoListViewController: ListViewBaseViewController<PhotoListReactor
                     self.collectionView.deselectItem(at: indexPath, animated: true)
                 }
 
-                // 딕셔너리에서 이미지 가져오기
                 let image = self.imageQueue.sync {
                     self.photoImages[photo.id]
                 }
@@ -209,26 +189,22 @@ final class PhotoListViewController: ListViewBaseViewController<PhotoListReactor
             })
             .disposed(by: disposeBag)
 
-        // Collection View Selection - 편집 모드
         collectionView.rx.itemSelected(dataSource)
             .filter { [weak self] _ in self?.isEditMode == true }
             .subscribe(onNext: { [weak self] photo in
                 guard let self = self else { return }
 
-                // 이미 선택된 경우 deselect 처리 (다음 이벤트에서 처리됨)
                 if self.selectedPhotoIds.contains(photo.id) {
                     if let indexPath = self.dataSource.indexPath(for: photo) {
                         self.collectionView.deselectItem(at: indexPath, animated: true)
                     }
                 } else {
-                    // 새로 선택된 경우
                     self.selectedPhotoIds.insert(photo.id)
                     self.updateNavigationBar()
                 }
             })
             .disposed(by: disposeBag)
 
-        // Collection View Deselection - 편집 모드
         collectionView.rx.itemDeselected(dataSource)
             .filter { [weak self] _ in self?.isEditMode == true }
             .subscribe(onNext: { [weak self] photo in
@@ -251,7 +227,6 @@ final class PhotoListViewController: ListViewBaseViewController<PhotoListReactor
 
             let photoId = photo.id
 
-            // 딕셔너리에서 이미지 가져오기
             let image = self?.imageQueue.sync {
                 self?.photoImages[photoId]
             }
@@ -259,7 +234,6 @@ final class PhotoListViewController: ListViewBaseViewController<PhotoListReactor
             if let image = image {
                 cell.configure(with: image)
             } else {
-                // 이미지가 아직 로드되지 않은 경우
                 cell.configure(with: nil)
             }
 
@@ -286,7 +260,6 @@ final class PhotoListViewController: ListViewBaseViewController<PhotoListReactor
             .distinctUntilChanged()
             .asDriver(onErrorJustReturn: false)
             .drive(onNext: { isLoading in
-                print("Loading: \(isLoading)")
             })
             .disposed(by: disposeBag)
     }
@@ -299,10 +272,8 @@ final class PhotoListViewController: ListViewBaseViewController<PhotoListReactor
     }
 
     private func loadPhotosAndUpdateSnapshot(with photos: [Photo]) {
-        // 스냅샷 먼저 업데이트 (photoId만)
         updateSnapshot(with: photos)
 
-        // 백그라운드에서 이미지 로드
         Task { [weak self] in
             guard let self = self else { return }
 
@@ -317,14 +288,12 @@ final class PhotoListViewController: ListViewBaseViewController<PhotoListReactor
                 for await (photoId, image) in group {
                     guard let image = image else { continue }
 
-                    // 이미지 딕셔너리에 저장
                     self.imageQueue.async(flags: .barrier) { [weak self] in
                         self?.photoImages[photoId] = image
                     }
                 }
             }
 
-            // 모든 이미지 로딩 완료 후 UI 갱신
             await MainActor.run { [weak self] in
                 guard let self = self else { return }
                 var snapshot = self.dataSource.snapshot()
@@ -339,19 +308,16 @@ final class PhotoListViewController: ListViewBaseViewController<PhotoListReactor
         }
     }
 
-    // MARK: - Actions
     private func selectAllPhotos() {
         guard let reactor = reactor else { return }
         let photos = reactor.currentState.photos
 
-        // 모든 사진 선택
         for (index, photo) in photos.enumerated() {
             selectedPhotoIds.insert(photo.id)
             let indexPath = IndexPath(item: index, section: 0)
             collectionView.selectItem(at: indexPath, animated: false, scrollPosition: [])
         }
 
-        // 햅틱 피드백
         let generator = UIImpactFeedbackGenerator(style: .light)
         generator.impactOccurred()
 
@@ -362,7 +328,6 @@ final class PhotoListViewController: ListViewBaseViewController<PhotoListReactor
         isEditMode = true
         selectedPhotoIds.removeAll()
 
-        // 햅틱 피드백
         let generator = UIImpactFeedbackGenerator(style: .medium)
         generator.impactOccurred()
 
@@ -373,11 +338,9 @@ final class PhotoListViewController: ListViewBaseViewController<PhotoListReactor
         isEditMode = false
         selectedPhotoIds.removeAll()
 
-        // 햅틱 피드백
         let generator = UIImpactFeedbackGenerator(style: .light)
         generator.impactOccurred()
 
-        // 모든 선택 해제
         collectionView.indexPathsForSelectedItems?.forEach {
             collectionView.deselectItem(at: $0, animated: true)
         }
@@ -409,19 +372,15 @@ final class PhotoListViewController: ListViewBaseViewController<PhotoListReactor
             reactor?.action.onNext(.deletePhoto(photoId))
         }
 
-        // 편집 모드 종료
         exitEditMode()
 
-        // 햅틱 피드백
         let generator = UINotificationFeedbackGenerator()
         generator.notificationOccurred(.success)
 
-        // 사진이 삭제되었음을 알림
         onPhotosDeleted?()
     }
 }
 
-// MARK: - Image Preview
 extension PhotoListViewController {
     private func showImagePreview(_ image: UIImage) {
         let previewVC = UIViewController()
@@ -444,7 +403,6 @@ extension PhotoListViewController {
     }
 }
 
-// MARK: - PhotoGridCell
 final class PhotoGridCell: UICollectionViewCell {
     static let identifier = "PhotoGridCell"
 

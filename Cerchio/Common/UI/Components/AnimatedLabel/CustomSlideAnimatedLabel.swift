@@ -7,7 +7,6 @@
 
 import UIKit
 
-/// SwiftUI 스타일의 커스텀 슬라이드 애니메이션 (위에서 아래로)
 final class CustomSlideAnimatedLabel: UIView {
 
     private let currentLabel = UILabel()
@@ -69,7 +68,6 @@ final class CustomSlideAnimatedLabel: UIView {
         nextLabel.frame = bounds
     }
 
-    /// 텍스트를 애니메이션과 함께 설정
     func setText(_ newText: String?, animated: Bool = true) {
         guard newText != currentLabel.text else { return }
 

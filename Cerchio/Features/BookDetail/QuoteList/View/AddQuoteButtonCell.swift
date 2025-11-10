@@ -9,13 +9,10 @@ import UIKit
 import SnapKit
 
 final class AddQuoteButtonCell: UICollectionViewCell, IsIdentifiable {
-    // MARK: - UI Components
     private let iconImageView = UIImageView()
 
-    // MARK: - Properties
     var onAddQuoteTapped: (() -> Void)?
 
-    // MARK: - Initialization
     override init(frame: CGRect) {
         super.init(frame: frame)
         setupViews()
@@ -27,12 +24,10 @@ final class AddQuoteButtonCell: UICollectionViewCell, IsIdentifiable {
         fatalError("init(coder:) has not been implemented")
     }
 
-    // MARK: - Setup
     private func setupViews() {
         contentView.backgroundColor = .systemGray6
         contentView.layer.cornerRadius = 12
 
-        // 아이콘 이미지뷰
         iconImageView.image = UIImage(systemName: "plus.circle.fill")
         iconImageView.tintColor = .forestGreen
         iconImageView.contentMode = .scaleAspectFit
@@ -51,7 +46,6 @@ final class AddQuoteButtonCell: UICollectionViewCell, IsIdentifiable {
         contentView.addGestureRecognizer(tapGesture)
     }
 
-    // MARK: - Actions
     @objc private func cellTapped() {
         onAddQuoteTapped?()
     }

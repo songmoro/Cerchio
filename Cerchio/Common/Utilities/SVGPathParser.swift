@@ -9,9 +9,7 @@ import UIKit
 
 struct SVGPathParser {
 
-    /// SVG 문자열에서 path d 속성 추출
     static func extractPath(from svgString: String) -> String? {
-        // <path d="..."> 또는 <path ... d="..."> 형식 찾기
         let pattern = #"<path[^>]*\sd="([^"]+)"#
         guard let regex = try? NSRegularExpression(pattern: pattern),
               let match = regex.firstMatch(in: svgString, range: NSRange(svgString.startIndex..., in: svgString)),
@@ -22,12 +20,9 @@ struct SVGPathParser {
         return String(svgString[range])
     }
 
-    /// SVG path 명령어를 UIBezierPath로 변환
     static func parse(_ pathData: String, into path: UIBezierPath) {
         var currentPoint = CGPoint.zero
 
-        // 명령어와 좌표를 분리하기 위한 정규식
-        // M, L, C, Q, Z 등의 명령어와 숫자들을 분리
         let pattern = #"([MLCQZHVmlcqzhv])|(-?\d+\.?\d*)"#
         guard let regex = try? NSRegularExpression(pattern: pattern) else { return }
 
@@ -44,7 +39,7 @@ struct SVGPathParser {
             let cmd = tokens[i]
 
             switch cmd {
-            case "M": // Absolute Move to
+            case "M":
                 guard i + 2 < tokens.count else { break }
                 let x = CGFloat(Double(tokens[i+1]) ?? 0)
                 let y = CGFloat(Double(tokens[i+2]) ?? 0)
@@ -52,7 +47,7 @@ struct SVGPathParser {
                 path.move(to: currentPoint)
                 i += 3
 
-            case "m": // Relative move to
+            case "m":
                 guard i + 2 < tokens.count else { break }
                 let dx = CGFloat(Double(tokens[i+1]) ?? 0)
                 let dy = CGFloat(Double(tokens[i+2]) ?? 0)
@@ -60,7 +55,7 @@ struct SVGPathParser {
                 path.move(to: currentPoint)
                 i += 3
 
-            case "L": // Absolute Line to
+            case "L":
                 guard i + 2 < tokens.count else { break }
                 let x = CGFloat(Double(tokens[i+1]) ?? 0)
                 let y = CGFloat(Double(tokens[i+2]) ?? 0)
@@ -68,7 +63,7 @@ struct SVGPathParser {
                 path.addLine(to: currentPoint)
                 i += 3
 
-            case "l": // Relative line to
+            case "l":
                 guard i + 2 < tokens.count else { break }
                 let dx = CGFloat(Double(tokens[i+1]) ?? 0)
                 let dy = CGFloat(Double(tokens[i+2]) ?? 0)
@@ -76,35 +71,35 @@ struct SVGPathParser {
                 path.addLine(to: currentPoint)
                 i += 3
 
-            case "H": // Absolute horizontal line
+            case "H":
                 guard i + 1 < tokens.count else { break }
                 let x = CGFloat(Double(tokens[i+1]) ?? 0)
                 currentPoint = CGPoint(x: x, y: currentPoint.y)
                 path.addLine(to: currentPoint)
                 i += 2
 
-            case "h": // Relative horizontal line
+            case "h":
                 guard i + 1 < tokens.count else { break }
                 let dx = CGFloat(Double(tokens[i+1]) ?? 0)
                 currentPoint = CGPoint(x: currentPoint.x + dx, y: currentPoint.y)
                 path.addLine(to: currentPoint)
                 i += 2
 
-            case "V": // Absolute vertical line
+            case "V":
                 guard i + 1 < tokens.count else { break }
                 let y = CGFloat(Double(tokens[i+1]) ?? 0)
                 currentPoint = CGPoint(x: currentPoint.x, y: y)
                 path.addLine(to: currentPoint)
                 i += 2
 
-            case "v": // Relative vertical line
+            case "v":
                 guard i + 1 < tokens.count else { break }
                 let dy = CGFloat(Double(tokens[i+1]) ?? 0)
                 currentPoint = CGPoint(x: currentPoint.x, y: currentPoint.y + dy)
                 path.addLine(to: currentPoint)
                 i += 2
 
-            case "C": // Absolute Cubic Bezier curve
+            case "C":
                 guard i + 6 < tokens.count else { break }
                 let cp1 = CGPoint(
                     x: CGFloat(Double(tokens[i+1]) ?? 0),
@@ -122,7 +117,7 @@ struct SVGPathParser {
                 path.addCurve(to: end, controlPoint1: cp1, controlPoint2: cp2)
                 i += 7
 
-            case "c": // Relative cubic Bezier curve
+            case "c":
                 guard i + 6 < tokens.count else { break }
                 let cp1 = CGPoint(
                     x: currentPoint.x + CGFloat(Double(tokens[i+1]) ?? 0),
@@ -140,7 +135,7 @@ struct SVGPathParser {
                 path.addCurve(to: end, controlPoint1: cp1, controlPoint2: cp2)
                 i += 7
 
-            case "Q": // Absolute Quadratic Bezier curve
+            case "Q":
                 guard i + 4 < tokens.count else { break }
                 let cp = CGPoint(
                     x: CGFloat(Double(tokens[i+1]) ?? 0),
@@ -154,7 +149,7 @@ struct SVGPathParser {
                 path.addQuadCurve(to: end, controlPoint: cp)
                 i += 5
 
-            case "q": // Relative quadratic Bezier curve
+            case "q":
                 guard i + 4 < tokens.count else { break }
                 let cp = CGPoint(
                     x: currentPoint.x + CGFloat(Double(tokens[i+1]) ?? 0),
@@ -168,7 +163,7 @@ struct SVGPathParser {
                 path.addQuadCurve(to: end, controlPoint: cp)
                 i += 5
 
-            case "Z", "z": // Close path
+            case "Z", "z":
                 path.close()
                 i += 1
 
@@ -180,7 +175,6 @@ struct SVGPathParser {
 }
 
 extension UIBezierPath {
-    /// SVG 파일에서 UIBezierPath 생성
     convenience init?(svgFile: URL) {
         guard let svgData = try? Data(contentsOf: svgFile),
               let svgString = String(data: svgData, encoding: .utf8),
@@ -192,18 +186,14 @@ extension UIBezierPath {
         SVGPathParser.parse(pathData, into: self)
     }
 
-    /// SVG 파일명에서 UIBezierPath 생성
     convenience init?(svgFileName: String) {
-        // 확장자 제거
         let fileName = (svgFileName as NSString).deletingPathExtension
 
-        // 1. Bundle에서 직접 SVG 파일 찾기 시도
         if let svgURL = Bundle.main.url(forResource: fileName, withExtension: "svg") {
             self.init(svgFile: svgURL)
             return
         }
 
-        // 2. Assets 카탈로그에서 찾기 시도
         if let asset = NSDataAsset(name: fileName),
            let svgString = String(data: asset.data, encoding: .utf8),
            let pathData = SVGPathParser.extractPath(from: svgString) {
@@ -215,7 +205,6 @@ extension UIBezierPath {
         return nil
     }
 
-    /// Path 상의 percentage 위치의 점 계산
     func point(at percentage: CGFloat) -> CGPoint {
         let percentage = max(0, min(1, percentage))
 
@@ -224,7 +213,6 @@ extension UIBezierPath {
         var pathLength: CGFloat = 0
         var previousPoint: CGPoint?
 
-        // Path 순회하며 길이와 점들 수집
         cgPath.applyWithBlock { elementPointer in
             let element = elementPointer.pointee
 
@@ -246,7 +234,6 @@ extension UIBezierPath {
                     let cp = element.points[0]
                     let end = element.points[1]
 
-                    // 이차 베지어 곡선 샘플링
                     for i in 1...20 {
                         let t = CGFloat(i) / 20.0
                         let point = quadraticBezierPoint(t: t, p0: prev, p1: cp, p2: end)
@@ -264,7 +251,6 @@ extension UIBezierPath {
                     let cp2 = element.points[1]
                     let end = element.points[2]
 
-                    // 삼차 베지어 곡선 샘플링
                     for i in 1...20 {
                         let t = CGFloat(i) / 20.0
                         let point = cubicBezierPoint(t: t, p0: prev, p1: cp1, p2: cp2, p3: end)
@@ -284,7 +270,6 @@ extension UIBezierPath {
             }
         }
 
-        // percentage에 해당하는 점 찾기
         let targetLength = pathLength * percentage
         var currentLength: CGFloat = 0
         var previousSample: CGPoint?
@@ -293,7 +278,6 @@ extension UIBezierPath {
             if let prev = previousSample {
                 let segmentLength = prev.distance(to: point)
                 if currentLength + segmentLength >= targetLength {
-                    // 보간
                     let t = (targetLength - currentLength) / segmentLength
                     return CGPoint(
                         x: prev.x + (point.x - prev.x) * t,
@@ -308,7 +292,6 @@ extension UIBezierPath {
         return points.last ?? .zero
     }
 
-    // 이차 베지어 곡선 점 계산
     private func quadraticBezierPoint(t: CGFloat, p0: CGPoint, p1: CGPoint, p2: CGPoint) -> CGPoint {
         let mt = 1 - t
         let x = mt * mt * p0.x + 2 * mt * t * p1.x + t * t * p2.x
@@ -316,7 +299,6 @@ extension UIBezierPath {
         return CGPoint(x: x, y: y)
     }
 
-    // 삼차 베지어 곡선 점 계산
     private func cubicBezierPoint(t: CGFloat, p0: CGPoint, p1: CGPoint, p2: CGPoint, p3: CGPoint) -> CGPoint {
         let mt = 1 - t
         let mt2 = mt * mt

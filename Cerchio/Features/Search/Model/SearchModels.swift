@@ -7,16 +7,14 @@
 
 import Foundation
 
-// MARK: - Search State
 enum SearchState {
     case initial
     case searching
-    case results([Book], [BookSearchItem])  // UI용 Book + 원본 BookSearchItem
+    case results([Book], [BookSearchItem])
     case noResults
     case error(String)
 }
 
-// MARK: - Search State Extensions
 extension SearchState {
     var description: String {
         switch self {
@@ -28,7 +26,6 @@ extension SearchState {
         }
     }
 
-    /// UI 표시용 Book 배열 반환
     var books: [Book] {
         switch self {
         case .results(let books, _):
@@ -38,7 +35,6 @@ extension SearchState {
         }
     }
 
-    /// 원본 BookSearchItem 배열 반환
     var originalItems: [BookSearchItem] {
         switch self {
         case .results(_, let items):
@@ -49,7 +45,6 @@ extension SearchState {
     }
 }
 
-// MARK: - Search Query Model
 struct SearchQuery {
     let text: String
     let filters: SearchFilters?
@@ -64,7 +59,6 @@ struct SearchQuery {
     }
 }
 
-// MARK: - Search Filters
 struct SearchFilters {
     let category: BookCategory?
     let author: String?
@@ -84,7 +78,6 @@ struct SearchFilters {
     }
 }
 
-// MARK: - Book Category
 enum BookCategory: String, CaseIterable, Codable {
     case fiction = "소설"
     case nonFiction = "비소설"
@@ -98,7 +91,6 @@ enum BookCategory: String, CaseIterable, Codable {
     }
 }
 
-// MARK: - Search Result Metadata
 struct SearchResultMetadata {
     let totalCount: Int
     let searchDuration: TimeInterval

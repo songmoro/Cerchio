@@ -11,7 +11,6 @@ import RxSwift
 import RxCocoa
 
 final class ReadingInfoEditViewController: UIViewController {
-    // MARK: - Properties
     private let disposeBag = DisposeBag()
     private var currentTotalPages: Int = 0
     private var currentStartDate: Date?
@@ -20,7 +19,6 @@ final class ReadingInfoEditViewController: UIViewController {
     private var isEndDateCleared = false
     var onSaved: ((Int, Date?, Date?) -> Void)?
 
-    // MARK: - UI Components
     private let pagesTextField: UITextField = {
         let field = UITextField()
         field.placeholder = String(localized: .`reading_info_edit.pages_placeholder`)
@@ -51,6 +49,7 @@ final class ReadingInfoEditViewController: UIViewController {
         picker.datePickerMode = .date
         picker.preferredDatePickerStyle = .inline
         picker.maximumDate = Date()
+        picker.tintColor = .forestGreen
         picker.addTarget(self, action: #selector(startDateChanged), for: .valueChanged)
         return picker
     }()
@@ -88,6 +87,8 @@ final class ReadingInfoEditViewController: UIViewController {
             String(localized: .`reading_info_edit.reading_status.completed`)
         ])
         control.selectedSegmentIndex = 0
+        control.selectedSegmentTintColor = .forestGreen
+        control.setTitleTextAttributes([.foregroundColor: UIColor.white], for: .selected)
         return control
     }()
 
@@ -96,6 +97,7 @@ final class ReadingInfoEditViewController: UIViewController {
         picker.datePickerMode = .date
         picker.preferredDatePickerStyle = .inline
         picker.maximumDate = Date()
+        picker.tintColor = .forestGreen
         picker.addTarget(self, action: #selector(endDateChanged), for: .valueChanged)
         return picker
     }()
@@ -131,7 +133,6 @@ final class ReadingInfoEditViewController: UIViewController {
         return view
     }()
 
-    // MARK: - Lifecycle
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
@@ -144,7 +145,6 @@ final class ReadingInfoEditViewController: UIViewController {
         pagesTextField.becomeFirstResponder()
     }
 
-    // MARK: - Setup
     private func setupUI() {
         view.backgroundColor = .systemBackground
 
@@ -222,6 +222,15 @@ final class ReadingInfoEditViewController: UIViewController {
     private func setupNavigationBar() {
         title = String(localized: .`reading_info_edit.title`)
 
+        let appearance = UINavigationBarAppearance()
+        appearance.configureWithOpaqueBackground()
+        appearance.backgroundColor = .white
+        appearance.titleTextAttributes = [.foregroundColor: UIColor.forestGreen]
+
+        navigationController?.navigationBar.standardAppearance = appearance
+        navigationController?.navigationBar.scrollEdgeAppearance = appearance
+        navigationController?.navigationBar.tintColor = .forestGreen
+
         let cancelButton = UIBarButtonItem(
             title: String(localized: .`action.cancel`),
             style: .plain,
@@ -250,17 +259,14 @@ final class ReadingInfoEditViewController: UIViewController {
         HapticFeedbackManager.shared.selection()
         let isCompleted = readingStatusSegmentedControl.selectedSegmentIndex == 1
 
-        // "읽는 중" 선택 시 날짜 선택 UI 숨기기, "완료" 선택 시 보이기
         endDatePicker.isHidden = !isCompleted
         clearEndDateButton.isHidden = !isCompleted
 
-        // "완료"를 선택했을 때 종료 날짜 picker가 보이도록 스크롤
         if isCompleted {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
                 guard let self = self else { return }
-                // 종료 날짜 picker가 화면에 보이도록 스크롤
                 let pickerFrame = self.endDatePicker.frame
-                let targetY = pickerFrame.origin.y - 20 // 약간의 여유 공간
+                let targetY = pickerFrame.origin.y - 20
                 self.scrollView.setContentOffset(CGPoint(x: 0, y: targetY), animated: true)
             }
         }
@@ -268,11 +274,9 @@ final class ReadingInfoEditViewController: UIViewController {
 
     @objc private func startDateChanged() {
         HapticFeedbackManager.shared.selection()
-        // 시작 날짜가 변경되면 종료 날짜의 minimumDate를 업데이트
         isStartDateCleared = false
         endDatePicker.minimumDate = startDatePicker.date
 
-        // 만약 종료 날짜가 시작 날짜보다 앞서면 자동으로 시작 날짜로 조정
         if endDatePicker.date < startDatePicker.date {
             endDatePicker.date = startDatePicker.date
         }
@@ -283,7 +287,6 @@ final class ReadingInfoEditViewController: UIViewController {
         isEndDateCleared = false
     }
 
-    // MARK: - Public Methods
     func configure(totalPages: Int, startDate: Date?, endDate: Date?) {
         self.currentTotalPages = totalPages
         self.currentStartDate = startDate
@@ -293,7 +296,6 @@ final class ReadingInfoEditViewController: UIViewController {
 
         if let startDate = startDate {
             startDatePicker.date = startDate
-            // 종료 날짜는 시작 날짜 이후여야 함
             endDatePicker.minimumDate = startDate
         } else {
             startDatePicker.date = Date()
@@ -302,18 +304,17 @@ final class ReadingInfoEditViewController: UIViewController {
 
         if let endDate = endDate {
             endDatePicker.date = endDate
-            readingStatusSegmentedControl.selectedSegmentIndex = 1 // 완료
+            readingStatusSegmentedControl.selectedSegmentIndex = 1
             endDatePicker.isHidden = false
             clearEndDateButton.isHidden = false
         } else {
             endDatePicker.date = Date()
-            readingStatusSegmentedControl.selectedSegmentIndex = 0 // 읽는 중
+            readingStatusSegmentedControl.selectedSegmentIndex = 0
             endDatePicker.isHidden = true
             clearEndDateButton.isHidden = true
         }
     }
 
-    // MARK: - Actions
     @objc private func cancelTapped() {
         HapticFeedbackManager.shared.impact()
         dismiss(animated: true)
@@ -324,20 +325,15 @@ final class ReadingInfoEditViewController: UIViewController {
         let pagesText = pagesTextField.text?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
         let totalPages = Int(pagesText) ?? currentTotalPages
 
-        // 시작 날짜: 초기화 버튼을 눌렀으면 nil, 아니면 picker의 날짜
         let startDate = isStartDateCleared ? nil : startDatePicker.date
 
-        // 완료 날짜: "읽는 중"이면 nil, "완료"면 선택된 날짜 (초기화된 경우 nil)
         let endDate: Date?
         if readingStatusSegmentedControl.selectedSegmentIndex == 0 {
-            // "읽는 중" 선택됨
             endDate = nil
         } else {
-            // "완료" 선택됨
             endDate = isEndDateCleared ? nil : endDatePicker.date
         }
 
-        // 날짜 유효성 검사: 종료 날짜가 시작 날짜보다 앞서면 경고
         if let start = startDate, let end = endDate {
             if end < start {
                 showDateValidationAlert()
@@ -363,7 +359,6 @@ final class ReadingInfoEditViewController: UIViewController {
         HapticFeedbackManager.shared.impact()
         isStartDateCleared = true
         startDatePicker.date = Date()
-        // 시작 날짜를 초기화하면 종료 날짜 제약도 제거
         endDatePicker.minimumDate = nil
 
         let alert = UIAlertController(

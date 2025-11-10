@@ -15,16 +15,17 @@ final class SearchViewController: BaseViewController<SearchReactor> {
     private typealias DataSource = UITableViewDiffableDataSource<Section, Book>
     private typealias Snapshot = NSDiffableDataSourceSnapshot<Section, Book>
 
-    // MARK: - Callbacks
     var onBookSaved: ((Book) -> Void)?
+    private var searchHistoryRepository: SearchHistoryRepositoryProtocol?
 
-    // MARK: - UI Components
     private let searchBar: UISearchBar = {
         let searchBar = UISearchBar()
         searchBar.placeholder = String(localized: .`search.placeholder`)
         searchBar.searchBarStyle = .minimal
         return searchBar
     }()
+
+    private let searchHistoryScrollView = SearchHistoryScrollView()
 
     private let tableView: UITableView = {
         let tableView = UITableView()
@@ -55,14 +56,12 @@ final class SearchViewController: BaseViewController<SearchReactor> {
         return indicator
     }()
 
-    // MARK: - Properties
     private var dataSource: DataSource!
 
     nonisolated enum Section: CaseIterable, Hashable, Sendable {
         case results
     }
 
-    // MARK: - Lifecycle
     override func setupUI() {
         super.setupUI()
 
@@ -76,8 +75,8 @@ final class SearchViewController: BaseViewController<SearchReactor> {
 
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        // 탭 전환 시 검색 결과의 도서 존재 여부 갱신
         reactor?.action.onNext(.refresh)
+        reactor?.action.onNext(.loadSearchHistory)
     }
 
     override func bind(reactor: SearchReactor) {
@@ -114,7 +113,6 @@ final class SearchViewController: BaseViewController<SearchReactor> {
             })
             .disposed(by: disposeBag)
 
-        // Error 상태 처리 (중복 책 등)
         reactor.state
             .map { $0.error }
             .distinctUntilChanged()
@@ -125,7 +123,6 @@ final class SearchViewController: BaseViewController<SearchReactor> {
             })
             .disposed(by: disposeBag)
 
-        // 저장된 책 상태 관찰 - 저장 완료 시 상세 화면으로 이동
         reactor.state
             .map { $0.lastSavedBook }
             .distinctUntilChanged { $0?.isbn == $1?.isbn }
@@ -135,9 +132,51 @@ final class SearchViewController: BaseViewController<SearchReactor> {
                 self?.showNavigationConfirmAlert(for: savedBook)
             })
             .disposed(by: disposeBag)
+
+        reactor.state
+            .map { $0.searchHistory }
+            .distinctUntilChanged()
+            .observe(on: MainScheduler.instance)
+            .subscribe(onNext: { [weak self] keywords in
+                self?.searchHistoryScrollView.updateHistory(keywords)
+            })
+            .disposed(by: disposeBag)
+
+        reactor.state
+            .map { $0.searchText }
+            .distinctUntilChanged()
+            .asDriver(onErrorJustReturn: "")
+            .drive(searchBar.rx.text)
+            .disposed(by: disposeBag)
+
+        searchHistoryScrollView.onHistorySelected = { [weak self] keyword in
+            self?.reactor?.action.onNext(.selectSearchHistory(keyword))
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                self?.reactor?.action.onNext(.searchButtonTapped)
+            }
+        }
+
+        searchHistoryScrollView.onEditTapped = { [weak self] in
+            self?.showHistoryEditScreen()
+        }
     }
 
-    // MARK: - Setup Methods
+    func configure(searchHistoryRepository: SearchHistoryRepositoryProtocol) {
+        self.searchHistoryRepository = searchHistoryRepository
+    }
+
+    private func showHistoryEditScreen() {
+        guard let repository = searchHistoryRepository else { return }
+
+        let editViewController = SearchHistoryEditViewController(searchHistoryRepository: repository)
+        editViewController.onHistoryUpdated = { [weak self] in
+            self?.reactor?.action.onNext(.loadSearchHistory)
+        }
+
+        let navigationController = UINavigationController(rootViewController: editViewController)
+        present(navigationController, animated: true)
+    }
+
     private func setupSearchBar() {
         view.addSubview(searchBar)
         searchBar.showsCancelButton = true
@@ -152,7 +191,8 @@ final class SearchViewController: BaseViewController<SearchReactor> {
 
     private func setupTableView() {
         tableView.register(SearchResultTableViewCell.self, forCellReuseIdentifier: SearchResultTableViewCell.identifier)
-        tableView.rowHeight = SearchResultConstants.Layout.rowHeight
+        tableView.rowHeight = UITableView.automaticDimension
+        tableView.estimatedRowHeight = 120
         tableView.contentInset.bottom = 20
         tableView.verticalScrollIndicatorInsets = .init(top: 0, left: 0, bottom: 20, right: 0)
         tableView.delegate = self
@@ -167,17 +207,23 @@ final class SearchViewController: BaseViewController<SearchReactor> {
     }
 
     private func setupLayout() {
+        view.addSubview(searchHistoryScrollView)
         view.addSubview(tableView)
         view.addSubview(emptyStateView)
         view.addSubview(loadingIndicator)
 
-        tableView.snp.makeConstraints {
+        searchHistoryScrollView.snp.makeConstraints {
             $0.top.equalTo(searchBar.snp.bottom)
+            $0.horizontalEdges.equalToSuperview()
+        }
+
+        tableView.snp.makeConstraints {
+            $0.top.equalTo(searchHistoryScrollView.snp.bottom)
             $0.horizontalEdges.bottom.equalTo(view.safeAreaLayoutGuide)
         }
 
         emptyStateView.snp.makeConstraints {
-            $0.top.equalTo(searchBar.snp.bottom)
+            $0.top.equalTo(searchHistoryScrollView.snp.bottom)
             $0.horizontalEdges.bottom.equalTo(view.safeAreaLayoutGuide)
         }
 
@@ -196,23 +242,28 @@ final class SearchViewController: BaseViewController<SearchReactor> {
         searchBar.resignFirstResponder()
     }
 
-    // MARK: - DataSource Configuration
     private func configureDataSource() {
         dataSource = DataSource(tableView: tableView) { [weak self] (tableView: UITableView, indexPath: IndexPath, book: Book) -> UITableViewCell? in
             let cell = tableView.dequeueReusableCell(withIdentifier: SearchResultTableViewCell.identifier, for: indexPath) as! SearchResultTableViewCell
-            cell.configure(with: book) { [weak self] selectedBook in
-                guard let self = self else { return }
-
-                // 책 저장 (저장 완료 후 lastSavedBook이 업데이트되고, bind의 구독이 알림을 처리)
-                self.reactor?.action.onNext(.addBookToLibrary(selectedBook))
-            }
+            cell.configure(
+                with: book,
+                addHandler: { [weak self] selectedBook in
+                    guard let self = self else { return }
+                    self.reactor?.action.onNext(.addBookToLibrary(selectedBook))
+                },
+                onExpandToggled: { [weak tableView] in
+                    UIView.animate(withDuration: SearchResultConstants.Animation.expandAnimationDuration) {
+                        tableView?.beginUpdates()
+                        tableView?.endUpdates()
+                    }
+                }
+            )
             return cell
         }
 
         tableView.dataSource = dataSource
     }
 
-    // MARK: - Alert
     private func showNavigationConfirmAlert(for book: Book) {
         let alert = UIAlertController(
             title: String(localized: .`search.book_saved.title`),
@@ -245,7 +296,6 @@ final class SearchViewController: BaseViewController<SearchReactor> {
         present(alert, animated: true)
     }
 
-    // MARK: - UI Updates
     private func updateUI(for searchState: SearchState) {
         switch searchState {
         case .initial:
@@ -291,22 +341,18 @@ final class SearchViewController: BaseViewController<SearchReactor> {
     }
 }
 
-
-// MARK: - UISearchBarDelegate
 extension SearchViewController: UISearchBarDelegate {
     func searchBarCancelButtonClicked(_ searchBar: UISearchBar) {
         searchBar.resignFirstResponder()
     }
 }
 
-// MARK: - UITableViewDelegate
 extension SearchViewController: UITableViewDelegate {
     func scrollViewDidScroll(_ scrollView: UIScrollView) {
         let offsetY = scrollView.contentOffset.y
         let contentHeight = scrollView.contentSize.height
         let frameHeight = scrollView.frame.size.height
 
-        // 하단에서 100pt 이내로 스크롤 시 다음 페이지 로드
         if offsetY > contentHeight - frameHeight - 100 {
             reactor?.action.onNext(.loadMore)
         }

@@ -18,6 +18,8 @@ final class SearchReactor: Reactor {
         case addBookToLibrary(Book)
         case loadMore
         case refresh
+        case loadSearchHistory
+        case selectSearchHistory(String)
     }
 
     enum Mutation {
@@ -32,6 +34,8 @@ final class SearchReactor: Reactor {
         case setHasMore(Bool)
         case setIsLoadingMore(Bool)
         case refreshSearchResults([Book], [BookSearchItem])
+        case setSearchHistory([String])
+        case setIsSearching(Bool)
     }
 
     struct State {
@@ -39,11 +43,13 @@ final class SearchReactor: Reactor {
         var searchState: SearchState = .initial
         var isLoading: Bool = false
         var error: String?
-        var originalSearchItems: [BookSearchItem] = []  // 원본 데이터 보존
-        var lastSavedBook: Book?  // 마지막으로 저장된 책
+        var originalSearchItems: [BookSearchItem] = []
+        var lastSavedBook: Book?
         var currentPage: Int = 1
         var hasMore: Bool = false
         var isLoadingMore: Bool = false
+        var searchHistory: [String] = []
+        var isSearching: Bool = false
     }
     
     let initialState = State()
@@ -64,6 +70,11 @@ final class SearchReactor: Reactor {
             return Observable.just(.setSearchText(text))
 
         case .searchButtonTapped:
+            // 이미 검색 중이면 무시
+            guard !currentState.isSearching else {
+                return Observable.empty()
+            }
+
             let searchText = currentState.searchText.trimmingCharacters(in: .whitespacesAndNewlines)
 
             guard !searchText.isEmpty else {
@@ -74,14 +85,16 @@ final class SearchReactor: Reactor {
                 "search_query": searchText
             ])
 
-            // 검색 이력 저장 및 첫 페이지 검색
             return Observable.concat([
+                Observable.just(.setIsSearching(true)),
                 Observable.just(.setLoading(true)),
                 Observable.just(.setSearchState(.searching)),
                 Observable.just(.setCurrentPage(1)),
                 saveSearchHistory(keyword: searchText),
+                reloadSearchHistory(),  // 검색 이력 먼저 갱신
                 performSearch(query: searchText, page: 1),
-                Observable.just(.setLoading(false))
+                Observable.just(.setLoading(false)),
+                Observable.just(.setIsSearching(false))
             ])
 
         case .loadMore:
@@ -100,7 +113,6 @@ final class SearchReactor: Reactor {
             ])
 
         case .refresh:
-            // 현재 검색 결과가 있으면 각 도서의 존재 여부를 다시 확인
             guard case .results(let books, let items) = currentState.searchState else {
                 return Observable.empty()
             }
@@ -113,9 +125,7 @@ final class SearchReactor: Reactor {
                 .toArray()
                 .asObservable()
                 .map { existsArray -> Mutation in
-                    // 존재 여부에 따라 검색 결과 업데이트
                     let refreshedBooks = zip(books, existsArray).map { book, exists -> Book in
-                        // Book 구조체에 isAdded 같은 필드가 없으므로, 그대로 반환
                         return book
                     }
                     return .refreshSearchResults(refreshedBooks, items)
@@ -123,21 +133,17 @@ final class SearchReactor: Reactor {
                 .catch { _ in Observable.empty() }
 
         case .addBookToLibrary(let book):
-            // ISBN 중복 체크 먼저 수행
             return bookRepository.bookExistsByISBN(book.isbn)
                 .flatMap { [weak self] exists -> Observable<Mutation> in
                     guard let self = self else { return Observable.just(.setError("내부 오류")) }
 
                     if exists {
-                        print(" 이미 서재에 있는 책: \(book.cleanTitle)")
                         return Observable.just(.setError("이미 서재에 있는 책입니다."))
                     }
 
-                    // 현재 상태에서 매칭되는 원본 BookSearchItem 찾기
                     let originalItems = self.currentState.originalSearchItems
 
                     if let matchingItem = originalItems.first(where: { $0.isbn == book.isbn }) {
-                        // 원본 데이터를 RealmBook으로 변환
                         let realmBook = matchingItem.toRealmBook()
 
                         Analytics.logEvent("book_added_to_library", parameters: [
@@ -145,27 +151,16 @@ final class SearchReactor: Reactor {
                             "book_isbn": realmBook.isbn
                         ])
 
-                        // Realm에 저장 후 업데이트된 Book 가져오기
                         return self.saveBookWithRepository(realmBook)
                             .do(onNext: { success in
                                 if success {
-                                    print(" 책 저장 성공: \(realmBook.cleanTitle)")
-                                    print(" 저장된 데이터:")
-                                    print("  - 제목: \(realmBook.cleanTitle)")
-                                    print("  - 저자: \(realmBook.author)")
-                                    print("  - 출판사: \(realmBook.publisher)")
-                                    print("  - 출간일: \(realmBook.pubdate)")
-                                    print("  - 가격: \(realmBook.formattedPrice ?? "정보 없음")")
-                                    print("  - ISBN: \(realmBook.isbn)")
                                 } else {
-                                    print(" 책 저장 실패: \(realmBook.cleanTitle)")
                                 }
                             })
                             .flatMap { success -> Observable<Mutation> in
                                 guard success else {
                                     return Observable.just(.setError(nil))
                                 }
-                                // 저장 후 업데이트된 Book 가져오기
                                 return self.bookRepository.getBookByISBN(book.isbn)
                                     .flatMap { savedBook -> Observable<Mutation> in
                                         if let savedBook = savedBook {
@@ -179,10 +174,21 @@ final class SearchReactor: Reactor {
                                     }
                             }
                     } else {
-                        print(" 매칭되는 원본 데이터를 찾을 수 없음: \(book.title)")
                         return Observable.just(.setError("원본 데이터를 찾을 수 없습니다."))
                     }
                 }
+
+        case .loadSearchHistory:
+            return searchHistoryRepository.getAllSearchHistory()
+                .take(10)
+                .map { history in
+                    let keywords = Array(history.prefix(10)).map { $0.keyword }
+                    return .setSearchHistory(keywords)
+                }
+                .catch { _ in Observable.just(.setSearchHistory([])) }
+
+        case .selectSearchHistory(let keyword):
+            return Observable.just(.setSearchText(keyword))
         }
     }
 
@@ -228,18 +234,35 @@ final class SearchReactor: Reactor {
         case .refreshSearchResults(let books, let items):
             newState.searchState = .results(books, items)
             newState.originalSearchItems = items
+
+        case .setSearchHistory(let keywords):
+            newState.searchHistory = keywords
+
+        case .setIsSearching(let isSearching):
+            newState.isSearching = isSearching
         }
 
         return newState
     }
 
-    // MARK: - Private Methods
+    // MARK: - Helper Methods
+
+    private func reloadSearchHistory() -> Observable<Mutation> {
+        return searchHistoryRepository.getAllSearchHistory()
+            .take(10)
+            .map { history in
+                let keywords = Array(history.prefix(10)).map { $0.keyword }
+                return .setSearchHistory(keywords)
+            }
+            .catch { _ in Observable.just(.setSearchHistory([])) }
+    }
+
     private func saveSearchHistory(keyword: String) -> Observable<Mutation> {
         return searchHistoryRepository.saveSearchHistory(keyword: keyword)
             .map { _ in .setError(nil) }
             .catch { error in
                 print(" 검색 이력 저장 실패: \(error.localizedDescription)")
-                return Observable.just(.setError(nil)) // 이력 저장 실패는 검색에 영향 없음
+                return Observable.just(.setError(nil))
             }
     }
 
@@ -256,7 +279,6 @@ final class SearchReactor: Reactor {
                 let hasMore = response.start + response.display <= response.total
 
                 if isLoadMore {
-                    // 페이지네이션: 기존 결과에 추가
                     if books.isEmpty {
                         return Observable.concat([
                             Observable.just(.setHasMore(false))
@@ -269,7 +291,6 @@ final class SearchReactor: Reactor {
                         ])
                     }
                 } else {
-                    // 새 검색: 결과 교체
                     if books.isEmpty {
                         return Observable.concat([
                             Observable.just(.setOriginalSearchItems([])),
@@ -300,7 +321,6 @@ final class SearchReactor: Reactor {
             }
     }
 
-    // MARK: - Repository Save Helper
     private func saveBookWithRepository(_ realmBook: RealmBook) -> Observable<Bool> {
         return bookRepository.saveBook(realmBook)
             .map { _ in true }

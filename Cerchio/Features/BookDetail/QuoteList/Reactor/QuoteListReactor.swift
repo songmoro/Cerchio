@@ -14,7 +14,7 @@ import FirebaseAnalytics
 final class QuoteListReactor: Reactor {
     enum Action {
         case loadQuotes
-        case deleteQuote(String) // ID로 삭제
+        case deleteQuote(String)
     }
 
     enum Mutation {

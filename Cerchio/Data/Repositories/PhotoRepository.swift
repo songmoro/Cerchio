@@ -20,7 +20,6 @@ protocol PhotoRepositoryProtocol {
 
 final class PhotoRepository: BaseRepository<RealmPhoto>, PhotoRepositoryProtocol {
 
-    // MARK: - PhotoRepositoryProtocol
     func getAllPhotos() -> Observable<[RealmPhoto]> {
         return fetch()
     }

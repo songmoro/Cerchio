@@ -119,46 +119,36 @@ final class BookDetailReactor: Reactor {
     private let bookRepository: BookRepositoryProtocol
     private let service: BookDetailService
 
-    // MARK: - Initialization
     init(book: Book, bookRepository: BookRepositoryProtocol, service: BookDetailService) {
         self.initialState = State(book: book, isFavorite: book.isFavorite)
         self.bookRepository = bookRepository
         self.service = service
     }
 
-    // MARK: - Reactor Methods
     func mutate(action: Action) -> Observable<Mutation> {
         switch action {
         case .loadBookDetail:
-            // 최신 Book 데이터를 먼저 로드하여 isFavorite 등의 상태를 동기화
             return bookRepository.getBookByISBN(currentState.book.isbn)
                 .flatMap { [weak self] updatedBook -> Observable<Mutation> in
                     guard let self = self else { return Observable.empty() }
 
                     if let updatedBook = updatedBook {
-                        // Book이 업데이트되었으면 먼저 Book을 업데이트
                         return Observable.concat([
                             Observable.just(.updateBook(updatedBook)),
                             self.loadBookDetailDataWithBook(updatedBook)
                         ])
                     } else {
-                        // Book을 찾지 못했으면 기존 Book으로 로드
                         return self.loadBookDetailData()
                     }
                 }
 
         case .updateReadingProgress(_):
-//            )
             return .empty()
 
         case .updateReadingInfo(let totalPages, let startDate, let endDate):
-            // BookDetail 업데이트
             guard let bookDetail = currentState.bookDetail else {
-                print(" No bookDetail in currentState")
                 return Observable.empty()
             }
-
-            print(" Updating reading info - totalPages: \(totalPages), startDate: \(String(describing: startDate)), endDate: \(String(describing: endDate))")
 
             let updatedBookDetail = BookDetail(
                 book: bookDetail.book,
@@ -168,17 +158,12 @@ final class BookDetailReactor: Reactor {
                 tags: bookDetail.tags
             )
 
-            // Realm에 저장
             return bookRepository.getBookByISBN(currentState.book.isbn)
                 .flatMap { [weak self] existingBook -> Observable<Mutation> in
                     guard let self = self, let existingBook = existingBook else {
-                        print(" No existing book found for ISBN: \(self?.currentState.book.isbn ?? "unknown")")
                         return Observable.empty()
                     }
 
-                    print(" Found existing book - current startDate: \(String(describing: existingBook.startDate))")
-
-                    // Book 업데이트
                     let updatedBook = Book(
                         id: existingBook.id,
                         title: existingBook.title,
@@ -208,11 +193,8 @@ final class BookDetailReactor: Reactor {
                         rating: existingBook.rating
                     )
 
-                    print(" Created updatedBook - startDate: \(String(describing: updatedBook.startDate))")
-
                     return self.bookRepository.saveBookStruct(updatedBook)
                         .flatMap { savedBook -> Observable<Mutation> in
-                            print(" Book saved - startDate: \(String(describing: savedBook.startDate))")
                             return Observable.concat([
                                 Observable.just(.updateBook(savedBook)),
                                 Observable.just(.setBookDetail(updatedBookDetail))
@@ -234,7 +216,6 @@ final class BookDetailReactor: Reactor {
                         "is_favorite": isFavorite
                     ])
 
-                    // 업데이트된 Book을 다시 가져오기
                     return self.bookRepository.getBookByISBN(self.currentState.book.isbn)
                         .flatMap { updatedBook -> Observable<Mutation> in
                             if let updatedBook = updatedBook {
@@ -253,7 +234,6 @@ final class BookDetailReactor: Reactor {
                 }
 
         case .addQuote:
-            // TODO: 문장 추가 로직 구현 (현재 사용하지 않음)
             return Observable.empty()
 
         case .deleteBook:
@@ -269,7 +249,6 @@ final class BookDetailReactor: Reactor {
                 }
 
         case .updateBookAndReload(let updatedBook):
-            // Book 업데이트 후 BookDetail 다시 로드
             return Observable.concat([
                 Observable.just(.updateBook(updatedBook)),
                 Observable.just(.setLoading(true)),
@@ -374,7 +353,6 @@ final class BookDetailReactor: Reactor {
             guard let objectId = try? ObjectId(string: photoId),
                   let realm = try? Realm(),
                   let photo = realm.object(ofType: RealmPhoto.self, forPrimaryKey: objectId) else {
-                print(" Photo not found")
                 return Observable.empty()
             }
 
@@ -416,13 +394,11 @@ final class BookDetailReactor: Reactor {
                 .flatMap { quotes -> Observable<Mutation> in
                     let quotesArray = Array(quotes)
                     guard let quoteToDelete = quotesArray.first(where: { $0.quote == quote && $0.createdAt == date }) else {
-                        print(" Quote not found")
                         return Observable.empty()
                     }
 
                     return quoteRepository.deleteQuote(quoteToDelete)
                         .flatMap { _ -> Observable<Mutation> in
-                            // 삭제 후 즉시 최신 데이터 로드
                             return self.service.loadQuotes(bookId: bookId)
                                 .observe(on: MainScheduler.instance)
                                 .map { realmQuotes -> Mutation in
@@ -449,7 +425,6 @@ final class BookDetailReactor: Reactor {
             newState.bookDetail = bookDetail
 
         case .clearBookDetail:
-            // BookDetail을 초기화하여 UI가 변경을 감지하도록 함
             newState.bookDetail = nil
 
         case .setLoading(let isLoading):
@@ -466,7 +441,6 @@ final class BookDetailReactor: Reactor {
 
         case .updateBook(let book):
             newState.book = book
-            // Book이 업데이트되면 isFavorite 상태도 함께 업데이트
             newState.isFavorite = book.isFavorite
 
         case .bookDeleted:
@@ -486,10 +460,8 @@ final class BookDetailReactor: Reactor {
 
         case .setTags(let tags):
             newState.tags = tags
-            print(" BookDetailReactor.reduce - setTags: \(tags.map { $0.tagName })")
             if let bookDetail = newState.bookDetail {
                 let tagNames = tags.map { $0.tagName }
-                print(" Updating bookDetail with tags: \(tagNames)")
                 newState.bookDetail = BookDetail(
                     book: bookDetail.book,
                     totalPages: bookDetail.totalPages,
@@ -498,7 +470,6 @@ final class BookDetailReactor: Reactor {
                     tags: tagNames
                 )
             } else {
-                print(" bookDetail is nil, cannot update tags!")
             }
 
         case .setAllUniqueTagNames(let tagNames):
@@ -514,35 +485,31 @@ final class BookDetailReactor: Reactor {
         return newState
     }
 
-    // MARK: - Private Methods
     private func loadBookDetailData() -> Observable<Mutation> {
-        // RealmBook을 기반으로 BookDetail 생성
         let bookDetail = BookDetail(
             book: currentState.book,
             totalPages: currentState.book.totalPages ?? 0,
             startDate: currentState.book.startDate,
             endDate: currentState.book.endDate,
-            tags: [] // 실제 태그는 Realm에서 로드
+            tags: []
         )
 
         return Observable.just(.setBookDetail(bookDetail))
     }
 
     private func loadBookDetailDataWithBook(_ book: Book) -> Observable<Mutation> {
-        // 업데이트된 Book으로 BookDetail 생성
         let bookDetail = BookDetail(
             book: book,
             totalPages: book.totalPages ?? 0,
             startDate: book.startDate,
             endDate: book.endDate,
-            tags: [] // 실제 태그는 Realm에서 로드
+            tags: []
         )
 
         return Observable.just(.setBookDetail(bookDetail))
     }
 }
 
-// MARK: - Supporting Models
 nonisolated struct BookDetail: Hashable, Sendable {
     let book: Book
     let totalPages: Int

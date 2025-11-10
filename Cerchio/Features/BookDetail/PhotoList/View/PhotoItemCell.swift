@@ -9,7 +9,6 @@ import UIKit
 import SnapKit
 
 final class PhotoItemCell: UICollectionViewCell, IsIdentifiable {
-    // MARK: - UI Components
     private lazy var imageView: UIImageView = {
         let imageView = UIImageView()
         imageView.contentMode = .scaleAspectFill
@@ -21,7 +20,6 @@ final class PhotoItemCell: UICollectionViewCell, IsIdentifiable {
         return imageView
     }()
 
-    // MARK: - Initialization
     override init(frame: CGRect) {
         super.init(frame: frame)
         setupViews()
@@ -31,7 +29,6 @@ final class PhotoItemCell: UICollectionViewCell, IsIdentifiable {
         fatalError("init(coder:) has not been implemented")
     }
 
-    // MARK: - Setup
     private func setupViews() {
         contentView.backgroundColor = .clear
         contentView.addSubview(imageView)
@@ -41,7 +38,6 @@ final class PhotoItemCell: UICollectionViewCell, IsIdentifiable {
         }
     }
 
-    // MARK: - Configuration
     func configure(with image: UIImage?) {
         imageView.image = image
     }

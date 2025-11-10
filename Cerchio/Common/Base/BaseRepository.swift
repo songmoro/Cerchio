@@ -9,7 +9,6 @@ import Foundation
 import RealmSwift
 import RxSwift
 
-// MARK: - Repository Type Protocol
 protocol RepositoryType {
     associatedtype Model
 
@@ -19,12 +18,10 @@ protocol RepositoryType {
     func update(_ model: Model) -> Observable<Model>
 }
 
-// MARK: - Base Repository Type Protocol
 protocol BaseRepositoryType: RepositoryType where Model: Object {
     var realm: Realm { get }
 }
 
-// MARK: - Base Repository Error
 enum RepositoryError: Error {
     case realmInitializationFailed
     case objectNotFound
@@ -45,7 +42,6 @@ enum RepositoryError: Error {
     }
 }
 
-// MARK: - Base Repository
 class BaseRepository<T: Object>: BaseRepositoryType {
     typealias Model = T
 
@@ -59,7 +55,6 @@ class BaseRepository<T: Object>: BaseRepositoryType {
         }
     }
 
-    // MARK: - Basic CRUD Operations
     func fetch() -> Observable<[T]> {
         return performOnMainThread {
             Array(self.realm.objects(T.self))
@@ -90,7 +85,6 @@ class BaseRepository<T: Object>: BaseRepositoryType {
         }
     }
 
-    // MARK: - Query Operations
     func findById(_ id: String) -> Observable<T?> {
         return performOnMainThread {
             self.realm.object(ofType: T.self, forPrimaryKey: id)
@@ -117,7 +111,6 @@ class BaseRepository<T: Object>: BaseRepositoryType {
         }
     }
 
-    // MARK: - Batch Operations
     func saveAll(_ models: [T]) -> Observable<[T]> {
         return performWriteTransaction {
             self.realm.add(models)
@@ -140,7 +133,6 @@ class BaseRepository<T: Object>: BaseRepositoryType {
         }
     }
 
-    // MARK: - Helper Methods
     func performOnMainThread<U>(_ operation: @escaping () -> U) -> Observable<U> {
         return Observable.create { observer in
             DispatchQueue.main.async {
@@ -167,14 +159,5 @@ class BaseRepository<T: Object>: BaseRepositoryType {
             }
             return Disposables.create()
         }
-    }
-
-    // MARK: - Legacy Support
-    func create(_ entity: T) -> Observable<Void> {
-        return save(entity).map { _ in () }
-    }
-
-    func read() -> Observable<[T]> {
-        return fetch()
     }
 }

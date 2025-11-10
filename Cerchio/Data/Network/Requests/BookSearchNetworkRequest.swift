@@ -73,8 +73,6 @@ struct BookSearchNetworkRequest: NetworkRequest {
     }
 }
 
-// MARK: - Validation Extensions
-
 extension BookSearchNetworkRequest {
 
     func validate() throws {
@@ -99,8 +97,6 @@ extension BookSearchNetworkRequest {
         }
     }
 }
-
-// MARK: - Book Search Request Builder
 
 struct BookSearchRequestBuilder {
     private var query: String = ""
@@ -141,8 +137,6 @@ struct BookSearchRequestBuilder {
         )
     }
 }
-
-// MARK: - Convenience Initializers
 
 extension BookSearchNetworkRequest {
 

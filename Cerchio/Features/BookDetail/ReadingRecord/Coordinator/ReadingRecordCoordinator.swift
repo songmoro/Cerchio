@@ -20,7 +20,6 @@ final class ReadingRecordCoordinator: BaseCoordinator {
         case cancelled
     }
 
-    // MARK: - Properties
     private let dependencies: Dependencies
     private let resultRelay = PublishRelay<Result>()
 
@@ -28,18 +27,15 @@ final class ReadingRecordCoordinator: BaseCoordinator {
         return resultRelay.asObservable()
     }
 
-    // MARK: - Initialization
     init(navigationController: UINavigationController, dependencies: Dependencies) {
         self.dependencies = dependencies
         super.init(navigationController: navigationController)
     }
 
-    // MARK: - Coordinator
     override func start() {
         showReadingRecord()
     }
 
-    // MARK: - Navigation
     private func showReadingRecord() {
         let reactor = ReadingRecordReactor(
             bookId: dependencies.bookId,
@@ -63,7 +59,6 @@ final class ReadingRecordCoordinator: BaseCoordinator {
             .observe(on: MainScheduler.instance)
             .subscribe(onNext: { [weak self] realmBook in
                 guard let self = self, let realmBook = realmBook else {
-                    print(" Failed to load book for timer")
                     return
                 }
 

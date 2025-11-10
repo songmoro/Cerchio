@@ -9,7 +9,6 @@ import UIKit
 import SnapKit
 
 final class PhotoActionBottomSheet: SnapshotBottomSheet {
-    // MARK: - Properties
     enum Action {
         case view
         case download
@@ -24,7 +23,6 @@ final class PhotoActionBottomSheet: SnapshotBottomSheet {
         ("삭제", "trash", .delete, true)
     ]
 
-    // MARK: - UI Components
     private lazy var tableView: UITableView = {
         let tableView = UITableView(frame: .zero, style: .plain)
         tableView.backgroundColor = .clear
@@ -36,7 +34,6 @@ final class PhotoActionBottomSheet: SnapshotBottomSheet {
         return tableView
     }()
 
-    // MARK: - Initialization
     override init(sourceView: UIView, sheetHeight: CGFloat) {
         super.init(sourceView: sourceView, sheetHeight: sheetHeight)
         setupTableView()
@@ -46,7 +43,6 @@ final class PhotoActionBottomSheet: SnapshotBottomSheet {
         fatalError("init(coder:) has not been implemented")
     }
 
-    // MARK: - Setup
     private func setupTableView() {
         containerView.addSubview(tableView)
 
@@ -58,7 +54,6 @@ final class PhotoActionBottomSheet: SnapshotBottomSheet {
         }
     }
 
-    // MARK: - Actions
     private func handleAction(_ action: Action) {
         dismiss { [weak self] in
             self?.onActionSelected?(action)
@@ -66,7 +61,6 @@ final class PhotoActionBottomSheet: SnapshotBottomSheet {
     }
 }
 
-// MARK: - UITableViewDataSource
 extension PhotoActionBottomSheet: UITableViewDataSource {
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return actions.count
@@ -88,7 +82,6 @@ extension PhotoActionBottomSheet: UITableViewDataSource {
     }
 }
 
-// MARK: - UITableViewDelegate
 extension PhotoActionBottomSheet: UITableViewDelegate {
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         tableView.deselectRow(at: indexPath, animated: true)
@@ -101,7 +94,6 @@ extension PhotoActionBottomSheet: UITableViewDelegate {
     }
 }
 
-// MARK: - ActionCell
 private final class ActionCell: UITableViewCell {
     private let iconImageView: UIImageView = {
         let imageView = UIImageView()

@@ -8,7 +8,6 @@
 import Foundation
 import RxSwift
 
-// MARK: - Service Protocol
 protocol ServiceProtocol {
     associatedtype Dependencies
 
@@ -17,7 +16,6 @@ protocol ServiceProtocol {
     init(dependencies: Dependencies)
 }
 
-// MARK: - Base Service
 class BaseService<Dependencies>: ServiceProtocol {
     let networkClient: NetworkClientProtocol
 
@@ -30,12 +28,10 @@ class BaseService<Dependencies>: ServiceProtocol {
     }
 }
 
-// MARK: - Service Dependencies Protocol
 protocol ServiceDependencies {
     var networkClient: NetworkClientProtocol { get }
 }
 
-// MARK: - Default Service Dependencies
 struct DefaultServiceDependencies: ServiceDependencies {
     let networkClient: NetworkClientProtocol
 
@@ -44,9 +40,6 @@ struct DefaultServiceDependencies: ServiceDependencies {
     }
 }
 
-
-
-// MARK: - Service Error Handling
 extension ServiceProtocol {
     func handleError<T>(_ error: Error) -> Observable<T> {
         print("Service Error: \(error)")

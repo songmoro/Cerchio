@@ -35,7 +35,7 @@ final class EditBookInfoReactor: Reactor {
         var customCoverImagePath: String?
         var isSaveInProgress: Bool = false
         var isSaveSuccess: Bool = false
-        var updatedBook: Book? // 저장 후 업데이트된 Book
+        var updatedBook: Book?
     }
 
     let initialState: State
@@ -118,7 +118,6 @@ final class EditBookInfoReactor: Reactor {
             )
             .flatMap { [weak self] _ -> Observable<Mutation> in
                 guard let self = self else { return .empty() }
-                // 저장 후 Realm에서 최신 Book 로드
                 return self.bookRepository.getBookByISBN(isbn)
                     .flatMap { updatedBook -> Observable<Mutation> in
                         if let updatedBook = updatedBook {

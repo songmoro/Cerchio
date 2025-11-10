@@ -9,7 +9,6 @@ import UIKit
 import SnapKit
 
 final class AddPhotoCell: UICollectionViewCell, IsIdentifiable {
-    // MARK: - UI Components
     private lazy var containerView: UIView = {
         let view = UIView()
         view.backgroundColor = .systemGray6
@@ -35,10 +34,8 @@ final class AddPhotoCell: UICollectionViewCell, IsIdentifiable {
         return label
     }()
 
-    // MARK: - Properties
     var onAddPhotoTapped: (() -> Void)?
 
-    // MARK: - Initialization
     override init(frame: CGRect) {
         super.init(frame: frame)
         setupViews()
@@ -48,7 +45,6 @@ final class AddPhotoCell: UICollectionViewCell, IsIdentifiable {
         fatalError("init(coder:) has not been implemented")
     }
 
-    // MARK: - Setup
     private func setupViews() {
         contentView.backgroundColor = .clear
         contentView.addSubview(containerView)
@@ -75,7 +71,6 @@ final class AddPhotoCell: UICollectionViewCell, IsIdentifiable {
         containerView.isUserInteractionEnabled = true
     }
 
-    // MARK: - Actions
     @objc private func addButtonTapped() {
         onAddPhotoTapped?()
     }

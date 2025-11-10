@@ -15,7 +15,6 @@ final class BookDetailViewController: FullScreenNestedScrollViewController, View
     private typealias DataSource = UICollectionViewDiffableDataSource<Section, Item>
     private typealias Snapshot = NSDiffableDataSourceSnapshot<Section, Item>
 
-    // MARK: - ReactorKit Properties
     var disposeBag = DisposeBag()
     weak var coordinator: Coordinator?
     let navigationEvents = PublishRelay<NavigationEvent>()
@@ -29,23 +28,18 @@ final class BookDetailViewController: FullScreenNestedScrollViewController, View
         }
     }
 
-    // MARK: - UI Components
     private var dataSource: DataSource!
     private var bookInfoView: BookInfoView?
     private var tabNavigationView: TabNavigationView<Section>?
     private var floatingActionButton: UIButton!
 
-    // MARK: - Navigation Bar Buttons
     private var favoriteButton: UIBarButtonItem?
 
-    // MARK: - Reading Statistics
     private var currentStatisticsPeriod: ReadingStatisticsPeriod = .today
     private var currentPeriodDate: Date = Date()
 
-    // MARK: - Animation Control
     private var isInitialLoad = true
 
-    // MARK: - Section & Item Types
     nonisolated enum Section: Int, Hashable {
         case readingRecords = 0
         case savedQuotes = 1
@@ -131,7 +125,6 @@ final class BookDetailViewController: FullScreenNestedScrollViewController, View
         case resetAndDelete
     }
 
-    // MARK: - Lifecycle
     override func viewDidLoad() {
         super.viewDidLoad()
 
@@ -205,13 +198,11 @@ final class BookDetailViewController: FullScreenNestedScrollViewController, View
         )
     }
 
-    // MARK: - Info View Height
     override var infoViewHeight: CGFloat {
         let screenHeight = UIScreen.main.bounds.height
         return screenHeight * 0.50
     }
 
-    // MARK: - Override: Create Info View
     override func createInfoView() -> UIView {
         let infoView = BookInfoView()
         self.bookInfoView = infoView
@@ -228,7 +219,6 @@ final class BookDetailViewController: FullScreenNestedScrollViewController, View
         return infoView
     }
 
-    // MARK: - Override: Create Sticky Tab View
     override func createStickyTabView() -> UIView {
         let tabs: [(title: String, value: Section)] = Section.visibleSections.map { ($0.title, $0) }
         let tabView = TabNavigationView<Section>(tabs: tabs)
@@ -241,7 +231,6 @@ final class BookDetailViewController: FullScreenNestedScrollViewController, View
         return tabView
     }
 
-    // MARK: - Public Methods
     func setFavoriteButton(_ button: UIBarButtonItem) {
         favoriteButton = button
 
@@ -266,15 +255,11 @@ final class BookDetailViewController: FullScreenNestedScrollViewController, View
         favoriteButton?.image = UIImage(systemName: imageName)
     }
 
-    // MARK: - ReactorKit Binding
     func bind(reactor: BookDetailReactor) {
-        // MARK: - Actions
 
         Observable.just(BookDetailReactor.Action.loadBookDetail)
             .bind(to: reactor.action)
             .disposed(by: disposeBag)
-
-        // MARK: - State Bindings
 
         reactor.state
             .map { $0.bookDetail }
@@ -295,8 +280,6 @@ final class BookDetailViewController: FullScreenNestedScrollViewController, View
             .take(1)
             .observe(on: MainScheduler.asyncInstance)
             .subscribe(onNext: { [weak self] bookDetail in
-                print(" BookDetail first set, loading all data")
-                print(" Current tags in bookDetail: \(bookDetail.tags)")
                 self?.reactor?.action.onNext(.loadReadingStatistics)
                 self?.reactor?.action.onNext(.loadReadingChartData(.today))
                 self?.reactor?.action.onNext(.loadPhotos)
@@ -392,7 +375,6 @@ final class BookDetailViewController: FullScreenNestedScrollViewController, View
             .disposed(by: disposeBag)
     }
 
-    // MARK: - Override: Collection View Layout
     override func createCollectionViewLayout() -> UICollectionViewLayout {
         return UICollectionViewCompositionalLayout { [weak self] sectionIndex, environment in
             guard let self = self,
@@ -420,10 +402,11 @@ final class BookDetailViewController: FullScreenNestedScrollViewController, View
     }
 
     private func handleTabSelection(_ section: Section) {
-        scrollToSection(section.rawValue)
+        guard let snapshot = dataSource?.snapshot(),
+              let sectionIndex = snapshot.indexOfSection(section) else { return }
+        scrollToSection(sectionIndex)
     }
 
-    // MARK: - Override: Setup Custom Content
     override func setupCustomContent() {
         collectionView.delegate = self
 
@@ -443,9 +426,7 @@ final class BookDetailViewController: FullScreenNestedScrollViewController, View
     }
 }
 
-// MARK: - Layout
 extension BookDetailViewController {
-    // MARK: - Section Layouts
     private func createReadingRecordsSection() -> NSCollectionLayoutSection {
         let itemSize = NSCollectionLayoutSize(
             widthDimension: .fractionalWidth(1.0),
@@ -515,8 +496,8 @@ extension BookDetailViewController {
 
         let section = NSCollectionLayoutSection(group: group)
         section.interGroupSpacing = 4
-        section.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 12, bottom: 24, trailing: 0)
-        section.orthogonalScrollingBehavior = .continuous
+        section.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 0, bottom: 24, trailing: 0)
+        section.orthogonalScrollingBehavior = .continuousGroupLeadingBoundary
         section.boundarySupplementaryItems = [CommonSectionHeader.createBoundarySupplementaryItem()]
 
         return section
@@ -584,9 +565,7 @@ extension BookDetailViewController {
     }
 }
 
-// MARK: - DataSource
 extension BookDetailViewController {
-    // MARK: - DataSource Configuration
     private func configureDataSource() {
         dataSource = DataSource(collectionView: collectionView) { [weak self] collectionView, indexPath, item in
             switch item {
@@ -729,8 +708,6 @@ extension BookDetailViewController {
         }
     }
 
-    // MARK: - UI Update Methods
-
     private func updateBookInfo(with bookDetail: BookDetail) {
         bookInfoView?.configure(with: bookDetail)
     }
@@ -749,8 +726,6 @@ extension BookDetailViewController {
             ]
             snapshot.appendItems(settingsItems, toSection: .settings)
 
-            // Note: 독서 기록 섹션은 차트 데이터 로드 후 추가
-            // addQuoteAction과 addPhotoAction 섹션은 updateQuotesUI/updatePhotosUI에서 조건부로 추가
         }
 
         let shouldAnimate = !isInitialLoad
@@ -788,7 +763,7 @@ extension BookDetailViewController {
 
         if photos.isEmpty {
             if !snapshot.sectionIdentifiers.contains(.addPhotoAction) {
-                if let settingsIndex = snapshot.sectionIdentifiers.firstIndex(of: .settings) {
+                if snapshot.sectionIdentifiers.contains(.settings) {
                     snapshot.insertSections([.addPhotoAction], beforeSection: .settings)
                 } else {
                     snapshot.appendSections([.addPhotoAction])
@@ -816,7 +791,6 @@ extension BookDetailViewController {
     }
 
     private func updateQuotesUI(_ quotes: [BookDetailReactor.QuoteItem]) {
-        print(#function)
         guard let dataSource = dataSource, let _ = reactor?.currentState.bookDetail else { return }
         var snapshot = dataSource.snapshot()
 
@@ -827,7 +801,7 @@ extension BookDetailViewController {
 
         if quotes.isEmpty {
             if !snapshot.sectionIdentifiers.contains(.addQuoteAction) {
-                if let photoIndex = snapshot.sectionIdentifiers.firstIndex(of: .photoPages) {
+                if snapshot.sectionIdentifiers.contains(.photoPages) {
                     snapshot.insertSections([.addQuoteAction], beforeSection: .photoPages)
                 } else {
                     snapshot.appendSections([.addQuoteAction])
@@ -855,7 +829,6 @@ extension BookDetailViewController {
     }
 
     private func updateTagsUI(_ tags: [BookDetailReactor.TagItem]) {
-        print(" updateTagsUI called with \(tags.count) tags")
         if let bookDetail = reactor?.currentState.bookDetail {
             bookInfoView?.configure(with: bookDetail)
         }
@@ -886,9 +859,7 @@ extension BookDetailViewController {
     }
 }
 
-// MARK: - Actions
 extension BookDetailViewController {
-    // MARK: - Helper Methods
     func dismissPresentedMenuAndExecute(_ action: @escaping () -> Void) {
         if let presentedVC = presentedViewController {
             presentedVC.dismiss(animated: true) {
@@ -899,7 +870,6 @@ extension BookDetailViewController {
         }
     }
 
-    // MARK: - Chart Navigation
     func handlePeriodChange(_ period: ReadingStatisticsPeriod) {
         currentStatisticsPeriod = period
         currentPeriodDate = Date()
@@ -912,36 +882,30 @@ extension BookDetailViewController {
 
         switch currentStatisticsPeriod {
         case .today:
-            // 하루 단위
             newDate = direction == .left
                 ? calendar.date(byAdding: .day, value: 1, to: currentPeriodDate) ?? currentPeriodDate
                 : calendar.date(byAdding: .day, value: -1, to: currentPeriodDate) ?? currentPeriodDate
 
         case .week:
-            // 주 단위
             newDate = direction == .left
                 ? calendar.date(byAdding: .weekOfYear, value: 1, to: currentPeriodDate) ?? currentPeriodDate
                 : calendar.date(byAdding: .weekOfYear, value: -1, to: currentPeriodDate) ?? currentPeriodDate
 
         case .month:
-            // 월 단위
             newDate = direction == .left
                 ? calendar.date(byAdding: .month, value: 1, to: currentPeriodDate) ?? currentPeriodDate
                 : calendar.date(byAdding: .month, value: -1, to: currentPeriodDate) ?? currentPeriodDate
 
         case .year:
-            // 년 단위
             newDate = direction == .left
                 ? calendar.date(byAdding: .year, value: 1, to: currentPeriodDate) ?? currentPeriodDate
                 : calendar.date(byAdding: .year, value: -1, to: currentPeriodDate) ?? currentPeriodDate
         }
 
         currentPeriodDate = newDate
-        // TODO: 날짜를 포함한 차트 데이터 로드 로직 구현 필요
         reactor?.action.onNext(.loadReadingChartData(currentStatisticsPeriod))
     }
 
-    // MARK: - Navigation Methods
     func showReadingRecordEntry() {
         guard let coordinator = coordinator as? BookDetailCoordinator else { return }
         coordinator.showReadingRecordEntry()
@@ -974,7 +938,6 @@ extension BookDetailViewController {
         coordinator.showReadingSessionList()
     }
 
-    // MARK: - Context Menus
     func setupPhotoContextMenu(for cell: PhotoItemCell, photoId: String, image: UIImage) {
         let menuItems = [
             CircularMenuItem(name: String(localized: .circularMenuCommonView), image: UIImage(systemName: "eye")) { [weak self] in
@@ -1029,7 +992,6 @@ extension BookDetailViewController {
         )
     }
 
-    // MARK: - Image Actions
     func showImagePreview(_ image: UIImage) {
         let previewVC = UIViewController()
         let imageView = UIImageView(image: image)
@@ -1082,7 +1044,6 @@ extension BookDetailViewController {
         present(alert, animated: true)
     }
 
-    // MARK: - Quote Actions
     func shareQuote(_ quote: String, pageNumber: Int?) {
         guard let reactor = reactor, let coordinator = coordinator as? BookDetailCoordinator else { return }
 
@@ -1123,20 +1084,17 @@ extension BookDetailViewController {
         present(alert, animated: true)
     }
 
-    // MARK: - Tag Input
     func showTagInputAlert() {
         guard let reactor = reactor else { return }
         let currentTags = reactor.currentState.tags.map { $0.tagName }
 
         let tagEditVC = TagEditViewController()
 
-        // 전체 태그 목록 로드 액션 발동
         reactor.action.onNext(.loadAllUniqueTagNames)
 
-        // 전체 태그 목록을 state에서 구독하여 설정
         reactor.state
             .map { $0.allUniqueTagNames }
-            .skip(1) // 초기 빈 배열 스킵
+            .skip(1)
             .take(1)
             .observe(on: MainScheduler.instance)
             .subscribe(onNext: { [weak tagEditVC] allTagNames in
@@ -1152,7 +1110,6 @@ extension BookDetailViewController {
         present(navController, animated: true)
     }
 
-    // MARK: - Reading Info Edit
     func showReadingInfoEdit(bookDetail: BookDetail) {
         let readingInfoEditVC = ReadingInfoEditViewController()
         readingInfoEditVC.configure(
@@ -1168,7 +1125,6 @@ extension BookDetailViewController {
         present(navController, animated: true)
     }
 
-    // MARK: - Delete Confirmation
     func showDeleteConfirmationAlert() {
         guard let reactor = reactor else { return }
         let bookTitle = reactor.currentState.book.cleanTitle
@@ -1191,7 +1147,6 @@ extension BookDetailViewController {
     }
 }
 
-// MARK: - UICollectionViewDelegate
 extension BookDetailViewController: UICollectionViewDelegate {
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         guard let item = dataSource.itemIdentifier(for: indexPath) else { return }
@@ -1220,8 +1175,6 @@ extension BookDetailViewController: UICollectionViewDelegate {
             showResetAndDelete()
         }
     }
-
-    // MARK: - Bottom Sheets
 
     private func showPhotoActionBottomSheet(for indexPath: IndexPath, photoId: String, image: UIImage) {
         guard let cell = collectionView.cellForItem(at: indexPath) as? PhotoItemCell,
@@ -1265,7 +1218,6 @@ extension BookDetailViewController: UICollectionViewDelegate {
         bottomSheet.show(in: window)
     }
 
-    // MARK: - Settings Actions
     private func showEditBookInfo() {
         guard let coordinator = coordinator as? BookDetailCoordinator else { return }
         coordinator.showEditBookInfo()

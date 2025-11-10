@@ -16,8 +16,8 @@ struct ReadingChartView: View {
     @State private var selectedPeriod: ReadingStatisticsPeriod
 
     enum SwipeDirection {
-        case left  // 다음 기간
-        case right // 이전 기간
+        case left
+        case right
     }
 
     init(chartData: ReadingChartData, onPeriodChanged: ((ReadingStatisticsPeriod) -> Void)? = nil, onSwipe: ((SwipeDirection) -> Void)? = nil) {
@@ -44,10 +44,8 @@ struct ReadingChartView: View {
             DragGesture(minimumDistance: 30)
                 .onEnded { value in
                     if value.translation.width < -50 {
-                        // 왼쪽으로 스와이프 = 다음 기간
                         onSwipe?(.left)
                     } else if value.translation.width > 50 {
-                        // 오른쪽으로 스와이프 = 이전 기간
                         onSwipe?(.right)
                     }
                 }

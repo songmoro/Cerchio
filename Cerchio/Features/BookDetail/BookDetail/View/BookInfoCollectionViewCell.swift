@@ -10,11 +10,8 @@ import SnapKit
 import Kingfisher
 
 final class BookInfoCollectionViewCell: UICollectionViewCell, IsIdentifiable {
-    // MARK: - Callback
     var onTagsTapped: (() -> Void)?
     var onReadingInfoTapped: (() -> Void)?
-
-    // MARK: - UI Components
 
     private let backgroundImageView: UIImageView = {
         let imageView = UIImageView()
@@ -94,7 +91,6 @@ final class BookInfoCollectionViewCell: UICollectionViewCell, IsIdentifiable {
         return stackView
     }()
 
-    // MARK: - Initialization
     override init(frame: CGRect) {
         super.init(frame: frame)
         setupUI()
@@ -104,7 +100,6 @@ final class BookInfoCollectionViewCell: UICollectionViewCell, IsIdentifiable {
         fatalError("init(coder:) has not been implemented")
     }
 
-    // MARK: - Setup
     private func setupUI() {
         contentView.clipsToBounds = true
 
@@ -176,7 +171,6 @@ final class BookInfoCollectionViewCell: UICollectionViewCell, IsIdentifiable {
         }
     }
 
-    // MARK: - Configuration
     func configure(with bookDetail: BookDetail) {
         titleLabel.text = bookDetail.book.cleanTitle
         authorLabel.text = bookDetail.book.author
@@ -210,15 +204,12 @@ final class BookInfoCollectionViewCell: UICollectionViewCell, IsIdentifiable {
     }
 
     private func setupTags(_ tags: [String]) {
-        // 기존 태그 제거
         tagsStackView.arrangedSubviews.forEach { $0.removeFromSuperview() }
 
         if tags.isEmpty {
-            // 태그가 없을 때 플레이스홀더 표시
             let placeholderLabel = createPlaceholderLabel()
             tagsStackView.addArrangedSubview(placeholderLabel)
         } else {
-            // 새 태그 추가
             tags.forEach { tag in
                 let tagLabel = createTagLabel(text: tag)
                 tagsStackView.addArrangedSubview(tagLabel)
@@ -263,7 +254,6 @@ final class BookInfoCollectionViewCell: UICollectionViewCell, IsIdentifiable {
     }
 }
 
-// MARK: - PaddingLabel
 private class PaddingLabel: UILabel {
     var padding = UIEdgeInsets.zero
 

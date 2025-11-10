@@ -13,7 +13,6 @@ import FirebaseAnalytics
 
 final class ReadingTimerReactor: Reactor {
     
-    // MARK: - Action
     enum Action {
         case viewDidLoad
         case requestTimerStart
@@ -32,7 +31,6 @@ final class ReadingTimerReactor: Reactor {
         case setTimerState(TimerStateManager.TimerState)
     }
     
-    // MARK: - Mutation
     enum Mutation {
         case setSession(RealmReadingSession)
         case setTimerState(TimerStateManager.TimerState)
@@ -44,7 +42,6 @@ final class ReadingTimerReactor: Reactor {
         case setError(Error)
     }
     
-    // MARK: - State
     enum ValidationError: Error, Equatable {
         case notificationPermissionDenied
         case liveActivityNotEnabled
@@ -82,7 +79,6 @@ final class ReadingTimerReactor: Reactor {
         }
     }
     
-    // MARK: - Properties
     let initialState: State
     private let service: ReadingTimerService
     private let disposeBag = DisposeBag()
@@ -96,9 +92,7 @@ final class ReadingTimerReactor: Reactor {
     private var backgroundEnterTime: Date?
     private var totalBackgroundDuration: TimeInterval = 0
     
-    // MARK: - Initialization
     
-    /// 새로운 타이머 생성
     init(
         bookId: String,
         bookTitle: String,
@@ -123,9 +117,10 @@ final class ReadingTimerReactor: Reactor {
             bookId: bookId,
             bookTitle: bookTitle
         )
+
+        setupDarwinNotificationObservers()
     }
 
-    /// 세션 복원
     init(
         session: TimerSessionManager.ActiveSession,
         sessionRepository: ReadingSessionRepositoryProtocol
@@ -150,7 +145,6 @@ final class ReadingTimerReactor: Reactor {
             bookTitle: session.bookTitle
         )
 
-        // 세션 복원 로직 실행
         service.restore(session: session)
             .observe(on: MainScheduler.instance)
             .subscribe(onNext: { [weak self] result in
@@ -161,24 +155,21 @@ final class ReadingTimerReactor: Reactor {
                 self.action.onNext(.setRemainingSeconds(result.remaining))
 
                 if result.isCompleted {
-                    // 타이머가 이미 완료된 경우
                     self.action.onNext(.setTimerState(.completed))
                     DebugLogger.shared.debug("세션 복구 완료 - 타이머 이미 완료됨", category: "ReadingTimer")
                 } else if result.shouldAutoResume {
-                    // 실행 중이었던 경우 자동 재개
                     self.action.onNext(.setTimerState(.running))
                     self.startTimerTick()
                 } else {
-                    // 일시정지 상태로 복원
                     self.action.onNext(.setTimerState(.paused))
                 }
             }, onError: { error in
                 DebugLogger.shared.debug("세션 복구 에러, \(error)", category: "ReadingTimer")
             })
             .disposed(by: disposeBag)
-    }
 
-    // MARK: - Mutation
+        setupDarwinNotificationObservers()
+    }
 
     func mutate(action: Action) -> Observable<Mutation> {
         switch action {
@@ -191,7 +182,6 @@ final class ReadingTimerReactor: Reactor {
                 }
 
         case .requestTimerStart:
-            // 중복 세션 확인
             if let duplicate = service.checkDuplicateSession() {
                 return .just(.setDuplicateSessionInfo(duplicate))
             }
@@ -201,12 +191,10 @@ final class ReadingTimerReactor: Reactor {
                 "target_minutes": currentState.targetMinutes
             ])
 
-            // 타이머 시작
             return service.start()
                 .flatMap { [weak self] result -> Observable<Mutation> in
                     guard let self = self else { return .empty() }
 
-                    // 사용자 확인이 필요한 경우
                     if let error = result.needsUserConfirmation {
                         let validationError: ValidationError = error == .notificationPermissionDenied
                             ? .notificationPermissionDenied
@@ -219,7 +207,6 @@ final class ReadingTimerReactor: Reactor {
                         return .just(.setValidationError(validationError))
                     }
 
-                    // 타이머 시작 성공
                     self.sessionStartDate = Date()
                     self.pauseCount = 0
                     self.totalPauseDuration = 0
@@ -247,7 +234,6 @@ final class ReadingTimerReactor: Reactor {
                 }
 
         case .startTimerConfirmed:
-            // 권한 확인 없이 바로 시작
             return service.start()
                 .do(onNext: { [weak self] _ in
                     self?.startTimerTick()
@@ -391,7 +377,6 @@ final class ReadingTimerReactor: Reactor {
 
                         self.stopTimerTick()
 
-                        // 라이브 액티비티 즉시 완료 처리
                         if #available(iOS 16.2, *) {
                             _ = self.service.activityManager.end().subscribe()
                         }
@@ -434,6 +419,7 @@ final class ReadingTimerReactor: Reactor {
             }
 
             return service.enterForeground()
+                .observe(on: MainScheduler.asyncInstance)
                 .flatMap { [weak self] result -> Observable<Mutation> in
                     guard let self = self else { return .empty() }
 
@@ -522,8 +508,6 @@ final class ReadingTimerReactor: Reactor {
         }
     }
 
-    // MARK: - Reduce
-
     func reduce(state: State, mutation: Mutation) -> State {
         var newState = state
 
@@ -555,14 +539,12 @@ final class ReadingTimerReactor: Reactor {
         return newState
     }
 
-    // MARK: - Timer Tick
-
     private func startTimerTick() {
         stopTimerTick()
 
         timerDisposable = Observable<Int>
             .interval(.seconds(1), scheduler: MainScheduler.instance)
-            .startWith(0)  // 즉시 첫 틱 발생
+            .startWith(0)
             .map { _ in Action.timerTick }
             .bind(to: action)
     }
@@ -572,7 +554,37 @@ final class ReadingTimerReactor: Reactor {
         timerDisposable = nil
     }
 
-    // MARK: - Deinit
+    // MARK: - Darwin Notification Observers
+
+    private func setupDarwinNotificationObservers() {
+        // Pause 이벤트 구독
+        TimerSessionManager.shared.pauseEvent
+            .observe(on: MainScheduler.instance)
+            .subscribe(onNext: { [weak self] in
+                DebugLogger.shared.debug("Darwin Notification: Pause 수신", category: "ReadingTimer")
+                self?.action.onNext(.pauseTimer)
+            })
+            .disposed(by: disposeBag)
+
+        // Resume 이벤트 구독
+        TimerSessionManager.shared.resumeEvent
+            .observe(on: MainScheduler.instance)
+            .subscribe(onNext: { [weak self] in
+                DebugLogger.shared.debug("Darwin Notification: Resume 수신", category: "ReadingTimer")
+                self?.action.onNext(.resumeTimer)
+            })
+            .disposed(by: disposeBag)
+
+        // Cancel 이벤트 구독
+        TimerSessionManager.shared.cancelEvent
+            .observe(on: MainScheduler.instance)
+            .subscribe(onNext: { [weak self] in
+                DebugLogger.shared.debug("Darwin Notification: Cancel 수신", category: "ReadingTimer")
+                self?.action.onNext(.stopTimer)
+            })
+            .disposed(by: disposeBag)
+    }
+
     deinit {
         stopTimerTick()
     }

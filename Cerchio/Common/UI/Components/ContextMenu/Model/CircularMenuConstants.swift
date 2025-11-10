@@ -9,7 +9,6 @@ import UIKit
 
 enum CircularMenuConstants {
 
-    // MARK: - Layout
     enum Layout {
         static let buttonSize: CGFloat = 50
         static let menuRadius: CGFloat = 100
@@ -24,7 +23,6 @@ enum CircularMenuConstants {
         static let radiansConversion: CGFloat = 180
     }
 
-    // MARK: - Animation
     enum Animation {
         static let duration: TimeInterval = 0.3
         static let labelDuration: TimeInterval = 0.2
@@ -35,7 +33,6 @@ enum CircularMenuConstants {
         static let buttonHighlightScale: CGFloat = 0.95
     }
 
-    // MARK: - Angles
     enum Angles {
         static let arcAngle: CGFloat = CGFloat.pi
         static let angleStep: CGFloat = 0.6
@@ -48,14 +45,12 @@ enum CircularMenuConstants {
         static let negativeThreeQuarterPi: CGFloat = -3 * CGFloat.pi / 4
     }
 
-    // MARK: - Counts
     enum Counts {
         static let singleButton: Int = 1
         static let minButtonCount: Int = 0
         static let divisionFactor: CGFloat = 2
     }
 
-    // MARK: - Colors
     enum Colors {
         static let backgroundAlpha: CGFloat = 0.9
         static let shadowOpacity: Float = 0.2
@@ -66,12 +61,10 @@ enum CircularMenuConstants {
         static let debugAlpha: CGFloat = 0.3
     }
 
-    // MARK: - Typography
     enum Typography {
         static let labelFontSize: CGFloat = 24
     }
 
-    // MARK: - Position Ratios
     struct PositionRatios {
         static let leftBoundaryRatio: CGFloat = 0.3
         static let rightBoundaryRatio: CGFloat = 1.7

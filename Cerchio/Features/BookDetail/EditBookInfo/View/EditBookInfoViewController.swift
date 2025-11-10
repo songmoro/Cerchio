@@ -13,11 +13,8 @@ import Kingfisher
 
 final class EditBookInfoViewController: BaseViewController<EditBookInfoReactor> {
 
-    // MARK: - Callbacks
-    var onDismiss: ((Bool) -> Void)? // Bool: isSaved
+    var onDismiss: ((Bool) -> Void)?
     var onChangeCover: (() -> Void)?
-
-    // MARK: - UI Components
 
     private let scrollView = UIScrollView()
     private let contentView = UIView()
@@ -76,8 +73,6 @@ final class EditBookInfoViewController: BaseViewController<EditBookInfoReactor> 
         let button = UIButton(configuration: config)
         return button
     }()
-
-    // MARK: - Setup
 
     override func setupUI() {
         super.setupUI()
@@ -165,8 +160,6 @@ final class EditBookInfoViewController: BaseViewController<EditBookInfoReactor> 
         )
     }
 
-    // MARK: - Binding
-
     override func bind(reactor: EditBookInfoReactor) {
         navigationItem.leftBarButtonItem?.rx.tap
             .do(onNext: { HapticFeedbackManager.shared.impact() })
@@ -213,7 +206,6 @@ final class EditBookInfoViewController: BaseViewController<EditBookInfoReactor> 
             .take(1)
             .asDriver(onErrorJustReturn: reactor.currentState.book)
             .drive(onNext: { [weak self] book in
-                // 커스텀 커버가 있으면 로컬 이미지 사용, 없으면 원본 URL 사용
                 if let customCoverPath = book.customCoverImagePath {
                     if let image = ImageStorageManager.shared.loadImage(fromPath: customCoverPath) {
                         self?.coverImageView.image = image

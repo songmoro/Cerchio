@@ -17,7 +17,6 @@ enum BookDetailNavigationEvent: NavigationEventProtocol {
     case deleteBook(Book)
 }
 
-// MARK: - BookDetail Dependencies
 struct BookDetailDependencies {
     let serviceFactory: ServiceFactory
     let book: Book
@@ -26,7 +25,6 @@ struct BookDetailDependencies {
 final class BookDetailCoordinator: BaseCoordinator, Coordinatable {
     typealias Dependencies = BookDetailDependencies
 
-    // MARK: - Properties
     private var dependencies: BookDetailDependencies!
     private weak var currentReactor: BookDetailReactor?
     private var photoCompletionHandler: ((UIImage) -> Void)?
@@ -35,12 +33,10 @@ final class BookDetailCoordinator: BaseCoordinator, Coordinatable {
         return dependencies.book
     }
 
-    // MARK: - Initialization
     override init(navigationController: UINavigationController) {
         super.init(navigationController: navigationController)
     }
 
-    // MARK: - BaseCoordinator
     override func start() {
         fatalError("Use start(with dependencies:) instead")
     }
@@ -51,29 +47,24 @@ final class BookDetailCoordinator: BaseCoordinator, Coordinatable {
         bindNavigationEvents()
     }
 
-    // MARK: - Setup (for session restoration)
     func setupDependencies(serviceFactory: ServiceFactory, book: Book) {
         self.dependencies = BookDetailDependencies(serviceFactory: serviceFactory, book: book)
     }
 
-    // MARK: - Private Methods
     private func showBookDetailViewController() {
         let bookDetailViewController = BookDetailViewController()
         let bookRepository = dependencies.serviceFactory.createBookRepository()
         let service = BookDetailService(serviceFactory: dependencies.serviceFactory)
         let bookDetailReactor = BookDetailReactor(book: book, bookRepository: bookRepository, service: service)
 
-        // Reactor 참조 저장
         self.currentReactor = bookDetailReactor
 
         bookDetailViewController.coordinator = self
         bookDetailViewController.reactor = bookDetailReactor
 
-        // 뒤로가기 버튼 텍스트 제거
         let backBarButtonItem = UIBarButtonItem(title: "", style: .plain, target: nil, action: nil)
         bookDetailViewController.navigationItem.backBarButtonItem = backBarButtonItem
 
-        // 네비게이션 아이템 설정
         setupNavigationItems(for: bookDetailViewController, reactor: bookDetailReactor)
 
         navigationController.pushViewController(bookDetailViewController, animated: true)
@@ -91,10 +82,8 @@ final class BookDetailCoordinator: BaseCoordinator, Coordinatable {
         viewController.navigationItem.scrollEdgeAppearance = appearance
         viewController.navigationItem.compactAppearance = appearance
 
-        // 타이틀 제거 (도서 정보 헤더에 이미 표시됨)
         viewController.navigationItem.title = nil
 
-        // 즐겨찾기 버튼
         let favoriteButton = UIBarButtonItem(
             image: UIImage(systemName: book.isFavorite ? "heart.fill" : "heart"),
             style: .plain,
@@ -102,7 +91,6 @@ final class BookDetailCoordinator: BaseCoordinator, Coordinatable {
             action: nil
         )
 
-        // 삭제 버튼
         let deleteButton = UIBarButtonItem(
             image: UIImage(systemName: "trash"),
             style: .plain,
@@ -112,14 +100,9 @@ final class BookDetailCoordinator: BaseCoordinator, Coordinatable {
 
         viewController.navigationItem.rightBarButtonItems = [deleteButton, favoriteButton]
 
-        // ViewController에 버튼 설정 (Rx 바인딩은 ViewController에서 처리)
         bookDetailVC.setFavoriteButton(favoriteButton)
         bookDetailVC.setDeleteButton(deleteButton)
 
-        // 타이틀이 제거되었으므로 타이틀 업데이트 구독 제거
-        //     })
-
-        // 즐겨찾기 상태 변경 감지
         reactor.state
             .map { $0.isFavorite }
             .distinctUntilChanged()
@@ -130,15 +113,13 @@ final class BookDetailCoordinator: BaseCoordinator, Coordinatable {
             })
             .disposed(by: disposeBag)
 
-        // 삭제 완료 감지 (Coordinator가 직접 구독)
         reactor.state
             .map { $0.isDeleted }
             .distinctUntilChanged()
             .filter { $0 == true }
-            .take(1) // 한 번만 실행
+            .take(1)
             .observe(on: MainScheduler.instance)
             .subscribe(onNext: { [weak self] _ in
-                // 삭제 완료 후 화면 닫기
                 self?.navigationController.popViewController(animated: true)
                 self?.finish()
             })
@@ -160,15 +141,11 @@ final class BookDetailCoordinator: BaseCoordinator, Coordinatable {
         case .close:
             navigationController.dismiss(animated: true)
         case .finished:
-            // 삭제는 setupNavigationItems에서 직접 처리
             break
         }
     }
 
-    // MARK: - Navigation Methods
     func showEditBook() {
-        // TODO: EditBookCoordinator 구현 시 추가
-        print("Show edit book: \(book.cleanTitle)")
     }
 
     func showQuoteEntry() {
@@ -187,11 +164,10 @@ final class BookDetailCoordinator: BaseCoordinator, Coordinatable {
         quoteSaveCoordinator.result
             .subscribe(onNext: { [weak self] result in
                 switch result {
-                case .quoteSaved(let quote):
-                    print(" Quote saved: \(quote)")
+                case .quoteSaved:
                     self?.currentReactor?.action.onNext(.loadQuotes)
                 case .cancelled:
-                    print("Quote save cancelled")
+                    break
                 }
                 self?.removeChildCoordinator(quoteSaveCoordinator)
             })
@@ -201,8 +177,6 @@ final class BookDetailCoordinator: BaseCoordinator, Coordinatable {
     }
 
     func showReadingProgress() {
-        // TODO: ReadingProgressCoordinator 구현 시 추가
-        print("Show reading progress for book: \(book.cleanTitle)")
     }
 
     func showQuoteShare(quoteData: QuoteShareData) {
@@ -217,10 +191,9 @@ final class BookDetailCoordinator: BaseCoordinator, Coordinatable {
             .subscribe(onNext: { [weak self] result in
                 switch result {
                 case .imageExported(let image):
-                    print(" Quote image exported")
                     self?.saveImageToPhotoLibrary(image)
                 case .cancelled:
-                    print("Quote share cancelled")
+                    break
                 }
                 self?.removeChildCoordinator(quoteShareCoordinator)
             })
@@ -234,7 +207,6 @@ final class BookDetailCoordinator: BaseCoordinator, Coordinatable {
 
         CameraPermissionManager.shared.handleCameraPermission(from: topViewController) { [weak self] granted in
             guard granted else {
-                print(" Camera permission denied")
                 return
             }
 
@@ -265,10 +237,9 @@ final class BookDetailCoordinator: BaseCoordinator, Coordinatable {
             .subscribe(onNext: { [weak self] result in
                 switch result {
                 case .quotesUpdated:
-                    print(" Quotes updated, refreshing...")
                     self?.currentReactor?.action.onNext(.loadQuotes)
                 case .dismissed:
-                    print("Quote list dismissed")
+                    break
                 }
                 self?.removeChildCoordinator(quoteListCoordinator)
             })
@@ -299,10 +270,9 @@ final class BookDetailCoordinator: BaseCoordinator, Coordinatable {
             .subscribe(onNext: { [weak self] result in
                 switch result {
                 case .photosUpdated:
-                    print(" Photos updated, refreshing...")
                     self?.currentReactor?.action.onNext(.loadPhotos)
                 case .dismissed:
-                    print("Photo list dismissed")
+                    break
                 }
                 self?.removeChildCoordinator(photoListCoordinator)
             })
@@ -321,7 +291,6 @@ final class BookDetailCoordinator: BaseCoordinator, Coordinatable {
         )
         viewController.reactor = reactor
 
-        // 독서 기록 추가 콜백 설정
         viewController.onAddRecordRequested = { [weak self, weak viewController] in
             self?.showReadingRecordEntry(reloadHandler: {
                 viewController?.reloadSessions()
@@ -345,12 +314,11 @@ final class BookDetailCoordinator: BaseCoordinator, Coordinatable {
         readingRecordCoordinator.result
             .subscribe(onNext: { [weak self] result in
                 switch result {
-                case .recordSaved(let content):
-                    print(" Reading record saved: \(content)")
+                case .recordSaved:
                     self?.currentReactor?.action.onNext(.loadReadingStatistics)
                     reloadHandler?()
                 case .cancelled:
-                    print("Reading record cancelled")
+                    break
                 }
                 self?.removeChildCoordinator(readingRecordCoordinator)
             })
@@ -374,11 +342,9 @@ final class BookDetailCoordinator: BaseCoordinator, Coordinatable {
             .subscribe(onNext: { [weak self] result in
                 switch result {
                 case .bookInfoUpdated(let updatedBook):
-                    print(" Book info updated - customTitle: \(updatedBook.customTitle ?? "nil"), refreshing...")
-                    // 업데이트된 Book으로 BookDetail 다시 로드
                     self?.currentReactor?.action.onNext(.updateBookAndReload(updatedBook))
                 case .cancelled:
-                    print("Book info edit cancelled")
+                    break
                 }
                 self?.removeChildCoordinator(editBookInfoCoordinator)
             })
@@ -418,11 +384,10 @@ final class BookDetailCoordinator: BaseCoordinator, Coordinatable {
         quoteSaveCoordinator.result
             .subscribe(onNext: { [weak self] result in
                 switch result {
-                case .quoteSaved(let updatedQuote):
-                    print(" Quote updated: \(updatedQuote)")
+                case .quoteSaved:
                     self?.currentReactor?.action.onNext(.loadQuotes)
                 case .cancelled:
-                    print("Quote edit cancelled")
+                    break
                 }
                 self?.removeChildCoordinator(quoteSaveCoordinator)
             })
@@ -431,13 +396,11 @@ final class BookDetailCoordinator: BaseCoordinator, Coordinatable {
         quoteSaveCoordinator.start()
     }
 
-    // MARK: - Helper Methods
     private func saveImageToPhotoLibrary(_ image: UIImage) {
         guard let topViewController = navigationController.topViewController else { return }
 
         PhotoLibraryPermissionManager.shared.handlePhotoLibraryPermission(from: topViewController) { [weak self] granted in
             guard granted else {
-                print(" Photo library permission denied")
                 return
             }
 
@@ -458,7 +421,6 @@ final class BookDetailCoordinator: BaseCoordinator, Coordinatable {
     }
 }
 
-// MARK: - CameraViewControllerDelegate
 extension BookDetailCoordinator: CameraViewControllerDelegate {
     func cameraViewController(_ controller: CameraViewController, didCapturePhoto image: UIImage) {
         controller.dismiss(animated: true) { [weak self] in

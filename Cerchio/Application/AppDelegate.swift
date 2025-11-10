@@ -10,23 +10,41 @@ import RealmSwift
 import UserNotifications
 import RxSwift
 import FirebaseCore
+import FirebaseMessaging
 
 @main
 class AppDelegate: UIResponder, UIApplicationDelegate {
-
     private let disposeBag = DisposeBag()
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-        FirebaseApp.configure()
+        configureFirebase()
         configureRealm()
         setupNotifications()
+        setupFCM()
         updateBadgeCount()
         cleanupExpiredNotifications()
         return true
     }
 
+    private func configureFirebase() {
+        #if DEBUG
+        guard let filePath = Bundle.main.path(forResource: "GoogleService-Info-dev", ofType: "plist"),
+              let options = FirebaseOptions(contentsOfFile: filePath) else {
+            fatalError("GoogleService-Info-dev.plist not found")
+        }
+        FirebaseApp.configure(options: options)
+        print("Firebase configured with Development settings (com.moro.Cerchio.dev)")
+        #else
+        guard let filePath = Bundle.main.path(forResource: "GoogleService-Info", ofType: "plist"),
+              let options = FirebaseOptions(contentsOfFile: filePath) else {
+            fatalError("GoogleService-Info.plist not found")
+        }
+        FirebaseApp.configure(options: options)
+        print("Firebase configured with Production settings (com.moro.Cerchio)")
+        #endif
+    }
+
     private func configureRealm() {
-        // 스키마 버전: (major * 1000) + (minor * 100) + build
         let schemaVersion: UInt64 = 1201
 
         let config = Realm.Configuration(
@@ -60,10 +78,19 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         UNUserNotificationCenter.current().delegate = self
     }
 
+    private func setupFCM() {
+        FCMManager.shared.requestPermissionAndGetToken()
+            .subscribe(onNext: { token in
+                if let token = token {
+                    print("FCM token received in AppDelegate: \(token)")
+                }
+            })
+            .disposed(by: disposeBag)
+    }
+
     private func updateBadgeCount() {
         NotificationManager.shared.updateBadgeCount()
             .subscribe(onNext: { count in
-                print("[AppDelegate]  Initial badge count: \(count)")
             })
             .disposed(by: disposeBag)
     }
@@ -71,7 +98,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     private func cleanupExpiredNotifications() {
         NotificationManager.shared.cleanupExpiredNotifications()
             .subscribe(onNext: {
-                print("[AppDelegate]  Expired notifications cleaned")
             })
             .disposed(by: disposeBag)
     }
@@ -79,50 +105,49 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     func application(_ application: UIApplication, configurationForConnecting connectingSceneSession: UISceneSession, options: UIScene.ConnectionOptions) -> UISceneConfiguration {
         return UISceneConfiguration(name: "Default Configuration", sessionRole: connectingSceneSession.role)
     }
+
+    func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
+        #if DEBUG
+        Messaging.messaging().apnsToken = deviceToken
+        print("APNS Token registered (sandbox): \(deviceToken.map { String(format: "%02.2hhx", $0) }.joined())")
+        #else
+        Messaging.messaging().apnsToken = deviceToken
+        print("APNS Token registered (production): \(deviceToken.map { String(format: "%02.2hhx", $0) }.joined())")
+        #endif
+    }
+
+    func application(_ application: UIApplication, didFailToRegisterForRemoteNotificationsWithError error: Error) {
+        print("Failed to register for remote notifications: \(error.localizedDescription)")
+    }
 }
 
-// MARK: - UNUserNotificationCenterDelegate
-
 extension AppDelegate: UNUserNotificationCenterDelegate {
-
-    // 포그라운드에서 알림 수신 시
     func userNotificationCenter(
         _ center: UNUserNotificationCenter,
         willPresent notification: UNNotification,
         withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
     ) {
-        print("[AppDelegate]  Notification will present: \(notification.request.identifier)")
-
-        // 알림을 전달됨으로 표시
         if let notificationId = notification.request.content.userInfo["notificationId"] as? String {
             NotificationManager.shared.markAsDelivered(notificationId: notificationId)
                 .subscribe()
                 .disposed(by: disposeBag)
         }
 
-        // 알림 표시 (배너, 소리, 배지)
         completionHandler([.banner, .sound])
     }
 
-    // 사용자가 알림을 탭했을 때
     func userNotificationCenter(
         _ center: UNUserNotificationCenter,
         didReceive response: UNNotificationResponse,
         withCompletionHandler completionHandler: @escaping () -> Void
     ) {
-        print("[AppDelegate]  Notification tapped: \(response.notification.request.identifier)")
-
-        // 알림을 읽음으로 표시
         if let notificationId = response.notification.request.content.userInfo["notificationId"] as? String {
             NotificationManager.shared.markAsDismissed(notificationId: notificationId)
                 .subscribe(onNext: {
-                    print("[AppDelegate]  Notification marked as dismissed")
+
                 })
                 .disposed(by: disposeBag)
         }
-
-        // TODO: 알림 타입에 따라 적절한 화면으로 이동
-        // 예: 타이머 완료 알림이면 해당 세션으로 이동
 
         completionHandler()
     }

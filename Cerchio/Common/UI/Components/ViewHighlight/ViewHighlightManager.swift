@@ -7,28 +7,16 @@
 
 import UIKit
 
-/// Manages view highlighting with configurable visual effects
 class ViewHighlightManager {
-    // MARK: - Properties
-
     private weak var containerView: UIView?
     private weak var originalView: UIView?
     private var highlightedSnapshotView: UIView?
     private let configuration: ViewHighlightConfiguration
 
-    // MARK: - Initialization
-
     init(configuration: ViewHighlightConfiguration = .default) {
         self.configuration = configuration
     }
 
-    // MARK: - Public Methods
-
-    /// Highlight a view with the configured effects
-    /// - Parameters:
-    ///   - view: The view to highlight
-    ///   - containerView: The container view where the snapshot will be displayed
-    ///   - touchPoint: Optional touch point for contextual rotation calculation
     func highlight(view: UIView, in containerView: UIView, touchPoint: CGPoint? = nil) {
         self.containerView = containerView
         self.originalView = view
@@ -72,8 +60,6 @@ class ViewHighlightManager {
         animateHighlight()
     }
 
-    /// Remove the highlight and restore the original view
-    /// - Parameter completion: Called when dismissal animation completes
     func dismiss(animated: Bool = true, completion: (() -> Void)? = nil) {
         guard let snapshot = highlightedSnapshotView else {
             completion?()
@@ -96,8 +82,6 @@ class ViewHighlightManager {
             completion?()
         }
     }
-
-    // MARK: - Private Methods
 
     private func calculateScaledFrame(originalFrame: CGRect) -> CGRect {
         let scaleMultiplier = configuration.effect.scaleMultiplier

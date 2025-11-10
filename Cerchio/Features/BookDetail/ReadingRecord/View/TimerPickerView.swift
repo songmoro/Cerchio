@@ -10,13 +10,11 @@ import SnapKit
 
 final class TimerPickerView: UIView {
 
-    // MARK: - UI Components
     private let gaugeLayer = CAShapeLayer()
     private let tickMarksLayer = CAShapeLayer()
     private let handleView = UIView()
     private var timeLabels: [UILabel] = []
 
-    // MARK: - Properties
     var selectedMinutes: Int = 25 {
         didSet {
             updateUI()
@@ -30,14 +28,12 @@ final class TimerPickerView: UIView {
     private let maxMinutes = 60
     private let impactFeedback = UIImpactFeedbackGenerator(style: .light)
 
-    // MARK: - Constants
     private let gaugeColor = UIColor.forestGreen
     private let tickColor = UIColor.forestGreen.withAlphaComponent(0.3)
     private let radius: CGFloat = 120
     private let gaugeLineWidth: CGFloat = 40
     private let handleSize: CGFloat = 20
 
-    // MARK: - Initialization
     override init(frame: CGRect) {
         super.init(frame: frame)
         setupUI()
@@ -49,7 +45,6 @@ final class TimerPickerView: UIView {
         fatalError("init(coder:) has not been implemented")
     }
 
-    // MARK: - Setup
     private func setupUI() {
         backgroundColor = .clear
 
@@ -96,7 +91,6 @@ final class TimerPickerView: UIView {
         updateUI()
     }
 
-    // MARK: - Drawing
     private func drawTickMarks() {
         let center = CGPoint(x: bounds.midX, y: bounds.midY)
         let path = UIBezierPath()
@@ -178,7 +172,6 @@ final class TimerPickerView: UIView {
         )
     }
 
-    // MARK: - Gesture Handling
     @objc private func handlePan(_ gesture: UIPanGestureRecognizer) {
         let location = gesture.location(in: self)
         let center = CGPoint(x: bounds.midX, y: bounds.midY)
@@ -208,7 +201,6 @@ final class TimerPickerView: UIView {
         }
     }
 
-    // MARK: - Helper Methods
     private func angleForMinute(_ minute: Int) -> CGFloat {
         let normalized = CGFloat(minute) / 60.0
         return normalized * 2 * .pi - .pi / 2

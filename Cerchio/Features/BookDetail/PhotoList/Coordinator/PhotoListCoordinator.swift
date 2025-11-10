@@ -41,13 +41,11 @@ final class PhotoListCoordinator: BaseCoordinator {
         viewController.reactor = reactor
         viewController.setService(service)
 
-        // 추가 버튼 액션
         viewController.onAddPhotoTapped = { [weak self] in
             self?.dependencies.onAddPhotoTapped()
             self?.resultRelay.accept(.photosUpdated)
         }
 
-        // 사진 삭제 액션
         viewController.onPhotosDeleted = { [weak self] in
             self?.resultRelay.accept(.photosUpdated)
         }

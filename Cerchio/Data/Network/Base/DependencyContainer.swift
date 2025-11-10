@@ -8,7 +8,6 @@
 import Foundation
 import RxSwift
 
-// MARK: - Dependency Container Protocol
 protocol DependencyContainerProtocol {
     func register<T>(_ serviceType: T.Type, factory: @escaping () -> T)
     func register<T>(_ serviceType: T.Type, instance: T)
@@ -16,12 +15,10 @@ protocol DependencyContainerProtocol {
     func resolve<T>(_ serviceType: T.Type) -> T
 }
 
-// MARK: - Dependency Container
 final class DependencyContainer: DependencyContainerProtocol {
     private var services: [String: Any] = [:]
     private let queue = DispatchQueue(label: "dependencyContainer.queue", attributes: .concurrent)
 
-    // MARK: - Registration
     func register<T>(_ serviceType: T.Type, factory: @escaping () -> T) {
         let key = String(describing: serviceType)
         queue.async(flags: .barrier) {
@@ -36,7 +33,6 @@ final class DependencyContainer: DependencyContainerProtocol {
         }
     }
 
-    // MARK: - Resolution
     func resolve<T>(_ serviceType: T.Type) -> T? {
         let key = String(describing: serviceType)
 
@@ -57,7 +53,6 @@ final class DependencyContainer: DependencyContainerProtocol {
         return service
     }
 
-    // MARK: - Clear
     func clear() {
         queue.async(flags: .barrier) {
             self.services.removeAll()
@@ -65,12 +60,10 @@ final class DependencyContainer: DependencyContainerProtocol {
     }
 }
 
-// MARK: - Dependency Assembly Protocol
 protocol DependencyAssemblyProtocol {
     func assemble(container: DependencyContainerProtocol)
 }
 
-// MARK: - Network Assembly
 struct NetworkAssembly: DependencyAssemblyProtocol {
     func assemble(container: DependencyContainerProtocol) {
         container.register(NetworkClientProtocol.self) {
@@ -88,15 +81,11 @@ struct NetworkAssembly: DependencyAssemblyProtocol {
     }
 }
 
-// MARK: - Repository Assembly
 struct RepositoryAssembly: DependencyAssemblyProtocol {
     func assemble(container: DependencyContainerProtocol) {
-        // Repository 관련 의존성들을 등록
-        // 예: BookRepository 등
     }
 }
 
-// MARK: - Main Dependency Assembler
 final class DependencyAssembler {
     private let container: DependencyContainer
     private let assemblies: [DependencyAssemblyProtocol]

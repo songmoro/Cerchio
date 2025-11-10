@@ -16,7 +16,6 @@ enum TabBarNavigationEvent: NavigationEventProtocol {
     case settingsSelected
 }
 
-// MARK: - TabBar Dependencies
 struct TabBarDependencies {
     let serviceFactory: ServiceFactory
 }
@@ -94,6 +93,7 @@ final class TabBarCoordinator: BaseCoordinator, Coordinatable {
         )
 
         searchViewController.reactor = searchReactor
+        searchViewController.configure(searchHistoryRepository: searchHistoryRepository)
         searchViewController.tabBarItem = UITabBarItem(
             title: AppConstants.TabBar.Titles.search,
             image: UIImage(systemName: AppConstants.TabBar.SystemImages.search),
@@ -110,11 +110,9 @@ final class TabBarCoordinator: BaseCoordinator, Coordinatable {
         let bookRepository = dependencies.serviceFactory.createBookRepository()
         let settingsReactor = SettingsReactor(bookRepository: bookRepository)
 
-        // SettingsCoordinator 생성 및 연결
         let settingsCoordinator = SettingsCoordinator(navigationController: navigationController)
         addChildCoordinator(settingsCoordinator)
 
-        // Coordinator에 onNavigateToLibrary 콜백 설정
         settingsCoordinator.onNavigateToLibrary = { [weak self] in
             self?.tabBarController.selectedIndex = AppConstants.TabBar.Tags.library
         }

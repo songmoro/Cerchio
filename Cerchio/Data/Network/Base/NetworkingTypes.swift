@@ -7,7 +7,6 @@
 
 import Foundation
 
-// MARK: - HTTP Method
 enum HTTPMethod: String, CaseIterable {
     case GET = "GET"
     case POST = "POST"
@@ -16,7 +15,6 @@ enum HTTPMethod: String, CaseIterable {
     case PATCH = "PATCH"
 }
 
-// MARK: - Request Protocol
 protocol NetworkRequest {
     associatedtype Response: Decodable
 
@@ -30,7 +28,6 @@ protocol NetworkRequest {
     var timeout: TimeInterval { get }
 }
 
-// MARK: - Default Implementation
 extension NetworkRequest {
     var baseURL: URL {
         guard let url = URL(string: NetworkConstants.baseURL) else {
@@ -60,7 +57,6 @@ extension NetworkRequest {
     }
 }
 
-// MARK: - Response Protocol
 protocol NetworkResponse {
     associatedtype DataType: Decodable
 
@@ -69,7 +65,6 @@ protocol NetworkResponse {
     var headers: [String: String] { get }
 }
 
-// MARK: - Error Types
 enum NetworkError: Error, LocalizedError {
     case invalidURL
     case noData
@@ -114,7 +109,6 @@ enum NetworkError: Error, LocalizedError {
     }
 }
 
-// MARK: - Network Constants
 enum NetworkConstants {
     static let baseURL = "https://api.example.com/v1"
     static let defaultTimeout: TimeInterval = 30.0
@@ -123,7 +117,6 @@ enum NetworkConstants {
         "Accept": "application/json",
     ]
 
-    // MARK: - HTTP Status Codes
     enum StatusCode {
         static let successRange = 200...299
         static let badRequest = 400
@@ -134,21 +127,18 @@ enum NetworkConstants {
         static let serverErrorRange = 500...599
     }
 
-    // MARK: - Error Codes
     enum ErrorCode {
         static let clientDeallocated = -1
         static let invalidResponseType = -2
         static let mockImplementation = 0
     }
 
-    // MARK: - Retry Configuration
     enum Retry {
         static let defaultRetryCount: Int = 3
         static let defaultRetryDelay: TimeInterval = 1.0
     }
 }
 
-// MARK: - Response Wrapper
 nonisolated struct APIResponse<T: Decodable>: Decodable, @unchecked Sendable {
     let data: T
     let message: String?
@@ -163,7 +153,6 @@ nonisolated struct APIResponse<T: Decodable>: Decodable, @unchecked Sendable {
     }
 }
 
-// MARK: - Pagination Support
 nonisolated struct PaginatedResponse<T: Decodable>: Decodable {
     let items: [T]
     let totalCount: Int

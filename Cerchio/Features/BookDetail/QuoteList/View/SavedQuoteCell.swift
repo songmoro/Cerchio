@@ -9,7 +9,6 @@ import UIKit
 import SnapKit
 
 final class SavedQuoteCell: UICollectionViewCell, IsIdentifiable {
-    // MARK: - UI Components
     private let headerContainer: UIView = {
         let view = UIView()
         return view
@@ -56,10 +55,8 @@ final class SavedQuoteCell: UICollectionViewCell, IsIdentifiable {
         return label
     }()
 
-    // MARK: - Properties
     var onActionButtonTapped: (() -> Void)?
 
-    // MARK: - Initialization
     override init(frame: CGRect) {
         super.init(frame: frame)
         setupViews()
@@ -69,7 +66,6 @@ final class SavedQuoteCell: UICollectionViewCell, IsIdentifiable {
         fatalError("init(coder:) has not been implemented")
     }
 
-    // MARK: - Setup
     private func setupViews() {
         contentView.backgroundColor = .clear
 
@@ -109,15 +105,12 @@ final class SavedQuoteCell: UICollectionViewCell, IsIdentifiable {
         actionButton.addTarget(self, action: #selector(actionButtonTapped), for: .touchUpInside)
     }
 
-    // MARK: - Actions
     @objc private func actionButtonTapped() {
         HapticFeedbackManager.shared.impact()
         onActionButtonTapped?()
     }
 
-    // MARK: - Configuration
     func configure(with quote: String, pageNumber: Int?, date: Date) {
-        // 페이지 번호
         if let pageNumber = pageNumber {
             pageLabel.text = "p.\(pageNumber)"
             pageLabel.isHidden = false
@@ -125,10 +118,8 @@ final class SavedQuoteCell: UICollectionViewCell, IsIdentifiable {
             pageLabel.isHidden = true
         }
 
-        // 문장 텍스트
         quoteLabel.text = "\"\(quote)\""
 
-        // 날짜
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy.MM.dd HH:mm"
         dateLabel.text = formatter.string(from: date)

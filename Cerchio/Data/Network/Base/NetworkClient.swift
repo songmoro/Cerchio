@@ -8,14 +8,12 @@
 import Foundation
 import RxSwift
 
-// MARK: - Network Client Protocol
 protocol NetworkClientProtocol {
     func execute<T: NetworkRequest>(_ request: T) -> Observable<T.Response>
     func execute<T: NetworkRequest>(_ request: T) -> Observable<APIResponse<T.Response>>
     func executePaginated<T: NetworkRequest>(_ request: T) -> Observable<PaginatedResponse<T.Response>>
 }
 
-// MARK: - URLSession-based Network Client
 final class URLSessionNetworkClient: NetworkClientProtocol {
     private let session: URLSession
     private let decoder: JSONDecoder
@@ -38,10 +36,8 @@ final class URLSessionNetworkClient: NetworkClientProtocol {
         formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z'"
         formatter.timeZone = TimeZone(abbreviation: "UTC")
         decoder.dateDecodingStrategy = .formatted(formatter)
-        // 네이버 API는 camelCase 사용하므로 snake_case 변환 제거
     }
 
-    // MARK: - Execute Request (Direct Response)
     func execute<T: NetworkRequest>(_ request: T) -> Observable<T.Response> {
         return Observable.create { [weak self] observer in
             guard let self = self else {
@@ -81,11 +77,10 @@ final class URLSessionNetworkClient: NetworkClientProtocol {
                     observer.onNext(decodedResponse)
                     observer.onCompleted()
                 } catch {
-                    // 디버깅을 위한 로그 추가
                     print("=== DECODING ERROR ===")
                     print("Error: \(error)")
                     if let jsonString = String(data: data, encoding: .utf8) {
-                        print("Raw JSON: \(jsonString)")
+                        _ = jsonString
                     }
                     observer.onError(NetworkError.decodingError(error))
                 }
@@ -99,7 +94,6 @@ final class URLSessionNetworkClient: NetworkClientProtocol {
         }
     }
 
-    // MARK: - Execute Request (API Response Wrapper)
     func execute<T: NetworkRequest>(_ request: T) -> Observable<APIResponse<T.Response>> {
         return Observable.create { [weak self] observer in
             guard let self = self else {
@@ -151,7 +145,6 @@ final class URLSessionNetworkClient: NetworkClientProtocol {
         }
     }
 
-    // MARK: - Execute Paginated Request
     func executePaginated<T: NetworkRequest>(_ request: T) -> Observable<PaginatedResponse<T.Response>> {
         return Observable.create { [weak self] observer in
             guard let self = self else {
@@ -204,7 +197,6 @@ final class URLSessionNetworkClient: NetworkClientProtocol {
     }
 }
 
-// MARK: - Private Helper Methods
 private extension URLSessionNetworkClient {
     func buildURLRequest<T: NetworkRequest>(from request: T) -> URLRequest? {
         let finalURL = request.path.isEmpty ? request.baseURL : request.baseURL.appendingPathComponent(request.path)

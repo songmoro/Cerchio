@@ -27,7 +27,6 @@ final class MasonryLayout: UICollectionViewLayout {
     override func prepare() {
         guard cache.isEmpty, let collectionView = collectionView else { return }
 
-        // diffable data source 호환성을 위한 안전 체크
         let numberOfSections = collectionView.numberOfSections
         guard numberOfSections > 0 else { return }
 
@@ -40,7 +39,6 @@ final class MasonryLayout: UICollectionViewLayout {
         var column = 0
         var yOffset: [CGFloat] = .init(repeating: 0, count: numberOfColumns)
 
-        // 모든 섹션을 처리 (현재는 주로 섹션 0만 사용하지만 확장 가능)
         for section in 0..<numberOfSections {
             let numberOfItems = collectionView.numberOfItems(inSection: section)
 
@@ -54,7 +52,6 @@ final class MasonryLayout: UICollectionViewLayout {
                                    width: columnWidth,
                                    height: height)
 
-                // 좌우 패딩 대칭 적용
                 let isLeftColumn = column == 0
                 let leftInset = isLeftColumn ? 8.0 : 2.0
                 let rightInset = isLeftColumn ? 2.0 : 8.0
@@ -94,7 +91,6 @@ final class MasonryLayout: UICollectionViewLayout {
         return cache[indexPath.item]
     }
 
-    // diffable data source 호환성을 위한 메서드들
     override func invalidateLayout() {
         super.invalidateLayout()
         cache.removeAll()

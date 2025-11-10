@@ -13,8 +13,6 @@ import SnapKit
 
 final class ReadingSessionListViewController: ListViewBaseViewController<ReadingSessionListReactor> {
 
-    // MARK: - UI Components
-
     private let tableView: UITableView = {
         let table = UITableView(frame: .zero, style: .insetGrouped)
         table.backgroundColor = UIColor(named: "Background")
@@ -34,22 +32,17 @@ final class ReadingSessionListViewController: ListViewBaseViewController<Reading
         return label
     }()
 
-    // MARK: - Properties
     var onAddRecordRequested: (() -> Void)?
 
-    // MARK: - Override Properties
     override var viewTitle: String {
         return String(localized: .bookDetailReadingRecords)
     }
-
-    // MARK: - Lifecycle
 
     override func viewDidLoad() {
         super.viewDidLoad()
         reactor?.action.onNext(.loadSessions)
     }
 
-    // MARK: - Override Methods
     override func addButtonTapped() {
         HapticFeedbackManager.shared.impact()
         onAddRecordRequested?()
@@ -58,8 +51,6 @@ final class ReadingSessionListViewController: ListViewBaseViewController<Reading
     override func editModeDidChange(_ isEditMode: Bool) {
         tableView.setEditing(isEditMode, animated: true)
     }
-
-    // MARK: - Setup
 
     override func setupUI() {
         super.setupUI()
@@ -83,8 +74,6 @@ final class ReadingSessionListViewController: ListViewBaseViewController<Reading
         navigationController?.navigationBar.topItem?.backBarButtonItem = UIBarButtonItem(title: "", style: .plain, target: nil, action: nil)
     }
 
-    // MARK: - Binding
-
     override func bind(reactor: ReadingSessionListReactor) {
         reactor.state
             .map { $0.sessions }
@@ -105,7 +94,6 @@ final class ReadingSessionListViewController: ListViewBaseViewController<Reading
             .drive(emptyLabel.rx.isHidden.mapObserver { !$0 })
             .disposed(by: disposeBag)
 
-        // TableView 스와이프 삭제
         tableView.rx.itemDeleted
             .subscribe(onNext: { [weak self] indexPath in
                 guard let self = self,
@@ -117,13 +105,9 @@ final class ReadingSessionListViewController: ListViewBaseViewController<Reading
             .disposed(by: disposeBag)
     }
 
-    // MARK: - Actions
-
     func reloadSessions() {
         reactor?.action.onNext(.loadSessions)
     }
-
-    // MARK: - Private Methods
 
     private func showDeleteConfirmation(for sessionId: String) {
         let alert = UIAlertController(
@@ -142,13 +126,9 @@ final class ReadingSessionListViewController: ListViewBaseViewController<Reading
     }
 }
 
-// MARK: - Reading Session Cell
-
 final class ReadingSessionCell: UITableViewCell {
 
     static let identifier = "ReadingSessionCell"
-
-    // MARK: - UI Components
 
     private let dateLabel: UILabel = {
         let label = UILabel()
@@ -181,11 +161,7 @@ final class ReadingSessionCell: UITableViewCell {
         return button
     }()
 
-    // MARK: - Properties
-
     var onDeleteTapped: (() -> Void)?
-
-    // MARK: - Initialization
 
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
@@ -195,8 +171,6 @@ final class ReadingSessionCell: UITableViewCell {
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
-
-    // MARK: - Setup
 
     private func setupUI() {
         backgroundColor = UIColor(named: "BookBackground")?.withAlphaComponent(0.1)
@@ -232,15 +206,12 @@ final class ReadingSessionCell: UITableViewCell {
         deleteButton.addTarget(self, action: #selector(deleteButtonTapped), for: .touchUpInside)
     }
 
-    // MARK: - Configuration
-
     func configure(with session: ReadingSession) {
         let dateFormatter = DateFormatter()
         dateFormatter.dateFormat = "yyyy년 M월 d일 a h:mm"
         dateFormatter.locale = Locale(identifier: "ko_KR")
         dateLabel.text = dateFormatter.string(from: session.createdAt)
 
-        // Duration formatting (실제 읽은 시간 표시)
         let minutes = session.durationSeconds / 60
         let seconds = session.durationSeconds % 60
 
@@ -256,8 +227,6 @@ final class ReadingSessionCell: UITableViewCell {
 
         targetLabel.text = "목표: \(session.targetMinutes)분"
     }
-
-    // MARK: - Actions
 
     @objc private func deleteButtonTapped() {
         HapticFeedbackManager.shared.impact()

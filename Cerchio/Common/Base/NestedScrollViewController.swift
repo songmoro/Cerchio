@@ -8,116 +8,72 @@
 import UIKit
 import SnapKit
 
-/// Base class for implementing nested scroll pattern with sticky tab functionality
-/// Subclass this to create screens with:
-/// - Top info view that scrolls away
-/// - Sticky tab that pins to top when scrolling
-/// - CollectionView with dynamic content
-open class NestedScrollViewController: UIViewController {
-
-    // MARK: - Public Properties
-
-    /// The main scroll view that contains all content
-    public private(set) var mainScrollView: UIScrollView!
-
-    /// The collection view that displays your content
-    public private(set) var collectionView: UICollectionView!
-
-    /// Height of the sticky tab view
-    public var tabHeight: CGFloat { return 48.5 }
-
-    /// Height of the info view (override to customize)
-    open var infoViewHeight: CGFloat {
-        return UIScreen.main.bounds.height / 2
-    }
-
-    // MARK: - Private Properties
-
+class NestedScrollViewController: UIViewController {
+    private(set) var mainScrollView: UIScrollView!
+    private(set) var collectionView: UICollectionView!
+    private(set) var isTabSticky = false
+    
+    var tabHeight: CGFloat { return 48.5 }
+    var infoViewHeight: CGFloat { return UIScreen.main.bounds.height / 2 }
+    var stickyThresholdOffset: CGFloat { return 0 }
+    
     private var contentStackView: UIStackView!
     private var stickyTabContainer: UIView!
     private var stickyTabView: UIView!
     private var infoView: UIView!
-
     private var collectionViewHeightConstraint: Constraint?
-    private var infoViewHeightConstraint: Constraint?
     private var contentSizeObservation: NSKeyValueObservation?
-
-    /// Whether the tab is currently in sticky mode
-    public private(set) var isTabSticky = false
-
-    /// Additional offset to adjust sticky threshold (e.g., for safe area)
-    /// Override this in subclasses to customize when sticky behavior triggers
-    open var stickyThresholdOffset: CGFloat {
-        return 0
-    }
-
-    // MARK: - Lifecycle
-
-    open override func viewDidLoad() {
+    
+    override func viewDidLoad() {
         super.viewDidLoad()
-
         view.backgroundColor = .systemBackground
-
         setupBaseUI()
         setupCustomContent()
         observeContentSize()
     }
-
-    open override func viewDidLayoutSubviews() {
-        super.viewDidLayoutSubviews()
-        collectionView.collectionViewLayout.invalidateLayout()
-    }
-
-    // MARK: - Setup Methods (Override Points)
-
-    /// Override this to provide your custom info view
-    /// The default implementation creates a simple placeholder view
-    open func createInfoView() -> UIView {
+    
+    func createInfoView() -> UIView {
         let view = UIView()
         view.backgroundColor = .systemBlue.withAlphaComponent(0.3)
-
+        
         let label = UILabel()
         label.text = "정보 뷰\n(위로 스크롤하면 사라짐)"
         label.textAlignment = .center
         label.numberOfLines = 0
         label.font = .systemFont(ofSize: 18, weight: .medium)
-
+        
         view.addSubview(label)
         label.snp.makeConstraints { make in
             make.center.equalToSuperview()
         }
-
+        
         return view
     }
-
-    /// Override this to provide your custom sticky tab view
-    /// The default implementation creates a simple green view
-    open func createStickyTabView() -> UIView {
+    
+    func createStickyTabView() -> UIView {
         let view = UIView()
         view.backgroundColor = .systemGreen
         return view
     }
-
-    /// Override this to provide your custom collection view layout
-    /// The default implementation creates a simple vertical list layout
-    open func createCollectionViewLayout() -> UICollectionViewLayout {
+    
+    func createCollectionViewLayout() -> UICollectionViewLayout {
         return UICollectionViewCompositionalLayout { sectionIndex, environment in
             let itemSize = NSCollectionLayoutSize(
                 widthDimension: .fractionalWidth(1.0),
                 heightDimension: .estimated(80)
             )
             let item = NSCollectionLayoutItem(layoutSize: itemSize)
-
+            
             let groupSize = NSCollectionLayoutSize(
                 widthDimension: .fractionalWidth(1.0),
                 heightDimension: .estimated(80)
             )
             let group = NSCollectionLayoutGroup.horizontal(layoutSize: groupSize, subitems: [item])
-
+            
             let section = NSCollectionLayoutSection(group: group)
             section.interGroupSpacing = 8
             section.contentInsets = NSDirectionalEdgeInsets(top: 8, leading: 16, bottom: 16, trailing: 16)
-
+            
             let headerSize = NSCollectionLayoutSize(
                 widthDimension: .fractionalWidth(1.0),
                 heightDimension: .estimated(44)
@@ -128,107 +84,93 @@ open class NestedScrollViewController: UIViewController {
                 alignment: .top
             )
             section.boundarySupplementaryItems = [header]
-
+            
             return section
         }
     }
-
-    /// Override this to register your custom cells and configure data source
-    /// Called after the collection view is set up
-    open func setupCustomContent() {
-    }
-
-    /// Override this to respond to sticky tab state changes
-    /// Called when the tab transitions between sticky and normal mode
-    /// - Parameter isSticky: true if tab is now sticky, false if it returned to normal position
-    open func tabStickyStateDidChange(isSticky: Bool) {
-    }
-
-    // MARK: - Base UI Setup
-
+    
+    func setupCustomContent() { }
+    func tabStickyStateDidChange(isSticky: Bool) { }
+    
     private func setupBaseUI() {
         infoView = createInfoView()
-
+        
         stickyTabView = createStickyTabView()
-
+        
         mainScrollView = UIScrollView()
         mainScrollView.backgroundColor = .systemBackground
         mainScrollView.showsVerticalScrollIndicator = true
         mainScrollView.delegate = self
-
+        
         view.addSubview(mainScrollView)
         mainScrollView.snp.makeConstraints { make in
             make.edges.equalToSuperview()
         }
-
+        
         contentStackView = UIStackView()
         contentStackView.axis = .vertical
         contentStackView.spacing = 0
-
+        
         mainScrollView.addSubview(contentStackView)
         contentStackView.snp.makeConstraints { make in
             make.edges.equalToSuperview()
             make.width.equalTo(mainScrollView)
         }
-
+        
         stickyTabContainer = UIView()
         stickyTabContainer.backgroundColor = .clear
-
+        
         contentStackView.addArrangedSubview(infoView)
         contentStackView.addArrangedSubview(stickyTabContainer)
 
         infoView.snp.makeConstraints { make in
-            infoViewHeightConstraint = make.height.equalTo(infoViewHeight).constraint
+            make.height.equalTo(infoViewHeight)
         }
-
+        
         stickyTabContainer.snp.makeConstraints { make in
             make.height.equalTo(tabHeight)
         }
-
+        
         stickyTabContainer.addSubview(stickyTabView)
         stickyTabView.snp.makeConstraints { make in
             make.edges.equalToSuperview()
             make.height.equalTo(tabHeight)
         }
-
+        
         collectionView = UICollectionView(frame: .zero, collectionViewLayout: createCollectionViewLayout())
         collectionView.backgroundColor = .clear
         collectionView.isScrollEnabled = false
-
+        
         contentStackView.addArrangedSubview(collectionView)
-
+        
         collectionView.snp.makeConstraints { make in
             collectionViewHeightConstraint = make.height.equalTo(100).constraint
         }
     }
-
-    // MARK: - ContentSize Observation
-
+    
     private func observeContentSize() {
         contentSizeObservation = collectionView.observe(\.contentSize, options: [.new]) { [weak self] _, change in
             guard let self = self, let newSize = change.newValue, newSize.height > 0 else { return }
-
+            
             self.collectionViewHeightConstraint?.update(offset: newSize.height)
-
+            
             UIView.animate(withDuration: 0.3) {
                 self.view.layoutIfNeeded()
             }
         }
     }
-
-    // MARK: - Sticky Tab Management
-
+    
     private func updateStickyTab(with offsetY: CGFloat) {
         let stickyThreshold = infoViewHeight - stickyThresholdOffset
         let shouldBeSticky = offsetY >= stickyThreshold
-
+        
         if shouldBeSticky != isTabSticky {
             isTabSticky = shouldBeSticky
-
+            
             if shouldBeSticky {
                 stickyTabView.removeFromSuperview()
                 view.addSubview(stickyTabView)
-
+                
                 stickyTabView.snp.remakeConstraints { make in
                     make.top.equalTo(view.safeAreaLayoutGuide)
                     make.leading.trailing.equalToSuperview()
@@ -237,42 +179,36 @@ open class NestedScrollViewController: UIViewController {
             } else {
                 stickyTabView.removeFromSuperview()
                 stickyTabContainer.addSubview(stickyTabView)
-
+                
                 stickyTabView.snp.remakeConstraints { make in
                     make.edges.equalToSuperview()
                     make.height.equalTo(tabHeight)
                 }
             }
-
+            
             view.layoutIfNeeded()
-
+            
             tabStickyStateDidChange(isSticky: shouldBeSticky)
         }
     }
-
-    // MARK: - Public Helper Methods
-
-    /// Scroll to a specific section in the collection view
-    /// - Parameter sectionIndex: The index of the section to scroll to
-    public func scrollToSection(_ sectionIndex: Int) {
+    
+    func scrollToSection(_ sectionIndex: Int) {
         let headerIndexPath = IndexPath(item: 0, section: sectionIndex)
-
+        
         guard let headerAttributes = collectionView.layoutAttributesForSupplementaryElement(
             ofKind: UICollectionView.elementKindSectionHeader,
             at: headerIndexPath
         ) else { return }
-
+        
         let headerY = headerAttributes.frame.origin.y
         let absoluteY = infoViewHeight + headerY - stickyThresholdOffset
-
+        
         mainScrollView.setContentOffset(CGPoint(x: 0, y: absoluteY), animated: true)
     }
 }
 
-// MARK: - UIScrollViewDelegate
-
 extension NestedScrollViewController: UIScrollViewDelegate {
-    public func scrollViewDidScroll(_ scrollView: UIScrollView) {
+    func scrollViewDidScroll(_ scrollView: UIScrollView) {
         guard scrollView == mainScrollView else { return }
         updateStickyTab(with: scrollView.contentOffset.y)
     }

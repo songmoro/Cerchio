@@ -7,8 +7,6 @@
 
 import Foundation
 
-// MARK: - Book Search Request Models
-
 struct BookSearchRequest {
     let query: String
     let display: Int?
@@ -24,8 +22,8 @@ struct BookSearchRequest {
 }
 
 enum BookSearchSort: String, CaseIterable {
-    case accuracy = "sim"    // 정확도순 (기본값)
-    case date = "date"       // 출간일순
+    case accuracy = "sim"
+    case date = "date"
 
     var displayName: String {
         switch self {
@@ -34,8 +32,6 @@ enum BookSearchSort: String, CaseIterable {
         }
     }
 }
-
-// MARK: - Book Search Response Models
 
 struct BookSearchResponse: Codable {
     let lastBuildDate: String
@@ -50,7 +46,7 @@ struct BookSearchItem: Codable {
     let link: String
     let image: String
     let author: String
-    let discount: String?  // 네이버 API는 가격을 문자열로 반환
+    let discount: String?
     let publisher: String
     let isbn: String
     let description: String
@@ -72,7 +68,6 @@ struct BookSearchItem: Codable {
 
     var formattedPrice: String? {
         guard let discount = discount else { return nil }
-        // 이미 문자열이므로 그대로 반환 (필요시 포맷팅)
         return discount
     }
 
@@ -82,16 +77,14 @@ struct BookSearchItem: Codable {
     }
 }
 
-// MARK: - Network Error Models
-
 enum BookSearchError: Error, LocalizedError {
-    case incorrectQuery          // SE01
-    case invalidDisplayValue     // SE02
-    case invalidStartValue       // SE03
-    case invalidSortValue        // SE04
-    case malformedEncoding       // SE06
-    case invalidSearchAPI        // SE05
-    case systemError            // SE99
+    case incorrectQuery
+    case invalidDisplayValue
+    case invalidStartValue
+    case invalidSortValue
+    case malformedEncoding
+    case invalidSearchAPI
+    case systemError
     case unknownError(String)
 
     var errorDescription: String? {
@@ -129,14 +122,10 @@ enum BookSearchError: Error, LocalizedError {
     }
 }
 
-// MARK: - API Response Error Model
-
 struct APIErrorResponse: Codable {
     let errorMessage: String
     let errorCode: String
 }
-
-// MARK: - Book Search Constants
 
 enum BookSearchConstants {
     static let baseURL = "https://openapi.naver.com/v1/search/book.json"

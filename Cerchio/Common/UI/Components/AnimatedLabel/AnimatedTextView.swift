@@ -7,7 +7,6 @@
 
 import SwiftUI
 
-/// SwiftUI의 contentTransition을 사용한 텍스트 애니메이션
 @available(iOS 16.0, *)
 struct AnimatedTextView: View {
     let text: String
@@ -22,7 +21,6 @@ struct AnimatedTextView: View {
     }
 }
 
-/// SwiftUI 커스텀 슬라이드 애니메이션
 struct CustomSlideTextView: View {
     let text: String
     let font: Font
@@ -50,7 +48,6 @@ struct CustomSlideTextView: View {
     }
 }
 
-/// UIViewRepresentable로 UIKit 애니메이션 레이블을 SwiftUI에서 사용
 struct TransitionAnimatedLabelView: UIViewRepresentable {
     let text: String
     let font: UIFont
@@ -70,7 +67,6 @@ struct TransitionAnimatedLabelView: UIViewRepresentable {
     }
 }
 
-/// CATransition 애니메이션 레이블 SwiftUI Wrapper
 struct CATransitionAnimatedLabelView: UIViewRepresentable {
     let text: String
     let font: UIFont
@@ -91,7 +87,6 @@ struct CATransitionAnimatedLabelView: UIViewRepresentable {
     }
 }
 
-/// Custom Slide 애니메이션 레이블 SwiftUI Wrapper
 struct CustomSlideAnimatedLabelView: UIViewRepresentable {
     let text: String
     let font: UIFont
@@ -110,13 +105,10 @@ struct CustomSlideAnimatedLabelView: UIViewRepresentable {
     }
 }
 
-// MARK: - UIKit Hosting Wrapper for ViewController
-
 import SnapKit
 import RxSwift
 import RxCocoa
 
-/// UIKit에서 SwiftUI AnimatedTextView를 사용하기 위한 Wrapper
 @available(iOS 16.0, *)
 final class AnimatedTextHostingView: UIView {
     private let hostingController: UIHostingController<AnimatedTextView>
@@ -157,7 +149,6 @@ final class AnimatedTextHostingView: UIView {
         hostingController.view.backgroundColor = .clear
         addSubview(hostingController.view)
 
-        // SnapKit 사용
         hostingController.view.snp.makeConstraints {
             $0.edges.equalToSuperview()
         }
@@ -167,14 +158,12 @@ final class AnimatedTextHostingView: UIView {
         hostingController.rootView = AnimatedTextView(text: text, font: font, color: color)
     }
 
-    /// Parent ViewController에 attach
     func attach(to parentViewController: UIViewController) {
         parentViewController.addChild(hostingController)
         hostingController.didMove(toParent: parentViewController)
     }
 }
 
-/// UIKit에서 SwiftUI CustomSlideTextView를 사용하기 위한 Wrapper
 final class CustomSlideTextHostingView: UIView {
     private let hostingController: UIHostingController<CustomSlideTextView>
 
@@ -214,7 +203,6 @@ final class CustomSlideTextHostingView: UIView {
         hostingController.view.backgroundColor = .clear
         addSubview(hostingController.view)
 
-        // SnapKit 사용
         hostingController.view.snp.makeConstraints {
             $0.edges.equalToSuperview()
         }
@@ -224,14 +212,12 @@ final class CustomSlideTextHostingView: UIView {
         hostingController.rootView = CustomSlideTextView(text: text, font: font, color: color)
     }
 
-    /// Parent ViewController에 attach
     func attach(to parentViewController: UIViewController) {
         parentViewController.addChild(hostingController)
         hostingController.didMove(toParent: parentViewController)
     }
 }
 
-// MARK: - Preview
 #Preview {
     VStack(spacing: 40) {
         if #available(iOS 16.0, *) {

@@ -16,13 +16,13 @@ final class ReadingTimerCoordinator: BaseCoordinator {
     private let bookTitle: String
     private let targetMinutes: Int
     private let restoredSession: TimerSessionManager.ActiveSession?
+    private var photoCompletionHandler: ((UIImage) -> Void)?
 
     private let completionRelay = PublishRelay<Void>()
     var completion: Observable<Void> {
         completionRelay.asObservable()
     }
 
-    /// 새로운 타이머 시작
     init(
         navigationController: UINavigationController,
         serviceFactory: ServiceFactory,
@@ -38,7 +38,6 @@ final class ReadingTimerCoordinator: BaseCoordinator {
         super.init(navigationController: navigationController)
     }
 
-    /// 세션 복원
     init(
         navigationController: UINavigationController,
         serviceFactory: ServiceFactory,
@@ -59,12 +58,10 @@ final class ReadingTimerCoordinator: BaseCoordinator {
         navigationController.pushViewController(viewController, animated: true)
     }
 
-    /// ViewController 생성 (세션 복원 시 스택에 직접 추가하기 위해 분리)
     func createViewController() -> ReadingTimerViewController {
         let repository = serviceFactory.createReadingSessionRepository()
         let reactor: ReadingTimerReactor
 
-        // 세션 복원 여부에 따라 다른 init 사용
         if let session = restoredSession {
             reactor = ReadingTimerReactor(
                 session: session,
@@ -82,7 +79,6 @@ final class ReadingTimerCoordinator: BaseCoordinator {
         let viewController = ReadingTimerViewController()
         viewController.reactor = reactor
 
-        // ViewController 완료 이벤트 구독
         viewController.completion
             .subscribe(onNext: { [weak self] in
                 self?.finishSession()
@@ -90,12 +86,10 @@ final class ReadingTimerCoordinator: BaseCoordinator {
             })
             .disposed(by: disposeBag)
 
-        // 사진 버튼 액션
         viewController.onPhotoTapped = { [weak self] in
             self?.showPhotoCapture()
         }
 
-        // 문장 버튼 액션
         viewController.onQuoteTapped = { [weak self] in
             self?.showQuoteSave()
         }
@@ -104,12 +98,46 @@ final class ReadingTimerCoordinator: BaseCoordinator {
     }
 
     private func showPhotoCapture() {
-        let imagePicker = UIImagePickerController()
-        imagePicker.delegate = self
-        imagePicker.sourceType = .camera
-        imagePicker.allowsEditing = true
+        guard let topViewController = navigationController.topViewController else { return }
 
-        navigationController.present(imagePicker, animated: true)
+        CameraPermissionManager.shared.handleCameraPermission(from: topViewController) { [weak self] granted in
+            guard granted else {
+                return
+            }
+
+            let cameraVC = CameraViewController()
+            cameraVC.delegate = self
+            cameraVC.modalPresentationStyle = .fullScreen
+
+            self?.photoCompletionHandler = { [weak self] image in
+                self?.savePhoto(image)
+            }
+
+            self?.navigationController.present(cameraVC, animated: true)
+        }
+    }
+
+    private func savePhoto(_ image: UIImage) {
+        let photoRepository = serviceFactory.createPhotoRepository()
+
+        let imageName = UUID().uuidString
+        if let imagePath = ImageStorageManager.shared.saveImage(image, withName: imageName) {
+            let realmPhoto = RealmPhoto(
+                bookId: bookId,
+                localImagePath: imagePath
+            )
+
+            photoRepository.savePhoto(realmPhoto)
+                .observe(on: MainScheduler.instance)
+                .subscribe(
+                    onNext: { _ in
+                    },
+                    onError: { error in
+                        print(" Failed to save photo: \(error.localizedDescription)")
+                    }
+                )
+                .disposed(by: disposeBag)
+        }
     }
 
     private func showQuoteSave() {
@@ -133,9 +161,9 @@ final class ReadingTimerCoordinator: BaseCoordinator {
 
                 switch result {
                 case .quoteSaved:
-                    print(" Quote saved from reading timer")
+                    break
                 case .cancelled:
-                    print(" Quote save cancelled")
+                    break
                 }
             })
             .disposed(by: disposeBag)
@@ -148,40 +176,17 @@ final class ReadingTimerCoordinator: BaseCoordinator {
     }
 }
 
-// MARK: - UIImagePickerControllerDelegate
-extension ReadingTimerCoordinator: UIImagePickerControllerDelegate, UINavigationControllerDelegate {
-    func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
-        picker.dismiss(animated: true)
-
-        guard let selectedImage = info[.editedImage] as? UIImage ?? info[.originalImage] as? UIImage else {
-            print(" Failed to get image from picker")
-            return
-        }
-
-        let photoRepository = serviceFactory.createPhotoRepository()
-
-        let imageName = UUID().uuidString
-        if let imagePath = ImageStorageManager.shared.saveImage(selectedImage, withName: imageName) {
-            let realmPhoto = RealmPhoto(
-                bookId: bookId,
-                localImagePath: imagePath
-            )
-
-            photoRepository.savePhoto(realmPhoto)
-                .observe(on: MainScheduler.instance)
-                .subscribe(
-                    onNext: { _ in
-                        print(" Photo saved from reading timer")
-                    },
-                    onError: { error in
-                        print(" Failed to save photo: \(error.localizedDescription)")
-                    }
-                )
-                .disposed(by: disposeBag)
+extension ReadingTimerCoordinator: CameraViewControllerDelegate {
+    func cameraViewController(_ controller: CameraViewController, didCapturePhoto image: UIImage) {
+        controller.dismiss(animated: true) { [weak self] in
+            self?.photoCompletionHandler?(image)
+            self?.photoCompletionHandler = nil
         }
     }
 
-    func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
-        picker.dismiss(animated: true)
+    func cameraViewControllerDidCancel(_ controller: CameraViewController) {
+        controller.dismiss(animated: true) { [weak self] in
+            self?.photoCompletionHandler = nil
+        }
     }
 }

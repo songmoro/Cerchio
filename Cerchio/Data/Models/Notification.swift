@@ -8,8 +8,6 @@
 import Foundation
 import RealmSwift
 
-// MARK: - Domain Model
-
 nonisolated struct AppNotification: Hashable, Sendable {
     let id: String
     let type: NotificationType
@@ -25,19 +23,19 @@ nonisolated struct AppNotification: Hashable, Sendable {
     let createdAt: Date
 
     enum NotificationType: String, Codable, Sendable {
-        case timerCompletion      // 독서 타이머 완료
-        case dailyReminder        // 일일 독서 리마인더
-        case goalAchievement      // 목표 달성
-        case readingStreak        // 연속 독서 기록
-        case bookRecommendation   // 도서 추천
+        case timerCompletion
+        case dailyReminder
+        case goalAchievement
+        case readingStreak
+        case bookRecommendation
     }
 
     enum NotificationStatus: String, Codable, Sendable {
-        case scheduled   // 예약됨
-        case delivered   // 전달됨 (사용자에게 표시됨)
-        case dismissed   // 사용자가 확인함
-        case cancelled   // 취소됨
-        case expired     // 만료됨
+        case scheduled
+        case delivered
+        case dismissed
+        case cancelled
+        case expired
     }
 
     enum EntityType: String, Codable, Sendable {
@@ -47,8 +45,6 @@ nonisolated struct AppNotification: Hashable, Sendable {
         case goal
     }
 }
-
-// MARK: - Realm Model
 
 final class RealmNotification: Object {
     @Persisted(primaryKey: true) var id: String

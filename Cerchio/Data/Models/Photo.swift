@@ -8,8 +8,6 @@
 import Foundation
 import RealmSwift
 
-// MARK: - Photo Struct (for UI)
-
 nonisolated struct Photo: Hashable, Sendable {
     let id: String
     let bookId: String
@@ -27,8 +25,6 @@ nonisolated struct Photo: Hashable, Sendable {
         self.createdAt = createdAt
     }
 }
-
-// MARK: - RealmPhoto Model
 
 class RealmPhoto: Object {
     @Persisted(primaryKey: true) var id: ObjectId

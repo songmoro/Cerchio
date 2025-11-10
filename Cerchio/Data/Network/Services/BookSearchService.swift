@@ -8,22 +8,16 @@
 import Foundation
 import RxSwift
 
-// MARK: - Book Search Service Protocol
-
 protocol BookSearchServiceProtocol {
     func searchBooks(query: String, display: Int?, start: Int?, sort: BookSearchSort?) -> Observable<BookSearchResponse>
     func searchBooks(request: BookSearchRequest) -> Observable<BookSearchResponse>
 }
-
-// MARK: - Book Search Service Implementation
 
 final class BookSearchService: BaseService<BookSearchService.Dependencies>, BookSearchServiceProtocol {
 
     struct Dependencies: ServiceDependencies {
         let networkClient: NetworkClientProtocol
     }
-
-    // MARK: - Public Methods
 
     func searchBooks(
         query: String,
@@ -68,8 +62,6 @@ final class BookSearchService: BaseService<BookSearchService.Dependencies>, Book
         }
     }
 
-    // MARK: - Error Handling
-
     private func mapNetworkError(_ error: Error) -> Error {
         if let networkError = error as? NetworkError {
             switch networkError {
@@ -111,8 +103,6 @@ final class BookSearchService: BaseService<BookSearchService.Dependencies>, Book
     }
 }
 
-// MARK: - Convenience Extensions
-
 extension BookSearchService {
 
     func searchFirstPage(query: String, display: Int = BookSearchConstants.defaultDisplay) -> Observable<BookSearchResponse> {
@@ -152,8 +142,6 @@ extension BookSearchService {
         )
     }
 }
-
-// MARK: - Mock Implementation
 
 final class MockBookSearchService: BookSearchServiceProtocol {
 

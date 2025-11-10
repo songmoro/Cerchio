@@ -7,7 +7,6 @@
 
 import UIKit
 
-/// UIView.transition을 사용한 간단한 텍스트 애니메이션
 final class TransitionAnimatedLabel: UILabel {
 
     var animationDuration: TimeInterval = 0.3
@@ -29,7 +28,6 @@ final class TransitionAnimatedLabel: UILabel {
         )
     }
 
-    /// 텍스트를 애니메이션과 함께 설정
     func setText(_ newText: String?, animated: Bool = true) {
         if animated {
             UIView.transition(

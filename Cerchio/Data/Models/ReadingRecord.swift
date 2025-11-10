@@ -8,8 +8,6 @@
 import Foundation
 import RealmSwift
 
-// MARK: - ReadingRecord Struct (for UI)
-
 nonisolated struct ReadingRecord: Hashable, Sendable {
     let id: String
     let bookId: String
@@ -23,8 +21,6 @@ nonisolated struct ReadingRecord: Hashable, Sendable {
         self.createdAt = createdAt
     }
 }
-
-// MARK: - RealmReadingRecord Model
 
 class RealmReadingRecord: Object {
     @Persisted(primaryKey: true) var id: ObjectId

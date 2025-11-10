@@ -20,7 +20,6 @@ protocol QuoteShareSettingsDelegate: AnyObject {
 }
 
 final class QuoteShareSettingsViewController: UIViewController {
-    // MARK: - Properties
     weak var delegate: QuoteShareSettingsDelegate?
     private let disposeBag = DisposeBag()
 
@@ -30,7 +29,6 @@ final class QuoteShareSettingsViewController: UIViewController {
     private var fullHeight: CGFloat = 450
     private var minimizedHeight: CGFloat = 60
 
-    // MARK: - Section & Row Types
     enum Section: Int, CaseIterable {
         case background
         case effects
@@ -98,7 +96,6 @@ final class QuoteShareSettingsViewController: UIViewController {
         }
     }
 
-    // MARK: - UI Components
     private let containerView: UIView = {
         let view = UIView()
         view.backgroundColor = .systemBackground
@@ -139,7 +136,6 @@ final class QuoteShareSettingsViewController: UIViewController {
         return tableView
     }()
 
-    // MARK: - Initialization
     init(config: QuoteBackgroundConfig) {
         self.config = config
         super.init(nibName: nil, bundle: nil)
@@ -149,14 +145,12 @@ final class QuoteShareSettingsViewController: UIViewController {
         fatalError("init(coder:) has not been implemented")
     }
 
-    // MARK: - Lifecycle
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
         setupGestureRecognizers()
     }
 
-    // MARK: - Setup
     private func setupUI() {
         view.backgroundColor = .clear
 
@@ -201,7 +195,6 @@ final class QuoteShareSettingsViewController: UIViewController {
         containerView.addGestureRecognizer(panGesture)
     }
 
-    // MARK: - Actions
     @objc private func handleGrabberTap() {
         toggleMinimized()
     }
@@ -267,7 +260,6 @@ final class QuoteShareSettingsViewController: UIViewController {
     }
 }
 
-// MARK: - UITableViewDataSource
 extension QuoteShareSettingsViewController: UITableViewDataSource {
     func numberOfSections(in tableView: UITableView) -> Int {
         return Section.allCases.count
@@ -283,11 +275,11 @@ extension QuoteShareSettingsViewController: UITableViewDataSource {
             if !config.isEnabled { return 0 }
             var count = 0
             for effect in EffectRow.allCases {
-                count += 1 // toggle
+                count += 1
                 if effect == .blurColor {
-                    count += 2 // color picker + slider
+                    count += 2
                 } else {
-                    count += 1 // slider
+                    count += 1
                 }
             }
             return count
@@ -341,7 +333,6 @@ extension QuoteShareSettingsViewController: UITableViewDataSource {
     }
 }
 
-// MARK: - UITableViewDelegate
 extension QuoteShareSettingsViewController: UITableViewDelegate {
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
         guard let section = Section(rawValue: indexPath.section) else { return 44 }
@@ -376,7 +367,6 @@ extension QuoteShareSettingsViewController: UITableViewDelegate {
     }
 }
 
-// MARK: - Helper Methods
 extension QuoteShareSettingsViewController {
     private func configureEffectCell(for indexPath: IndexPath, in tableView: UITableView) -> UITableViewCell {
         var currentRow = 0
@@ -515,7 +505,6 @@ extension QuoteShareSettingsViewController {
     }
 }
 
-// MARK: - SwitchCell
 class SwitchCell: UITableViewCell {
     static let identifier = "SwitchCell"
 
@@ -570,7 +559,6 @@ class SwitchCell: UITableViewCell {
     }
 }
 
-// MARK: - SliderCell
 class SliderCell: UITableViewCell {
     static let identifier = "SliderCell"
 
@@ -651,7 +639,6 @@ class SliderCell: UITableViewCell {
     }
 }
 
-// MARK: - ColorPickerCell
 class ColorPickerCell: UITableViewCell {
     static let identifier = "ColorPickerCell"
 
@@ -737,7 +724,6 @@ class ColorPickerCell: UITableViewCell {
     }
 }
 
-// MARK: - UIColorPickerViewControllerDelegate
 extension ColorPickerCell: UIColorPickerViewControllerDelegate {
     func colorPickerViewControllerDidFinish(_ viewController: UIColorPickerViewController) {
         selectedColor = viewController.selectedColor
