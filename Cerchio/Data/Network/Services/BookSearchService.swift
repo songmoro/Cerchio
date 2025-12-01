@@ -35,6 +35,16 @@ final class BookSearchService: BaseService<BookSearchService.Dependencies>, Book
     }
 
     func searchBooks(request: BookSearchRequest) -> Observable<BookSearchResponse> {
+        // 첫 페이지 여부 확인 (start가 nil이거나 1이면 첫 페이지)
+        let isFirstPage = request.start == nil || request.start == 1
+
+        // 첫 페이지이고 유효한 캐시가 있으면 캐시 반환
+        if isFirstPage,
+           let cachedResult = SearchResultCache.shared.get(forKey: request.query) {
+            return Observable.just(cachedResult.response)
+        }
+
+        // 캐시 미스 또는 첫 페이지가 아니면 API 호출
         let networkRequest = BookSearchNetworkRequest(searchRequest: request)
 
         return Observable.create { observer in
@@ -49,6 +59,11 @@ final class BookSearchService: BaseService<BookSearchService.Dependencies>, Book
                 .execute(networkRequest)
                 .subscribe(
                     onNext: { response in
+                        // 첫 페이지이면 캐싱
+                        if isFirstPage {
+                            SearchResultCache.shared.set(response: response, forKey: request.query)
+                        }
+
                         observer.onNext(response)
                         observer.onCompleted()
                     },
