@@ -446,6 +446,19 @@ final class LibraryViewController: BaseViewController<LibraryReactor> {
         snapshot.appendItems(books, toSection: .book)
 
         dataSource.apply(snapshot, animatingDifferences: true)
+
+        preloadColorsForBooks(books)
+    }
+
+    private func preloadColorsForBooks(_ books: [Book]) {
+        let imageKeys = books.map { $0.customCoverImagePath ?? $0.image }
+
+        Task {
+            await DominantColorCache.shared.loadAndCacheColors(
+                imageKeys: imageKeys,
+                scope: "library"
+            )
+        }
     }
 
     private func handleLoadingState(_ isLoading: Bool) {

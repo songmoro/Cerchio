@@ -124,6 +124,14 @@ final class ServiceFactory: BaseServiceFactory<ServiceDependencies> {
         }
     }
 
+    func createColorCacheRepository() -> ColorCacheRepositoryProtocol {
+        do {
+            return try ColorCacheRepository()
+        } catch {
+            fatalError("Failed to create ColorCacheRepository: \(error)")
+        }
+    }
+
     func clearServiceCache() {
         cacheQueue.async(flags: .barrier) {
             self.serviceCache.removeAll()

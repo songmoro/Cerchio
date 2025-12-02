@@ -45,7 +45,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     }
 
     private func configureRealm() {
-        let schemaVersion: UInt64 = 1201
+        let schemaVersion: UInt64 = 1202
 
         let config = Realm.Configuration(
             schemaVersion: schemaVersion,

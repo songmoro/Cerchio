@@ -89,12 +89,14 @@ final class LibraryCollectionViewCell: UICollectionViewCell, IsIdentifiable {
 
         backgroundContainerView.backgroundColor = .clear
 
+        let imageKey = item.customCoverImagePath ?? item.image
+
         if let customCoverPath = item.customCoverImagePath,
            let customImage = ImageStorageManager.shared.loadImage(fromPath: customCoverPath) {
             coverImageView.image = customImage
             loadingIndicator.stopAnimating()
 
-            extractAndApplyDominantColor(from: customImage)
+            extractAndApplyDominantColor(from: customImage, imageKey: imageKey)
         } else if let url = URL(string: item.image) {
             loadingIndicator.startAnimating()
 
@@ -109,7 +111,7 @@ final class LibraryCollectionViewCell: UICollectionViewCell, IsIdentifiable {
                 self.loadingIndicator.stopAnimating()
 
                 if case .success(let imageResult) = result {
-                    self.extractAndApplyDominantColor(from: imageResult.image)
+                    self.extractAndApplyDominantColor(from: imageResult.image, imageKey: imageKey)
                 }
             }
         } else {
@@ -117,11 +119,25 @@ final class LibraryCollectionViewCell: UICollectionViewCell, IsIdentifiable {
         }
     }
 
-    private func extractAndApplyDominantColor(from image: UIImage) {
+    private func extractAndApplyDominantColor(from image: UIImage, imageKey: String) {
         Task {
+            if let cachedColors = DominantColorCache.shared.getColors(forImageKey: imageKey),
+               let dominantColor = cachedColors.first {
+                await MainActor.run {
+                    UIView.animate(withDuration: 0.3) {
+                        self.backgroundContainerView.backgroundColor = dominantColor
+                    }
+                }
+                return
+            }
+
+            DominantColorCache.shared.recordMiss()
+
             let dominantColor = await Task.detached(priority: .userInitiated) {
                 DominantColorExtractor.extract(from: image).first ?? .gray
             }.value
+
+            DominantColorCache.shared.setColors([dominantColor], forImageKey: imageKey, scope: "library")
 
             await MainActor.run {
                 UIView.animate(withDuration: 0.3) {
