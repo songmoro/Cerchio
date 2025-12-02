@@ -92,7 +92,5 @@ iOSInjectionProject/
 **/Secret/*.swift
 **/Secret/*.plist
 
-# Markdown files
-*.md
-
-# End of https://www.toptal.com/developers/gitignore/api/swift
+# 어시스턴스 설정 파일 제외
+[A-Z]*.md
