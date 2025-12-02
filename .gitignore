@@ -93,4 +93,4 @@ iOSInjectionProject/
 **/Secret/*.plist
 
 # 어시스턴스 설정 파일 제외
-[A-Z]*.md
+/[A-Z]*.md
