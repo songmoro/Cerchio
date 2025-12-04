@@ -40,14 +40,64 @@ jobs:
             REPO: ${{ github.repository }}
             PR NUMBER: ${{ github.event.pull_request.number }}
 
-            Please review this pull request and provide feedback on:
-            - Code quality and best practices
-            - Potential bugs or issues
-            - Performance considerations
-            - Security concerns
-            - Test coverage
-            
-            Use the repository's CLAUDE.md for guidance on style and conventions. Be constructive and helpful in your feedback.
+            # 문서 준수 검사 (Document Compliance Review)
+
+            이 PR의 변경사항이 프로젝트 문서를 잘 따르고 있는지 검사해주세요.
+
+            ## 필수 검사 항목
+
+            ### 1. 아키텍처 원칙 준수 (docs/principles/)
+            - MVVM-C + ReactorKit 패턴 준수 여부
+            - Protocol-Oriented Design 적용 여부
+            - Reactive Programming 원칙 준수 여부
+            - Memory Management 규칙 준수 여부
+
+            ### 2. 컴포넌트 계약 준수 (docs/contracts/)
+            - BaseCoordinator/BaseViewController/BaseRepository 사용 여부
+            - 필수 메서드 구현 여부 (start(), setupUI(), bind(reactor:))
+            - ServiceFactory 패턴 사용 여부
+
+            ### 3. 구현 가이드라인 준수 (docs/guidelines/)
+            - RxSwift Best Practices (Driver, bind(to:), [weak self], disposed(by:))
+            - UI Conventions (SnapKit, UIButton.Configuration, Custom Font)
+            - Localization (String(localized:) 사용)
+            - Haptic Feedback (HapticFeedbackManager 사용)
+            - Swift Concurrency 패턴 (Realm 작업은 main thread)
+
+            ### 4. Feature 구현 체크리스트
+            - Coordinator → Reactor → ViewController → View 순서 준수
+            - Repository protocol 정의 및 구현
+            - 문서 업데이트 (docs/features/{FeatureName}.md)
+
+            ## 검사 방법
+
+            1. `gh pr diff` 로 변경된 파일 확인
+            2. 각 변경사항이 위 문서 규칙을 준수하는지 검사
+            3. 위반 사항 발견 시:
+               - 어떤 문서 규칙을 위반했는지 명시
+               - 해당 문서 경로 제공 (예: docs/principles/reactive-programming.md:45)
+               - 올바른 구현 예시 제공
+
+            ## 리뷰 형식
+
+            리뷰 코멘트는 다음 형식으로 작성:
+
+            ```markdown
+            ## 문서 준수 검사 결과
+
+            ### [PASS] 준수 항목
+            - [항목명]: 설명
+
+            ### [WARN] 개선 권장 사항
+            - **[파일명:라인]**: 문제 설명
+              - 위반 규칙: [문서 경로]
+              - 권장 수정: [구체적 예시]
+
+            ### [FAIL] 필수 수정 사항
+            - **[파일명:라인]**: 문제 설명
+              - 위반 규칙: [문서 경로]
+              - 필수 수정: [구체적 예시]
+            ```
 
             Use `gh pr comment` with your Bash tool to leave your review as a comment on the PR.
           

@@ -23,6 +23,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         setupFCM()
         updateBadgeCount()
         cleanupExpiredNotifications()
+        cleanupDominantColorCache()
         return true
     }
 
@@ -100,6 +101,13 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
             .subscribe(onNext: {
             })
             .disposed(by: disposeBag)
+    }
+
+    private func cleanupDominantColorCache() {
+        DispatchQueue.main.async {
+            DominantColorCache.shared.cleanupOldCaches(maxAge: 30 * 24 * 60 * 60)
+            DominantColorCache.shared.cleanupLeastRecentlyUsed(keepCount: 200)
+        }
     }
 
     func application(_ application: UIApplication, configurationForConnecting connectingSceneSession: UISceneSession, options: UIScene.ConnectionOptions) -> UISceneConfiguration {

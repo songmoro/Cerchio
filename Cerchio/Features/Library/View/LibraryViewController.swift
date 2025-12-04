@@ -82,6 +82,12 @@ final class LibraryViewController: BaseViewController<LibraryReactor> {
         reactor?.action.onNext(.loadBooks)
     }
 
+    override func viewDidDisappear(_ animated: Bool) {
+        super.viewDidDisappear(animated)
+
+        DominantColorCache.shared.clearScope("library")
+    }
+
     func setEditButton(_ button: UIBarButtonItem) {
         editButton = button
 

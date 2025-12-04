@@ -1,7 +1,7 @@
 ---
 Feature ID: FEAT-DOMCOLOR
-Version: 1.0.0
-Last Updated: 2025-12-02
+Version: 1.1.0
+Last Updated: 2025-12-03
 Status: Active
 Related Contracts: [CONT-004]
 Related Principles: [PRIN-002, PRIN-004]
@@ -70,6 +70,11 @@ var memoryCacheTotalCostLimit: Int = 5 * 1024 * 1024  // 최대 5MB
 - NSCache의 LRU 알고리즘으로 자동 관리
 - countLimit 또는 totalCostLimit 초과 시 오래된 항목부터 제거
 
+**메모리 경고 처리:**
+- 시스템 메모리 부족 시 자동으로 메모리 캐시 정리
+- Realm 데이터는 보존 (재로딩 가능)
+- NotificationCenter 기반 자동 감지
+
 #### 영구 캐시 (Realm)
 
 ```swift
@@ -83,8 +88,10 @@ final class RealmColorCache: Object {
 ```
 
 **정리 정책:**
-- 시간 기반: 30일 이상 미사용 항목 삭제
-- LRU 기반: 최근 200개만 유지
+- 시간 기반: 30일 이상 미사용 항목 삭제 (앱 시작 시 자동 실행)
+- LRU 기반: 최근 200개만 유지 (앱 시작 시 자동 실행)
+- 실행 시점: AppDelegate.didFinishLaunchingWithOptions
+- 실행 스레드: Main (비동기)
 
 ### 2. 핵심 컴포넌트
 
@@ -181,16 +188,17 @@ private func preloadColorsForBooks(_ books: [Book]) {
 **목적:** Feature별 메모리 캐시 분리 관리
 
 ```swift
-// Library 화면 진입 시
-DominantColorCache.shared.registerScope("library", imageKeys: visibleImageKeys)
+// Library 화면 진입 시 (자동)
+// LibraryViewController.updateData() -> preloadColorsForBooks() 호출
 
-// Library 화면 이탈 시 (선택사항)
-DominantColorCache.shared.clearScope("library")
+// Library 화면 이탈 시 (자동)
+// LibraryViewController.viewDidDisappear() -> clearScope("library") 호출
 ```
 
 **동작:**
 - 메모리 캐시만 제거 (Realm 유지)
 - 다음 진입 시 preload로 자동 복원
+- 수동 호출 불필요 (ViewController 생명주기에 통합)
 
 ## 성능 지표
 
@@ -274,7 +282,7 @@ DominantColorCache.shared.cleanupLeastRecentlyUsed(keepCount: 100)
 
 ### Realm 캐시
 
-- ❌ 수동 정리 필요 (자동 정리 없음)
+- ✅ 앱 시작 시 자동 정리 (30일/200개 정책)
 - ❌ 메인 스레드에서만 접근 (Realm 제약)
 - ✅ 앱 재시작 후에도 유지
 
@@ -313,6 +321,18 @@ DispatchQueue.main.asyncAfter(deadline: .now() + 10) {
 - **참고 구현**: PhotoImageCache (Common/Managers/PhotoImageCache.swift)
 
 ## 변경 이력
+
+### v1.1.0 (2025-12-03)
+- 앱 시작 시 자동 정리 추가 (AppDelegate)
+  - 시간 기반 정리 (30일)
+  - LRU 정리 (200개)
+  - 메인 스레드 비동기 실행
+- 메모리 경고 자동 처리
+  - UIApplication.didReceiveMemoryWarningNotification 등록
+  - 메모리 캐시 자동 정리
+- Library 화면 이탈 시 Scope 자동 정리
+  - viewDidDisappear 통합
+  - 메모리 효율성 개선
 
 ### v1.0.0 (2025-12-02)
 - 초기 구현

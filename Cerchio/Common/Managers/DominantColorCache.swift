@@ -36,6 +36,17 @@ final class DominantColorCache {
 
         cache.countLimit = memoryCacheCountLimit
         cache.totalCostLimit = memoryCacheTotalCostLimit
+
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleMemoryWarning),
+            name: UIApplication.didReceiveMemoryWarningNotification,
+            object: nil
+        )
+    }
+
+    deinit {
+        NotificationCenter.default.removeObserver(self)
     }
 
     func getColors(forImageKey imageKey: String) -> [UIColor]? {
@@ -100,6 +111,16 @@ final class DominantColorCache {
     }
 
     func clearCache() {
+        queue.async(flags: .barrier) { [weak self] in
+            self?.cache.removeAllObjects()
+        }
+
+        scopeQueue.async(flags: .barrier) { [weak self] in
+            self?.scopedImageKeys.removeAll()
+        }
+    }
+
+    @objc private func handleMemoryWarning() {
         queue.async(flags: .barrier) { [weak self] in
             self?.cache.removeAllObjects()
         }
